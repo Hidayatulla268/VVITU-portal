@@ -1,0 +1,105 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Manage Timetable{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-alt me-2 text-accent"></i>Manage Timetable</h1>
+    <p class="ph-sub">Create and view timetable slot assignments</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Add/Update Slot Form -->
+  <div class="col-xl-4">
+    <div class="glass-card sticky-top" style="top:80px">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-plus me-2 text-accent"></i>Add / Update Slot</h3>
+      </div>
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-12">
+          <label class="form-label text-muted">Section *</label>
+          <select name="section" class="vvit-select" required>
+            <option value="">— Select —</option>
+            {% for s in sections %}<option value="{{ s.id }}">{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Day *</label>
+          <select name="day" class="vvit-select" required>
+            {% for d in day_choices %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Period *</label>
+          <select name="period" class="vvit-select" required>
+            {% for p in periods %}
+            <option value="{{ p }}">Period {{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label text-muted">Subject *</label>
+          <select name="subject" class="vvit-select" required>
+            <option value="">— Select —</option>
+            {% for s in subjects %}<option value="{{ s.id }}">{{ s.code }} — {{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label text-muted">Faculty *</label>
+          <select name="faculty" class="vvit-select" required>
+            <option value="">— Select —</option>
+            {% for f in faculties %}<option value="{{ f.id }}">{{ f.employee_id }} — {{ f.user.get_full_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn-vvit-primary w-100"><i class="fas fa-save me-2"></i>Save Slot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Existing Entries Table -->
+  <div class="col-xl-8">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-list me-2 text-accent"></i>All Timetable Entries</h3>
+        <span class="card-badge">{{ entries|length }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr><th>Section</th><th>Day</th><th>Period</th><th>Subject</th><th>Faculty</th></tr>
+          </thead>
+          <tbody>
+            {% for e in entries %}
+            <tr>
+              <td>{{ e.section }}</td>
+              <td>{{ e.day }}</td>
+              <td><span class="period-badge">P{{ e.period }}</span></td>
+              <td>
+                <div class="fw-600">{{ e.subject.code }}</div>
+                <small class="text-muted">{{ e.subject.name }}</small>
+              </td>
+              <td>{{ e.faculty.user.get_full_name|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No timetable entries yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

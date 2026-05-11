@@ -1,0 +1,48 @@
+# ═══════════════════════════════════════════════════════
+# VVIT Portal — Render.com Deployment Configuration
+# Deploy at: https://render.com
+# Push this repo to GitHub, then connect it on Render.
+# Render reads this file and sets everything up automatically.
+# ═══════════════════════════════════════════════════════
+
+services:
+  # ── Web Service (Django + Gunicorn) ─────────────────
+  - type: web
+    name: vvit-portal
+    runtime: python
+    region: singapore   # closest to Andhra Pradesh
+    plan: free          # upgrade to "starter" for always-on
+
+    # Build: install deps, collect static files, run migrations
+    buildCommand: |
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --no-input &&
+      python manage.py migrate
+
+    # Start: launch Gunicorn with 4 workers
+    startCommand: gunicorn vvit_portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+
+    # Health check so Render knows when the app is ready
+    healthCheckPath: /accounts/login/
+
+    # Environment variables Render will set for you
+    # Add SECRET_KEY and DATABASE_URL in the Render dashboard.
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: vvit_portal.settings_prod   # production settings file
+
+      - key: SECRET_KEY
+        generateValue: true   # Render auto-generates a secure random key
+
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+      - key: WEB_CONCURRENCY
+        value: 4
+
+  # ── PostgreSQL Database ──────────────────────────────
+  - type: pserv          # managed Postgres
+    name: vvit-portal-db
+    plan: free
+    databaseName: vvit_portal
+    user: vvit_user

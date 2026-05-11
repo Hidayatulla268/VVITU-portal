@@ -1,0 +1,291 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Mark Attendance{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-check me-2 text-accent"></i>Mark Attendance</h1>
+    <p class="ph-sub">Select a section, date, and period slot to record attendance</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Filter Panel -->
+  <div class="col-xl-4">
+    <div class="glass-card sticky-top" style="top:80px">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-sliders me-2 text-accent"></i>Select Class</h3>
+      </div>
+
+      <form id="attendanceForm" method="post" action="{% url 'faculty:mark_attendance' %}">
+        {% csrf_token %}
+
+        <!-- Section -->
+        <div class="mb-3">
+          <label class="form-label text-muted">Section</label>
+          <select id="sectionSelect" name="section" class="vvit-select" required>
+            <option value="">— Choose Section —</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}">{{ sec }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Date -->
+        <div class="mb-3">
+          <label class="form-label text-muted">Date</label>
+          <div class="date-input-wrapper">
+            <input type="date" name="date" id="dateInput" class="vvit-input"
+                   value="{{ today }}" min="{{ min_date }}" max="{{ today }}" required/>
+            <i class="fas fa-calendar-days cal-icon"></i>
+          </div>
+          <small class="text-muted mt-1 d-block">
+            <i class="fas fa-info-circle me-1"></i>
+            You can edit attendance from {{ min_date }} to today only.
+          </small>
+        </div>
+
+        <!-- Day (auto-filled) -->
+        <input type="hidden" name="day" id="dayHidden"/>
+
+        <!-- Timetable Slot -->
+        <div class="mb-3">
+          <label class="form-label text-muted">Period / Subject</label>
+          <select id="slotSelect" name="slot" class="vvit-select" required disabled>
+            <option value="">— Select section first —</option>
+          </select>
+        </div>
+
+        <!-- Load students button -->
+        <button type="button" id="loadStudentsBtn" class="btn-vvit-primary w-100 mb-3" disabled>
+          <i class="fas fa-users me-2"></i>Load Students
+        </button>
+
+        <!-- Hidden save button triggered from the attendance panel -->
+        <button type="submit" id="saveBtn" class="btn-vvit-success w-100 d-none">
+          <i class="fas fa-save me-2"></i>Save Attendance
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Student Attendance Panel -->
+  <div class="col-xl-8">
+    <div class="glass-card">
+      <div class="card-header-custom" id="attendancePanelHeader">
+        <h3 class="card-title-custom"><i class="fas fa-clipboard-list me-2 text-accent"></i>Student List</h3>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn-sm-accent d-none" id="markAllPresent" onclick="markAll('P')">
+            <i class="fas fa-check me-1"></i>All Present
+          </button>
+          <button type="button" class="btn-sm-danger d-none" id="markAllAbsent" onclick="markAll('A')">
+            <i class="fas fa-times me-1"></i>All Absent
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading spinner -->
+      <div id="loadingSpinner" class="text-center py-5 d-none">
+        <div class="spinner-ring"></div>
+        <p class="mt-3 text-muted">Loading students…</p>
+      </div>
+
+      <!-- Empty placeholder -->
+      <div id="emptyPlaceholder" class="empty-state py-5">
+        <i class="fas fa-users empty-icon fa-3x mb-3"></i>
+        <h5>No Students Loaded</h5>
+        <p class="text-muted">Select a section and period, then click "Load Students".</p>
+      </div>
+
+      <!-- Attendance rows (injected by JS) -->
+      <div id="attendanceRows" class="d-none">
+        <div class="table-responsive">
+          <table class="vvit-table" id="attTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Roll Number</th>
+                <th>Name</th>
+                <th class="text-center">
+                  <span class="status-badge status-present">Present</span>
+                </th>
+                <th class="text-center">
+                  <span class="status-badge status-absent">Absent</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Counter summary -->
+        <div class="att-summary-bar">
+          <span class="att-count-present">
+            <i class="fas fa-check-circle text-success me-1"></i>
+            Present: <strong id="presentCount">0</strong>
+          </span>
+          <span class="att-count-absent">
+            <i class="fas fa-times-circle text-danger me-1"></i>
+            Absent: <strong id="absentCount">0</strong>
+          </span>
+          <span class="att-count-total text-muted">
+            Total: <strong id="totalCount">0</strong>
+          </span>
+        </div>
+
+        <!-- Final submit inside the form -->
+        <div class="p-3">
+          <button type="submit" form="attendanceForm" class="btn-vvit-success w-100">
+            <i class="fas fa-save me-2"></i>Save Attendance
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const AJAX_STUDENTS_URL  = "{% url 'faculty:ajax_students' %}";
+const AJAX_TIMETABLE_URL = "{% url 'faculty:ajax_timetable' %}";
+const CSRFTOKEN          = "{{ csrf_token }}";
+
+const sectionSelect = document.getElementById('sectionSelect');
+const dateInput     = document.getElementById('dateInput');
+const slotSelect    = document.getElementById('slotSelect');
+const loadBtn       = document.getElementById('loadStudentsBtn');
+const dayHidden     = document.getElementById('dayHidden');
+const spinner       = document.getElementById('loadingSpinner');
+const emptyPH       = document.getElementById('emptyPlaceholder');
+const attRows       = document.getElementById('attendanceRows');
+const tbody         = document.getElementById('studentTableBody');
+const markAllP      = document.getElementById('markAllPresent');
+const markAllA      = document.getElementById('markAllAbsent');
+
+// Derive JS day name from a date string (YYYY-MM-DD or Date object)
+function getDayName(dateStr) {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  // Parse date as local (not UTC) to avoid timezone off-by-one
+  const parts = String(dateStr).split('-');
+  const d = parts.length === 3
+    ? new Date(+parts[0], +parts[1]-1, +parts[2])
+    : new Date(dateStr);
+  return days[d.getDay()];
+}
+
+// Get current date value from input (works with flatpickr altInput)
+function getDateValue() {
+  const raw = document.getElementById('dateInput');
+  // flatpickr stores YYYY-MM-DD in the real input, altInput shows human readable
+  return raw._flatpickr ? raw._flatpickr.formatDate(raw._flatpickr.selectedDates[0] || new Date(), 'Y-m-d') : raw.value;
+}
+
+// Fetch timetable slots for current section + date day
+async function loadSlots() {
+  const sectionId = sectionSelect.value;
+  const day = getDayName(getDateValue());
+  dayHidden.value = day;
+
+  if (!sectionId) return;
+
+  slotSelect.innerHTML = '<option value="">Loading…</option>';
+  slotSelect.disabled  = true;
+  loadBtn.disabled     = true;
+
+  try {
+    const res  = await fetch(`${AJAX_TIMETABLE_URL}?section_id=${sectionId}&day=${day}`);
+    const data = await res.json();
+
+    slotSelect.innerHTML = '<option value="">— Select Period —</option>';
+    data.slots.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `P${s.period} — ${s.subject_code}: ${s.subject_name}`;
+      slotSelect.appendChild(opt);
+    });
+    slotSelect.disabled = false;
+    loadBtn.disabled    = !slotSelect.value;
+  } catch(e) {
+    slotSelect.innerHTML = '<option value="">Error loading slots</option>';
+  }
+}
+
+slotSelect.addEventListener('change', () => {
+  loadBtn.disabled = !slotSelect.value;
+});
+
+sectionSelect.addEventListener('change', loadSlots);
+dateInput.addEventListener('change', loadSlots);
+
+// Load students
+loadBtn.addEventListener('click', async () => {
+  const sectionId = sectionSelect.value;
+  if (!sectionId) return;
+
+  spinner.classList.remove('d-none');
+  emptyPH.classList.add('d-none');
+  attRows.classList.add('d-none');
+
+  try {
+    const res  = await fetch(`${AJAX_STUDENTS_URL}?section_id=${sectionId}`);
+    const data = await res.json();
+
+    tbody.innerHTML = '';
+    data.students.forEach((st, idx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="text-muted small">${idx + 1}</td>
+        <td><strong>${st.roll_number}</strong></td>
+        <td>${st.name}</td>
+        <td class="text-center">
+          <input type="radio" name="attendance_${st.id}" value="P"
+                 id="p_${st.id}" class="att-radio att-radio-present" checked
+                 onchange="updateCounts()"/>
+          <label for="p_${st.id}" class="radio-label-present">P</label>
+        </td>
+        <td class="text-center">
+          <input type="radio" name="attendance_${st.id}" value="A"
+                 id="a_${st.id}" class="att-radio att-radio-absent"
+                 onchange="updateCounts()"/>
+          <label for="a_${st.id}" class="radio-label-absent">A</label>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    spinner.classList.add('d-none');
+    attRows.classList.remove('d-none');
+    markAllP.classList.remove('d-none');
+    markAllA.classList.remove('d-none');
+    updateCounts();
+  } catch(e) {
+    spinner.classList.add('d-none');
+    emptyPH.classList.remove('d-none');
+    emptyPH.querySelector('p').textContent = 'Failed to load students. Try again.';
+  }
+});
+
+function markAll(status) {
+  document.querySelectorAll(`.att-radio-${status === 'P' ? 'present' : 'absent'}`).forEach(r => {
+    r.checked = true;
+  });
+  updateCounts();
+}
+
+function updateCounts() {
+  const total   = document.querySelectorAll('input[type="radio"][value="P"]').length;
+  const present = document.querySelectorAll('input[type="radio"][value="P"]:checked').length;
+  const absent  = total - present;
+  document.getElementById('presentCount').textContent = present;
+  document.getElementById('absentCount').textContent  = absent;
+  document.getElementById('totalCount').textContent   = total;
+}
+</script>
+{% endblock %}

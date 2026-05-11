@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
+  },
+  "deploy": {
+    "startCommand": "gunicorn vvit_portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120",
+    "healthcheckPath": "/accounts/login/",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  }
+}

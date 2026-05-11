@@ -1,0 +1,142 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Exam Results{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-chart-bar me-2 text-accent"></i>Exam Results</h1>
+    <p class="ph-sub">View and filter your academic performance records</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label text-muted">Exam</label>
+      <select name="exam" class="vvit-select">
+        <option value="">— All Exams —</option>
+        {% for exam in exams %}
+        <option value="{{ exam.id }}" {% if selected_exam == exam.id|stringformat:"s" %}selected{% endif %}>
+          {{ exam.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-muted">Semester</label>
+      <select name="semester" class="vvit-select">
+        <option value="">— All Semesters —</option>
+        {% for s in semesters %}
+        <option value="{{ s }}" {% if selected_sem == s|stringformat:"s" %}selected{% endif %}>Sem {{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn-vvit-primary w-100">
+        <i class="fas fa-filter me-2"></i>Filter
+      </button>
+    </div>
+    <div class="col-md-2">
+      <a href="{% url 'student:results' %}" class="btn-vvit-outline w-100">
+        <i class="fas fa-times me-2"></i>Clear
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Results Table -->
+<div class="glass-card">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom"><i class="fas fa-table me-2 text-accent"></i>Results</h3>
+    <span class="card-badge">{{ results_page.paginator.count }} record{{ results_page.paginator.count|pluralize }}</span>
+  </div>
+
+  {% if results_page.object_list %}
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Exam</th>
+          <th>Subject</th>
+          <th>Marks</th>
+          <th>Max</th>
+          <th>%</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in results_page %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td>
+            <div class="fw-600">{{ result.exam.name }}</div>
+            <small class="text-muted">Sem {{ result.exam.semester }}</small>
+          </td>
+          <td>
+            <div class="subject-cell">
+              <span class="subject-code">{{ result.subject.code }}</span>
+              <span class="subject-name-small">{{ result.subject.name }}</span>
+            </div>
+          </td>
+          <td>
+            <strong>{{ result.marks_obtained }}</strong>
+            {% if result.final_total_score %}
+            <br><small class="text-success" title="Weighted Overall Total">Overall: {{ result.final_total_score }}/100</small>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ result.max_marks }}</td>
+          <td>
+            <div class="pct-bar-wrap">
+              {% with pct=result.final_total_score|default:result.percentage %}
+              <div class="pct-bar-fill {% if pct >= 75 %}bar-green{% elif pct >= 50 %}bar-yellow{% else %}bar-red{% endif %}"
+                   style="width:{{ pct }}%"></div>
+              <span class="pct-label">{{ pct }}%</span>
+              {% endwith %}
+            </div>
+          </td>
+          <td>
+            {% if result.grade %}
+            <span class="grade-badge grade-{{ result.grade|lower|cut:'+' }}">{{ result.grade }}</span>
+            {% else %}
+            <span class="text-muted small">N/A</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if results_page.has_other_pages %}
+  <div class="pagination-wrap">
+    {% if results_page.has_previous %}
+    <a href="?page={{ results_page.previous_page_number }}&exam={{ selected_exam }}&semester={{ selected_sem }}" class="page-btn">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+    <span class="page-info">Page {{ results_page.number }} of {{ results_page.paginator.num_pages }}</span>
+    {% if results_page.has_next %}
+    <a href="?page={{ results_page.next_page_number }}&exam={{ selected_exam }}&semester={{ selected_sem }}" class="page-btn">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="fas fa-folder-open empty-icon fa-3x mb-3"></i>
+    <h5>No results found</h5>
+    <p class="text-muted">Try adjusting the filters above.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

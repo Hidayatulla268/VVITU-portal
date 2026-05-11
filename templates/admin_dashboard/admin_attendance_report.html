@@ -1,0 +1,130 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Admin Attendance Report{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div>
+    <h1 class="ph-title">VVITU Attendance Report</h1>
+    <p class="ph-sub">Comprehensive overview of student attendance across the institution.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Filter Card -->
+  <div class="col-12">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h5 class="card-title-custom">Generate Report</h5>
+      </div>
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">Section</label>
+          <select name="section" class="vvit-select" required>
+            <option value="">-- Select Section --</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}" {% if section_id|stringformat:"s" == sec.id|stringformat:"s" %}selected{% endif %}>
+              {{ sec.branch.code }} - Year {{ sec.year.year }} - Section {{ sec.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">From Date</label>
+          <div class="date-input-wrapper">
+            <input type="text" name="date_from" class="vvit-input flatpickr-date" value="{{ date_from }}" required/>
+            <i class="fas fa-calendar cal-icon"></i>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">To Date</label>
+          <div class="date-input-wrapper">
+            <input type="text" name="date_to" class="vvit-input flatpickr-date" value="{{ date_to }}" required/>
+            <i class="fas fa-calendar cal-icon"></i>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn-vvit-primary w-100">
+            <i class="fas fa-filter me-2"></i>Generate Report
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Data Card -->
+  {% if section_id %}
+  <div class="col-12">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h5 class="card-title-custom">Report Results</h5>
+        <div class="action-btns">
+          <span class="card-badge"><i class="fas fa-users me-1"></i>{{ report_data|length }} Students</span>
+        </div>
+      </div>
+
+      {% if report_data %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Roll Number</th>
+              <th>Student Name</th>
+              <th>Total Classes</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in report_data %}
+            <tr class="{% if item.low %}row-warning{% endif %}">
+              <td>{{ forloop.counter }}</td>
+              <td class="fw-bold">{{ item.roll }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ item.total }}</td>
+              <td class="text-success">{{ item.present }}</td>
+              <td class="text-danger">{{ item.absent }}</td>
+              <td>
+                <span class="badge {% if item.low %}bg-danger{% else %}bg-success{% endif %}" style="font-size:0.85rem;">
+                  {{ item.pct }}%
+                </span>
+                {% if item.low %}
+                  <i class="fas fa-exclamation-triangle text-warning ms-2" title="Below minimum threshold ({{ threshold }}%)"></i>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 empty-state">
+        <i class="fas fa-folder-open fa-3x mb-3 empty-icon"></i>
+        <h5>No Data Found</h5>
+        <p>No attendance records exist for this section in the selected date range.</p>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    flatpickr(".flatpickr-date", {
+      dateFormat: "Y-m-d",
+      allowInput: true
+    });
+  });
+</script>
+{% endblock %}

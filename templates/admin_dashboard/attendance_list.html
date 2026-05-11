@@ -1,0 +1,131 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Attendance Records{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-clipboard-list me-2 text-accent"></i>Attendance Records</h1>
+    <p class="ph-sub">Admin override — edit any record without date restrictions</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter Bar -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label text-muted">Filter by Date</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date" class="vvit-input" value="{{ date_filter }}"/>
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label text-muted">Filter by Section</label>
+      <select name="section" class="vvit-select">
+        <option value="">— All Sections —</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if section_filter == sec.id|stringformat:"s" %}selected{% endif %}>
+          {{ sec }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn-vvit-primary w-100">
+        <i class="fas fa-filter me-2"></i>Filter
+      </button>
+    </div>
+    <div class="col-md-2">
+      <a href="{% url 'admin_dashboard:attendance_list' %}" class="btn-vvit-outline w-100">
+        <i class="fas fa-times me-2"></i>Clear
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Records Table -->
+<div class="glass-card">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom">
+      <i class="fas fa-table me-2 text-accent"></i>Records
+    </h3>
+    <span class="card-badge">{{ page.paginator.count }} total</span>
+  </div>
+
+  {% if page.object_list %}
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Section</th>
+          <th>Subject</th>
+          <th>Period</th>
+          <th>Status</th>
+          <th>Last Modified</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in page %}
+        <tr>
+          <td>{{ rec.date|date:"d M Y" }}</td>
+          <td><strong>{{ rec.student.roll_number }}</strong></td>
+          <td>{{ rec.student.user.get_full_name }}</td>
+          <td>{{ rec.timetable_entry.section }}</td>
+          <td>{{ rec.timetable_entry.subject.code }}</td>
+          <td><span class="period-badge">P{{ rec.timetable_entry.period }}</span></td>
+          <td>
+            <span class="status-badge {% if rec.status == 'P' %}status-present{% else %}status-absent{% endif %}">
+              {% if rec.status == 'P' %}
+                <i class="fas fa-check me-1"></i>Present
+              {% else %}
+                <i class="fas fa-times me-1"></i>Absent
+              {% endif %}
+            </span>
+          </td>
+          <td class="text-muted small">{{ rec.last_modified|date:"d M y H:i" }}</td>
+          <td>
+            <a href="{% url 'admin_dashboard:edit_attendance' rec.pk %}" class="btn-sm-accent">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page.has_other_pages %}
+  <div class="pagination-wrap">
+    {% if page.has_previous %}
+    <a href="?page={{ page.previous_page_number }}&date={{ date_filter }}&section={{ section_filter }}"
+       class="page-btn"><i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    <span class="page-info">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+    <a href="?page={{ page.next_page_number }}&date={{ date_filter }}&section={{ section_filter }}"
+       class="page-btn"><i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="fas fa-search fa-3x empty-icon mb-3"></i>
+    <h5>No records found</h5>
+    <p class="text-muted">Try adjusting the date or section filter.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

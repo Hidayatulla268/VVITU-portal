@@ -1,0 +1,302 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-tachometer-alt me-2 text-accent"></i>Student Dashboard</h1>
+    <p class="ph-sub">Welcome back, <strong>{{ student.user.first_name }}</strong> · {{ student.roll_number }}</p>
+  </div>
+  <div class="ph-right">
+    <span class="badge-section">
+      {{ student.branch.code }} · {{ student.year }} · Sec {{ student.section.name }}
+    </span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ── ROW 1: KPI Cards ────────────────────────────────── -->
+<div class="row g-4 mb-4">
+
+  <!-- Overall Attendance -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card {% if overall >= 75 %}kpi-success{% elif overall >= 60 %}kpi-warning{% else %}kpi-danger{% endif %}">
+      <div class="kpi-icon"><i class="fas fa-percentage"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ overall }}%</span>
+        <span class="kpi-label">Overall Attendance</span>
+      </div>
+      <div class="kpi-donut">
+        <svg viewBox="0 0 36 36" class="donut-svg">
+          <circle class="donut-track" cx="18" cy="18" r="15.9"/>
+          <circle class="donut-fill" cx="18" cy="18" r="15.9"
+                  stroke-dasharray="{{ overall }} 100"
+                  stroke-dashoffset="25"/>
+        </svg>
+        <span class="donut-center-text">{{ overall }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subjects Count -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-book-open"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats|length }}</span>
+        <span class="kpi-label">Active Subjects</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Class Teacher -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value text-sm">{{ class_teacher.get_full_name|default:"—" }}</span>
+        <span class="kpi-label">Class Teacher</span>
+        {% if class_teacher.phone %}
+        <a href="tel:{{ class_teacher.phone }}" class="kpi-phone">
+          <i class="fas fa-phone me-1"></i>{{ class_teacher.phone }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Counsellor -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-user-friends"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value text-sm">{{ counsellor.get_full_name|default:"—" }}</span>
+        <span class="kpi-label">Counsellor</span>
+        {% if counsellor.phone %}
+        <a href="tel:{{ counsellor.phone }}" class="kpi-phone">
+          <i class="fas fa-phone me-1"></i>{{ counsellor.phone }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ROW 2: Chart + AI Prediction ──────────────────── -->
+<div class="row g-4 mb-4">
+
+  <!-- Subject-wise Bar Chart -->
+  <div class="col-xl-8">
+    <div class="glass-card h-100">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-chart-bar me-2 text-accent"></i>Subject-wise Attendance</h3>
+        <span class="card-badge">{{ stats|length }} subjects</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="attendanceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Prediction Panel -->
+  <div class="col-xl-4">
+    <div class="glass-card h-100">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-brain me-2 text-accent"></i>AI Prediction</h3>
+      </div>
+
+      {% if ai_prediction %}
+      <div class="ai-prediction-body">
+        <div class="ai-meter-wrap">
+          <div class="ai-meter-label">Predicted end-of-semester</div>
+          <div class="ai-gauge">
+            <div class="ai-gauge-fill {% if ai_prediction.predicted_pct >= 75 %}gauge-green{% elif ai_prediction.predicted_pct >= 60 %}gauge-yellow{% else %}gauge-red{% endif %}"
+                 style="width:{{ ai_prediction.predicted_pct }}%"></div>
+          </div>
+          <div class="ai-pct-display">{{ ai_prediction.predicted_pct }}%</div>
+        </div>
+
+        <div class="ai-trend {% if ai_prediction.trend == 'rising' %}trend-up{% else %}trend-down{% endif %}">
+          <i class="fas fa-arrow-{% if ai_prediction.trend == 'rising' %}up{% else %}down{% endif %} me-2"></i>
+          Trend is <strong>{{ ai_prediction.trend }}</strong>
+        </div>
+
+        {% if ai_prediction.predicted_pct < 75 %}
+        <div class="ai-alert-box">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Attendance may fall below 75%. Attend classes regularly!
+        </div>
+        {% else %}
+        <div class="ai-ok-box">
+          <i class="fas fa-check-circle me-2"></i>
+          On track to meet the 75% requirement.
+        </div>
+        {% endif %}
+
+        <div class="ai-meta">Model confidence (R²): {{ ai_prediction.r2 }}</div>
+      </div>
+      {% else %}
+      <div class="ai-empty">
+        <i class="fas fa-database ai-empty-icon"></i>
+        <p>Not enough attendance data yet for prediction.</p>
+        <small>Come back after a few weeks of classes.</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── ROW 3: Last 7 Days + Subject Table ─────────────── -->
+<div class="row g-4">
+
+  <!-- Daily Attendance (last 7 days) -->
+  <div class="col-xl-6">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-calendar-week me-2 text-accent"></i>Last 7 Days</h3>
+      </div>
+      {% if daily %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr><th>Date</th><th>Subject</th><th>Period</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for date, recs in daily.items %}
+              {% for rec in recs %}
+              <tr>
+                {% if forloop.first %}<td rowspan="{{ recs|length }}" class="date-cell">{{ date }}</td>{% endif %}
+                <td>{{ rec.timetable_entry.subject.code }}</td>
+                <td>P{{ rec.timetable_entry.period }}</td>
+                <td>
+                  <span class="status-badge {% if rec.status == 'P' %}status-present{% else %}status-absent{% endif %}">
+                    {% if rec.status == 'P' %}<i class="fas fa-check me-1"></i>Present
+                    {% else %}<i class="fas fa-times me-1"></i>Absent{% endif %}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-calendar-times empty-icon"></i>
+        <p>No attendance records in the last 7 days.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Subject-wise Summary Table -->
+  <div class="col-xl-6">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-list-check me-2 text-accent"></i>Subject Summary</h3>
+      </div>
+      {% if stats %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr><th>Subject</th><th>Attended</th><th>Total</th><th>%</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for s in stats %}
+            <tr>
+              <td>
+                <div class="subject-cell">
+                  <span class="subject-code">{{ s.code }}</span>
+                  <span class="subject-name-small">{{ s.name }}</span>
+                </div>
+              </td>
+              <td>{{ s.present }}</td>
+              <td>{{ s.total }}</td>
+              <td><strong>{{ s.percentage }}%</strong></td>
+              <td>
+                {% if s.percentage >= 75 %}
+                  <span class="status-badge status-present"><i class="fas fa-check"></i></span>
+                {% elif s.percentage >= 60 %}
+                  <span class="status-badge status-warning"><i class="fas fa-exclamation"></i></span>
+                {% else %}
+                  <span class="status-badge status-absent"><i class="fas fa-times"></i></span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-book-open empty-icon"></i>
+        <p>No subjects enrolled yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div><!-- /row -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const labels = {{ chart_labels|safe }};
+  const data   = {{ chart_data|safe }};
+
+  if (!labels.length) return;
+
+  const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+  // Colour bars: green ≥75, yellow ≥60, red <60
+  const colours = data.map(v =>
+    v >= 75 ? 'rgba(0,200,100,0.85)' :
+    v >= 60 ? 'rgba(255,180,0,0.85)' :
+              'rgba(220,38,38,0.85)'
+  );
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Attendance %',
+        data:  data,
+        backgroundColor: colours,
+        borderColor:     colours.map(c => c.replace('0.85','1')),
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0, max: 100,
+          grid:  { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#ccc', callback: v => v + '%' }
+        },
+        x: {
+          grid:  { display: false },
+          ticks: { color: '#ccc' }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

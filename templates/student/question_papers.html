@@ -1,0 +1,111 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Question Papers{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-file-pdf me-2 text-accent"></i>Past Question Papers</h1>
+    <p class="ph-sub">Download previous examination papers for practice</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label text-muted">Subject</label>
+      <select name="subject" class="vvit-select">
+        <option value="">— All Subjects —</option>
+        {% for subj in subjects %}
+        <option value="{{ subj.id }}" {% if selected_subj == subj.id|stringformat:"s" %}selected{% endif %}>
+          {{ subj.code }} — {{ subj.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-muted">Year</label>
+      <select name="year" class="vvit-select">
+        <option value="">— All Years —</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-muted">Semester</label>
+      <select name="semester" class="vvit-select">
+        <option value="">— All Sems —</option>
+        {% for s in semesters %}
+        <option value="{{ s }}" {% if selected_sem == s|stringformat:"s" %}selected{% endif %}>Sem {{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn-vvit-primary w-100"><i class="fas fa-filter me-2"></i>Filter</button>
+    </div>
+    <div class="col-md-2">
+      <a href="{% url 'student:question_papers' %}" class="btn-vvit-outline w-100"><i class="fas fa-times me-2"></i>Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Papers Grid -->
+{% if papers_page.object_list %}
+<div class="row g-4 mb-4">
+  {% for paper in papers_page %}
+  <div class="col-sm-6 col-lg-4 col-xl-3">
+    <div class="paper-card glass-card h-100">
+      <div class="paper-icon-wrap">
+        <i class="fas fa-file-pdf paper-icon"></i>
+      </div>
+      <div class="paper-info">
+        <h6 class="paper-title">{{ paper.title }}</h6>
+        <div class="paper-meta">
+          <span class="paper-tag"><i class="fas fa-book me-1"></i>{{ paper.subject.code }}</span>
+          <span class="paper-tag"><i class="fas fa-calendar me-1"></i>{{ paper.year }}</span>
+          <span class="paper-tag"><i class="fas fa-layer-group me-1"></i>Sem {{ paper.semester }}</span>
+        </div>
+        <div class="paper-uploaded text-muted small mt-2">
+          Uploaded {{ paper.upload_date|date:"d M Y" }}
+        </div>
+      </div>
+      <a href="{{ paper.file.url }}" target="_blank" class="btn-download mt-3">
+        <i class="fas fa-download me-2"></i>Download PDF
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if papers_page.has_other_pages %}
+<div class="pagination-wrap">
+  {% if papers_page.has_previous %}
+  <a href="?page={{ papers_page.previous_page_number }}&subject={{ selected_subj }}&year={{ selected_year }}&semester={{ selected_sem }}" class="page-btn">
+    <i class="fas fa-chevron-left"></i>
+  </a>
+  {% endif %}
+  <span class="page-info">Page {{ papers_page.number }} of {{ papers_page.paginator.num_pages }}</span>
+  {% if papers_page.has_next %}
+  <a href="?page={{ papers_page.next_page_number }}&subject={{ selected_subj }}&year={{ selected_year }}&semester={{ selected_sem }}" class="page-btn">
+    <i class="fas fa-chevron-right"></i>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="glass-card text-center py-5">
+  <i class="fas fa-folder-open fa-3x text-accent mb-3"></i>
+  <h5>No question papers found</h5>
+  <p class="text-muted">Try adjusting the filters above, or check back later when papers are uploaded.</p>
+</div>
+{% endif %}
+
+{% endblock %}

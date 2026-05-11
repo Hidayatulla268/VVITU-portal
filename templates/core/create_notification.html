@@ -1,0 +1,318 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Send Notification{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-paper-plane me-2 text-accent"></i>Send Notification</h1>
+    <p class="ph-sub">Push an announcement, alert or notice to students, faculty or everyone.</p>
+  </div>
+  <a href="{% url 'notifications:centre' %}" class="btn-vvit-outline">
+    <i class="fas fa-arrow-left me-2"></i>Back to Centre
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- ── Form ── -->
+  <div class="col-lg-7">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-edit me-2 text-accent"></i>Compose Notification</h3>
+      </div>
+
+      <form method="post" id="notifForm">
+        {% csrf_token %}
+
+        <!-- Title -->
+        <div class="mb-4">
+          <label class="vvit-label" for="id_title">Title <span class="text-accent">*</span></label>
+          <input type="text" id="id_title" name="title" class="vvit-input w-100"
+                 placeholder="e.g., Mid Term 1 Results Released" required maxlength="200"/>
+        </div>
+
+        <!-- Message -->
+        <div class="mb-4">
+          <label class="vvit-label" for="id_message">Message <span class="text-accent">*</span></label>
+          <textarea id="id_message" name="message" class="vvit-input w-100"
+                    rows="5" placeholder="Write the full notification message here…" required></textarea>
+          <small class="text-muted">Keep it clear and concise — students will see this on their portal.</small>
+        </div>
+
+        <!-- Type + Priority row -->
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <label class="vvit-label" for="id_notif_type">Notification Type</label>
+            <select id="id_notif_type" name="notif_type" class="vvit-input w-100">
+              {% for val, label in notif_types %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="vvit-label" for="id_priority">Priority</label>
+            <select id="id_priority" name="priority" class="vvit-input w-100">
+              {% for val, label in priority_choices %}
+              <option value="{{ val }}" {% if val == 'normal' %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Link (optional) -->
+        <div class="mb-4">
+          <label class="vvit-label" for="id_link">Action Link <small class="text-muted">(optional)</small></label>
+          <input type="text" id="id_link" name="link" class="vvit-input w-100"
+                 placeholder="/student/results/ — leave blank if no link needed"/>
+        </div>
+
+        <!-- Target Audience -->
+        <div class="mb-4">
+          <label class="vvit-label">Send To <span class="text-accent">*</span></label>
+          <div class="target-selector-grid">
+            <label class="target-option">
+              <input type="radio" name="target" value="all" checked/>
+              <div class="target-box">
+                <i class="fas fa-globe"></i>
+                <span>Everyone</span>
+              </div>
+            </label>
+            <label class="target-option">
+              <input type="radio" name="target" value="students"/>
+              <div class="target-box">
+                <i class="fas fa-user-graduate"></i>
+                <span>All Students</span>
+              </div>
+            </label>
+            <label class="target-option">
+              <input type="radio" name="target" value="faculty"/>
+              <div class="target-box">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>All Faculty</span>
+              </div>
+            </label>
+            <label class="target-option">
+              <input type="radio" name="target" value="branch"/>
+              <div class="target-box">
+                <i class="fas fa-code-branch"></i>
+                <span>By Branch</span>
+              </div>
+            </label>
+            <label class="target-option">
+              <input type="radio" name="target" value="user"/>
+              <div class="target-box">
+                <i class="fas fa-user"></i>
+                <span>One Person</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Conditional: Branch selector -->
+        <div class="mb-4 d-none" id="branchRow">
+          <label class="vvit-label" for="id_branch_id">Select Branch</label>
+          <select id="id_branch_id" name="branch_id" class="vvit-input w-100">
+            <option value="">— Choose Branch —</option>
+            {% for b in branches %}
+            <option value="{{ b.id }}">{{ b }} </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Conditional: Single user selector -->
+        <div class="mb-4 d-none" id="userRow">
+          <label class="vvit-label" for="id_user_id">Select User</label>
+          <select id="id_user_id" name="user_id" class="vvit-input w-100">
+            <option value="">— Choose User —</option>
+            {% for u in users %}
+            <option value="{{ u.id }}">{{ u.username }} — {{ u.get_full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Expiry -->
+        <div class="mb-4">
+          <label class="vvit-label" for="id_expires_at">
+            Expires At <small class="text-muted">(optional — leave blank = never expires)</small>
+          </label>
+          <input type="datetime-local" id="id_expires_at" name="expires_at" class="vvit-input w-100"/>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-vvit-primary w-100" style="padding:14px;">
+          <i class="fas fa-paper-plane me-2"></i>Send Notification Now
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Preview + Tips ── -->
+  <div class="col-lg-5">
+    <!-- Live Preview -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-eye me-2 text-accent"></i>Preview</h3>
+      </div>
+      <div class="notif-card" style="cursor:default; border-left-color:#ef4444; background:rgba(220,38,38,0.04);">
+        <div class="notif-icon-wrap notif-blue" id="previewIcon">
+          <i class="fas fa-bullhorn" id="previewIconInner"></i>
+        </div>
+        <div class="notif-body">
+          <div class="notif-header-row">
+            <span class="notif-type-badge notif-blue" id="previewType">Announcement</span>
+            <span class="notif-unread-dot"></span>
+            <span class="notif-time ms-auto">Just now</span>
+          </div>
+          <h3 class="notif-title" id="previewTitle">Your notification title will appear here</h3>
+          <p class="notif-message" id="previewMessage">Your message preview will appear here as you type…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-lightbulb me-2 text-accent"></i>Tips</h3>
+      </div>
+      <ul class="notif-tips-list">
+        <li><i class="fas fa-check-circle text-accent me-2"></i>Use <strong>Urgent</strong> priority sparingly — it shows a red badge.</li>
+        <li><i class="fas fa-check-circle text-accent me-2"></i>Add an <strong>Action Link</strong> to send users to the relevant page (e.g., <code>/student/results/</code>).</li>
+        <li><i class="fas fa-check-circle text-accent me-2"></i>Set an <strong>Expiry</strong> date for time-sensitive notices like exam schedules.</li>
+        <li><i class="fas fa-check-circle text-accent me-2"></i>Results are already auto-notified when released — use this for custom messages.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.vvit-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.target-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+.target-option input { display: none; }
+.target-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.target-box i { font-size: 1.3rem; }
+.target-option input:checked + .target-box {
+  border-color: rgba(220,38,38,0.5);
+  background: rgba(220,38,38,0.1);
+  color: #ef4444;
+}
+
+.notif-tips-list {
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.notif-tips-list li {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+.notif-tips-list code {
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
+/* Reuse notification styles from notification centre */
+.notif-card { display:flex; align-items:flex-start; gap:18px; padding:18px 20px; border-radius:14px; border-left:3px solid transparent; }
+.notif-icon-wrap { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.notif-blue { background:rgba(59,130,246,0.15); color:#3b82f6; }
+.notif-body { flex:1; min-width:0; }
+.notif-header-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.notif-type-badge { font-size:0.65rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:2px 8px; border-radius:10px; font-family:'Rajdhani',sans-serif; }
+.notif-blue.notif-type-badge { background:rgba(59,130,246,0.12); }
+.notif-unread-dot { width:8px; height:8px; background:#ef4444; border-radius:50%; flex-shrink:0; }
+.notif-time { font-size:0.7rem; color:#6b7280; }
+.notif-title { font-family:'Rajdhani',sans-serif; font-size:1rem; font-weight:700; color:#f0f0f5; margin:0 0 4px; }
+.notif-message { font-size:0.82rem; color:#9ca3af; margin:0; line-height:1.5; }
+
+/* Type → icon/color map for preview */
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const TYPE_ICON = {
+  result:       {icon:'fa-chart-bar',       cls:'notif-green'},
+  attendance:   {icon:'fa-clipboard-check', cls:'notif-orange'},
+  announcement: {icon:'fa-bullhorn',        cls:'notif-blue'},
+  exam:         {icon:'fa-file-alt',        cls:'notif-purple'},
+  holiday:      {icon:'fa-umbrella-beach',  cls:'notif-teal'},
+  system:       {icon:'fa-cog',             cls:'notif-grey'},
+};
+const TYPE_LABEL = {
+  result:'Result Released', attendance:'Attendance Alert',
+  announcement:'Announcement', exam:'Exam Notice',
+  holiday:'Holiday Notice', system:'System'
+};
+
+function updatePreview() {
+  const title   = document.getElementById('id_title').value   || 'Your notification title will appear here';
+  const message = document.getElementById('id_message').value || 'Your message preview will appear here as you type…';
+  const type    = document.getElementById('id_notif_type').value;
+
+  document.getElementById('previewTitle').textContent   = title;
+  document.getElementById('previewMessage').textContent = message.substring(0, 140) + (message.length > 140 ? '…' : '');
+
+  const meta = TYPE_ICON[type] || TYPE_ICON.announcement;
+  const iconWrap = document.getElementById('previewIcon');
+  iconWrap.className = `notif-icon-wrap ${meta.cls}`;
+  document.getElementById('previewIconInner').className = `fas ${meta.icon}`;
+  const typeBadge = document.getElementById('previewType');
+  typeBadge.className = `notif-type-badge ${meta.cls}`;
+  typeBadge.textContent = TYPE_LABEL[type] || 'Announcement';
+}
+
+document.getElementById('id_title').addEventListener('input', updatePreview);
+document.getElementById('id_message').addEventListener('input', updatePreview);
+document.getElementById('id_notif_type').addEventListener('change', updatePreview);
+
+// Show/hide conditional rows
+document.querySelectorAll('input[name="target"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('branchRow').classList.toggle('d-none', r.value !== 'branch');
+    document.getElementById('userRow').classList.toggle('d-none', r.value !== 'user');
+  });
+});
+</script>
+{% endblock %}

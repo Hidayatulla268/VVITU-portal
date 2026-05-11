@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+{% block title %}Assign Counsellor{% endblock %}
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-friends me-2 text-accent"></i>Assign Counsellor</h1>
+    <p class="ph-sub">Bulk-assign a counsellor to all students in a section</p>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-6">
+    <div class="glass-card">
+      <form method="post" class="row g-4">
+        {% csrf_token %}
+        <div class="col-12">
+          <label class="form-label text-muted">Section *</label>
+          <select name="section" class="vvit-select" required>
+            <option value="">— Choose Section —</option>
+            {% for s in sections %}<option value="{{ s.id }}">{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label text-muted">Counsellor *</label>
+          <select name="faculty" class="vvit-select" required>
+            <option value="">— Choose Faculty —</option>
+            {% for f in faculties %}<option value="{{ f.id }}">{{ f.employee_id }} — {{ f.user.get_full_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12">
+          <div class="alert-info-box">
+            <i class="fas fa-info-circle me-2"></i>
+            This operation can be repeated each semester to re-assign counsellors.
+          </div>
+        </div>
+        <div class="col-12 d-flex gap-3">
+          <button type="submit" class="btn-vvit-primary"><i class="fas fa-save me-2"></i>Assign Counsellor</button>
+          <a href="{% url 'admin_dashboard:dashboard' %}" class="btn-vvit-outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

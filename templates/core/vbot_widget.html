@@ -1,0 +1,281 @@
+{% load static %}
+{% if user.is_authenticated %}
+<!-- ═══════════════════════════════════════════════════════
+     VBOT — AI STUDY ASSISTANT WIDGET
+═══════════════════════════════════════════════════════ -->
+<div id="vbotWidget">
+  <button id="vbotTrigger" onclick="toggleVBot()" title="VBot AI Assistant" aria-label="Open AI Assistant">
+    <span id="vbotBtnIcon"><i class="fas fa-robot"></i></span>
+    <span id="vbotBtnClose" class="d-none"><i class="fas fa-times"></i></span>
+    <span class="vbot-pulse"></span>
+  </button>
+
+  <div id="vbotPanel" class="d-none">
+    <div class="vbot-header">
+      <div class="vbot-header-left">
+        <div class="vbot-avatar"><i class="fas fa-robot"></i></div>
+        <div>
+          <div class="vbot-name">VBot <span class="vbot-ai-badge">AI</span></div>
+          <div class="vbot-status" id="vbotStatus">
+            <span class="vbot-status-dot"></span>VVITU Study Assistant
+          </div>
+        </div>
+      </div>
+      <div class="vbot-header-actions">
+        <button class="vbot-icon-btn" onclick="clearChat()" title="Clear chat"><i class="fas fa-trash-alt"></i></button>
+        <button class="vbot-icon-btn" onclick="toggleVBot()" title="Minimize"><i class="fas fa-minus"></i></button>
+      </div>
+    </div>
+
+    <div class="vbot-messages" id="vbotMessages">
+      <div class="vbot-welcome" id="vbotWelcome">
+        <div class="vbot-avatar-lg"><i class="fas fa-robot"></i></div>
+        <p id="vbotGreeting">Hi! I'm VBot, your VVITU AI Study Assistant. Loading your personalised greeting...</p>
+      </div>
+      <div class="vbot-chips" id="vbotChips">
+        <button class="vbot-chip" onclick="sendQuick('How do I check my attendance?')">📊 Check attendance</button>
+        <button class="vbot-chip" onclick="sendQuick('How are grades calculated in VVITU?')">🎓 Grade formula</button>
+        <button class="vbot-chip" onclick="sendQuick('How do I view my exam results?')">📋 View results</button>
+        <button class="vbot-chip" onclick="sendQuick('Explain Data Structures for beginners')">💻 Study help</button>
+        <button class="vbot-chip" onclick="sendQuick('What features does the VVITU portal have?')">🗺️ Portal guide</button>
+      </div>
+    </div>
+
+    <div class="vbot-input-area">
+      <div class="vbot-input-row">
+        <textarea id="vbotInput"
+                  placeholder="Ask about subjects, portal, attendance…"
+                  rows="1" maxlength="2000"
+                  onkeydown="handleVBotKey(event)"
+                  oninput="autoResizeInput(this)"></textarea>
+        <button id="vbotSendBtn" onclick="sendVBotMessage()" title="Send">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+      <div class="vbot-footer-note">
+        <i class="fas fa-shield-alt me-1"></i>
+        Academic &amp; portal questions only &middot; Powered by Gemini AI
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'css/vbot.css' %}"/>
+
+<script>
+/* ═══════════════════════════════════════════════
+   VBOT JavaScript — AI Study Assistant
+═══════════════════════════════════════════════ */
+let vbotOpen = false;
+let vbotHistory = [];   // [{role:'user'|'model', parts:[{text:'...'}]}]
+let vbotTyping = false;
+
+// ── Toggle open/close
+function toggleVBot() {
+  vbotOpen = !vbotOpen;
+  const panel  = document.getElementById('vbotPanel');
+  const iconOpen  = document.getElementById('vbotBtnIcon');
+  const iconClose = document.getElementById('vbotBtnClose');
+  panel.classList.toggle('d-none', !vbotOpen);
+  iconOpen.classList.toggle('d-none', vbotOpen);
+  iconClose.classList.toggle('d-none', !vbotOpen);
+  if (vbotOpen) {
+    loadBotContext();
+    setTimeout(() => document.getElementById('vbotInput').focus(), 100);
+  }
+}
+
+// ── Load role-aware greeting
+async function loadBotContext() {
+  if (document.getElementById('vbotGreeting').dataset.loaded) return;
+  try {
+    const r = await fetch('/chat/context/');
+    const d = await r.json();
+    document.getElementById('vbotGreeting').textContent = d.greeting;
+    document.getElementById('vbotGreeting').dataset.loaded = '1';
+    if (!d.api_configured) {
+      document.getElementById('vbotStatus').innerHTML =
+        '<span style="color:#f59e0b;font-size:0.62rem;">⚠ API key not set</span>';
+    }
+  } catch(e) {}
+}
+
+// ── Send a quick chip message
+function sendQuick(text) {
+  document.getElementById('vbotInput').value = text;
+  sendVBotMessage();
+}
+
+// ── Keyboard handler
+function handleVBotKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendVBotMessage();
+  }
+}
+
+// ── Auto-resize textarea
+function autoResizeInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── Send message
+async function sendVBotMessage() {
+  if (vbotTyping) return;
+  const input = document.getElementById('vbotInput');
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  // Hide chips after first message
+  const chips = document.getElementById('vbotChips');
+  if (chips) chips.style.display = 'none';
+
+  // Append user bubble
+  appendBubble('user', msg);
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Show typing
+  const typingId = showTyping();
+  vbotTyping = true;
+  document.getElementById('vbotSendBtn').disabled = true;
+
+  try {
+    const resp = await fetch('/chat/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrf()
+      },
+      body: JSON.stringify({ message: msg, history: vbotHistory })
+    });
+
+    const data = await resp.json();
+    removeTyping(typingId);
+
+    if (data.error) {
+      appendError(data.error);
+    } else {
+      const reply = data.reply || 'Sorry, I could not generate a response.';
+      appendBubble('bot', reply);
+      // Update history
+      vbotHistory.push({ role: 'user',  parts: [{ text: msg }] });
+      vbotHistory.push({ role: 'model', parts: [{ text: reply }] });
+      // Keep last 20 turns
+      if (vbotHistory.length > 20) vbotHistory = vbotHistory.slice(-20);
+    }
+  } catch(e) {
+    removeTyping(typingId);
+    appendError('Network error. Please check your connection and try again.');
+  } finally {
+    vbotTyping = false;
+    document.getElementById('vbotSendBtn').disabled = false;
+    document.getElementById('vbotInput').focus();
+  }
+}
+
+// ── Append a message bubble
+function appendBubble(role, text) {
+  const container = document.getElementById('vbotMessages');
+  const wrap = document.createElement('div');
+  wrap.className = `vbot-msg ${role === 'user' ? 'user-msg' : ''}`;
+
+  const avatarIcon = role === 'bot'
+    ? '<i class="fas fa-robot"></i>'
+    : '<i class="fas fa-user"></i>';
+  const avatarCls = role === 'bot' ? 'bot-avatar-sm' : 'user-avatar-sm';
+  const bubbleCls = role === 'bot' ? 'bot' : 'user';
+  const html      = role === 'bot' ? markdownToHtml(text) : escHtml(text);
+
+  wrap.innerHTML = `
+    <div class="vbot-msg-avatar ${avatarCls}">${avatarIcon}</div>
+    <div class="vbot-bubble ${bubbleCls}">${html}</div>
+  `;
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── Show typing indicator, return unique id
+function showTyping() {
+  const container = document.getElementById('vbotMessages');
+  const id = 'vbot-typing-' + Date.now();
+  const wrap = document.createElement('div');
+  wrap.className = 'vbot-msg';
+  wrap.id = id;
+  wrap.innerHTML = `
+    <div class="vbot-msg-avatar bot-avatar-sm"><i class="fas fa-robot"></i></div>
+    <div class="vbot-bubble bot">
+      <div class="vbot-typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  `;
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ── Error message
+function appendError(msg) {
+  const container = document.getElementById('vbotMessages');
+  const el = document.createElement('div');
+  el.className = 'vbot-error';
+  el.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${escHtml(msg)}`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── Clear conversation
+function clearChat() {
+  vbotHistory = [];
+  const container = document.getElementById('vbotMessages');
+  // Remove all message bubbles and errors, keep welcome + chips
+  container.querySelectorAll('.vbot-msg, .vbot-error').forEach(el => el.remove());
+  // Show chips again
+  const chips = document.getElementById('vbotChips');
+  if (chips) chips.style.display = '';
+}
+
+// ── Minimal markdown → HTML
+function markdownToHtml(text) {
+  let h = escHtml(text);
+  // Code blocks ```...```
+  h = h.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  // Inline code
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold **text**
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic *text*
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Headers ### ## #
+  h = h.replace(/^### (.+)$/gm, '<strong style="font-size:0.9rem;color:#f9fafb;">$1</strong>');
+  h = h.replace(/^## (.+)$/gm,  '<strong style="font-size:0.95rem;color:#f9fafb;">$1</strong>');
+  h = h.replace(/^# (.+)$/gm,   '<strong style="font-size:1rem;color:#f9fafb;">$1</strong>');
+  // Bullets - item
+  h = h.replace(/^- (.+)$/gm, '• $1');
+  // Line breaks
+  h = h.replace(/\n\n/g, '<br/><br/>');
+  h = h.replace(/\n/g, '<br/>');
+  return h;
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function getCsrf() {
+  const el = document.querySelector('[name=csrfmiddlewaretoken]');
+  if (el) return el.value;
+  const c = document.cookie.split(';').find(x => x.trim().startsWith('csrftoken='));
+  return c ? c.split('=')[1].trim() : '';
+}
+</script>
+{% endif %}

@@ -1,0 +1,198 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Release Results{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-paper-plane me-2 text-accent"></i>Release Results</h1>
+    <p class="ph-sub">Publish exam results — students are notified by email automatically</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Info Banner -->
+<div class="release-info-banner mb-4">
+  <i class="fas fa-circle-info me-2"></i>
+  <span>
+    When you click <strong>Release</strong>, results become visible to students on their portal
+    <strong>and</strong> an email with full marks is sent to every student automatically.
+    This action sends emails only <strong>once</strong> per exam.
+  </span>
+</div>
+
+<!-- Exams Table -->
+<div class="glass-card">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom">
+      <i class="fas fa-list-check me-2 text-accent"></i>All Exams
+    </h3>
+    <span class="card-badge">{{ exams|length }} exam{{ exams|length|pluralize }}</span>
+  </div>
+
+  {% if exams %}
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Exam Name</th>
+          <th>Type</th>
+          <th>Branch</th>
+          <th>Year / Sem</th>
+          <th>Exam Date</th>
+          <th>Status</th>
+          <th>Released At</th>
+          <th>Email</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exam in exams %}
+        {% with rel=release_map|dict_get:exam.id %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td>
+            <div class="fw-600">{{ exam.name }}</div>
+          </td>
+          <td>
+            <span class="badge-section small">{{ exam.get_exam_type_display }}</span>
+          </td>
+          <td>{{ exam.branch.code }}</td>
+          <td>{{ exam.year }} / Sem {{ exam.semester }}</td>
+          <td>{{ exam.date|date:"d M Y"|default:"—" }}</td>
+
+          <!-- Release Status -->
+          <td>
+            {% if rel and rel.released %}
+            <span class="status-badge status-present">
+              <i class="fas fa-check me-1"></i>Released
+            </span>
+            {% else %}
+            <span class="status-badge status-absent">
+              <i class="fas fa-lock me-1"></i>Hidden
+            </span>
+            {% endif %}
+          </td>
+
+          <!-- Released At -->
+          <td class="text-muted small">
+            {% if rel and rel.released_at %}
+              {{ rel.released_at|date:"d M Y H:i" }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
+          <!-- Email Sent -->
+          <td>
+            {% if rel and rel.email_sent %}
+            <span class="status-badge status-present">
+              <i class="fas fa-envelope-circle-check me-1"></i>Sent
+            </span>
+            {% else %}
+            <span class="status-badge status-warning">
+              <i class="fas fa-envelope me-1"></i>Pending
+            </span>
+            {% endif %}
+          </td>
+
+          <!-- Action Button -->
+          <td>
+            {% if rel and rel.released %}
+            <!-- Unrelease button -->
+            <form method="post" style="display:inline"
+                  onsubmit="return confirm('Hide results for {{ exam.name }}?')">
+              {% csrf_token %}
+              <input type="hidden" name="exam_id" value="{{ exam.id }}"/>
+              <input type="hidden" name="action"  value="unrelease"/>
+              <button type="submit" class="btn-sm-danger">
+                <i class="fas fa-eye-slash me-1"></i>Hide
+              </button>
+            </form>
+            {% else %}
+            <!-- Release button -->
+            <form method="post" style="display:inline"
+                  onsubmit="return confirm('Release results for {{ exam.name }}? An email will be sent to all students.')">
+              {% csrf_token %}
+              <input type="hidden" name="exam_id" value="{{ exam.id }}"/>
+              <input type="hidden" name="action"  value="release"/>
+              <button type="submit" class="btn-vvit-primary" style="padding:6px 14px;font-size:0.78rem">
+                <i class="fas fa-paper-plane me-1"></i>Release + Email
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="fas fa-folder-open fa-3x empty-icon mb-3"></i>
+    <h5>No Exams Found</h5>
+    <p class="text-muted">Add exams first via Django Admin before releasing results.</p>
+    <a href="/admin/core/exam/add/" class="btn-vvit-primary mt-2">
+      <i class="fas fa-plus me-2"></i>Add Exam
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Email Preview Box -->
+<div class="glass-card mt-4">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom">
+      <i class="fas fa-envelope me-2 text-accent"></i>Email Preview
+    </h3>
+    <span class="card-badge">Sent to each student</span>
+  </div>
+  <div class="email-preview-box">
+    <div class="email-preview-line">
+      <span class="ep-label">From:</span>
+      <span class="ep-value">noreply@vvitu.ac.in</span>
+    </div>
+    <div class="email-preview-line">
+      <span class="ep-label">To:</span>
+      <span class="ep-value">student@vvitu.ac.in (each student individually)</span>
+    </div>
+    <div class="email-preview-line">
+      <span class="ep-label">Subject:</span>
+      <span class="ep-value">[VVIT] Results Released — {Exam Name}</span>
+    </div>
+    <div class="email-preview-body">
+      <pre>
+Dear {Student Name},
+
+Your results for {Exam Name} have been released.
+
+Roll Number : 24BQ1A4901
+Exam        : Mid Term 1
+Branch      : CSE  |  Year : II Year  |  Semester : 3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBJECT RESULTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CS301    Data Structures & Algorithms    82/100   Grade: A+
+  CS302    Operating Systems               75/100   Grade: A
+  CS303    Database Management Systems     90/100   Grade: O
+  CS304    Computer Networks               68/100   Grade: B+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Overall Percentage : 78.75%
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Regards,
+Examination Cell
+Vasireddy Venkatadri International Institute of Technology (VVITU)</pre>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

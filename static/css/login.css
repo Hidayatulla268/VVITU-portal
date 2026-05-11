@@ -1,0 +1,621 @@
+/* ═══════════════════════════════════════════════════════════════════
+   VVIT PORTAL — LOGIN PAGE CSS
+   Full-screen split layout with animated left panel and glass form
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Base reset for login page ────────────────────────────────────── */
+.login-body {
+  min-height: 100vh;
+  background: #050508 url('/static/images/college_main.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  align-items: stretch;
+  overflow-y: auto;        /* allow vertical scroll */
+  overflow-x: hidden;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.login-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 8, 0.75); /* dark overlay for readability */
+  z-index: 0;
+}
+
+/* ── Animated background elements ────────────────────────────────── */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-radial-top {
+  position: fixed;
+  top: -200px;
+  left: -100px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(220,38,38,0.18) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 12s ease-in-out infinite alternate;
+}
+
+.bg-radial-bottom {
+  position: fixed;
+  bottom: -200px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(127,29,29,0.14) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 16s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, 40px) scale(1.08); }
+}
+
+/* ── Floating orbs ────────────────────────────────────────────────── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 8s ease-in-out infinite;
+}
+.orb-1 {
+  width: 300px; height: 300px;
+  top: 10%; left: 15%;
+  background: radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+.orb-2 {
+  width: 200px; height: 200px;
+  bottom: 20%; left: 30%;
+  background: radial-gradient(circle, rgba(127,29,29,0.1) 0%, transparent 70%);
+  animation-delay: -3s;
+}
+.orb-3 {
+  width: 150px; height: 150px;
+  top: 50%; right: 10%;
+  background: radial-gradient(circle, rgba(220,38,38,0.06) 0%, transparent 70%);
+  animation-delay: -5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-24px); }
+}
+
+/* ── Login wrapper ─────────────────────────────────────────────────── */
+.login-wrapper {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;         /* stack on small screens */
+}
+
+/* ══════════════════════════════════════════════
+   LEFT BRANDING PANEL
+══════════════════════════════════════════════ */
+.login-left {
+  flex: 0 0 52%;
+  display: flex;
+  align-items: flex-start;    /* don't squash content vertically */
+  justify-content: center;
+  padding: 3rem 4rem 3rem;    /* generous padding so content breathes */
+  position: relative;
+  overflow: visible;           /* never clip the campus image */
+  min-height: 100vh;
+
+  /* rich dark crimson gradient */
+  background: linear-gradient(
+    145deg,
+    rgba(69, 5, 5, 0.45) 0%,
+    rgba(5, 5, 8, 0.8) 45%,
+    rgba(5, 5, 8, 0.95) 100%
+  );
+
+  /* Subtle left border separator */
+  border-right: 1px solid rgba(220,38,38,0.18);
+}
+
+/* Vertical red accent stripe on far-left */
+.login-left::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, transparent, #dc2626, #dc2626, transparent);
+}
+
+.left-content {
+  max-width: 460px;
+  width: 100%;
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+  animation: slideInLeft 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Logo ring stack ─────────────────────────────── */
+.logo-showcase {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 2rem;
+}
+
+.logo-outer-ring {
+  width: 130px; height: 130px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(220,38,38,0.25), rgba(127,29,29,0.12));
+  border: 2px solid rgba(220,38,38,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.logo-inner-ring {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(5,5,8,0.7);
+  border: 2px solid rgba(220,38,38,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.login-logo {
+  width: 78px; height: 78px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(220,38,38,0.35));
+}
+
+/* Animated pulse rings */
+.logo-pulse-ring {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 1px solid rgba(220,38,38,0.18);
+  animation: pulse-ring 2.5s ease-out infinite;
+}
+.logo-pulse-ring-2 {
+  inset: -32px;
+  animation-delay: 1.25s;
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* College name & tagline ────────────────────────── */
+.college-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  color: #f0f0f5;
+}
+
+.college-title .text-accent {
+  color: #ef4444 !important;
+}
+
+.college-location {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  margin-bottom: 0.35rem;
+}
+
+.college-tagline {
+  font-size: 0.88rem;
+  color: rgba(220,38,38,0.8);
+  font-style: italic;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 500;
+  margin-bottom: 1.75rem;
+  letter-spacing: 0.03em;
+}
+
+/* Stats strip ───────────────────────────────────── */
+.stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.08);
+}
+
+/* Campus image strip ────────────────────────────── */
+.campus-img-strip {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  height: 160px;
+}
+
+.campus-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(0.8);
+  transition: filter 0.4s ease;
+}
+
+.campus-img-strip:hover .campus-img {
+  filter: brightness(0.7) saturate(1);
+}
+
+/* ══════════════════════════════════════════════
+   RIGHT LOGIN PANEL
+══════════════════════════════════════════════ */
+.login-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(5, 5, 8, 0.98);
+}
+
+/* Login glass card */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(14, 14, 22, 0.90);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow:
+    0 24px 64px rgba(0,0,0,0.6),
+    0 0 40px rgba(220,38,38,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  animation: slideInRight 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Form header */
+.form-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.form-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #f0f0f5;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+
+.form-subtitle {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+/* ── Floating label inputs ────────────────────────────────────────── */
+.form-group-float {
+  position: relative;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: #6b7280;
+  font-size: 0.85rem;
+  z-index: 2;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.vvit-input.floating {
+  padding-left: 40px;
+  padding-right: 42px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  height: 54px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px;
+  color: #f0f0f5;
+  font-size: 0.9rem;
+  width: 100%;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Generic floating-label input for login */
+.input-wrapper .vvit-input {
+  padding-left: 42px;
+  padding-right: 44px;
+  height: 52px;
+}
+
+.floating-label {
+  position: absolute;
+  left: 42px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.88rem;
+  color: #6b7280;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 3;
+}
+
+/* When input has value or is focused, float the label up */
+.vvit-input:focus ~ .floating-label,
+.vvit-input:not(:placeholder-shown) ~ .floating-label {
+  top: 10px;
+  font-size: 0.68rem;
+  color: #dc2626;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Move icon colour when focused */
+.vvit-input:focus ~ .input-icon,
+.input-wrapper:focus-within .input-icon {
+  color: #dc2626;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 4;
+  transition: color 0.2s;
+}
+.toggle-password:hover { color: #dc2626; }
+
+/* ── Login button ─────────────────────────────────────────────────── */
+.btn-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.06em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(220,38,38,0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer sweep on hover */
+.btn-login::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+
+.btn-login:hover::after { left: 125%; }
+
+.btn-login:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8px 28px rgba(220,38,38,0.5);
+  transform: translateY(-1px);
+}
+
+.btn-login:active { transform: translateY(0); }
+
+.btn-text, .btn-icon { pointer-events: none; letter-spacing: 0.05em; }
+
+/* ── Footer text ──────────────────────────────────────────────────── */
+.form-footer { text-align: center; }
+
+.footer-info {
+  font-size: 0.75rem;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.footer-help {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.link-accent { color: #ef4444; font-weight: 600; }
+.link-accent:hover { color: #f87171; }
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+  .login-right {
+    padding: 1.5rem 1rem;
+  }
+  .login-card {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* ── Real campus photo — premium aerial shot ──────────────── */
+.campus-img-strip {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(220,38,38,0.25);
+  height: 240px;           /* taller so more of building is visible */
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(220,38,38,0.1);
+  margin-top: 0.5rem;
+}
+
+.campus-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;   /* show building facade, not just the top */
+  filter: brightness(0.75) saturate(1.1) contrast(1.05);
+  transition: filter 0.5s ease, transform 0.6s ease;
+  transform: scale(1.0);
+}
+
+.campus-img-strip:hover .campus-img {
+  filter: brightness(0.85) saturate(1.3) contrast(1.05);
+  transform: scale(1.06);
+}
+
+/* Overlay gradient at bottom of campus photo */
+.campus-img-strip::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 55px;
+  background: linear-gradient(to top, rgba(5,5,8,0.85), transparent);
+  pointer-events: none;
+}
+
+/* Caption text over campus photo */
+.campus-img-strip::before {
+  content: 'VVITU Campus — Nambur, Guntur, Andhra Pradesh';
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  right: 12px;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0.06em;
+  z-index: 2;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Accreditation badges ──────────────────────────────────── */
+.accreditation-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.accr-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.06em;
+  color: #ef4444;
+  background: rgba(220,38,38,0.12);
+  border: 1px solid rgba(220,38,38,0.25);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+/* ── Left panel footer note (website + phone) ──────────────── */
+.left-footer-note {
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+.left-footer-note a {
+  color: #ef4444;
+  text-decoration: none;
+}
+.left-footer-note a:hover { color: #f87171; text-decoration: underline; }
+
+/* ── Copyright line in form footer ────────────────────────── */
+.footer-copy {
+  font-size: 0.68rem;
+  color: #374151;
+  margin-top: 10px;
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+/* ── Input hint styling ────────────────────────────────────── */
+.input-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.72rem;
+  color: #6b7280;
+  padding-left: 2px;
+}
+.input-hint code {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}

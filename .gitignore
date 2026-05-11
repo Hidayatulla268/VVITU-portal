@@ -1,0 +1,46 @@
+# ══════════════════════════════════════════════
+# VVIT Portal — .gitignore
+# ══════════════════════════════════════════════
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Django
+*.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+local_settings.py
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+
+# IDE / editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Coverage / testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/

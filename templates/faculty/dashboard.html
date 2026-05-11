@@ -1,0 +1,148 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Faculty Dashboard{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-tachometer-alt me-2 text-accent"></i>Faculty Dashboard</h1>
+    <p class="ph-sub">Welcome, <strong>{{ faculty.user.get_full_name }}</strong> · {{ faculty.employee_id }}</p>
+  </div>
+  <div class="ph-right">
+    <span class="badge-section">{{ faculty.department.code|default:"" }} · {{ faculty.user.get_role_display }}</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Row -->
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-users-class"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ section_count }}</span>
+        <span class="kpi-label">Sections Handled</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-user-graduate"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ student_count }}</span>
+        <span class="kpi-label">Total Students</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ present_today }}</span>
+        <span class="kpi-label">Present Today</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ absent_today }}</span>
+        <span class="kpi-label">Absent Today</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Today's Schedule + Quick Links -->
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-calendar-day me-2 text-accent"></i>Today's Schedule</h3>
+        <span class="card-badge">{{ today|date:"l, d M Y" }}</span>
+      </div>
+      {% if timetable_today %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr><th>Period</th><th>Subject</th><th>Section</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for slot in timetable_today %}
+            <tr>
+              <td><span class="period-badge">P{{ slot.period }}</span></td>
+              <td>
+                <div class="fw-600">{{ slot.subject.code }}</div>
+                <small class="text-muted">{{ slot.subject.name }}</small>
+              </td>
+              <td><span class="badge-section small">{{ slot.section }}</span></td>
+              <td>
+                <a href="{% url 'faculty:mark_attendance' %}" class="btn-sm-accent">
+                  <i class="fas fa-check me-1"></i>Mark
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state py-4">
+        <i class="fas fa-coffee fa-2x empty-icon mb-2"></i>
+        <p>No classes scheduled today.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-bolt me-2 text-accent"></i>Quick Actions</h3>
+      </div>
+      <div class="quick-actions-grid">
+        <a href="{% url 'faculty:mark_attendance' %}" class="quick-action-btn">
+          <i class="fas fa-user-check"></i>
+          <span>Mark Attendance</span>
+        </a>
+        <a href="{% url 'faculty:reports' %}" class="quick-action-btn">
+          <i class="fas fa-chart-line"></i>
+          <span>View Reports</span>
+        </a>
+        <a href="{% url 'faculty:counselled_students' %}" class="quick-action-btn">
+          <i class="fas fa-user-graduate"></i>
+          <span>My Students</span>
+        </a>
+        <a href="{% url 'faculty:export_excel' %}" class="quick-action-btn">
+          <i class="fas fa-file-excel"></i>
+          <span>Export Excel</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Subjects taught -->
+    <div class="glass-card mt-4">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-book me-2 text-accent"></i>My Subjects</h3>
+      </div>
+      {% if subjects %}
+      <div class="subject-pill-list">
+        {% for subj in subjects %}
+        <div class="subject-pill">
+          <span class="pill-code">{{ subj.code }}</span>
+          <span class="pill-name">{{ subj.name }}</span>
+          <span class="pill-year text-muted small">{{ subj.branch.code }} Y{{ subj.year.year }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted px-3">No subjects assigned yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

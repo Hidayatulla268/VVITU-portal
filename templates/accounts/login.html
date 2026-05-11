@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — VVITU Portal | Vasireddy Venkatadri International Institute of Technology</title>
+
+  <!-- SEO Meta -->
+  <meta name="description" content="VVITU Student & Faculty Portal — Sign in to access results, attendance, timetable and more."/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="theme-color" content="#dc2626"/>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="VVITU Academic Portal"/>
+  <meta property="og:description" content="Vasireddy Venkatadri International Institute of Technology — Student & Faculty Portal"/>
+  <meta property="og:type" content="website"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- VVITU CSS -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/login.css' %}"/>
+</head>
+<body class="login-body">
+
+<!-- Animated background grid -->
+<div class="bg-grid"></div>
+<div class="bg-radial-top"></div>
+<div class="bg-radial-bottom"></div>
+
+<!-- Floating orbs for depth -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="login-wrapper">
+
+  <!-- ═══════════════════════════════════════
+       LEFT PANEL — Branding
+  ═══════════════════════════════════════ -->
+  <div class="login-left d-none d-lg-flex">
+    <div class="left-content">
+
+      <!-- Logo ring -->
+      <div class="logo-showcase">
+        <div class="logo-outer-ring">
+          <div class="logo-inner-ring">
+            <img src="{% static 'images/vvit_logo.png' %}"
+                 alt="VVITU Logo"
+                 class="login-logo"
+                 id="mainLoginLogo"
+                 onerror="this.onerror=null; this.src='/static/images/vvit_logo_fallback.svg'"/>
+          </div>
+        </div>
+        <div class="logo-pulse-ring"></div>
+        <div class="logo-pulse-ring logo-pulse-ring-2"></div>
+      </div>
+
+      <!-- College name -->
+      <h1 class="college-title">
+        Vasireddy Venkatadri<br/>
+        <span class="text-accent">International Institute of Technology</span>
+      </h1>
+      <p class="college-location">
+        <i class="fas fa-map-marker-alt me-2 text-accent"></i>
+        Nambur, Guntur District, Andhra Pradesh
+      </p>
+      <p class="college-tagline">"Transforming Education, Shaping Futures"</p>
+
+      <!-- Stats strip -->
+      <div class="stats-strip">
+        <div class="stat-item">
+          <span class="stat-num">20K+</span>
+          <span class="stat-label">Students</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">500+</span>
+          <span class="stat-label">Faculty</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">NAAC</span>
+          <span class="stat-label">Accredited</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">NBA</span>
+          <span class="stat-label">Certified</span>
+        </div>
+      </div>
+
+      <!-- Accreditation badges -->
+      <div class="accreditation-row">
+        <span class="accr-badge"><i class="fas fa-award me-1"></i>NAAC A+</span>
+        <span class="accr-badge"><i class="fas fa-certificate me-1"></i>NBA</span>
+        <span class="accr-badge"><i class="fas fa-star me-1"></i>AICTE</span>
+      </div>
+
+      <!-- Campus photo -->
+      <div class="campus-img-strip">
+        <img src="{% static 'images/college_campus.jpg' %}"
+             alt="VVITU Campus — Nambur, Guntur, Andhra Pradesh"
+             class="campus-img"
+             onerror="this.style.display='none'"/>
+      </div>
+
+      <!-- Left panel footer -->
+      <p class="left-footer-note">
+        <i class="fas fa-globe me-1"></i>
+        <a href="https://www.vvitu.ac.in" target="_blank" rel="noopener" class="link-accent">www.vvitu.ac.in</a>
+        &nbsp;|&nbsp;
+        <i class="fas fa-phone me-1"></i>+91-863-2288888
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       RIGHT PANEL — Login Form
+  ═══════════════════════════════════════ -->
+  <div class="login-right">
+    <div class="login-card glass-card">
+
+      <!-- Mobile logo -->
+      <div class="d-flex d-lg-none justify-content-center mb-3">
+        <img src="{% static 'images/vvit_logo.png' %}"
+             alt="VVITU"
+             style="height:52px;"
+             onerror="this.onerror=null; this.src='/static/images/vvit_logo_fallback.svg'"/>
+      </div>
+      <!-- Mobile college name (small screens only) -->
+      <div class="d-block d-lg-none text-center mb-4">
+        <p style="font-family:'Rajdhani',sans-serif; font-size:0.8rem; color:#9ca3af; margin:0;">
+          Vasireddy Venkatadri International Institute of Technology
+        </p>
+      </div>
+
+      <div class="form-header">
+        <h2 class="form-title">Welcome Back</h2>
+        <p class="form-subtitle">Sign in to your <strong>VVITU</strong> Portal account</p>
+      </div>
+
+      <!-- Alert messages -->
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert vvit-alert {% if msg.tags == 'error' %}alert-error{% else %}alert-success{% endif %} mb-3"
+             role="alert" aria-live="polite">
+          <i class="fas {% if msg.tags == 'error' %}fa-circle-xmark{% else %}fa-circle-check{% endif %} me-2"></i>
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'accounts:login' %}" class="login-form" autocomplete="off" novalidate>
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="form-group-float mb-4">
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <i class="fas fa-id-card"></i>
+            </span>
+            <input type="text"
+                   name="username"
+                   id="id_username"
+                   class="vvit-input"
+                   placeholder=" "
+                   required
+                   aria-label="Username or Roll Number"
+                   value="{{ request.POST.username|default:'' }}"
+                   autocomplete="username"/>
+            <label for="id_username" class="floating-label">Username / Roll Number</label>
+          </div>
+          <small class="input-hint">
+            <i class="fas fa-circle-info me-1" style="color:#6b7280;"></i>
+            Student: <code>24BQ1A4942</code> &nbsp;|&nbsp; Faculty: <code>EMP001</code>
+          </small>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group-float mb-4">
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <i class="fas fa-lock"></i>
+            </span>
+            <input type="password"
+                   name="password"
+                   id="id_password"
+                   class="vvit-input"
+                   placeholder=" "
+                   required
+                   aria-label="Password"
+                   autocomplete="current-password"/>
+            <label for="id_password" class="floating-label">Password</label>
+            <button type="button"
+                    class="toggle-password"
+                    id="togglePwdBtn"
+                    onclick="togglePwd()"
+                    title="Show / hide password"
+                    aria-label="Toggle password visibility">
+              <i class="fas fa-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sign In button -->
+        <button type="submit" class="btn-login w-100" id="loginSubmitBtn">
+          <span class="btn-text">Sign In</span>
+          <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
+          <span class="btn-loading d-none">
+            <i class="fas fa-spinner fa-spin me-2"></i>Authenticating…
+          </span>
+        </button>
+      </form>
+
+      <!-- Footer info -->
+      <div class="form-footer mt-4">
+        <p class="footer-info">
+          <i class="fas fa-shield-alt me-1 text-accent"></i>
+          Secure access &mdash; your data is protected
+        </p>
+        <p class="footer-help">
+          Forgot password?&nbsp;Contact&nbsp;
+          <a href="mailto:admin@vvitu.ac.in" class="link-accent">admin@vvitu.ac.in</a>
+        </p>
+        <!-- Copyright -->
+        <p class="footer-copy">
+          &copy; <span id="copyrightYear"></span>
+          Vasireddy Venkatadri International Institute of Technology.
+          All rights reserved.
+        </p>
+      </div>
+
+    </div><!-- /login-card -->
+  </div><!-- /login-right -->
+
+</div><!-- /login-wrapper -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ── Dynamic copyright year
+  document.getElementById('copyrightYear').textContent = new Date().getFullYear();
+
+  // ── Toggle password visibility
+  function togglePwd() {
+    const inp  = document.getElementById('id_password');
+    const icon = document.getElementById('eyeIcon');
+    const btn  = document.getElementById('togglePwdBtn');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'fas fa-eye-slash';
+      btn.setAttribute('aria-label', 'Hide password');
+    } else {
+      inp.type = 'password';
+      icon.className = 'fas fa-eye';
+      btn.setAttribute('aria-label', 'Show password');
+    }
+  }
+
+  // ── Loading state on form submit
+  document.querySelector('.login-form').addEventListener('submit', function() {
+    const btn = document.getElementById('loginSubmitBtn');
+    btn.querySelector('.btn-text').classList.add('d-none');
+    btn.querySelector('.btn-icon').classList.add('d-none');
+    btn.querySelector('.btn-loading').classList.remove('d-none');
+    btn.disabled = true;
+  });
+
+  // ── Auto-focus username field
+  document.getElementById('id_username').focus();
+</script>
+</body>
+</html>

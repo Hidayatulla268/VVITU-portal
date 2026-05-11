@@ -1,0 +1,74 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Upload Results{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div>
+    <h1 class="ph-title">Bulk CSV Upload</h1>
+    <p class="ph-sub">Upload a massive spreadsheet of marks to process thousands of students at once.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  
+  <div class="col-md-8">
+    <div class="glass-card">
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h5 class="card-title-custom mb-0">Upload CSV File</h5>
+        <a href="{% url 'admin_dashboard:sample_results_csv' %}" class="btn-vvit-outline-primary btn-sm">
+          <i class="fas fa-download me-2"></i>Download Sample CSV
+        </a>
+      </div>
+      
+      <form method="post" enctype="multipart/form-data" class="mt-3">
+        {% csrf_token %}
+        
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Select Exam</label>
+            <select name="exam" class="vvit-select" required>
+              <option value="">-- Choose Exam --</option>
+              {% for ex in exams %}
+              <option value="{{ ex.id }}">{{ ex.name }} ({{ ex.branch.code }} Y{{ ex.year.year }} S{{ ex.semester }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Select Subject</label>
+            <select name="subject" class="vvit-select" required>
+              <option value="">-- Choose Subject --</option>
+              {% for sub in subjects %}
+              <option value="{{ sub.id }}">{{ sub.code }} - {{ sub.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="upload-area p-5 text-center border rounded mb-4" style="background: var(--bg-card); border: 2px dashed var(--primary-accent) !important; cursor: pointer;">
+          <i class="fas fa-file-csv fa-4x mb-3 text-primary"></i>
+          <h5>Drag & Drop your CSV file here</h5>
+          <p class="text-muted mb-3">or click to browse your files</p>
+          <input type="file" name="csv_file" class="form-control w-75 mx-auto" accept=".csv" required>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Format Requirements:</strong> The CSV must contain three columns: <code>Roll Number</code>, <code>Marks Obtained</code>, and <code>Max Marks</code> (optional, defaults to 100).
+        </div>
+        
+        <div class="text-end">
+          <button type="submit" class="btn-vvit-success btn-lg">
+            <i class="fas fa-cloud-upload-alt me-2"></i>Upload & Process Results
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

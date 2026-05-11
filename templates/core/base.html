@@ -1,0 +1,393 @@
+{% load static %}{% load core_tags %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}VVITU Portal{% endblock %} | Vasireddy Venkatadri International Institute of Technology</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <!-- Flatpickr Calendar Picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+  <style>
+    /* Override flatpickr default light theme before our dark theme loads */
+    .flatpickr-calendar { background: #0a0a12; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+  <!-- VVIT Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/theme_and_calendar.css' %}"/>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     TOP NAVBAR
+══════════════════════════════════════════ -->
+{% if user.is_authenticated %}
+<nav class="vvit-navbar" id="mainNavbar">
+  <div class="container-fluid px-4 d-flex align-items-center w-100">
+
+    <!-- Brand -->
+    <a class="navbar-brand d-flex align-items-center gap-3 text-decoration-none" href="{% url 'accounts:redirect' %}">
+      <div class="brand-logo-ring">
+        <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT Logo" class="brand-logo"
+             onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"/>
+      </div>
+      <div class="brand-text">
+        <span class="brand-short">VVITU</span>
+        <span class="brand-full">Portal</span>
+      </div>
+    </a>
+
+    <!-- Mobile hamburger -->
+    <button class="navbar-toggler-custom d-lg-none ms-3" onclick="toggleSidebar()" type="button">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Right controls -->
+    <div class="navbar-right ms-auto d-flex align-items-center gap-3">
+      <!-- Theme Toggle Dark/Light -->
+      <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark / Light Mode" onclick="toggleTheme()">
+        <i class="fas fa-sun" id="themeIcon"></i>
+      </button>
+      <!-- ── Notification Bell ─────────────────────── -->
+      <div class="notif-bell-wrap dropdown" id="notifDropdownWrap">
+        <button class="icon-btn notif-bell-btn dropdown-toggle"
+                id="notifDropdownToggle"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                aria-expanded="false"
+                title="Notifications"
+                onclick="loadNotifications()">
+          <i class="fas fa-bell"></i>
+          <span class="notif-badge" id="navbarNotifBadge" style="display:none;">0</span>
+        </button>
+
+        <!-- Dropdown panel -->
+        <div class="dropdown-menu notif-dropdown-panel glass-dropdown" aria-labelledby="notifDropdownToggle">
+          <div class="notif-panel-header">
+            <span class="notif-panel-title"><i class="fas fa-bell me-2 text-accent"></i>Notifications</span>
+            <button class="notif-mark-all-btn" id="dropMarkAllBtn" onclick="dropMarkAllRead()">
+              Mark all read
+            </button>
+          </div>
+          <div class="notif-panel-body" id="notifPanelBody">
+            <div class="notif-loading">
+              <i class="fas fa-spinner fa-spin me-2"></i>Loading…
+            </div>
+          </div>
+          <div class="notif-panel-footer">
+            <a href="{% url 'notifications:centre' %}" class="notif-view-all">
+              <i class="fas fa-inbox me-1"></i>View All Notifications
+            </a>
+            {% if user.role == 'admin' %}
+            <a href="{% url 'notifications:create' %}" class="notif-send-link">
+              <i class="fas fa-paper-plane me-1"></i>Send
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="user-chip dropdown">
+        <button class="user-chip-btn dropdown-toggle" data-bs-toggle="dropdown" type="button">
+          <div class="user-avatar">
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </div>
+          <div class="user-meta d-none d-md-flex flex-column">
+            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+            <span class="user-role">{{ user.get_role_display }}</span>
+          </div>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end glass-dropdown">
+          <li>
+            <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+              <i class="fas fa-sign-out-alt me-2"></i>Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════ -->
+<aside class="vvit-sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT"
+         onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"
+         class="sidebar-logo"/>
+    <div>
+      <div class="sidebar-college-name">Vasireddy Venkatadri International Institute of Technology</div>
+      <div class="sidebar-college-sub">Nambur, Guntur, AP</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    {% if user.role == 'student' %}
+      <a href="{% url 'student:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
+      </a>
+      <a href="{% url 'student:timetable' %}" class="nav-link {% if request.resolver_match.url_name == 'timetable' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Timetable</span>
+      </a>
+      <a href="{% url 'student:results' %}" class="nav-link {% if request.resolver_match.url_name == 'results' %}active{% endif %}">
+        <i class="fas fa-chart-bar nav-icon"></i><span>Results</span>
+      </a>
+      <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}">
+        <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
+      </a>
+      <a href="{% url 'student:question_papers' %}" class="nav-link {% if request.resolver_match.url_name == 'question_papers' %}active{% endif %}">
+        <i class="fas fa-file-pdf nav-icon"></i><span>Question Papers</span>
+      </a>
+
+    {% elif user.role == 'faculty' or user.role == 'hod' or user.role == 'lab_technician' %}
+      <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
+      </a>
+      <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
+        <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
+      </a>
+      <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+        <i class="fas fa-file-chart-line nav-icon"></i><span>Reports</span>
+      </a>
+      <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' %}active{% endif %}">
+        <i class="fas fa-user-graduate nav-icon"></i><span>My Students</span>
+      </a>
+
+    {% elif user.role == 'admin' %}
+      <a href="{% url 'admin_dashboard:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-user-graduate nav-icon"></i><span>Students</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Timetable</span>
+      </a>
+      <a href="{% url 'admin_dashboard:assign_class_teacher' %}" class="nav-link">
+        <i class="fas fa-user-tie nav-icon"></i><span>Assign Teacher</span>
+      </a>
+      <a href="{% url 'admin_dashboard:assign_counsellor' %}" class="nav-link">
+        <i class="fas fa-user-friends nav-icon"></i><span>Assign Counsellor</span>
+      </a>
+      <a href="{% url 'admin_dashboard:add_results' %}" class="nav-link {% if request.resolver_match.url_name == 'add_results' %}active{% endif %}">
+        <i class="fas fa-plus-circle nav-icon"></i><span>Add Results</span>
+      </a>
+      <a href="{% url 'admin_dashboard:bulk_upload_results' %}" class="nav-link {% if request.resolver_match.url_name == 'bulk_upload_results' %}active{% endif %}">
+        <i class="fas fa-file-csv nav-icon"></i><span>Bulk Upload</span>
+      </a>
+      <a href="{% url 'admin_dashboard:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}">
+        <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
+      </a>
+      <a href="{% url 'admin_dashboard:attendance_list' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
+        <i class="fas fa-clipboard-list nav-icon"></i><span>Attendance Editor</span>
+      </a>
+      <a href="{% url 'admin_dashboard:admin_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_attendance_report' %}active{% endif %}">
+        <i class="fas fa-chart-pie nav-icon"></i><span>Attendance Report</span>
+      </a>
+      <a href="{% url 'notifications:create' %}" class="nav-link">
+        <i class="fas fa-bell nav-icon"></i>
+        <span>Notifications</span>
+        <span class="sidebar-notif-badge" id="sidebarNotifBadge" style="display:none;"></span>
+      </a>
+      <a href="/admin/" class="nav-link">
+        <i class="fas fa-cog nav-icon"></i><span>Django Admin</span>
+      </a>
+    {% endif %}
+
+    <div class="sidebar-divider"></div>
+    <a href="{% url 'accounts:logout' %}" class="nav-link nav-link-danger">
+      <i class="fas fa-sign-out-alt nav-icon"></i><span>Logout</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+{% endif %}
+
+<!-- ══════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════ -->
+<main class="vvit-main {% if user.is_authenticated %}with-sidebar{% endif %}" id="mainContent">
+
+  {% if messages %}
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+    {% for msg in messages %}
+    <div class="toast vvit-toast show align-items-center border-0
+      {% if msg.tags == 'error' %}toast-error
+      {% elif msg.tags == 'success' %}toast-success
+      {% elif msg.tags == 'warning' %}toast-warning
+      {% else %}toast-info{% endif %}"
+      role="alert" data-bs-autohide="true" data-bs-delay="4500">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas
+            {% if msg.tags == 'error' %}fa-circle-xmark
+            {% elif msg.tags == 'success' %}fa-circle-check
+            {% else %}fa-circle-info{% endif %} me-2"></i>
+          {{ msg }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% block page_header %}{% endblock %}
+
+  <div class="content-body">
+    {% block content %}{% endblock %}
+  </div>
+
+</main>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- VVIT Main JS -->
+<script src="{% static 'js/main.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
+
+{% include "core/vbot_widget.html" %}
+
+{% if user.is_authenticated %}
+<script>
+/* ═══════════════════════════════════════════════
+   NOTIFICATION CENTRE — Navbar Dropdown JS
+═══════════════════════════════════════════════ */
+const COLOR_MAP = {
+  result:'nd-green', attendance:'nd-orange', announcement:'nd-blue',
+  exam:'nd-purple', holiday:'nd-teal', system:'nd-grey'
+};
+
+let notifsLoaded = false;
+
+async function loadNotifications() {
+  if (notifsLoaded) return;
+  try {
+    const resp = await fetch('/notifications/api/');
+    const data = await resp.json();
+    renderDropdown(data.notifications, data.unread_count);
+    notifsLoaded = true;
+  } catch (e) {
+    document.getElementById('notifPanelBody').innerHTML =
+      '<div class="notif-loading"><i class="fas fa-exclamation-circle me-2"></i>Could not load notifications.</div>';
+  }
+}
+
+function renderDropdown(items, unreadCount) {
+  const body  = document.getElementById('notifPanelBody');
+  const badge = document.getElementById('navbarNotifBadge');
+
+  // Update badge
+  if (badge) {
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if (!items || items.length === 0) {
+    body.innerHTML = '<div class="notif-empty-state"><i class="fas fa-bell-slash"></i>No notifications yet</div>';
+    return;
+  }
+
+  body.innerHTML = items.map(n => `
+    <div class="notif-drop-item ${n.is_read ? '' : 'unread'}"
+         data-id="${n.id}" data-read="${n.is_read}"
+         onclick="dropItemClick(${n.id}, '${n.link}', this)">
+      <div class="notif-drop-icon ${COLOR_MAP[n.type] || 'nd-grey'}">
+        <i class="fas ${n.icon}"></i>
+      </div>
+      <div class="notif-drop-content">
+        <div class="notif-drop-title">${n.title}</div>
+        <div class="notif-drop-msg">${n.message}</div>
+        <div class="notif-drop-time">${n.created_at}</div>
+      </div>
+      ${!n.is_read ? '<div class="notif-drop-unread-dot"></div>' : ''}
+    </div>
+  `).join('');
+}
+
+async function dropItemClick(id, link, el) {
+  el.classList.remove('unread');
+  const dot = el.querySelector('.notif-drop-unread-dot');
+  if (dot) dot.remove();
+  el.setAttribute('data-read', 'true');
+
+  await fetch('/notifications/mark-read/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+    body: JSON.stringify({id})
+  });
+  refreshBadge();
+  if (link) setTimeout(() => window.location.href = link, 200);
+}
+
+async function dropMarkAllRead() {
+  await fetch('/notifications/mark-all/', {
+    method:'POST', headers:{'X-CSRFToken': getCsrf()}
+  });
+  document.querySelectorAll('.notif-drop-item').forEach(el => {
+    el.classList.remove('unread');
+    const dot = el.querySelector('.notif-drop-unread-dot');
+    if (dot) dot.remove();
+  });
+  const badge = document.getElementById('navbarNotifBadge');
+  if (badge) badge.style.display = 'none';
+}
+
+async function refreshBadge() {
+  try {
+    const r = await fetch('/notifications/count/');
+    const d = await r.json();
+    const badge = document.getElementById('navbarNotifBadge');
+    if (badge) {
+      if (d.unread_count > 0) {
+        badge.textContent = d.unread_count > 99 ? '99+' : d.unread_count;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch(e) {}
+}
+
+function getCsrf() {
+  const el = document.querySelector('[name=csrfmiddlewaretoken]');
+  if (el) return el.value;
+  const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+  return cookie ? cookie.split('=')[1].trim() : '';
+}
+
+// Poll for new notifications every 60 seconds
+refreshBadge();
+setInterval(() => { refreshBadge(); notifsLoaded = false; }, 60000);
+</script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,92 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Academic Calendar{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-check me-2 text-accent"></i>Academic Calendar</h1>
+    <p class="ph-sub">Important dates, holidays, and events</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Upcoming Events -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom"><i class="fas fa-forward me-2 text-accent"></i>Upcoming Events</h3>
+    <span class="card-badge">{{ upcoming|length }} event{{ upcoming|length|pluralize }}</span>
+  </div>
+
+  {% if upcoming %}
+  <div class="events-timeline">
+    {% for event in upcoming %}
+    <div class="event-item event-{{ event.event_type }}">
+      <div class="event-date-badge">
+        <span class="event-day">{{ event.date|date:"d" }}</span>
+        <span class="event-month">{{ event.date|date:"M" }}</span>
+      </div>
+      <div class="event-body">
+        <div class="event-type-pill pill-{{ event.event_type }}">
+          <i class="fas {% if event.event_type == 'holiday' %}fa-umbrella-beach
+                        {% elif event.event_type == 'exam' %}fa-pen-to-square
+                        {% elif event.event_type == 'event' %}fa-star
+                        {% elif event.event_type == 'deadline' %}fa-clock
+                        {% else %}fa-circle-info{% endif %} me-1"></i>
+          {{ event.get_event_type_display }}
+        </div>
+        <h5 class="event-title">{{ event.title }}</h5>
+        {% if event.description %}<p class="event-desc">{{ event.description }}</p>{% endif %}
+        <small class="event-scope text-muted">
+          {% if event.branch %}{{ event.branch.code }}{% else %}All Branches{% endif %}
+          {% if event.year %}· {{ event.year }}{% endif %}
+        </small>
+      </div>
+      <div class="event-days-away">
+        {% with days=event.date|timeuntil %}
+        <span class="days-away-num">{{ days|truncatewords:1 }}</span>
+        <span class="days-away-label">away</span>
+        {% endwith %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state py-4">
+    <i class="fas fa-calendar-times empty-icon fa-2x mb-2"></i>
+    <p>No upcoming events found.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Past Events -->
+{% if past %}
+<div class="glass-card">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom"><i class="fas fa-history me-2"></i>Past Events</h3>
+    <span class="card-badge">{{ past|length }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr><th>Date</th><th>Title</th><th>Type</th><th>Scope</th></tr>
+      </thead>
+      <tbody>
+        {% for event in past %}
+        <tr class="text-muted">
+          <td>{{ event.date|date:"d M Y" }}</td>
+          <td>{{ event.title }}</td>
+          <td><span class="event-type-pill pill-{{ event.event_type }} pill-sm">{{ event.get_event_type_display }}</span></td>
+          <td>{% if event.branch %}{{ event.branch.code }}{% else %}All{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

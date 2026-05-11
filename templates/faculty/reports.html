@@ -1,0 +1,176 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Attendance Reports{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-chart-line me-2 text-accent"></i>Attendance Reports</h1>
+    <p class="ph-sub">Filter and export student-wise attendance data</p>
+  </div>
+  {% if report_data %}
+  <div class="ph-right d-flex gap-2">
+    <a href="{% url 'faculty:export_excel' %}?section={{ section_id }}&subject={{ subject_id }}&date_from={{ date_from }}&date_to={{ date_to }}"
+       class="btn-vvit-outline">
+      <i class="fas fa-file-excel me-2"></i>Excel
+    </a>
+    <a href="{% url 'faculty:export_pdf' %}?section={{ section_id }}&subject={{ subject_id }}&date_from={{ date_from }}&date_to={{ date_to }}"
+       class="btn-vvit-primary">
+      <i class="fas fa-file-pdf me-2"></i>PDF
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label text-muted">Section</label>
+      <select name="section" class="vvit-select" required>
+        <option value="">— Choose Section —</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if section_id == sec.id|stringformat:"s" %}selected{% endif %}>{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-muted">Subject (optional)</label>
+      <select name="subject" class="vvit-select">
+        <option value="">— All Subjects —</option>
+        {% for subj in subjects %}
+        <option value="{{ subj.id }}" {% if subject_id == subj.id|stringformat:"s" %}selected{% endif %}>{{ subj.code }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-muted">From</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date_from" class="vvit-input" value="{{ date_from }}"/>
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-muted">To</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date_to" class="vvit-input" value="{{ date_to }}"/>
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn-vvit-primary w-100"><i class="fas fa-search me-2"></i>Generate</button>
+    </div>
+  </form>
+</div>
+
+<!-- Summary Stats -->
+{% if report_data %}
+{% with low_count=report_data|length %}
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="kpi-card kpi-info kpi-compact">
+      <div class="kpi-icon"><i class="fas fa-users"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ report_data|length }}</span>
+        <span class="kpi-label">Total Students</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card kpi-danger kpi-compact">
+      <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">
+          <span id="lowCount">—</span>
+        </span>
+        <span class="kpi-label">Below {{ threshold }}%</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card kpi-success kpi-compact">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value"><span id="goodCount">—</span></span>
+        <span class="kpi-label">Above {{ threshold }}%</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endwith %}
+
+<!-- Report Table -->
+<div class="glass-card">
+  <div class="card-header-custom">
+    <h3 class="card-title-custom"><i class="fas fa-table me-2 text-accent"></i>Student-wise Report</h3>
+  </div>
+  <div class="table-responsive">
+    <table class="vvit-table" id="reportTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Roll Number</th>
+          <th>Name</th>
+          <th>Total Classes</th>
+          <th>Present</th>
+          <th>Absent</th>
+          <th>Percentage</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in report_data %}
+        <tr class="{% if s.low %}row-warning{% endif %}" data-low="{{ s.low|yesno:'1,0' }}">
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td><strong>{{ s.roll }}</strong></td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.total }}</td>
+          <td class="text-success fw-600">{{ s.present }}</td>
+          <td class="text-danger fw-600">{{ s.total|subtract:s.present }}</td>
+          <td>
+            <div class="pct-bar-wrap">
+              <div class="pct-bar-fill {% if s.pct >= threshold %}bar-green{% elif s.pct >= 60 %}bar-yellow{% else %}bar-red{% endif %}"
+                   style="width:{{ s.pct }}%"></div>
+              <span class="pct-label">{{ s.pct }}%</span>
+            </div>
+          </td>
+          <td>
+            {% if s.low %}
+            <span class="status-badge status-absent"><i class="fas fa-exclamation-triangle me-1"></i>Low</span>
+            {% else %}
+            <span class="status-badge status-present"><i class="fas fa-check me-1"></i>OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="glass-card text-center py-5">
+  <i class="fas fa-chart-bar fa-3x text-accent mb-3"></i>
+  <h5>No Report Generated</h5>
+  <p class="text-muted">Select a section and date range above to generate the report.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const rows    = document.querySelectorAll('#reportTable tbody tr');
+  const lowCnt  = Array.from(rows).filter(r => r.dataset.low === '1').length;
+  const goodCnt = rows.length - lowCnt;
+  const lEl = document.getElementById('lowCount');
+  const gEl = document.getElementById('goodCount');
+  if (lEl) lEl.textContent  = lowCnt;
+  if (gEl) gEl.textContent  = goodCnt;
+});
+</script>
+{% endblock %}

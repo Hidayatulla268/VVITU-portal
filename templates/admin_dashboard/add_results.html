@@ -1,0 +1,141 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Add Results{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div>
+    <h1 class="ph-title">Add Exam Results</h1>
+    <p class="ph-sub">Quickly input marks for an entire section at once.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  
+  <!-- Selection Form -->
+  <div class="col-12">
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h5 class="card-title-custom">1. Select Target Class & Exam</h5>
+      </div>
+      <form method="get" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Exam</label>
+          <select name="exam" class="vvit-select" required>
+            <option value="">-- Select Exam --</option>
+            {% for ex in exams %}
+            <option value="{{ ex.id }}" {% if exam_id|stringformat:"s" == ex.id|stringformat:"s" %}selected{% endif %}>
+              {{ ex.name }} ({{ ex.branch.code }} Y{{ ex.year.year }} S{{ ex.semester }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Subject</label>
+          <select name="subject" class="vvit-select" required>
+            <option value="">-- Select Subject --</option>
+            {% for sub in subjects %}
+            <option value="{{ sub.id }}" {% if subject_id|stringformat:"s" == sub.id|stringformat:"s" %}selected{% endif %}>
+              {{ sub.code }} - {{ sub.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Section</label>
+          <select name="section" class="vvit-select" required>
+            <option value="">-- Select Section --</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}" {% if section_id|stringformat:"s" == sec.id|stringformat:"s" %}selected{% endif %}>
+              {{ sec.branch.code }} - Year {{ sec.year.year }} - Sec {{ sec.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn-vvit-primary w-100">
+            <i class="fas fa-search me-2"></i>Load Students
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Students Grid -->
+  {% if students %}
+  <div class="col-12">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="exam" value="{{ exam_id }}">
+      <input type="hidden" name="subject" value="{{ subject_id }}">
+      <input type="hidden" name="section" value="{{ section_id }}">
+
+      <div class="glass-card">
+        <div class="card-header-custom">
+          <h5 class="card-title-custom">2. Enter Marks</h5>
+          <button type="submit" class="btn-vvit-success">
+            <i class="fas fa-save me-2"></i>Save All Results
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="vvit-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">S.No</th>
+                <th style="width: 150px;">Roll Number</th>
+                <th>Student Name</th>
+                <th style="width: 150px;">Marks Obtained</th>
+                <th style="width: 150px;">Max Marks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in students %}
+                {% with sid=student.id %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td class="fw-bold">{{ student.roll_number }}</td>
+                  <td>{{ student.user.get_full_name }}</td>
+                  <td>
+                    <input type="number" step="0.01" class="vvit-input" 
+                           name="marks_obtained_{{ sid }}" 
+                           value="{{ existing_results|dict_get:sid|default:''|dict_get:'marks_obtained'|default:'' }}" 
+                           placeholder="0.00" required>
+                  </td>
+                  <td>
+                    <input type="number" step="0.01" class="vvit-input" 
+                           name="max_marks_{{ sid }}" 
+                           value="{{ existing_results|dict_get:sid|default:''|dict_get:'max_marks'|default:'100' }}" 
+                           placeholder="100.00" required>
+                  </td>
+                </tr>
+                {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn-vvit-success btn-lg">
+            <i class="fas fa-save me-2"></i>Save All Results
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+  {% elif exam_id and subject_id and section_id %}
+  <div class="col-12">
+    <div class="glass-card text-center py-5 empty-state">
+      <i class="fas fa-user-slash fa-3x mb-3 empty-icon"></i>
+      <h5>No Students Found</h5>
+      <p>There are no active students in the selected section.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Edit Attendance Record{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-edit me-2 text-accent"></i>Edit Attendance Record</h1>
+    <p class="ph-sub">Admin override — no date restriction applies</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-6 col-lg-8">
+
+    <!-- Record details card -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom">
+          <i class="fas fa-info-circle me-2 text-accent"></i>Record Details
+        </h3>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Student</span>
+          <span class="detail-value">{{ record.student.user.get_full_name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Roll Number</span>
+          <span class="detail-value">{{ record.student.roll_number }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date</span>
+          <span class="detail-value">{{ record.date|date:"d F Y" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Subject</span>
+          <span class="detail-value">{{ record.timetable_entry.subject.code }} — {{ record.timetable_entry.subject.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Period</span>
+          <span class="detail-value">Period {{ record.timetable_entry.period }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Current Status</span>
+          <span class="detail-value">
+            <span class="status-badge {% if record.status == 'P' %}status-present{% else %}status-absent{% endif %}">
+              {% if record.status == 'P' %}
+                <i class="fas fa-check me-1"></i>Present
+              {% else %}
+                <i class="fas fa-times me-1"></i>Absent
+              {% endif %}
+            </span>
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Last Modified</span>
+          <span class="detail-value text-muted">{{ record.last_modified|date:"d M Y H:i" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom">
+          <i class="fas fa-pencil me-2 text-accent"></i>Override Status
+        </h3>
+      </div>
+
+      <form method="post" class="p-2">
+        {% csrf_token %}
+
+        <div class="attendance-radio-group mb-4">
+          <label class="att-radio-card {% if record.status == 'P' %}selected{% endif %}" id="labelPresent">
+            <input type="radio" name="status" value="P"
+                   {% if record.status == 'P' %}checked{% endif %}
+                   onchange="highlightCard(this)"/>
+            <div class="att-radio-inner">
+              <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+              <span class="att-radio-label">Present</span>
+            </div>
+          </label>
+
+          <label class="att-radio-card {% if record.status == 'A' %}selected{% endif %}" id="labelAbsent">
+            <input type="radio" name="status" value="A"
+                   {% if record.status == 'A' %}checked{% endif %}
+                   onchange="highlightCard(this)"/>
+            <div class="att-radio-inner">
+              <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+              <span class="att-radio-label">Absent</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn-vvit-primary flex-grow-1">
+            <i class="fas fa-save me-2"></i>Save Override
+          </button>
+          <a href="{% url 'admin_dashboard:attendance_list' %}" class="btn-vvit-outline flex-grow-1 text-center">
+            <i class="fas fa-arrow-left me-2"></i>Back
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function highlightCard(radio) {
+  document.querySelectorAll('.att-radio-card').forEach(c => c.classList.remove('selected'));
+  radio.closest('.att-radio-card').classList.add('selected');
+}
+</script>
+{% endblock %}

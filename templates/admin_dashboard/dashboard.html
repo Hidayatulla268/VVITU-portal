@@ -1,0 +1,157 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-shield-halved me-2 text-accent"></i>Admin Dashboard</h1>
+    <p class="ph-sub">Complete control over VVIT Portal data and settings</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Row -->
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-2">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-user-graduate"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats.total_students }}</span>
+        <span class="kpi-label">Students</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-2">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats.total_faculty }}</span>
+        <span class="kpi-label">Faculty</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-2">
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-icon"><i class="fas fa-book"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats.total_subjects }}</span>
+        <span class="kpi-label">Subjects</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-2">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-door-open"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats.total_sections }}</span>
+        <span class="kpi-label">Sections</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-2">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats.present_today }}</span>
+        <span class="kpi-label">Present Today</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-2">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ stats.absent_today }}</span>
+        <span class="kpi-label">Absent Today</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts + Quick Actions -->
+<div class="row g-4 mb-4">
+  <!-- Branch-wise chart -->
+  <div class="col-xl-7">
+    <div class="glass-card h-100">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-chart-pie me-2 text-accent"></i>Branch-wise Students</h3>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="branchChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="col-xl-5">
+    <div class="glass-card h-100">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-bolt me-2 text-accent"></i>Quick Actions</h3>
+      </div>
+      <div class="quick-actions-grid">
+        <a href="{% url 'admin_dashboard:add_student' %}" class="quick-action-btn">
+          <i class="fas fa-user-plus"></i><span>Add Student</span>
+        </a>
+        <a href="{% url 'admin_dashboard:add_faculty' %}" class="quick-action-btn">
+          <i class="fas fa-user-tie"></i><span>Add Faculty</span>
+        </a>
+        <a href="{% url 'admin_dashboard:manage_timetable' %}" class="quick-action-btn">
+          <i class="fas fa-calendar-alt"></i><span>Timetable</span>
+        </a>
+        <a href="{% url 'admin_dashboard:attendance_list' %}" class="quick-action-btn">
+          <i class="fas fa-clipboard-list"></i><span>Attendance</span>
+        </a>
+        <a href="{% url 'admin_dashboard:assign_class_teacher' %}" class="quick-action-btn">
+          <i class="fas fa-user-tie"></i><span>Assign Teacher</span>
+        </a>
+        <a href="{% url 'admin_dashboard:assign_counsellor' %}" class="quick-action-btn">
+          <i class="fas fa-handshake"></i><span>Assign Counsellor</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const branchData = {{ branch_data|safe }};
+  if (!branchData.length) return;
+
+  const labels = branchData.map(b => b.branch__code || 'N/A');
+  const data   = branchData.map(b => b.count);
+  const colours = [
+    '#DC2626','#EF4444','#F87171','#FB923C','#FBBF24',
+    '#34D399','#60A5FA','#818CF8','#A78BFA','#F472B6'
+  ];
+
+  new Chart(document.getElementById('branchChart'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colours.slice(0, data.length),
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#ccc', font: { family: 'Inter', size: 12 } }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

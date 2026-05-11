@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+{% block title %}Add Faculty{% endblock %}
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-plus me-2 text-accent"></i>Add New Faculty</h1>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-8">
+    <div class="glass-card">
+      <form method="post" class="row g-4">
+        {% csrf_token %}
+        <div class="col-md-6">
+          <label class="form-label text-muted">Employee ID *</label>
+          <input type="text" name="employee_id" class="vvit-input" placeholder="e.g. EMP001" required/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Password (default: vvit@1234)</label>
+          <input type="password" name="password" class="vvit-input"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">First Name *</label>
+          <input type="text" name="first_name" class="vvit-input" required/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Last Name</label>
+          <input type="text" name="last_name" class="vvit-input"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Phone</label>
+          <input type="tel" name="phone" class="vvit-input"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Designation</label>
+          <input type="text" name="designation" class="vvit-input" placeholder="e.g. Associate Professor"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Role *</label>
+          <select name="role" class="vvit-select" required>
+            <option value="faculty">Faculty</option>
+            <option value="hod">Head of Department (HOD)</option>
+            <option value="lab_technician">Lab Technician</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Department</label>
+          <select name="department" class="vvit-select">
+            <option value="">— Select —</option>
+            {% for b in branches %}<option value="{{ b.id }}">{{ b.code }} — {{ b.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 d-flex gap-3">
+          <button type="submit" class="btn-vvit-primary"><i class="fas fa-save me-2"></i>Create Faculty</button>
+          <a href="{% url 'admin_dashboard:manage_faculty' %}" class="btn-vvit-outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

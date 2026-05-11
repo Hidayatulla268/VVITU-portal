@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+{% block title %}Manage Faculty{% endblock %}
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Manage Faculty</h1>
+    <p class="ph-sub">{{ faculties|length }} active faculty members</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'admin_dashboard:add_faculty' %}" class="btn-vvit-primary"><i class="fas fa-user-plus me-2"></i>Add Faculty</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr><th>#</th><th>Employee ID</th><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for f in faculties %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td><strong>{{ f.employee_id }}</strong></td>
+          <td>{{ f.user.get_full_name }}</td>
+          <td><span class="badge-section small">{{ f.user.get_role_display }}</span></td>
+          <td>{{ f.department.code|default:"—" }}</td>
+          <td>{{ f.user.phone|default:"—" }}</td>
+          <td>
+            <form method="post" action="{% url 'admin_dashboard:delete_faculty' f.pk %}" class="d-inline"
+                  onsubmit="return confirm('Delete faculty {{ f.employee_id }}?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-sm-danger"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No faculty found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

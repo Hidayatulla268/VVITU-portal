@@ -1,0 +1,71 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+{% block title %}Edit Student{% endblock %}
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-edit me-2 text-accent"></i>Edit Student</h1>
+    <p class="ph-sub">{{ student.roll_number }} — {{ student.user.get_full_name }}</p>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-8">
+    <div class="glass-card">
+      <form method="post" class="row g-4">
+        {% csrf_token %}
+        <div class="col-md-6">
+          <label class="form-label text-muted">First Name</label>
+          <input type="text" name="first_name" class="vvit-input" value="{{ student.user.first_name }}" required/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Last Name</label>
+          <input type="text" name="last_name" class="vvit-input" value="{{ student.user.last_name }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Phone</label>
+          <input type="tel" name="phone" class="vvit-input" value="{{ student.user.phone|default:'' }}"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted">Branch</label>
+          <select name="branch" class="vvit-select">
+            {% for b in branches %}<option value="{{ b.id }}" {% if student.branch_id == b.id %}selected{% endif %}>{{ b.code }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted">Year</label>
+          <select name="year" class="vvit-select">
+            {% for y in years %}<option value="{{ y.id }}" {% if student.year_id == y.id %}selected{% endif %}>{{ y }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-muted">Section</label>
+          <select name="section" class="vvit-select">
+            {% for s in sections %}<option value="{{ s.id }}" {% if student.section_id == s.id %}selected{% endif %}>{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Class Teacher</label>
+          <select name="class_teacher" class="vvit-select">
+            <option value="">— None —</option>
+            {% for f in faculties %}<option value="{{ f.id }}" {% if student.class_teacher_id == f.id %}selected{% endif %}>{{ f.employee_id }} — {{ f.user.get_full_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Counsellor</label>
+          <select name="counsellor" class="vvit-select">
+            <option value="">— None —</option>
+            {% for f in faculties %}<option value="{{ f.id }}" {% if student.counsellor_id == f.id %}selected{% endif %}>{{ f.employee_id }} — {{ f.user.get_full_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 d-flex gap-3">
+          <button type="submit" class="btn-vvit-primary"><i class="fas fa-save me-2"></i>Update Student</button>
+          <a href="{% url 'admin_dashboard:manage_students' %}" class="btn-vvit-outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
