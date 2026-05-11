@@ -11,6 +11,8 @@ urlpatterns = [
     # Students
     path('students/',                views.manage_students,      name='manage_students'),
     path('students/add/',            views.add_student,          name='add_student'),
+    path('students/bulk-upload/',    views.bulk_upload_students, name='bulk_upload_students'),
+    path('students/sample-csv/',     views.download_sample_students_csv, name='sample_students_csv'),
     path('students/<int:pk>/edit/',  views.edit_student,         name='edit_student'),
     path('students/<int:pk>/delete/',views.delete_student,       name='delete_student'),
 

@@ -795,3 +795,130 @@ def download_sample_results_csv(request):
     return response
 
 
+# ═══════════════════════════════════════════════
+# BULK CSV UPLOAD STUDENTS
+# ═══════════════════════════════════════════════
+@admin_required
+def bulk_upload_students(request):
+    """
+    Admin uploads a CSV file of students to create their accounts and profiles.
+    CSV Format: Roll Number, First Name, Last Name, Email, Phone, Branch Code, Year, Section, Admission Year
+    """
+    import csv
+    import io
+    from django.db import transaction
+    
+    if request.method == 'POST':
+        if 'csv_file' not in request.FILES:
+            messages.error(request, "Please upload a CSV file.")
+            return redirect('admin_dashboard:bulk_upload_students')
+            
+        csv_file = request.FILES['csv_file']
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, "Invalid file format. Please upload a .csv file.")
+            return redirect('admin_dashboard:bulk_upload_students')
+            
+        try:
+            data_set = csv_file.read().decode('UTF-8')
+            io_string = io.StringIO(data_set)
+            
+            header = next(io_string, None)
+            
+            success_count = 0
+            errors = []
+            
+            reader = csv.reader(io_string, delimiter=',', quotechar='"')
+            
+            with transaction.atomic():
+                for row_idx, row in enumerate(reader, start=2):
+                    if not row or not row[0].strip():
+                        continue
+                        
+                    if len(row) < 9:
+                        errors.append(f"Row {row_idx}: Missing columns. Expected 9, got {len(row)}.")
+                        continue
+                        
+                    roll_number = row[0].strip().upper()
+                    first_name = row[1].strip()
+                    last_name = row[2].strip()
+                    email = row[3].strip()
+                    phone = row[4].strip()
+                    branch_code = row[5].strip().upper()
+                    year_val = row[6].strip()
+                    section_name = row[7].strip()
+                    adm_year = row[8].strip()
+                    
+                    if not roll_number:
+                        errors.append(f"Row {row_idx}: Roll Number is required.")
+                        continue
+                        
+                    # Lookup foreign keys
+                    branch = Branch.objects.filter(code=branch_code).first() if branch_code else None
+                    year = Year.objects.filter(year=year_val).first() if year_val else None
+                    section = Section.objects.filter(name__iexact=section_name).first() if section_name else None
+                    
+                    if not branch:
+                        errors.append(f"Row {row_idx}: Invalid Branch Code '{branch_code}'.")
+                        continue
+                        
+                    # Create User
+                    if User.objects.filter(username=roll_number).exists():
+                        errors.append(f"Row {row_idx}: User with username '{roll_number}' already exists.")
+                        continue
+                        
+                    user = User.objects.create_user(
+                        username=roll_number,
+                        password='password123',
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        role='student',
+                        phone=phone
+                    )
+                    
+                    # Create Student
+                    adm_year_int = int(adm_year) if adm_year.isdigit() else timezone.now().year
+                    Student.objects.create(
+                        user=user,
+                        roll_number=roll_number,
+                        branch=branch,
+                        year=year,
+                        section=section,
+                        admission_year=adm_year_int
+                    )
+                    success_count += 1
+                    
+            if errors:
+                for err in errors[:5]:
+                    messages.error(request, err)
+                if len(errors) > 5:
+                    messages.error(request, f"...and {len(errors) - 5} more errors. Database transaction rolled back.")
+                raise Exception("Upload failed due to data errors.")
+            else:
+                messages.success(request, f"Successfully imported {success_count} students.")
+                return redirect('admin_dashboard:manage_students')
+                
+        except Exception as e:
+            if not errors:
+                messages.error(request, f"Error processing file: {str(e)}")
+            return redirect('admin_dashboard:bulk_upload_students')
+            
+    return render(request, 'admin_dashboard/bulk_upload_students.html')
+
+
+@admin_required
+def download_sample_students_csv(request):
+    """Generates and returns a sample CSV file for bulk student uploads."""
+    from django.http import HttpResponse
+    import csv
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="sample_students_upload.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Roll Number', 'First Name', 'Last Name', 'Email', 'Phone', 'Branch Code', 'Year', 'Section', 'Admission Year'])
+    writer.writerow(['24BQ1A4999', 'Rahul', 'Sharma', 'rahul@example.com', '9876543210', 'CSM', '1', 'A', '2024'])
+    writer.writerow(['24BQ1A4998', 'Priya', 'Reddy', 'priya@example.com', '9876543211', 'CSE', '1', 'B', '2024'])
+    
+    return response
+

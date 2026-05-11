@@ -8,7 +8,10 @@
     <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Manage Students</h1>
     <p class="ph-sub">{{ page.paginator.count }} student records</p>
   </div>
-  <div class="ph-right">
+  <div class="ph-right d-flex gap-2">
+    <a href="{% url 'admin_dashboard:bulk_upload_students' %}" class="btn-vvit-outline">
+      <i class="fas fa-file-csv me-2"></i>Bulk Upload
+    </a>
     <a href="{% url 'admin_dashboard:add_student' %}" class="btn-vvit-primary">
       <i class="fas fa-user-plus me-2"></i>Add Student
     </a>

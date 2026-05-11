@@ -1,0 +1,68 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Bulk Upload Students{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div>
+    <h1 class="ph-title"><i class="fas fa-file-csv me-2 text-accent"></i>Bulk CSV Upload</h1>
+    <p class="ph-sub">Upload a massive spreadsheet of students to create their accounts and profiles instantly.</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'admin_dashboard:manage_students' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  
+  <div class="col-md-8">
+    <div class="glass-card">
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h5 class="card-title-custom mb-0">Upload CSV File</h5>
+        <a href="{% url 'admin_dashboard:sample_students_csv' %}" class="btn-vvit-outline-primary btn-sm">
+          <i class="fas fa-download me-2"></i>Download Sample CSV
+        </a>
+      </div>
+      
+      <form method="post" enctype="multipart/form-data" class="mt-4">
+        {% csrf_token %}
+
+        <div class="upload-area p-5 text-center border rounded mb-4" style="background: var(--bg-card); border: 2px dashed var(--primary-accent) !important; cursor: pointer;">
+          <i class="fas fa-users fa-4x mb-3 text-primary"></i>
+          <h5>Drag & Drop your CSV file here</h5>
+          <p class="text-muted mb-3">or click to browse your files</p>
+          <input type="file" name="csv_file" class="form-control w-75 mx-auto" accept=".csv" required>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Format Requirements:</strong> The CSV must contain exactly 9 columns in this order:
+          <ol class="mt-2 mb-0 pl-3">
+            <li><code>Roll Number</code> (e.g. 24BQ1A4901)</li>
+            <li><code>First Name</code></li>
+            <li><code>Last Name</code></li>
+            <li><code>Email</code></li>
+            <li><code>Phone</code></li>
+            <li><code>Branch Code</code> (e.g. CSE, CSM, CSD)</li>
+            <li><code>Year</code> (e.g. 1, 2, 3, 4)</li>
+            <li><code>Section</code> (e.g. A, B, C)</li>
+            <li><code>Admission Year</code> (e.g. 2024)</li>
+          </ol>
+        </div>
+        
+        <div class="text-end">
+          <button type="submit" class="btn-vvit-success btn-lg">
+            <i class="fas fa-cloud-upload-alt me-2"></i>Upload & Create Students
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
