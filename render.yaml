@@ -13,14 +13,17 @@ services:
     region: singapore   # closest to Andhra Pradesh
     plan: free          # upgrade to "starter" for always-on
 
-    # Build: install deps, collect static files, run migrations
+    # Build: install dependencies and collect static files
     buildCommand: |
       pip install -r requirements.txt &&
-      python manage.py collectstatic --no-input &&
-      python manage.py migrate
+      python manage.py collectstatic --no-input
 
-    # Start: launch Gunicorn with 4 workers
-    startCommand: gunicorn vvit_portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+    # Start: run migrations, load sample data, and launch Gunicorn
+    startCommand: |
+      python manage.py migrate &&
+      python manage.py shell -c "exec(open('sample_data.py').read())" &&
+      gunicorn vvit_portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+
 
     # Health check so Render knows when the app is ready
     healthCheckPath: /accounts/login/
