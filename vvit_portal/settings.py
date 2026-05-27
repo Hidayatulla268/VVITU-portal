@@ -21,7 +21,7 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-_RAW_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+_RAW_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*')
 ALLOWED_HOSTS = [h.strip() for h in _RAW_HOSTS.split(',') if h.strip()]
 
 # ── Production HTTPS / Cookie security ──────
@@ -245,4 +245,7 @@ ADMIN_INDEX_TITLE = 'VVITU Site Administration'
 # Get a FREE key at: https://aistudio.google.com/app/apikey
 # Set env var: GEMINI_API_KEY=your_key_here
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+
+
+CSRF_TRUSTED_ORIGINS = ['https://*.trycloudflare.com', 'https://*.lhr.life', 'https://*.serveousercontent.com']
 

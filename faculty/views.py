@@ -27,7 +27,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.models import Faculty, Student
 from core.models import (
-    Section, Timetable, Attendance, Subject
+    Section, Timetable, Attendance, Subject, Result
 )
 
 
@@ -514,3 +514,32 @@ def counselled_students(request):
         'students': students,
     }
     return render(request, 'faculty/counselled_students.html', context)
+
+
+# ─────────────────────────────────────────────
+# STUDENT RESULTS
+# ─────────────────────────────────────────────
+@faculty_required
+def student_results(request):
+    """
+    View for class teachers and counsellors to see their assigned students' exam results.
+    """
+    faculty = request.faculty
+    
+    # Get students where faculty is class_teacher or counsellor
+    students = Student.objects.filter(
+        Q(class_teacher=faculty) | Q(counsellor=faculty),
+        is_active=True
+    )
+    
+    # Get released results for these students
+    results = Result.objects.filter(
+        student__in=students,
+        exam__release__released=True
+    ).select_related('student__user', 'exam', 'subject').order_by('student__roll_number', '-exam__date')
+    
+    context = {
+        'faculty': faculty,
+        'results': results,
+    }
+    return render(request, 'faculty/student_results.html', context)

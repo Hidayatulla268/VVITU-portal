@@ -168,6 +168,9 @@
       <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' %}active{% endif %}">
         <i class="fas fa-user-graduate nav-icon"></i><span>My Students</span>
       </a>
+      <a href="{% url 'faculty:student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' %}active{% endif %}">
+        <i class="fas fa-poll-h nav-icon"></i><span>Student Results</span>
+      </a>
 
     {% elif user.role == 'admin' %}
       <a href="{% url 'admin_dashboard:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">

@@ -1,0 +1,67 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Student Results{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-poll-h me-2 text-accent"></i>Student Results</h1>
+    <p class="ph-sub">Exam results for students assigned to you as Class Teacher or Counsellor.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if results %}
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student Roll</th>
+          <th>Name</th>
+          <th>Exam</th>
+          <th>Subject</th>
+          <th class="text-center">Marks Obtained</th>
+          <th class="text-center">Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for res in results %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td><strong>{{ res.student.roll_number }}</strong></td>
+          <td>{{ res.student.user.get_full_name }}</td>
+          <td>
+            <span class="badge-accent small">{{ res.exam.name }}</span>
+          </td>
+          <td>{{ res.subject.name }} <span class="text-muted small">({{ res.subject.code }})</span></td>
+          <td class="text-center">
+            <strong>{{ res.marks_obtained|floatformat:0 }}</strong> <span class="text-muted small">/ {{ res.max_marks|floatformat:0 }}</span>
+          </td>
+          <td class="text-center">
+            {% if res.grade == 'F' %}
+              <span class="badge-danger">{{ res.grade }}</span>
+            {% elif res.grade == 'S' or res.grade == 'A' %}
+              <span class="badge-success">{{ res.grade }}</span>
+            {% else %}
+              <span class="badge-warning text-dark">{{ res.grade }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="glass-card text-center py-5">
+  <i class="fas fa-chart-bar fa-3x text-accent mb-3"></i>
+  <h5>No Results Found</h5>
+  <p class="text-muted">No released exam results were found for the students assigned to you.</p>
+</div>
+{% endif %}
+{% endblock %}
