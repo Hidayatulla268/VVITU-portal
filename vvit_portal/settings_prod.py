@@ -51,6 +51,7 @@ if DATABASE_URL:
                 'PASSWORD': r.password,
                 'HOST':     r.hostname,
                 'PORT':     str(r.port or 5432),
+                'CONN_MAX_AGE': 600,  # Keep database connections open for reuse
             }
         }
 # If DATABASE_URL is absent we keep the SQLite default from settings.py.
@@ -99,6 +100,27 @@ EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS       = True
 EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# ── Caching & Session Hardening (Redis Cluster) ─────────────────────────────
+# Automatically switches cache and session engine to Redis if REDIS_URL is set in environment
+REDIS_URL = os.environ.get('REDIS_URL', '')
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {'max_connections': 100}
+            }
+        }
+    }
+    # Use cached session engine (stores sessions in Redis for high performance lookup)
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+else:
+    # Safe fallback if Redis is not configured in local testing
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
 
 # ── Logging (surface errors in Render / Railway log viewer) ─────────────────
 LOGGING = {
