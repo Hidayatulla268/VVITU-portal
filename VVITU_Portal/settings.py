@@ -73,7 +73,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 # ─────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'vvit_portal.middleware.LoginRateLimitMiddleware',   # Rate limiting brute force protection
+    'VVITU_Portal.middleware.LoginRateLimitMiddleware',   # Rate limiting brute force protection
     'whitenoise.middleware.WhiteNoiseMiddleware',         # serve static in prod
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,10 +81,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'vvit_portal.middleware.RoleBasedAccessMiddleware',  # custom middleware
+    'VVITU_Portal.middleware.RoleBasedAccessMiddleware',  # custom middleware
 ]
 
-ROOT_URLCONF = 'vvit_portal.urls'
+ROOT_URLCONF = 'VVITU_Portal.urls'
 
 # ─────────────────────────────────────────────
 # TEMPLATES
@@ -105,7 +105,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'vvit_portal.wsgi.application'
+WSGI_APPLICATION = 'VVITU_Portal.wsgi.application'
 
 # ─────────────────────────────────────────────
 # DATABASE — SQLite for dev, PostgreSQL for prod
@@ -116,7 +116,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
         # Production: switch to PostgreSQL:
         # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': os.environ.get('DB_NAME', 'vvit_portal'),
+        # 'NAME': os.environ.get('DB_NAME', 'VVITU_Portal'),
         # 'USER': os.environ.get('DB_USER', 'postgres'),
         # 'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         # 'HOST': os.environ.get('DB_HOST', 'localhost'),

@@ -15,7 +15,7 @@ takes ~30 seconds to wake up on the next visit — that's normal on free tier).
 ### Step 1 — Push your code to GitHub
 
 If you haven't used Git before, here are the exact commands.
-Open a terminal inside the `vvit_portal` folder and run:
+Open a terminal inside the `VVITU_Portal` folder and run:
 
 ```bash
 git init
@@ -54,7 +54,7 @@ most settings. Verify these fields match:
 | **Region**         | Singapore (closest to India)                           |
 | **Branch**         | main                                                    |
 | **Build Command**  | `pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate` |
-| **Start Command**  | `gunicorn vvit_portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4` |
+| **Start Command**  | `gunicorn VVITU_Portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4` |
 
 ### Step 4 — Add the PostgreSQL database
 
@@ -68,7 +68,7 @@ Still on the same page, scroll to **"Environment Variables"** and add:
 
 | Key                        | Value                              |
 |----------------------------|------------------------------------|
-| `DJANGO_SETTINGS_MODULE`   | `vvit_portal.settings_prod`        |
+| `DJANGO_SETTINGS_MODULE`   | `VVITU_Portal.settings_prod`        |
 | `SECRET_KEY`               | (click "Generate" — Render does this automatically if you use render.yaml) |
 
 ### Step 6 — Click "Create Web Service"
@@ -119,7 +119,7 @@ Go to your web service → **"Variables"** tab → add:
 
 | Key                      | Value                          |
 |--------------------------|--------------------------------|
-| `DJANGO_SETTINGS_MODULE` | `vvit_portal.settings_prod`   |
+| `DJANGO_SETTINGS_MODULE` | `VVITU_Portal.settings_prod`   |
 | `SECRET_KEY`             | any long random string, e.g. `vvit-super-secret-2024-change-this-xyz` |
 
 ### Step 6 — Deploy

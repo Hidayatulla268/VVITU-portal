@@ -3,7 +3,7 @@ VVIT Portal — Student Views
 
 All views protected by the student_required decorator.
 Querysets use select_related / prefetch_related throughout to stay
-efficient at 20,000+ student scale.  The academic_calendar view uses
+efficient at 300,000+ student scale.  The academic_calendar view uses
 Django's cache framework (5-minute TTL) so simultaneous page loads
 hit the DB only once per branch/year combination.
 """

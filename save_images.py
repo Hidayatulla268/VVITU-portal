@@ -2,7 +2,7 @@ import base64
 import urllib.request
 import os
 
-img_dir = r"c:\Users\HP\Desktop\vvit\vvit_portal_v8_THEME_CALENDAR\vvit_portal\static\images"
+img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "images")
 os.makedirs(img_dir, exist_ok=True)
 
 def decode_b64(b64_str):

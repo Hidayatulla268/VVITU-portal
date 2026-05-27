@@ -8,7 +8,7 @@ import sys
 import datetime
 import random
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'vvit_portal.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'VVITU_Portal.settings')
 
 from django.utils import timezone
 from accounts.models import User, Student, Faculty

@@ -1,7 +1,7 @@
 # VVIT Portal — Complete ERP System
 ### Vasireddy Venkatadri Institute of Technology, Nambur, Guntur
 
-A production-grade college ERP web application built with Django, featuring a glassmorphism UI, role-based access control, AI attendance prediction, Excel/PDF exports, automatic cloud seeding, and scalability for 20,000+ concurrent students.
+A production-grade college ERP web application built with Django, featuring a glassmorphism UI, role-based access control, AI attendance prediction, Excel/PDF exports, automatic cloud seeding, and scalability for 300,000+ concurrent students.
 
 ---
 
@@ -31,8 +31,8 @@ A production-grade college ERP web application built with Django, featuring a gl
 ## Project Structure
 
 ```
-vvit_portal/
-├── vvit_portal/          # Django project config
+VVITU_Portal/
+├── VVITU_Portal/          # Django project config
 │   ├── settings.py       # Base settings
 │   ├── settings_prod.py  # Production settings overrides (HSTS, SSL, Cache)
 │   ├── urls.py           # Root URL routing

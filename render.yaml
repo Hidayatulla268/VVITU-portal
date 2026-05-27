@@ -22,7 +22,7 @@ services:
     startCommand: |
       python manage.py migrate &&
       python manage.py shell -c "exec(open('sample_data.py').read())" &&
-      gunicorn vvit_portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
+      gunicorn VVITU_Portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
 
 
     # Health check so Render knows when the app is ready
@@ -32,7 +32,7 @@ services:
     # Add SECRET_KEY and DATABASE_URL in the Render dashboard.
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: vvit_portal.settings_prod   # production settings file
+        value: VVITU_Portal.settings_prod   # production settings file
 
       - key: SECRET_KEY
         generateValue: true   # Render auto-generates a secure random key
@@ -53,6 +53,6 @@ databases:
   - name: vvit-portal-db
     plan: free
     region: singapore
-    databaseName: vvit_portal
+    databaseName: VVITU_Portal
     user: vvit_user
 
