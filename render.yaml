@@ -40,9 +40,16 @@ services:
       - key: WEB_CONCURRENCY
         value: 4
 
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vvit-portal-db
+          property: connectionString
+
+databases:
   # ── PostgreSQL Database ──────────────────────────────
-  - type: pserv          # managed Postgres
-    name: vvit-portal-db
+  - name: vvit-portal-db
     plan: free
+    region: singapore
     databaseName: vvit_portal
-    user: vvit_user
+    userName: vvit_user
+
