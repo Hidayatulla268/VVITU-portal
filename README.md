@@ -1,5 +1,5 @@
-# VVIT Portal — Complete ERP System
-### Vasireddy Venkatadri Institute of Technology, Nambur, Guntur
+# VVITU Portal — Complete ERP System
+### Vasireddy Venkatadri International Institute of Technology, Nambur, Guntur
 
 A production-grade college ERP web application built with Django, featuring a glassmorphism UI, role-based access control, AI attendance prediction, Excel/PDF exports, automatic cloud seeding, and scalability for 300,000+ concurrent students.
 
@@ -161,4 +161,4 @@ This repository is pre-configured with a `render.yaml` blueprint for one-click d
 
 ---
 
-*Built for VVIT — Nambur, Guntur District, Andhra Pradesh*
+*Built for VVITU — Nambur, Guntur District, Andhra Pradesh*
