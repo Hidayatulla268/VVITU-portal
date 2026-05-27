@@ -5,6 +5,7 @@ from django.contrib import messages
 PUBLIC_PREFIXES = [
     '/accounts/login',
     '/accounts/logout',
+    '/accounts/set-password',
     '/admin/',
     '/static/',
     '/media/',
@@ -35,6 +36,14 @@ class RoleBasedAccessMiddleware:
             if path.startswith(prefix):
                 return self.get_response(request)
 
+        # Force student password setup on first login
+        if request.user.is_authenticated and request.user.role == 'student':
+            try:
+                if request.user.student_profile.is_first_login:
+                    return redirect('accounts:set_password')
+            except Exception:
+                pass
+
         if path == '/':
             if request.user.is_authenticated:
                 return redirect(self._dashboard_url(request.user))
@@ -48,6 +57,7 @@ class RoleBasedAccessMiddleware:
                         return redirect(self._dashboard_url(request.user))
 
         return self.get_response(request)
+
 
     @staticmethod
     def _dashboard_url(user):

@@ -77,6 +77,8 @@ class Student(models.Model):
     counsellor   = models.ForeignKey('Faculty', on_delete=models.SET_NULL, null=True, blank=True, related_name='counselled_students', db_index=True)
     admission_year = models.IntegerField(default=2024)
     is_active    = models.BooleanField(default=True)
+    is_first_login = models.BooleanField(default=True)
+
 
     class Meta:
         verbose_name = 'Student'

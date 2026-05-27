@@ -60,3 +60,50 @@ def role_redirect(request):
     Used as LOGIN_REDIRECT_URL in settings.
     """
     return redirect(request.user.get_dashboard_url())
+
+
+# ─────────────────────────────────────────────
+# FORCE SET PASSWORD FOR STUDENTS (FIRST LOGIN)
+# ─────────────────────────────────────────────
+@login_required
+def set_password(request):
+    """
+    Force students on first login to set their permanent password.
+    """
+    # Check if the user is a student and has is_first_login set to True
+    try:
+        profile = request.user.student_profile
+    except Exception:
+        profile = None
+
+    if request.user.role != 'student' or not profile or not profile.is_first_login:
+        return redirect(request.user.get_dashboard_url())
+
+    if request.method == 'POST':
+        password = request.POST.get('password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not password:
+            messages.error(request, "Password cannot be empty.")
+        elif password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+        elif len(password) < 6:
+            messages.error(request, "Password must be at least 6 characters long.")
+        else:
+            # Set new password
+            request.user.set_password(password)
+            request.user.save()
+            
+            # Update student profile first login flag
+            profile.is_first_login = False
+            profile.save()
+            
+            # Since password changed, we must update the session auth hash to prevent logout
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            
+            messages.success(request, "Your password has been set successfully! This is now your permanent password.")
+            return redirect(request.user.get_dashboard_url())
+
+    return render(request, 'accounts/set_password.html')
+
