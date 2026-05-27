@@ -43,12 +43,16 @@
             <strong>{{ res.marks_obtained|floatformat:0 }}</strong> <span class="text-muted small">/ {{ res.max_marks|floatformat:0 }}</span>
           </td>
           <td class="text-center">
-            {% if res.grade == 'F' %}
-              <span class="badge-danger">{{ res.grade }}</span>
-            {% elif res.grade == 'S' or res.grade == 'A' %}
-              <span class="badge-success">{{ res.grade }}</span>
+            {% if res.grade %}
+              {% if res.grade == 'F' %}
+                <span class="badge-danger">{{ res.grade }}</span>
+              {% elif res.grade == 'S' or res.grade == 'A' %}
+                <span class="badge-success">{{ res.grade }}</span>
+              {% else %}
+                <span class="badge-warning text-dark">{{ res.grade }}</span>
+              {% endif %}
             {% else %}
-              <span class="badge-warning text-dark">{{ res.grade }}</span>
+              <span class="text-muted small">N/A</span>
             {% endif %}
           </td>
         </tr>

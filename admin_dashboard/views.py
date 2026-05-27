@@ -731,7 +731,7 @@ def bulk_upload_results(request):
                     errors.append(f"Row {row_idx}: Missing columns. Expected at least Roll Number and Marks.")
                     continue
                     
-                roll_num = row[0].strip()
+                roll_num = row[0].strip().upper()
                 marks_str = row[1].strip()
                 max_str = row[2].strip() if len(row) > 2 and row[2].strip() else '100'
                 
@@ -855,10 +855,18 @@ def bulk_upload_students(request):
                     # Lookup foreign keys
                     branch = Branch.objects.filter(code=branch_code).first() if branch_code else None
                     year = Year.objects.filter(year=year_val).first() if year_val else None
-                    section = Section.objects.filter(name__iexact=section_name).first() if section_name else None
+                    section = Section.objects.filter(name__iexact=section_name, branch=branch, year=year).first() if (section_name and branch and year) else None
                     
                     if not branch:
                         errors.append(f"Row {row_idx}: Invalid Branch Code '{branch_code}'.")
+                        continue
+                        
+                    if year_val and not year:
+                        errors.append(f"Row {row_idx}: Invalid Year '{year_val}'.")
+                        continue
+                        
+                    if section_name and not section:
+                        errors.append(f"Row {row_idx}: Section '{section_name}' does not exist for Branch '{branch_code}' and Year '{year_val}'.")
                         continue
                         
                     # Create User
