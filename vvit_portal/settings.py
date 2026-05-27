@@ -73,6 +73,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 # ─────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'vvit_portal.middleware.LoginRateLimitMiddleware',   # Rate limiting brute force protection
     'whitenoise.middleware.WhiteNoiseMiddleware',         # serve static in prod
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -240,7 +241,7 @@ ADMIN_INDEX_TITLE = 'VVITU Site Administration'
 # DEFAULT_FROM_EMAIL  = 'VVITU Portal <noreply@vvitu.ac.in>'
 
 # ---------------------------------------------
-# AI CHATBOT (VBot) � Gemini API
+# AI CHATBOT (VBot)  Gemini API
 # ---------------------------------------------
 # Get a FREE key at: https://aistudio.google.com/app/apikey
 # Set env var: GEMINI_API_KEY=your_key_here

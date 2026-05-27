@@ -16,7 +16,9 @@ from .settings import *          # pull in every base setting first
 
 # ── Security ────────────────────────────────────────────────────────────────
 DEBUG      = False
-SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)  # override with env var
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable is missing! Production deployment halted for security.")
 
 # Render / Railway set ALLOWED_HOSTS automatically via environment.
 # If it's not set we still add localhost so manage.py commands don't error.
@@ -72,6 +74,20 @@ CSRF_COOKIE_SECURE          = True
 SECURE_BROWSER_XSS_FILTER   = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS             = 'DENY'
+
+# HTTP Strict Transport Security (HSTS) - force HTTPS
+SECURE_HSTS_SECONDS           = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD           = True
+
+# Referrer Policy - mitigate metadata leakage
+SECURE_REFERRER_POLICY = 'same-origin'
+
+# Session Cookie Hardening
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY    = True
+CSRF_COOKIE_SAMESITE    = 'Lax'
 
 # Tell Django it's sitting behind the cloud provider's HTTPS proxy.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
