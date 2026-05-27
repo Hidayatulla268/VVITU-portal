@@ -53,6 +53,6 @@ databases:
   - name: vvitu-portal-db
     plan: free
     region: singapore
-    databaseName: VVITU_Portal
-    user: vvit_user
+    databaseName: vvitu_portal
+    user: vvitu_user
 
