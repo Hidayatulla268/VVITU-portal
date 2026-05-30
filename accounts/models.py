@@ -78,6 +78,13 @@ class Student(models.Model):
     admission_year = models.IntegerField(default=2024)
     is_active    = models.BooleanField(default=True)
     is_first_login = models.BooleanField(default=True)
+    parent_name  = models.CharField(max_length=100, blank=True, null=True)
+    parent_mobile = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')],
+    )
 
 
     class Meta:

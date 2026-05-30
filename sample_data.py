@@ -125,8 +125,13 @@ student_data = [
 
 students = []
 for roll, fname, lname, section, phone in student_data:
+    p_name = f"{random.choice(['Venkata', 'Srinivasa', 'Satya', 'Rama', 'Koteswara', 'Subba', 'Nageswara', 'Prasad'])} {lname}"
+    p_mobile = f"9{random.randint(100000000, 999999999)}"
     if User.objects.filter(username=roll).exists():
         stu = Student.objects.get(roll_number=roll)
+        stu.parent_name = p_name
+        stu.parent_mobile = p_mobile
+        stu.save()
     else:
         u = User.objects.create_user(
             username=roll, password='vvit@1234',
@@ -140,6 +145,8 @@ for roll, fname, lname, section, phone in student_data:
             class_teacher=f_rajesh,
             counsellor=f_sunitha,
             admission_year=2024,
+            parent_name=p_name,
+            parent_mobile=p_mobile,
         )
     students.append(stu)
 

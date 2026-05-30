@@ -2,67 +2,229 @@
 {% load static %}
 {% load core_tags %}
 
-{% block title %}My Counselled Students{% endblock %}
+{% block title %}My Students{% endblock %}
 
 {% block page_header %}
 <div class="page-header-strip">
   <div class="ph-left">
-    <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>My Counselled Students</h1>
-    <p class="ph-sub">Students assigned to you as counsellor — {{ students|length }} student{{ students|length|pluralize }}</p>
+    <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>My Students</h1>
+    <p class="ph-sub">Overview of your counselled students, class students, and subject students</p>
   </div>
 </div>
 {% endblock %}
 
 {% block content %}
-{% if students %}
-<div class="glass-card">
-  <div class="table-responsive">
-    <table class="vvit-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Roll Number</th>
-          <th>Name</th>
-          <th>Branch</th>
-          <th>Year</th>
-          <th>Section</th>
-          <th>Phone</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for st in students %}
-        <tr>
-          <td class="text-muted small">{{ forloop.counter }}</td>
-          <td><strong>{{ st.roll_number }}</strong></td>
-          <td>{{ st.user.get_full_name }}</td>
-          <td><span class="badge-section small">{{ st.branch.code }}</span></td>
-          <td>{{ st.year }}</td>
-          <td>{{ st.section.name }}</td>
-          <td>
-            {% if st.user.phone %}
-            <a href="tel:{{ st.user.phone }}" class="link-accent">
-              <i class="fas fa-phone me-1"></i>{{ st.user.phone }}
-            </a>
-            {% else %}
-            <span class="text-muted">—</span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="mailto:{{ st.user.email }}" class="link-accent small">{{ st.user.email }}</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="glass-card mb-4" style="padding: 0;">
+  <!-- Tab navigation -->
+  <div class="card-header-custom" style="border-bottom: 1px solid var(--clr-border); padding: 0 1.5rem;">
+    <ul class="nav nav-tabs card-header-tabs" id="studentTabs" role="tablist" style="border-bottom: none; margin-bottom: 0;">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active text-uppercase fw-bold" id="counselled-tab" data-bs-toggle="tab" data-bs-target="#counselled" type="button" role="tab" aria-controls="counselled" aria-selected="true" style="border: none; padding: 1.25rem 1.5rem; background: transparent; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
+          <i class="fas fa-user-friends me-2 text-accent"></i>Counselled ({{ counselled_students|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-uppercase fw-bold" id="class-tab" data-bs-toggle="tab" data-bs-target="#class-students" type="button" role="tab" aria-controls="class-students" aria-selected="false" style="border: none; padding: 1.25rem 1.5rem; background: transparent; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
+          <i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Class Students ({{ class_students|length }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-uppercase fw-bold" id="subject-tab" data-bs-toggle="tab" data-bs-target="#subject-students" type="button" role="tab" aria-controls="subject-students" aria-selected="false" style="border: none; padding: 1.25rem 1.5rem; background: transparent; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
+          <i class="fas fa-book-reader me-2 text-accent"></i>Students I Teach ({{ subject_students|length }})
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Tab Contents -->
+  <div class="tab-content" id="studentTabsContent" style="padding: 1.5rem;">
+    <!-- 1. Counselled Students -->
+    <div class="tab-pane fade show active" id="counselled" role="tabpanel" aria-labelledby="counselled-tab">
+      {% if counselled_students %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Roll Number</th>
+              <th>Name</th>
+              <th>Branch</th>
+              <th>Year</th>
+              <th>Section</th>
+              <th>Student Phone</th>
+              <th>Parent Name</th>
+              <th>Parent Mobile</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in counselled_students %}
+            <tr>
+              <td class="text-muted small">{{ forloop.counter }}</td>
+              <td><strong>{{ st.roll_number }}</strong></td>
+              <td>{{ st.user.get_full_name }}</td>
+              <td><span class="badge-section small">{{ st.branch.code }}</span></td>
+              <td>{{ st.year }}</td>
+              <td>{{ st.section.name }}</td>
+              <td>
+                {% if st.user.phone %}
+                <a href="tel:{{ st.user.phone }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.user.phone }}</a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>{{ st.parent_name|default:"—" }}</td>
+              <td>
+                {% if st.parent_mobile %}
+                <a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-user-friends fa-3x text-accent mb-3"></i>
+        <h5>No Counselled Students</h5>
+        <p class="text-muted">You are not assigned as counsellor to any students yet.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 2. Class Students -->
+    <div class="tab-pane fade" id="class-students" role="tabpanel" aria-labelledby="class-tab">
+      {% if class_students %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Roll Number</th>
+              <th>Name</th>
+              <th>Branch</th>
+              <th>Year</th>
+              <th>Section</th>
+              <th>Student Phone</th>
+              <th>Parent Name</th>
+              <th>Parent Mobile</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in class_students %}
+            <tr>
+              <td class="text-muted small">{{ forloop.counter }}</td>
+              <td><strong>{{ st.roll_number }}</strong></td>
+              <td>{{ st.user.get_full_name }}</td>
+              <td><span class="badge-section small">{{ st.branch.code }}</span></td>
+              <td>{{ st.year }}</td>
+              <td>{{ st.section.name }}</td>
+              <td>
+                {% if st.user.phone %}
+                <a href="tel:{{ st.user.phone }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.user.phone }}</a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>{{ st.parent_name|default:"—" }}</td>
+              <td>
+                {% if st.parent_mobile %}
+                <a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-chalkboard-teacher fa-3x text-accent mb-3"></i>
+        <h5>No Class Students</h5>
+        <p class="text-muted">You are not designated as the Class Teacher for any section.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 3. Subject Students -->
+    <div class="tab-pane fade" id="subject-students" role="tabpanel" aria-labelledby="subject-tab">
+      {% if subject_students %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Roll Number</th>
+              <th>Name</th>
+              <th>Branch</th>
+              <th>Year</th>
+              <th>Section</th>
+              <th>Subject Taught</th>
+              <th>Student Phone</th>
+              <th>Parent Name</th>
+              <th>Parent Mobile</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for st in subject_students %}
+            <tr>
+              <td class="text-muted small">{{ forloop.counter }}</td>
+              <td><strong>{{ st.roll_number }}</strong></td>
+              <td>{{ st.user.get_full_name }}</td>
+              <td><span class="badge-section small">{{ st.branch.code }}</span></td>
+              <td>{{ st.year }}</td>
+              <td>{{ st.section.name }}</td>
+              <td><span class="badge-subject small">{{ st.subjects_taught }}</span></td>
+              <td>
+                {% if st.user.phone %}
+                <a href="tel:{{ st.user.phone }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.user.phone }}</a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>{{ st.parent_name|default:"—" }}</td>
+              <td>
+                {% if st.parent_mobile %}
+                <a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-book-reader fa-3x text-accent mb-3"></i>
+        <h5>No Subject Students</h5>
+        <p class="text-muted">You have not been assigned to teach any subjects in the timetable.</p>
+      </div>
+      {% endif %}
+    </div>
   </div>
 </div>
-{% else %}
-<div class="glass-card text-center py-5">
-  <i class="fas fa-user-friends fa-3x text-accent mb-3"></i>
-  <h5>No Students Assigned</h5>
-  <p class="text-muted">You have not been assigned as counsellor to any students yet.</p>
-  <p class="text-muted small">Contact your administrator if you believe this is an error.</p>
-</div>
-{% endif %}
+
+<style>
+  /* Custom styles for tabs active indicators using accent color */
+  #studentTabs .nav-link:hover {
+    color: var(--text-primary) !important;
+  }
+  #studentTabs .nav-link.active {
+    color: var(--accent-bright) !important;
+    border-bottom: 3px solid var(--accent) !important;
+  }
+  .badge-subject {
+    background-color: var(--accent-subtle);
+    color: var(--accent-bright);
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+  }
+</style>
 {% endblock %}

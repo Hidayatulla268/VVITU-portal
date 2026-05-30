@@ -28,6 +28,14 @@
           <label class="form-label text-muted">Phone</label>
           <input type="tel" name="phone" class="vvit-input" value="{{ student.user.phone|default:'' }}"/>
         </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Parent Name</label>
+          <input type="text" name="parent_name" class="vvit-input" value="{{ student.parent_name|default:'' }}" placeholder="e.g. Satyanarayana"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Parent Mobile</label>
+          <input type="tel" name="parent_mobile" class="vvit-input" value="{{ student.parent_mobile|default:'' }}" placeholder="+91 XXXXXXXXXX"/>
+        </div>
         <div class="col-md-4">
           <label class="form-label text-muted">Branch</label>
           <select name="branch" class="vvit-select">

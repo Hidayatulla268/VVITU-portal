@@ -493,25 +493,62 @@ def export_pdf(request):
 
 
 # ─────────────────────────────────────────────
-# COUNSELLED STUDENTS
+# COUNSELLED & ASSIGNED STUDENTS
 # ─────────────────────────────────────────────
 @faculty_required
 def counselled_students(request):
     """
-    List all students for whom this faculty member is the designated counsellor.
-    Shows roll number, name, branch, year, section, and phone.
+    List all students associated with this faculty member:
+      1. Counselled students (designated counsellor)
+      2. Class students (designated class teacher)
+      3. Subject students (students in sections taught by this faculty)
     """
-    faculty  = request.faculty
-    students = (
+    faculty = request.faculty
+    
+    # 1. Counselled Students
+    counselled_list = (
         Student.objects
         .filter(counsellor=faculty, is_active=True)
         .select_related('user', 'branch', 'year', 'section')
         .order_by('roll_number')
     )
+    
+    # 2. Class Students
+    class_list = (
+        Student.objects
+        .filter(class_teacher=faculty, is_active=True)
+        .select_related('user', 'branch', 'year', 'section')
+        .order_by('roll_number')
+    )
+    
+    # 3. Subject Students (students in sections handled by this faculty)
+    timetable_slots = Timetable.objects.filter(faculty=faculty).select_related('section', 'subject')
+    section_ids = list(timetable_slots.values_list('section_id', flat=True).distinct())
+    
+    # Mapping of section ID to subjects taught
+    section_subjects = {}
+    for slot in timetable_slots:
+        if slot.section_id not in section_subjects:
+            section_subjects[slot.section_id] = []
+        if slot.subject.code not in section_subjects[slot.section_id]:
+            section_subjects[slot.section_id].append(slot.subject.code)
+            
+    subject_list = (
+        Student.objects
+        .filter(section_id__in=section_ids, is_active=True)
+        .select_related('user', 'branch', 'year', 'section')
+        .order_by('section__name', 'roll_number')
+    )
+    
+    # Attach subject codes to each subject student for rendering
+    for student in subject_list:
+        student.subjects_taught = ", ".join(section_subjects.get(student.section_id, []))
 
     context = {
-        'faculty':  faculty,
-        'students': students,
+        'faculty': faculty,
+        'counselled_students': counselled_list,
+        'class_students': class_list,
+        'subject_students': subject_list,
     }
     return render(request, 'faculty/counselled_students.html', context)
 

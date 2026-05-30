@@ -132,6 +132,8 @@ def add_student(request):
             class_teacher_id = p.get('class_teacher') or None,
             counsellor_id    = p.get('counsellor')    or None,
             admission_year   = p.get('admission_year', 2024),
+            parent_name   = p.get('parent_name', '').strip() or None,
+            parent_mobile = p.get('parent_mobile', '').strip() or None,
         )
         messages.success(request, f"Student {username} created successfully.")
         return redirect('admin_dashboard:manage_students')
@@ -161,6 +163,8 @@ def edit_student(request, pk):
         student.section_id   = p.get('section',       student.section_id)
         student.class_teacher_id = p.get('class_teacher') or None
         student.counsellor_id    = p.get('counsellor')    or None
+        student.parent_name  = p.get('parent_name', '').strip() or None
+        student.parent_mobile = p.get('parent_mobile', '').strip() or None
         student.save()
         messages.success(request, "Student updated.")
         return redirect('admin_dashboard:manage_students')

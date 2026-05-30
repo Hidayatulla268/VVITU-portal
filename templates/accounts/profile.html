@@ -122,6 +122,26 @@
         </div>
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent / Guardian Name</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.parent_name|default:"Not Provided" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent Mobile Number</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+              {% if student.parent_mobile %}
+              <a href="tel:{{ student.parent_mobile }}" class="link-accent">
+                <i class="fas fa-phone me-1"></i>{{ student.parent_mobile }}
+              </a>
+              {% else %}
+              Not Provided
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
             <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Account Status</div>
             <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--clr-success);">
               <i class="fas fa-circle-check me-2"></i>Active Student
