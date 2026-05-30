@@ -42,7 +42,7 @@
   left: -100px;
   width: 700px;
   height: 700px;
-  background: radial-gradient(circle, rgba(220,38,38,0.18) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(255,101,61,0.18) 0%, transparent 65%);
   pointer-events: none;
   z-index: 0;
   animation: drift 12s ease-in-out infinite alternate;
@@ -54,7 +54,7 @@
   right: -100px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(127,29,29,0.14) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(150,45,17,0.14) 0%, transparent 65%);
   pointer-events: none;
   z-index: 0;
   animation: drift 16s ease-in-out infinite alternate-reverse;
@@ -76,19 +76,19 @@
 .orb-1 {
   width: 300px; height: 300px;
   top: 10%; left: 15%;
-  background: radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,101,61,0.08) 0%, transparent 70%);
   animation-delay: 0s;
 }
 .orb-2 {
   width: 200px; height: 200px;
   bottom: 20%; left: 30%;
-  background: radial-gradient(circle, rgba(127,29,29,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(150,45,17,0.1) 0%, transparent 70%);
   animation-delay: -3s;
 }
 .orb-3 {
   width: 150px; height: 150px;
   top: 50%; right: 10%;
-  background: radial-gradient(circle, rgba(220,38,38,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,101,61,0.06) 0%, transparent 70%);
   animation-delay: -5s;
 }
 
@@ -129,7 +129,7 @@
   );
 
   /* Subtle left border separator */
-  border-right: 1px solid rgba(220,38,38,0.18);
+  border-right: 1px solid rgba(255,101,61,0.18);
 }
 
 /* Vertical red accent stripe on far-left */
@@ -138,7 +138,7 @@
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 4px;
-  background: linear-gradient(to bottom, transparent, #dc2626, #dc2626, transparent);
+  background: linear-gradient(to bottom, transparent, #FF653D, #FF653D, transparent);
 }
 
 .left-content {
@@ -164,8 +164,8 @@
 .logo-outer-ring {
   width: 130px; height: 130px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(220,38,38,0.25), rgba(127,29,29,0.12));
-  border: 2px solid rgba(220,38,38,0.35);
+  background: linear-gradient(135deg, rgba(255,101,61,0.25), rgba(150,45,17,0.12));
+  border: 2px solid rgba(255,101,61,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,7 +177,7 @@
   width: 100px; height: 100px;
   border-radius: 50%;
   background: rgba(5,5,8,0.7);
-  border: 2px solid rgba(220,38,38,0.2);
+  border: 2px solid rgba(255,101,61,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,7 +187,7 @@
 .login-logo {
   width: 78px; height: 78px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(220,38,38,0.35));
+  filter: drop-shadow(0 2px 8px rgba(255,101,61,0.35));
 }
 
 /* Animated pulse rings */
@@ -195,7 +195,7 @@
   position: absolute;
   inset: -16px;
   border-radius: 50%;
-  border: 1px solid rgba(220,38,38,0.18);
+  border: 1px solid rgba(255,101,61,0.18);
   animation: pulse-ring 2.5s ease-out infinite;
 }
 .logo-pulse-ring-2 {
@@ -219,7 +219,7 @@
 }
 
 .college-title .text-accent {
-  color: #ef4444 !important;
+  color: #FF8362 !important;
 }
 
 .college-location {
@@ -230,7 +230,7 @@
 
 .college-tagline {
   font-size: 0.88rem;
-  color: rgba(220,38,38,0.8);
+  color: rgba(255,101,61,0.8);
   font-style: italic;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 500;
@@ -262,7 +262,7 @@
   font-family: 'Rajdhani', sans-serif;
   font-size: 1.3rem;
   font-weight: 700;
-  color: #ef4444;
+  color: #FF8362;
 }
 
 .stat-label {
@@ -320,7 +320,7 @@
   padding: 2.5rem;
   box-shadow:
     0 24px 64px rgba(0,0,0,0.6),
-    0 0 40px rgba(220,38,38,0.06),
+    0 0 40px rgba(255,101,61,0.06),
     inset 0 1px 0 rgba(255,255,255,0.06);
   animation: slideInRight 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(18px);
@@ -412,7 +412,7 @@
 .vvit-input:not(:placeholder-shown) ~ .floating-label {
   top: 10px;
   font-size: 0.68rem;
-  color: #dc2626;
+  color: #FF653D;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -420,7 +420,7 @@
 /* Move icon colour when focused */
 .vvit-input:focus ~ .input-icon,
 .input-wrapper:focus-within .input-icon {
-  color: #dc2626;
+  color: #FF653D;
 }
 
 .toggle-password {
@@ -434,7 +434,7 @@
   z-index: 4;
   transition: color 0.2s;
 }
-.toggle-password:hover { color: #dc2626; }
+.toggle-password:hover { color: #FF653D; }
 
 /* ── Login button ─────────────────────────────────────────────────── */
 .btn-login {
@@ -443,7 +443,7 @@
   justify-content: space-between;
   padding: 13px 20px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  background: linear-gradient(135deg, #FF653D 0%, #B83E1D 100%);
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
@@ -452,7 +452,7 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 6px 20px rgba(220,38,38,0.35);
+  box-shadow: 0 6px 20px rgba(255,101,61,0.35);
   position: relative;
   overflow: hidden;
 }
@@ -473,8 +473,8 @@
 .btn-login:hover::after { left: 125%; }
 
 .btn-login:hover {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 8px 28px rgba(220,38,38,0.5);
+  background: linear-gradient(135deg, #FF8362 0%, #FF653D 100%);
+  box-shadow: 0 8px 28px rgba(255,101,61,0.5);
   transform: translateY(-1px);
 }
 
@@ -496,7 +496,7 @@
   color: #6b7280;
 }
 
-.link-accent { color: #ef4444; font-weight: 600; }
+.link-accent { color: #FF8362; font-weight: 600; }
 .link-accent:hover { color: #f87171; }
 
 /* ── Responsive ───────────────────────────────────────────────────── */
@@ -513,10 +513,10 @@
 .campus-img-strip {
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(220,38,38,0.25);
+  border: 1px solid rgba(255,101,61,0.25);
   height: 240px;           /* taller so more of building is visible */
   position: relative;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(220,38,38,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,101,61,0.1);
   margin-top: 0.5rem;
 }
 
@@ -575,9 +575,9 @@
   font-weight: 600;
   font-family: 'Rajdhani', sans-serif;
   letter-spacing: 0.06em;
-  color: #ef4444;
-  background: rgba(220,38,38,0.12);
-  border: 1px solid rgba(220,38,38,0.25);
+  color: #FF8362;
+  background: rgba(255,101,61,0.12);
+  border: 1px solid rgba(255,101,61,0.25);
   border-radius: 20px;
   padding: 3px 10px;
 }
@@ -589,7 +589,7 @@
   color: #6b7280;
 }
 .left-footer-note a {
-  color: #ef4444;
+  color: #FF8362;
   text-decoration: none;
 }
 .left-footer-note a:hover { color: #f87171; text-decoration: underline; }

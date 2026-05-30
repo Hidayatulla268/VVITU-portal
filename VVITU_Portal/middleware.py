@@ -99,9 +99,9 @@ class LoginRateLimitMiddleware:
                     <style>
                         body { background: #0a0a12; color: #f0f0f5; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
                         .card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 40px; border-radius: 16px; text-align: center; max-width: 400px; box-shadow: 0 24px 64px rgba(0,0,0,0.5); }
-                        h1 { color: #dc2626; font-size: 1.8rem; margin-top: 0; }
+                        h1 { color: #FF653D; font-size: 1.8rem; margin-top: 0; }
                         p { color: #9ca3af; font-size: 0.95rem; line-height: 1.6; }
-                        .timer { display: inline-block; margin-top: 20px; font-weight: bold; color: #dc2626; }
+                        .timer { display: inline-block; margin-top: 20px; font-weight: bold; color: #FF653D; }
                     </style>
                 </head>
                 <body>
