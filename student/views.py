@@ -198,29 +198,88 @@ def timetable(request):
 @student_required
 def results(request):
     student = request.student
-    # Only show results for released exams
+    exam_id  = request.GET.get('exam',     '')
+    semester = request.GET.get('semester', '')
+    
+    selected_exam_obj = None
+    sgpa = 0.0
+    pass_status = "Pass"
+    revaluation_date = None
+    results_list = []
+    
+    # Filter exams matching the student's branch and year level
+    exams = Exam.objects.filter(branch=student.branch, year=student.year).order_by('-date')
+
+    if exam_id:
+        try:
+            selected_exam_obj = Exam.objects.get(id=exam_id)
+            results_qs = Result.objects.filter(
+                student=student,
+                exam_id=exam_id,
+                exam__release__released=True
+            ).select_related('subject').order_by('subject__name')
+            
+            results_list = list(results_qs)
+            
+            # Calculate SGPA and Pass/Fail status dynamically according to R23 regulation
+            grade_points = {
+                'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5,
+                'F': 0, 'Ab': 0
+            }
+            total_points = 0
+            total_credits = 0
+            has_fail = False
+            
+            for r in results_list:
+                g = r.grade
+                if g in ['CP', 'NCP']:
+                    if g == 'NCP':
+                        has_fail = True
+                    continue
+                if g in ['F', 'Ab'] or not g:
+                    has_fail = True
+                
+                credits = r.subject.credits if r.subject else 3
+                points = grade_points.get(g, 0)
+                total_points += points * credits
+                total_credits += credits
+                
+            sgpa = round(total_points / total_credits, 2) if total_credits > 0 else 0.0
+            pass_status = "Fail" if has_fail else "Pass"
+            
+            if selected_exam_obj.date:
+                revaluation_date = selected_exam_obj.date + datetime.timedelta(days=40)
+            else:
+                revaluation_date = timezone.localdate() + datetime.timedelta(days=30)
+                
+        except Exam.DoesNotExist:
+            pass
+
+    # Standard general view (all results list)
     qs = (
         Result.objects
         .filter(student=student, exam__release__released=True)
         .select_related('exam', 'subject')
         .order_by('-exam__date', 'subject__name')
     )
-    exam_id  = request.GET.get('exam',     '')
-    semester = request.GET.get('semester', '')
     if exam_id:
         qs = qs.filter(exam_id=exam_id)
     if semester:
         qs = qs.filter(exam__semester=semester)
 
-    exams        = Exam.objects.filter(branch=student.branch, year=student.year).order_by('-date')
     results_page = Paginator(qs, 15).get_page(request.GET.get('page', 1))
 
     return render(request, 'student/results.html', {
-        'results_page':  results_page,
-        'exams':         exams,
-        'selected_exam': exam_id,
-        'selected_sem':  semester,
-        'semesters':     range(1, 9),
+        'results_page':      results_page,
+        'exams':             exams,
+        'selected_exam':     exam_id,
+        'selected_exam_obj': selected_exam_obj,
+        'selected_sem':      semester,
+        'semesters':         range(1, 9),
+        'results_list':      results_list,
+        'sgpa':              sgpa,
+        'pass_status':       pass_status,
+        'revaluation_date':  revaluation_date,
     })
 
 

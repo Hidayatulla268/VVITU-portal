@@ -530,16 +530,93 @@ def student_results(request):
     students = Student.objects.filter(
         Q(class_teacher=faculty) | Q(counsellor=faculty),
         is_active=True
-    )
+    ).select_related('user')
     
-    # Get released results for these students
+    selected_student_id = request.GET.get('student', '')
+    selected_exam_id = request.GET.get('exam', '')
+    
+    selected_student = None
+    selected_exam_obj = None
+    results_list = []
+    sgpa = 0.0
+    pass_status = "Pass"
+    revaluation_date = None
+    
+    # List of all exams for branch/year combination of these students
+    branch_ids = students.values_list('branch_id', flat=True).distinct()
+    year_ids = students.values_list('year_id', flat=True).distinct()
+    exams = Exam.objects.filter(branch_id__in=branch_ids, year_id__in=year_ids).order_by('-date')
+    
+    if selected_student_id and selected_exam_id:
+        try:
+            selected_student = students.get(id=selected_student_id)
+            selected_exam_obj = Exam.objects.get(id=selected_exam_id)
+            
+            results_qs = Result.objects.filter(
+                student=selected_student,
+                exam_id=selected_exam_id,
+                exam__release__released=True
+            ).select_related('subject').order_by('subject__name')
+            
+            results_list = list(results_qs)
+            
+            # Calculate SGPA and Pass/Fail status dynamically according to R23 regulation
+            grade_points = {
+                'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5,
+                'F': 0, 'Ab': 0
+            }
+            total_points = 0
+            total_credits = 0
+            has_fail = False
+            
+            for r in results_list:
+                g = r.grade
+                if g in ['CP', 'NCP']:
+                    if g == 'NCP':
+                        has_fail = True
+                    continue
+                if g in ['F', 'Ab'] or not g:
+                    has_fail = True
+                
+                credits = r.subject.credits if r.subject else 3
+                points = grade_points.get(g, 0)
+                total_points += points * credits
+                total_credits += credits
+                
+            sgpa = round(total_points / total_credits, 2) if total_credits > 0 else 0.0
+            pass_status = "Fail" if has_fail else "Pass"
+            
+            if selected_exam_obj.date:
+                revaluation_date = selected_exam_obj.date + datetime.timedelta(days=40)
+            else:
+                revaluation_date = timezone.localdate() + datetime.timedelta(days=30)
+                
+        except (Student.DoesNotExist, Exam.DoesNotExist):
+            pass
+            
+    # Default view list
     results = Result.objects.filter(
         student__in=students,
         exam__release__released=True
     ).select_related('student__user', 'exam', 'subject').order_by('student__roll_number', '-exam__date')
     
+    if selected_student_id:
+        results = results.filter(student_id=selected_student_id)
+    if selected_exam_id:
+        results = results.filter(exam_id=selected_exam_id)
+        
     context = {
-        'faculty': faculty,
-        'results': results,
+        'faculty':             faculty,
+        'students':            students,
+        'exams':               exams,
+        'selected_student':    selected_student,
+        'selected_exam_obj':   selected_exam_obj,
+        'selected_student_id': selected_student_id,
+        'selected_exam_id':    selected_exam_id,
+        'results_list':        results_list,
+        'sgpa':                sgpa,
+        'pass_status':         pass_status,
+        'revaluation_date':    revaluation_date,
+        'results':             results,
     }
     return render(request, 'faculty/student_results.html', context)

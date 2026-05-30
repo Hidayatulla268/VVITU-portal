@@ -14,8 +14,255 @@
 {% endblock %}
 
 {% block content %}
-{% if results %}
-<div class="glass-card">
+<!-- Filter Bar -->
+<div class="glass-card mb-4 no-print-filter-wrapper">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label text-muted">Select Student</label>
+      <select name="student" class="vvit-select">
+        <option value="">— Choose Student —</option>
+        {% for std in students %}
+        <option value="{{ std.id }}" {% if selected_student_id == std.id|stringformat:"s" %}selected{% endif %}>
+          {{ std.roll_number }} — {{ std.user.get_full_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label text-muted">Select Exam</label>
+      <select name="exam" class="vvit-select">
+        <option value="">— Choose Exam —</option>
+        {% for exm in exams %}
+        <option value="{{ exm.id }}" {% if selected_exam_id == exm.id|stringformat:"s" %}selected{% endif %}>
+          {{ exm.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-fill">
+        <i class="fas fa-search me-2"></i>Search
+      </button>
+      <a href="{% url 'faculty:student_results' %}" class="btn-vvit-outline flex-fill">
+        <i class="fas fa-times me-2"></i>Clear
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Styles and Printing overrides -->
+<style>
+@media print {
+  /* Hide standard layout wrapper components */
+  .vvit-navbar,
+  .vvit-sidebar,
+  .sidebar-overlay,
+  .page-header-strip,
+  .glass-card:not(.print-sheet-card),
+  .print-controls-wrapper,
+  .no-print-filter-wrapper,
+  .theme-toggle-btn,
+  .vbot-icon-btn,
+  .vbot-chat-window,
+  .card-header-custom,
+  #vvit-navbar,
+  #vvit-sidebar {
+    display: none !important;
+  }
+  
+  /* Reset background and text colors to clean print white */
+  body, html {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .vvit-main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  .content-body {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  
+  /* Reset print sheet margins and borders */
+  .print-sheet-card {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  
+  .print-sheet-card h2,
+  .print-sheet-card h4,
+  .print-sheet-card h5,
+  .print-sheet-card p,
+  .print-sheet-card td,
+  .print-sheet-card th {
+    color: #000 !important;
+  }
+  
+  /* High contrast colors for print compatibility */
+  .print-sheet-card .text-danger {
+    color: #000 !important;
+    font-weight: bold !important;
+  }
+  
+  .print-header-logo-section h2 {
+    color: #dc2626 !important;
+  }
+  .print-header-logo-section h4 {
+    color: #ea580c !important;
+  }
+  
+  .print-sheet-card div[style*="background"] {
+    background: #fff !important;
+    border: 1px solid #000 !important;
+  }
+  
+  /* Table formatting during printing */
+  .vvit-table {
+    width: 100% !important;
+    border: 1px solid #000 !important;
+    border-collapse: collapse !important;
+  }
+  .vvit-table th, .vvit-table td {
+    border: 1px solid #000 !important;
+    padding: 8px 12px !important;
+    color: #000 !important;
+  }
+  .vvit-table thead tr {
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+</style>
+
+<!-- Results Card wrapper -->
+<div class="glass-card print-sheet-card">
+  {% if selected_student and selected_exam_obj and results_list %}
+  <!-- Header Logo & College Name -->
+  <div class="text-center mb-4 print-header-logo-section pt-3">
+    <div class="mx-auto mb-2" style="width: 70px; height: 70px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+      <svg width="50" height="50" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#dc2626"/>
+            <stop offset="100%" stop-color="#7f1d1d"/>
+          </linearGradient>
+        </defs>
+        <path d="M20 2 L6 8 V20 C6 29 12 35 20 38 C28 35 34 29 34 20 V8 L20 2 Z" fill="url(#shieldGrad)" stroke="#dc2626" stroke-width="1.5"/>
+        <text x="20" y="25" fill="#ffffff" font-family="'Rajdhani', sans-serif" font-weight="900" font-size="14" text-anchor="middle">VVIT</text>
+      </svg>
+    </div>
+    <h2 style="font-family: var(--font-display); font-weight: 700; color: var(--accent-bright); margin-bottom: 2px;">
+      Vasireddy Venkatadri Institute of Technology (VVITU)
+    </h2>
+    <h5 class="text-muted small text-uppercase" style="letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600;">
+      Autonomous
+    </h5>
+    <h4 class="text-accent fw-bold mb-3">
+      {{ selected_exam_obj.name }} Results
+    </h4>
+  </div>
+
+  <!-- Search / Print Row -->
+  <div class="print-controls-wrapper mb-4">
+    <div class="row align-items-center justify-content-center g-3">
+      <div class="col-auto">
+        <input type="text" value="{{ selected_student.roll_number }}" readonly class="vvit-input text-center" style="width: 150px; font-weight: bold; background: rgba(0,0,0,0.25);">
+      </div>
+      <div class="col-auto">
+        <button onclick="window.print();" class="btn-vvit-primary px-4" style="background: linear-gradient(135deg, #f97316, #ea580c); border-color: #ea580c; box-shadow: 0 4px 12px rgba(234,88,12,0.3);">
+          <i class="fas fa-print me-2"></i>Print Result Sheet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Details Block -->
+  <div class="mx-auto mb-4" style="max-width: 500px; border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 16px; background: rgba(0,0,0,0.15);">
+    <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+      <tr>
+        <td style="width: 40%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">HallTicket No</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">{{ selected_student.roll_number }}</td>
+      </tr>
+      <tr>
+        <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Name</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{ selected_student.user.get_full_name }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Subject Wise Table -->
+  <div class="table-responsive">
+    <table class="vvit-table text-start">
+      <thead>
+        <tr style="background: rgba(220, 38, 38, 0.1);">
+          <th style="width: 25%;">Subject Code</th>
+          <th>Subject</th>
+          <th style="width: 15%; text-align: center;">Grade</th>
+          <th style="width: 15%; text-align: center;">Credits</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for res in results_list %}
+        <tr>
+          <td><strong>{{ res.subject.code }}</strong></td>
+          <td>
+            <div class="subject-cell">
+              <span class="subject-code" style="font-weight: normal; font-size: 0.88rem;">{{ res.subject.name }}</span>
+            </div>
+          </td>
+          <td class="text-center">
+            {% if res.grade %}
+            <span class="grade-badge grade-{{ res.grade|lower|cut:'+' }}" style="font-size: 0.85rem; font-weight: 700;">{{ res.grade }}</span>
+            {% else %}
+            <span class="text-muted small">N/A</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {{ res.subject.credits|default:'—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary Details Row -->
+  <div class="mx-auto mt-4" style="max-width: 500px; border-top: 1px solid var(--clr-border); padding-top: 16px;">
+    <table style="width: 100%; font-size: 0.95rem; border-collapse: collapse;">
+      <tr>
+        <td style="width: 50%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Pass/Fail</td>
+        <td style="font-weight: 700; padding: 6px 0; {% if pass_status == 'Pass' %}color: var(--clr-success);{% else %}color: var(--clr-danger);{% endif %}">{{ pass_status }}</td>
+      </tr>
+      <tr>
+        <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">SGPA</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">{{ sgpa }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Footer Warning & Notes -->
+  <div class="text-center mt-5 pt-3" style="font-size: 0.8rem; border-top: 1px solid var(--clr-border); line-height: 1.6;">
+    <p class="mb-1" style="font-weight: 600; color: var(--text-primary);">
+      Note: Last date for Recounting/Revaluation/Challenge by Revaluation is {{ revaluation_date|date:"d-m-Y" }}
+    </p>
+    <p class="text-danger mb-1" style="font-weight: 600;">
+      Important!! The data provided on this site is purely for informational purpose.
+    </p>
+    <p class="text-muted mb-0">
+      Note: *CP-Completed *NCP-Not Completed
+    </p>
+  </div>
+
+  {% else %}
+  <!-- Fallback: Standard general list table -->
+  {% if results %}
   <div class="table-responsive">
     <table class="vvit-table">
       <thead>
@@ -60,12 +307,13 @@
       </tbody>
     </table>
   </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="fas fa-chart-bar fa-3x text-accent mb-3"></i>
+    <h5>No Results Found</h5>
+    <p class="text-muted">Choose a student and an exam from the filters above to print their results sheet.</p>
+  </div>
+  {% endif %}
+  {% endif %}
 </div>
-{% else %}
-<div class="glass-card text-center py-5">
-  <i class="fas fa-chart-bar fa-3x text-accent mb-3"></i>
-  <h5>No Results Found</h5>
-  <p class="text-muted">No released exam results were found for the students assigned to you.</p>
-</div>
-{% endif %}
 {% endblock %}

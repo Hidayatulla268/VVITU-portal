@@ -16,10 +16,10 @@
   --clr-border:    rgba(0,0,0,0.10);
   --clr-border-2:  rgba(0,0,0,0.16);
 
-  --accent:        #D94E2B;
-  --accent-bright: #FF653D;
-  --accent-glow:   rgba(217,78,43,0.20);
-  --accent-subtle: rgba(255,101,61,0.08);
+  --accent:        #c01a1a;
+  --accent-bright: #dc2626;
+  --accent-glow:   rgba(192,26,26,0.20);
+  --accent-subtle: rgba(220,38,38,0.08);
 
   --text-primary:   #111827;
   --text-secondary: #374151;
@@ -29,8 +29,8 @@
   --clr-success-bg: rgba(5,150,105,0.10);
   --clr-warning:    #d97706;
   --clr-warning-bg: rgba(217,119,6,0.10);
-  --clr-danger:     #FF653D;
-  --clr-danger-bg:  rgba(255,101,61,0.10);
+  --clr-danger:     #dc2626;
+  --clr-danger-bg:  rgba(220,38,38,0.10);
   --clr-info:       #2563eb;
   --clr-info-bg:    rgba(37,99,235,0.10);
 
@@ -64,12 +64,12 @@
 }
 
 [data-theme="light"] .sidebar-nav .nav-link:hover {
-  background: rgba(255,101,61,0.07);
+  background: rgba(220,38,38,0.07);
   color: var(--accent-bright);
 }
 
 [data-theme="light"] .sidebar-nav .nav-link.active {
-  background: rgba(255,101,61,0.12);
+  background: rgba(220,38,38,0.12);
   color: var(--accent);
 }
 
@@ -82,7 +82,7 @@
 
 /* ── Light mode table ───────────────────────────────────────────────── */
 [data-theme="light"] .vvit-table thead tr {
-  background: rgba(255,101,61,0.06);
+  background: rgba(220,38,38,0.06);
 }
 
 [data-theme="light"] .vvit-table thead th {
@@ -95,7 +95,7 @@
 }
 
 [data-theme="light"] .vvit-table tbody tr:hover {
-  background: rgba(255,101,61,0.04);
+  background: rgba(220,38,38,0.04);
 }
 
 [data-theme="light"] .vvit-table td {
@@ -122,7 +122,7 @@
 [data-theme="light"] .vvit-input:focus,
 [data-theme="light"] .vvit-select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255,101,61,0.12);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
   background: #fff;
 }
 
@@ -138,7 +138,7 @@
 
 /* ── Light mode page header ─────────────────────────────────────────── */
 [data-theme="light"] .page-header-strip {
-  background: linear-gradient(90deg, rgba(255,101,61,0.06), transparent);
+  background: linear-gradient(90deg, rgba(220,38,38,0.06), transparent);
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
@@ -154,13 +154,13 @@
 }
 
 [data-theme="light"] .quick-action-btn:hover {
-  background: rgba(255,101,61,0.06);
-  border-color: rgba(255,101,61,0.3);
+  background: rgba(220,38,38,0.06);
+  border-color: rgba(220,38,38,0.3);
 }
 
 /* ── Light mode scrollbar ───────────────────────────────────────────── */
 [data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: rgba(255,101,61,0.3);
+  background: rgba(220,38,38,0.3);
 }
 
 /* ── Light mode toasts ──────────────────────────────────────────────── */
@@ -172,8 +172,8 @@
 
 [data-theme="light"] .toast-error {
   background: rgba(254,226,226,0.98) !important;
-  border: 1px solid rgba(255,101,61,0.4) !important;
-  color: #B83E1D !important;
+  border: 1px solid rgba(220,38,38,0.4) !important;
+  color: #991b1b !important;
 }
 
 /* ── Light mode user chip ───────────────────────────────────────────── */
@@ -202,7 +202,7 @@
 
 /* ── Light mode period badge ─────────────────────────────────────────── */
 [data-theme="light"] .period-badge {
-  background: rgba(255,101,61,0.08);
+  background: rgba(220,38,38,0.08);
   color: var(--accent);
 }
 
@@ -217,8 +217,8 @@
 }
 
 [data-theme="light"] .tt-slot.filled {
-  background: rgba(255,101,61,0.08);
-  border-color: rgba(255,101,61,0.2);
+  background: rgba(220,38,38,0.08);
+  border-color: rgba(220,38,38,0.2);
 }
 
 [data-theme="light"] .tt-subject-name,
@@ -260,7 +260,7 @@
 }
 
 [data-theme="light"] .att-radio-card.selected {
-  background: rgba(255,101,61,0.08);
+  background: rgba(220,38,38,0.08);
   border-color: var(--accent);
 }
 
@@ -284,7 +284,7 @@
 }
 
 [data-theme="light"] .glass-dropdown .dropdown-item:hover {
-  background: rgba(255,101,61,0.06) !important;
+  background: rgba(220,38,38,0.06) !important;
   color: var(--accent) !important;
 }
 
@@ -320,9 +320,9 @@
 /* ── Kill ALL flatpickr default styles and replace completely ─────── */
 .flatpickr-calendar {
   background:      #1a0505 !important;
-  border:          2px solid #FF653D !important;
+  border:          2px solid #dc2626 !important;
   border-radius:   16px !important;
-  box-shadow:      0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,101,61,0.3) !important;
+  box-shadow:      0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(220,38,38,0.3) !important;
   font-family:     'Inter', sans-serif !important;
   width:           300px !important;
   padding:         8px !important;
@@ -332,13 +332,13 @@
 /* Light mode calendar */
 [data-theme="light"] .flatpickr-calendar {
   background:  #ffffff !important;
-  border:      2px solid #FF653D !important;
-  box-shadow:  0 12px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,101,61,0.15) !important;
+  border:      2px solid #dc2626 !important;
+  box-shadow:  0 12px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(220,38,38,0.15) !important;
 }
 
 /* ── Month header section ──────────────────────────────────────────── */
 .flatpickr-months {
-  background:    rgba(255,101,61,0.2) !important;
+  background:    rgba(220,38,38,0.2) !important;
   border-radius: 10px !important;
   padding:       6px 4px !important;
   margin-bottom: 6px !important;
@@ -347,7 +347,7 @@
 }
 
 [data-theme="light"] .flatpickr-months {
-  background: rgba(255,101,61,0.08) !important;
+  background: rgba(220,38,38,0.08) !important;
 }
 
 /* Month text — THIS IS THE FIX for invisible month names */
@@ -421,17 +421,17 @@
 
 /* Year up/down arrows */
 .arrowUp, .arrowDown {
-  border-top-color:    #FF653D !important;
-  border-bottom-color: #FF653D !important;
+  border-top-color:    #dc2626 !important;
+  border-bottom-color: #dc2626 !important;
 }
 
 /* ── Prev / Next month arrows ──────────────────────────────────────── */
 .flatpickr-prev-month,
 .flatpickr-next-month {
-  background:    rgba(255,101,61,0.15) !important;
+  background:    rgba(220,38,38,0.15) !important;
   border-radius: 8px !important;
-  color:         #FF8362 !important;
-  fill:          #FF8362 !important;
+  color:         #ef4444 !important;
+  fill:          #ef4444 !important;
   padding:       6px 10px !important;
   height:        32px !important;
   display:       flex !important;
@@ -442,7 +442,7 @@
 
 .flatpickr-prev-month:hover,
 .flatpickr-next-month:hover {
-  background: rgba(255,101,61,0.35) !important;
+  background: rgba(220,38,38,0.35) !important;
   color:      #fff !important;
   fill:       #fff !important;
 }
@@ -466,7 +466,7 @@
 }
 
 .flatpickr-weekday {
-  color:          #FF8362 !important;
+  color:          #ef4444 !important;
   font-family:    'Rajdhani', sans-serif !important;
   font-size:      0.78rem !important;
   font-weight:    700 !important;
@@ -475,7 +475,7 @@
 }
 
 [data-theme="light"] .flatpickr-weekday {
-  color: #FF653D !important;
+  color: #dc2626 !important;
 }
 
 /* ── Day cells ─────────────────────────────────────────────────────── */
@@ -511,27 +511,27 @@
 
 /* Hover */
 .flatpickr-day:hover {
-  background:   rgba(255,101,61,0.18) !important;
-  border-color: rgba(255,101,61,0.4) !important;
-  color:        #FF8362 !important;
+  background:   rgba(220,38,38,0.18) !important;
+  border-color: rgba(220,38,38,0.4) !important;
+  color:        #ef4444 !important;
 }
 
 [data-theme="light"] .flatpickr-day:hover {
-  background:   rgba(255,101,61,0.10) !important;
-  color:        #FF653D !important;
+  background:   rgba(220,38,38,0.10) !important;
+  color:        #dc2626 !important;
 }
 
 /* Today */
 .flatpickr-day.today {
-  border-color: #FF653D !important;
-  color:        #FF8362 !important;
+  border-color: #dc2626 !important;
+  color:        #ef4444 !important;
   font-weight:  700 !important;
-  background:   rgba(255,101,61,0.10) !important;
+  background:   rgba(220,38,38,0.10) !important;
 }
 
 [data-theme="light"] .flatpickr-day.today {
-  color:      #FF653D !important;
-  background: rgba(255,101,61,0.08) !important;
+  color:      #dc2626 !important;
+  background: rgba(220,38,38,0.08) !important;
 }
 
 /* Selected */
@@ -539,11 +539,11 @@
 .flatpickr-day.selected:hover,
 .flatpickr-day.startRange,
 .flatpickr-day.endRange {
-  background:   linear-gradient(135deg, #FF653D, #962D11) !important;
-  border-color: #FF653D !important;
+  background:   linear-gradient(135deg, #dc2626, #7f1d1d) !important;
+  border-color: #dc2626 !important;
   color:        #ffffff !important;
   font-weight:  700 !important;
-  box-shadow:   0 4px 14px rgba(255,101,61,0.5) !important;
+  box-shadow:   0 4px 14px rgba(220,38,38,0.5) !important;
 }
 
 /* Disabled */
@@ -584,7 +584,7 @@ input.flatpickr-input,
   font-weight:   500 !important;
   width:         100% !important;
   cursor:        pointer !important;
-  caret-color:   #FF653D !important;
+  caret-color:   #dc2626 !important;
   transition:    border-color 0.2s, box-shadow 0.2s !important;
 }
 
@@ -597,8 +597,8 @@ input.flatpickr-input,
 
 .flatpickr-input:focus,
 input.flatpickr-input:focus {
-  border-color: #FF653D !important;
-  box-shadow:   0 0 0 3px rgba(255,101,61,0.18) !important;
+  border-color: #dc2626 !important;
+  box-shadow:   0 0 0 3px rgba(220,38,38,0.18) !important;
   outline:      none !important;
 }
 
@@ -627,7 +627,7 @@ input.flatpickr-input:focus {
   right:          12px;
   top:            50%;
   transform:      translateY(-50%);
-  color:          #FF653D;
+  color:          #dc2626;
   font-size:      0.88rem;
   pointer-events: none;
   z-index:        10;
