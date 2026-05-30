@@ -112,6 +112,12 @@
         </button>
         <ul class="dropdown-menu dropdown-menu-end glass-dropdown">
           <li>
+            <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+              <i class="fas fa-user-circle me-2"></i>My Profile
+            </a>
+          </li>
+          <li><hr class="dropdown-divider" style="border-color: var(--clr-border);"></li>
+          <li>
             <a class="dropdown-item" href="{% url 'accounts:logout' %}">
               <i class="fas fa-sign-out-alt me-2"></i>Logout
             </a>
@@ -139,6 +145,9 @@
 
   <nav class="sidebar-nav">
     {% if user.role == 'student' %}
+      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+      </a>
       <a href="{% url 'student:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
       </a>
@@ -156,6 +165,9 @@
       </a>
 
     {% elif user.role == 'faculty' or user.role == 'hod' or user.role == 'lab_technician' %}
+      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+      </a>
       <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
       </a>
@@ -173,6 +185,9 @@
       </a>
 
     {% elif user.role == 'admin' %}
+      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+      </a>
       <a href="{% url 'admin_dashboard:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
       </a>

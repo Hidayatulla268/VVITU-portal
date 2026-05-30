@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from .models import Student, Faculty
 
 
 # ─────────────────────────────────────────────
@@ -106,4 +107,35 @@ def set_password(request):
             return redirect(request.user.get_dashboard_url())
 
     return render(request, 'accounts/set_password.html')
+
+
+# ─────────────────────────────────────────────
+# USER PROFILE VIEW
+# ─────────────────────────────────────────────
+@login_required
+def profile_view(request):
+    """
+    Render personal profile details for Students, Faculty, and Admin.
+    """
+    user = request.user
+    student = None
+    faculty = None
+    
+    if user.role == 'student':
+        try:
+            student = user.student_profile
+        except Student.DoesNotExist:
+            pass
+    elif user.role in ['faculty', 'hod', 'lab_technician']:
+        try:
+            faculty = user.faculty_profile
+        except Faculty.DoesNotExist:
+            pass
+            
+    context = {
+        'user': user,
+        'student': student,
+        'faculty': faculty,
+    }
+    return render(request, 'accounts/profile.html', context)
 

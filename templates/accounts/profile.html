@@ -1,0 +1,192 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-circle me-2 text-accent"></i>My Profile</h1>
+    <p class="ph-sub">View and manage your academic account settings</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Profile Sidebar Summary Card -->
+  <div class="col-lg-4">
+    <div class="glass-card text-center py-5 h-100">
+      <!-- Avatar Bubble -->
+      <div class="mx-auto mb-4 d-flex align-items-center justify-content-center" 
+           style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #7f1d1d); border: 3px solid var(--accent-bright); box-shadow: var(--shadow-glow);">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+        {% else %}
+          <span style="font-family: var(--font-display); font-weight: 700; font-size: 2.5rem; color: #fff; letter-spacing: 0.05em;">
+            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          </span>
+        {% endif %}
+      </div>
+
+      <h3 style="font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: var(--text-primary); margin-bottom: 6px;">
+        {{ user.get_full_name|default:user.username }}
+      </h3>
+      <span class="badge-section mb-4 d-inline-block text-uppercase" style="font-size: 0.72rem; padding: 4px 14px;">
+        {{ user.get_role_display }}
+      </span>
+
+      <!-- Contact Details -->
+      <div class="text-start px-4 mt-3" style="border-top: 1px solid var(--clr-border); padding-top: 20px;">
+        <div class="mb-3 d-flex align-items-center gap-3">
+          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <div>
+            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Email Address</div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem; word-break: break-all;">{{ user.email|default:"Not Configured" }}</div>
+          </div>
+        </div>
+
+        <div class="mb-0 d-flex align-items-center gap-3">
+          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-phone"></i>
+          </div>
+          <div>
+            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number</div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ user.phone|default:"Not Configured" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Academic and Registration Details -->
+  <div class="col-lg-8">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-4">
+        <h3 class="card-title-custom"><i class="fas fa-id-card me-2 text-accent"></i>Registration Details</h3>
+        <span class="card-badge">Portal ID: {{ user.username }}</span>
+      </div>
+
+      {% if user.role == 'student' and student %}
+      <!-- Student Profile Fields -->
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">HallTicket / Roll No</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.roll_number }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Department / Branch</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.branch.name }} ({{ student.branch.code }})</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Current Semester & Year</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+              Sem {{ student.year.year }} — Year {{ student.year.get_year_display }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Assigned Section</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">Section {{ student.section.name|default:"Not Assigned" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Class Teacher</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+              {{ student.class_teacher.user.get_full_name|default:"Not Assigned" }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Counsellor</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+              {{ student.counsellor.user.get_full_name|default:"Not Assigned" }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Admission Year</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.admission_year }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Account Status</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--clr-success);">
+              <i class="fas fa-circle-check me-2"></i>Active Student
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% elif user.role in 'faculty hod lab_technician' and faculty %}
+      <!-- Faculty Profile Fields -->
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Employee / Staff ID</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ faculty.employee_id }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Department</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ faculty.department.name }} ({{ faculty.department.code }})</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Designation</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ faculty.designation|default:"Professor" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Date of Joining</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ faculty.joining_date|date:"d M Y"|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Staff Status</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--clr-success);">
+              <i class="fas fa-circle-check me-2"></i>Active Faculty
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Admin / Fallback Fields -->
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Username</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ user.username }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">System Clearance</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--clr-danger);">
+              <i class="fas fa-shield-alt me-2"></i>Full System Administrator
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
