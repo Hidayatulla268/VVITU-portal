@@ -28,7 +28,16 @@ def login_view(request):
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
 
-        user = authenticate(request, username=username, password=password)
+        # Resolve username case-insensitively, also supporting email-based login
+        from django.contrib.auth import get_user_model
+        from django.db.models import Q
+        User = get_user_model()
+        db_user = User.objects.filter(
+            Q(username__iexact=username) | Q(email__iexact=username)
+        ).first()
+        resolved_username = db_user.username if db_user else username
+
+        user = authenticate(request, username=resolved_username, password=password)
         if user is not None:
             login(request, user)
             messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
