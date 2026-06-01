@@ -5,6 +5,7 @@ Production-ready configuration for Vasireddy Venkatadri International Institute 
 
 import os
 from pathlib import Path
+from decouple import config, Csv
 
 # ─────────────────────────────────────────────
 # BASE PATHS
@@ -12,17 +13,16 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ─────────────────────────────────────────────
-# CORE SECURITY  (override via env vars in prod)
+# CORE SECURITY  (override via env vars / .env)
 # ─────────────────────────────────────────────
-SECRET_KEY = os.environ.get(
+SECRET_KEY = config(
     'DJANGO_SECRET_KEY',
-    'vvitu-dev-fallback-key-DO-NOT-USE-in-production-replace-me-immediately-2024'
+    default='vvitu-dev-fallback-key-DO-NOT-USE-in-production-replace-me-immediately-2024'
 )
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
-_RAW_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*')
-ALLOWED_HOSTS = [h.strip() for h in _RAW_HOSTS.split(',') if h.strip()]
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='*', cast=Csv())
 
 # ── Production HTTPS / Cookie security ──────
 # These are SAFE to leave as-is in dev (DEBUG=True bypasses most of them).

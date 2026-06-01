@@ -21,7 +21,7 @@ services:
     # Start: run migrations, load sample data, and launch Gunicorn
     startCommand: |
       python manage.py migrate &&
-      python manage.py shell -c "exec(open('sample_data.py').read())" &&
+      python manage.py seed_data &&
       gunicorn VVITU_Portal.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120
 
 

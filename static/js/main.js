@@ -162,7 +162,22 @@ document.addEventListener('keydown', e => {
 });
 
 
-/* ── 9. DOM READY ────────────────────────────────────────────────── */
+/* ── 9. STAGGERED ENTRANCE ANIMATION ─────────────────────────────── */
+function triggerStaggeredEntrance() {
+  const elements = document.querySelectorAll('.glass-card, .kpi-card, .vvit-table, .timetable-grid');
+  elements.forEach((el, index) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(15px)';
+    el.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color var(--t-med), box-shadow var(--t-med)';
+    setTimeout(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, index * 60);
+  });
+}
+
+
+/* ── 10. DOM READY ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Re-apply theme so icon updates correctly
   applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
@@ -171,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
   animatePctBars();
   animateGauge();
   document.body.classList.add('js-loaded');
+  triggerStaggeredEntrance();
 
   if (typeof flatpickr !== 'undefined') {
     initDatePickers();

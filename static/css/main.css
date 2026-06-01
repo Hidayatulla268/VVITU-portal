@@ -1705,9 +1705,112 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
 /* Logo pulse ring colour update */
 .logo-pulse-ring {
   border-color: rgba(220,38,38,0.25);
+}
 
 /* ── Theme and calendar overrides loaded separately ─────────────── */
 /* (see theme_and_calendar.css — imported via base.html) */
 
 /* NOTIFICATION BELL DROPDOWN */
 .notif-bell-wrap{position:relative}.notif-bell-btn{position:relative}.notif-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;background:#dc2626;color:#fff;font-size:0.6rem;font-weight:800;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 4px;font-family:'Inter',sans-serif;animation:notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1)}@keyframes notif-pop{from{transform:scale(0)}to{transform:scale(1)}}.notif-dropdown-panel{width:380px;max-width:96vw;padding:0!important;overflow:hidden;border-radius:18px!important;border:1px solid rgba(255,255,255,0.1)!important;background:rgba(10,10,18,0.97)!important;backdrop-filter:blur(24px);box-shadow:0 24px 64px rgba(0,0,0,0.7)!important;right:0;left:auto!important}.notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}.notif-panel-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.95rem;color:#f0f0f5}.notif-mark-all-btn{background:none;border:none;color:#ef4444;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}.notif-panel-body{max-height:360px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(220,38,38,0.3) transparent}.notif-loading{padding:24px;text-align:center;color:#6b7280;font-size:0.82rem}.notif-drop-item{display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s}.notif-drop-item:hover{background:rgba(255,255,255,0.04)}.notif-drop-item.unread{background:rgba(220,38,38,0.03);border-left:3px solid #dc2626}.notif-drop-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0}.nd-green{background:rgba(16,185,129,0.15);color:#10b981}.nd-orange{background:rgba(245,158,11,0.15);color:#f59e0b}.nd-blue{background:rgba(59,130,246,0.15);color:#3b82f6}.nd-purple{background:rgba(139,92,246,0.15);color:#8b5cf6}.nd-teal{background:rgba(20,184,166,0.15);color:#14b8a6}.nd-grey{background:rgba(107,114,128,0.15);color:#6b7280}.notif-drop-content{flex:1;min-width:0}.notif-drop-title{font-size:0.82rem;font-weight:600;color:#f0f0f5;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Rajdhani',sans-serif}.notif-drop-msg{font-size:0.72rem;color:#6b7280;line-height:1.4}.notif-drop-time{font-size:0.65rem;color:#4b5563;margin-top:4px}.notif-drop-unread-dot{width:7px;height:7px;background:#ef4444;border-radius:50%;flex-shrink:0;margin-top:6px}.notif-panel-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid rgba(255,255,255,0.06)}.notif-view-all{font-size:0.78rem;color:#9ca3af;text-decoration:none;font-weight:600}.notif-view-all:hover{color:#ef4444}.notif-send-link{font-size:0.75rem;color:#ef4444;text-decoration:none;font-weight:600}.notif-empty-state{padding:28px 18px;text-align:center;color:#4b5563;font-size:0.82rem}
+
+/* ── 18. PREMIUM FULL STACK DEVELOPER ANIMATIONS ─────────────────────── */
+
+/* Keyframe for staggered fade-in and slide-up */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered cards entrance styles */
+.js-loaded .glass-card,
+.js-loaded .kpi-card,
+.js-loaded .vvit-table,
+.js-loaded .timetable-grid {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color var(--t-med), box-shadow var(--t-med);
+}
+
+/* Realistic dynamic card tilt and glow hover */
+.glass-card, .kpi-card {
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 24px rgba(220, 38, 38, 0.18) !important;
+  border-color: rgba(220, 38, 38, 0.35) !important;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.3) !important;
+}
+
+/* Interactive focus glow for inputs and select fields */
+.vvit-input, .vvit-select {
+  transition: border-color 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.25s ease;
+}
+
+.vvit-input:focus, .vvit-select:focus {
+  border-color: var(--accent-bright) !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25) !important;
+}
+
+/* Button hover realistic micro-animations */
+.btn-vvit-primary, .btn-vvit-outline, .btn-vvit-success, .btn-sm-accent, .btn-sm-danger, .btn-download {
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.btn-vvit-primary:hover, .btn-vvit-success:hover, .btn-download:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-vvit-primary:active, .btn-vvit-success:active, .btn-download:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-vvit-outline:hover, .btn-sm-accent:hover, .btn-sm-danger:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* Notification bell dynamic swinging animation */
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(15deg); }
+  30% { transform: rotate(-10deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+  85% { transform: rotate(-3deg); }
+  95% { transform: rotate(3deg); }
+}
+
+.bell-ringing {
+  animation: bellShake 1.8s infinite ease-in-out;
+  transform-origin: top center;
+  color: var(--accent-bright) !important;
+}
+
+/* Animated smooth dropdown transition */
+.glass-dropdown.dropdown-menu {
+  display: block !important;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(0.95);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s;
+}
+
+.glass-dropdown.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+

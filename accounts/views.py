@@ -15,7 +15,7 @@ from .models import Student, Faculty
 # ─────────────────────────────────────────────
 # LOGIN
 # ─────────────────────────────────────────────
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["GET", "POST", "HEAD"])
 def login_view(request):
     """
     Render the login form on GET; authenticate and redirect on POST.

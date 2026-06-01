@@ -11,6 +11,7 @@ Full administrative control:
 """
 
 import datetime
+import json
 from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -70,7 +71,7 @@ def dashboard(request):
 
     context = {
         'stats':       stats,
-        'branch_data': branch_data,
+        'branch_data': json.dumps(branch_data),
     }
     return render(request, 'admin_dashboard/dashboard.html', context)
 
@@ -717,7 +718,7 @@ def bulk_upload_results(request):
             return redirect('admin_dashboard:bulk_upload_results')
             
         try:
-            data_set = csv_file.read().decode('UTF-8')
+            data_set = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(data_set)
             
             # Read first line to check if it's a header
@@ -823,7 +824,7 @@ def bulk_upload_students(request):
             return redirect('admin_dashboard:bulk_upload_students')
             
         try:
-            data_set = csv_file.read().decode('UTF-8')
+            data_set = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(data_set)
             
             header = next(io_string, None)

@@ -47,12 +47,12 @@ def get_user_notifications(user, limit=None):
     user_branch = None
     if hasattr(user, 'student_profile'):
         try:
-            user_branch = user.student_profile.section.branch if user.student_profile.section else None
+            user_branch = user.student_profile.branch
         except Exception:
             pass
     elif hasattr(user, 'faculty_profile'):
         try:
-            user_branch = user.faculty_profile.branch
+            user_branch = user.faculty_profile.department
         except Exception:
             pass
 

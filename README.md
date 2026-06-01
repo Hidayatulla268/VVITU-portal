@@ -11,7 +11,7 @@ A production-grade college ERP web application built with Django, featuring a gl
 *   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login, locking it against client modification (only admins can reset it).
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
 *   **Faculty Student Results View**: Class Teachers and Counsellors can monitor and review the grades of their assigned students.
-*   **Advanced Security Hardening**: Incorporates client-side rate limiting (5 attempts/min per IP on login) to block brute-force/credential-stuffing, HSTS, SameSite/HttpOnly session cookies, and Referrer-Policy headers.
+*   **Advanced Security Hardening**: Incorporates server-side rate limiting (5 attempts/min per IP on login) to block brute-force/credential-stuffing, HSTS, SameSite/HttpOnly session cookies, and Referrer-Policy headers.
 *   **Excel & PDF Export**: Download dynamically generated attendance reports on demand.
 *   **AI Attendance Predictor**: Utilizes scikit-learn to analyze student records and predict semester attendance outcomes.
 
@@ -90,8 +90,6 @@ pip install -r requirements.txt
 ### Step 3 — Apply database migrations
 
 ```bash
-python manage.py makemigrations accounts
-python manage.py makemigrations core
 python manage.py makemigrations
 python manage.py migrate
 ```
@@ -99,10 +97,10 @@ python manage.py migrate
 ### Step 4 — Load sample data (highly recommended for testing)
 
 ```bash
-python manage.py shell -c "exec(open('sample_data.py').read())"
+python manage.py seed_data
 ```
 
-This creates branches, faculty accounts, students, a full timetable for CSE-II-A, 45 days of attendance records, exam results, and academic calendar events—everything you need to explore the portal immediately.
+This creates branches, faculty accounts, students, a full timetable for CSE-II-A, 45 days of attendance records, exam results, and academic calendar events—everything you need to explore the portal immediately. Note: This command is idempotent and will skip seeding if data already exists in the database.
 
 ### Step 5 — Start the development server
 
@@ -111,6 +109,19 @@ python manage.py runserver
 ```
 
 The application is now available at `http://127.0.0.1:8000/`.
+
+### Step 6 — (Optional) Running PostgreSQL locally with Docker
+
+To avoid SQLite/PostgreSQL mismatches in local development, run a local PostgreSQL container:
+
+```bash
+docker run --name vvit-postgres -p 5432:5432 -e POSTGRES_DB=vvitu_portal -e POSTGRES_USER=vvitu_user -e POSTGRES_PASSWORD=pass -d postgres
+```
+
+And update your `.env` file to reference this local database:
+```ini
+DATABASE_URL=postgres://vvitu_user:pass@localhost:5432/vvitu_portal
+```
 
 ---
 
@@ -121,6 +132,9 @@ The application is now available at `http://127.0.0.1:8000/`.
 | Admin     | `admin`     | `vvit@1234`| Full CRUD Access |
 | Faculty   | `EMP001`    | `vvit@1234`| Class Teacher & Counsellor |
 | Student   | `24BQ1A4942`| `vvit@1234`| Student Login (first login forces password setup) |
+
+> [!WARNING]
+> **Production Password Security**: Change these default passwords immediately when deploying in any live or public-facing environment.
 
 ---
 

@@ -63,12 +63,12 @@ class Command(BaseCommand):
 
         for student in students:
             records = student.attendance_records.all()
-            total   = records.count()
+            total   = len(records)
             if total == 0:
                 skipped += 1
                 continue
 
-            present = records.filter(status='P').count()
+            present = sum(1 for r in records if r.status == 'P')
             pct     = present / total * 100
 
             if pct < threshold:

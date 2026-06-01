@@ -319,13 +319,16 @@ function renderDropdown(items, unreadCount) {
   const body  = document.getElementById('notifPanelBody');
   const badge = document.getElementById('navbarNotifBadge');
 
-  // Update badge
+  // Update badge and trigger bell ringing animation
   if (badge) {
+    const bell = document.querySelector('.notif-bell-btn i');
     if (unreadCount > 0) {
       badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
       badge.style.display = 'flex';
+      if (bell) bell.classList.add('bell-ringing');
     } else {
       badge.style.display = 'none';
+      if (bell) bell.classList.remove('bell-ringing');
     }
   }
 
@@ -384,12 +387,15 @@ async function refreshBadge() {
     const r = await fetch('/notifications/count/');
     const d = await r.json();
     const badge = document.getElementById('navbarNotifBadge');
+    const bell = document.querySelector('.notif-bell-btn i');
     if (badge) {
       if (d.unread_count > 0) {
         badge.textContent = d.unread_count > 99 ? '99+' : d.unread_count;
         badge.style.display = 'flex';
+        if (bell) bell.classList.add('bell-ringing');
       } else {
         badge.style.display = 'none';
+        if (bell) bell.classList.remove('bell-ringing');
       }
     }
   } catch(e) {}

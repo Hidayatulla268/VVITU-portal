@@ -270,6 +270,7 @@ def results(request):
     results_page = Paginator(qs, 15).get_page(request.GET.get('page', 1))
 
     return render(request, 'student/results.html', {
+        'student':           student,
         'results_page':      results_page,
         'exams':             exams,
         'selected_exam':     exam_id,
