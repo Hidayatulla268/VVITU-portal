@@ -30,6 +30,9 @@
           <td>{{ f.department.code|default:"—" }}</td>
           <td>{{ f.user.phone|default:"—" }}</td>
           <td>
+            <a href="{% url 'admin_dashboard:edit_faculty' f.pk %}" class="btn-sm-edit me-1">
+              <i class="fas fa-edit"></i>
+            </a>
             <form method="post" action="{% url 'admin_dashboard:delete_faculty' f.pk %}" class="d-inline"
                   onsubmit="return confirm('Delete faculty {{ f.employee_id }}?')">
               {% csrf_token %}

@@ -87,7 +87,9 @@ SECURE_REFERRER_POLICY = 'same-origin'
 # Session Cookie Hardening
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY    = True
+# IMPORTANT: CSRF_COOKIE_HTTPONLY must be False so JavaScript can read
+# the csrftoken cookie for AJAX POST requests (notifications, chatbot, etc.)
+CSRF_COOKIE_HTTPONLY    = False
 CSRF_COOKIE_SAMESITE    = 'Lax'
 
 # Tell Django it's sitting behind the cloud provider's HTTPS proxy.

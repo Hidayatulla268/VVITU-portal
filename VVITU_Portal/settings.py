@@ -248,5 +248,14 @@ ADMIN_INDEX_TITLE = 'VVITU Site Administration'
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 
-CSRF_TRUSTED_ORIGINS = ['https://*.trycloudflare.com', 'https://*.lhr.life', 'https://*.serveousercontent.com']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.trycloudflare.com',
+    'https://*.lhr.life',
+    'https://*.serveousercontent.com',
+    'https://*.onrender.com',        # Render production hosting
+    'https://*.up.railway.app',      # Railway production hosting
+    'https://*.ngrok.io',            # ngrok tunnels for local testing
+    'https://*.ngrok-free.app',      # ngrok free tier
+]
+
 

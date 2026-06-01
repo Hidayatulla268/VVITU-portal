@@ -307,7 +307,7 @@ def reports(request):
             p = d['present']
             d['pct']    = round(p / t * 100, 1) if t else 0
             d['absent'] = t - p
-            d['low']    = d['pct'] < settings.LOW_ATTENDANCE_THRESHOLD
+            d['low']    = d['pct'] < getattr(settings, 'LOW_ATTENDANCE_THRESHOLD', 75)
             report_data.append(d)
 
         report_data.sort(key=lambda x: x['roll'])
@@ -320,7 +320,7 @@ def reports(request):
         'subject_id':  subject_id,
         'date_from':   date_from,
         'date_to':     date_to,
-        'threshold':   settings.LOW_ATTENDANCE_THRESHOLD,
+        'threshold':   getattr(settings, 'LOW_ATTENDANCE_THRESHOLD', 75),
     }
     return render(request, 'faculty/reports.html', context)
 

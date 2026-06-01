@@ -238,6 +238,41 @@ def delete_faculty(request, pk):
     return redirect('admin_dashboard:manage_faculty')
 
 
+@admin_required
+def edit_faculty(request, pk):
+    """Edit an existing faculty member's name, phone, department, and designation."""
+    fac      = get_object_or_404(Faculty, pk=pk)
+    branches = Branch.objects.all()
+
+    if request.method == 'POST':
+        p = request.POST
+        u = fac.user
+        u.first_name = p.get('first_name', u.first_name)
+        u.last_name  = p.get('last_name',  u.last_name)
+        u.phone      = p.get('phone',      u.phone)
+        role = p.get('role', u.role)
+        if role in dict(u.ROLE_CHOICES):
+            u.role = role
+        u.save()
+
+        fac.department_id = p.get('department') or fac.department_id
+        fac.designation   = p.get('designation', fac.designation)
+        fac.save()
+        messages.success(request, f"Faculty {fac.employee_id} updated.")
+        return redirect('admin_dashboard:manage_faculty')
+
+    context = {
+        'fac':       fac,
+        'branches':  branches,
+        'role_choices': [
+            ('faculty',        'Faculty'),
+            ('hod',            'Head of Department'),
+            ('lab_technician', 'Lab Technician'),
+        ],
+    }
+    return render(request, 'admin_dashboard/edit_faculty.html', context)
+
+
 # ═══════════════════════════════════════════════
 # ASSIGN CLASS TEACHER / COUNSELLOR
 # ═══════════════════════════════════════════════
@@ -511,7 +546,7 @@ Overall Percentage : {overall_pct}%
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 You can also view your detailed results by logging into the VVIT Portal:
-http://127.0.0.1:8000/student/results/
+{django_settings.COLLEGE_WEBSITE}/student/results/
 
 For any queries, contact your class teacher or the examination cell.
 
@@ -881,7 +916,7 @@ def bulk_upload_students(request):
                         
                     user = User.objects.create_user(
                         username=roll_number,
-                        password='password123',
+                        password='vvit@1234',
                         first_name=first_name,
                         last_name=last_name,
                         email=email,
