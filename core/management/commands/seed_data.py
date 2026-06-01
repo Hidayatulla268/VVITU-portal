@@ -10,7 +10,7 @@ from django.utils import timezone
 from accounts.models import User, Student, Faculty
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
-    Attendance, Exam, Result, AcademicCalendar, ResultRelease
+    Attendance, Exam, Result, AcademicCalendar
 )
 import datetime
 import random
@@ -202,42 +202,17 @@ class Command(BaseCommand):
             year=y2, branch=cse,
             defaults={'date': today - datetime.timedelta(days=5)}
         )
-        final_exam, _ = Exam.objects.get_or_create(
-            name='Semester Final Examinations', exam_type='final', semester=3,
-            year=y2, branch=cse,
-            defaults={'date': today - datetime.timedelta(days=2)}
-        )
 
         result_subjects = [dsa, os_, dbms, cn]
         for stu in cse2a_students:
             for subj in result_subjects:
-                # Seed mid1
-                marks_mid1 = random.randint(55, 95)
+                marks = random.randint(55, 95)
                 Result.objects.get_or_create(
                     student=stu, exam=mid1, subject=subj,
-                    defaults={'marks_obtained': marks_mid1, 'max_marks': 100}
-                )
-                # Seed mid2
-                marks_mid2 = random.randint(55, 95)
-                Result.objects.get_or_create(
-                    student=stu, exam=mid2, subject=subj,
-                    defaults={'marks_obtained': marks_mid2, 'max_marks': 100}
-                )
-                # Seed semester final
-                marks_final = random.randint(45, 95)
-                Result.objects.get_or_create(
-                    student=stu, exam=final_exam, subject=subj,
-                    defaults={'marks_obtained': marks_final, 'max_marks': 100}
+                    defaults={'marks_obtained': marks, 'max_marks': 100}
                 )
 
-        # Release all 3 exams automatically so they show up on the website
-        for ex in [mid1, mid2, final_exam]:
-            ResultRelease.objects.get_or_create(
-                exam=ex,
-                defaults={'released': True, 'released_at': timezone.now()}
-            )
-
-        self.stdout.write(self.style.SUCCESS("[OK] Exams, results, and result releases created"))
+        self.stdout.write(self.style.SUCCESS("[OK] Exams and results created"))
 
         # ACADEMIC CALENDAR
         events = [
