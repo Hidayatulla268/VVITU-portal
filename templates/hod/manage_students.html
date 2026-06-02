@@ -7,7 +7,7 @@
 <div class="page-header-strip">
   <div class="ph-left">
     <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Students Directory</h1>
-    <p class="ph-sub">{{ page.paginator.count }} student records in CSE department</p>
+    <p class="ph-sub">{{ page.paginator.count }} student records in {{ department.name }} department</p>
   </div>
   <div class="ph-right d-flex gap-2">
     <a href="{% url 'hod:add_student' %}" class="btn-vvit-primary">

@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q, Count
 from django.utils import timezone
+from django.core.paginator import Paginator
 from functools import wraps
 
 from accounts.models import User, Student, Faculty, Achievement
@@ -118,7 +119,7 @@ def create_notice(request):
         messages.success(request, "Notice circulated successfully.")
         return redirect('hod:dashboard')
         
-    return render(request, 'hod/create_notice.html', {'sections': sections})
+    return render(request, 'hod/create_notice.html', {'sections': sections, 'department': dept})
 
 # ─────────────────────────────────────────────
 # SUBJECT & FACULTY MAPPING
@@ -310,7 +311,7 @@ def manage_students(request):
         
     paginator = Paginator(qs, 25)
     page = paginator.get_page(request.GET.get('page', 1))
-    return render(request, 'hod/manage_students.html', {'page': page, 'search': search})
+    return render(request, 'hod/manage_students.html', {'page': page, 'search': search, 'department': dept})
 
 @hod_required
 def add_student(request):
@@ -366,6 +367,7 @@ def add_student(request):
         'years': years,
         'sections': sections,
         'faculties': faculties,
+        'department': dept,
     })
 
 @hod_required
@@ -425,7 +427,7 @@ def delete_student(request, pk):
 def manage_faculty(request):
     dept = request.department
     faculties = Faculty.objects.filter(department=dept).select_related('user').order_by('employee_id')
-    return render(request, 'hod/manage_faculty.html', {'faculties': faculties})
+    return render(request, 'hod/manage_faculty.html', {'faculties': faculties, 'department': dept})
 
 @hod_required
 def add_faculty(request):

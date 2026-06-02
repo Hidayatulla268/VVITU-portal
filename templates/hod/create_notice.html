@@ -36,7 +36,7 @@
         <div class="mb-3">
           <label class="form-label text-muted">Notice Circulation Scope</label>
           <select name="circulation" id="circulation-select" class="vvit-select" onchange="toggleSectionSelect()" required>
-            <option value="branch" selected>Branch-wide (Only CSE Faculty & Students)</option>
+            <option value="branch" selected>Branch-wide (Only {{ department.code }} Faculty & Students)</option>
             <option value="class">Class-specific (Specific Year & Section)</option>
             <option value="college">College-wide (Pushed to Everyone)</option>
           </select>

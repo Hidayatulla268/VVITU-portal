@@ -6,7 +6,7 @@
 <div class="page-header-strip">
   <div class="ph-left">
     <h1 class="ph-title"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Faculty Directory</h1>
-    <p class="ph-sub">{{ faculties|length }} faculty members in CSE department</p>
+    <p class="ph-sub">{{ faculties|length }} faculty members in {{ department.name }} department</p>
   </div>
   <div class="ph-right">
     <a href="{% url 'hod:add_faculty' %}" class="btn-vvit-primary"><i class="fas fa-user-plus me-2"></i>Add Faculty</a>

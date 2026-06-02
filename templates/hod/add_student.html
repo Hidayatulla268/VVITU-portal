@@ -5,7 +5,7 @@
 <div class="page-header-strip">
   <div class="ph-left">
     <h1 class="ph-title"><i class="fas fa-user-plus me-2 text-accent"></i>Add Student</h1>
-    <p class="ph-sub">Create a new student account inside CSE department</p>
+    <p class="ph-sub">Create a new student account inside {{ department.name }} department</p>
   </div>
   <div class="ph-right">
     <a href="{% url 'hod:manage_students' %}" class="btn-vvit-outline"><i class="fas fa-arrow-left me-2"></i>Back</a>
@@ -43,10 +43,10 @@
           <div class="col-md-6">
             <label class="form-label text-muted">Year Level</label>
             <select name="year" class="vvit-select" required>
-              <option value="1">I Year</option>
-              <option value="2">II Year</option>
-              <option value="3">III Year</option>
-              <option value="4">IV Year</option>
+              <option value="">— Select Year —</option>
+              {% for yr in years %}
+              <option value="{{ yr.id }}">{{ yr }}</option>
+              {% endfor %}
             </select>
           </div>
           <div class="col-md-6">
