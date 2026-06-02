@@ -53,18 +53,26 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("[OK] Sections created"))
 
         # ADMIN USER
-        if not User.objects.filter(username='admin').exists():
+        admin_user = User.objects.filter(username='admin').first()
+        if not admin_user:
             User.objects.create_superuser(
                 username='admin', password='vvit@1234',
                 email='admin@vvit.net',
                 first_name='Portal', last_name='Admin',
                 role='admin',
             )
+        else:
+            admin_user.set_password('vvit@1234')
+            admin_user.save()
         self.stdout.write(self.style.SUCCESS("[OK] Admin user: admin / vvit@1234"))
 
         # FACULTY
         def make_faculty(emp_id, fname, lname, dept, role='faculty', phone='9000000001'):
-            if User.objects.filter(username=emp_id).exists():
+            u = User.objects.filter(username=emp_id).first()
+            if u:
+                u.set_password('vvit@1234')
+                u.role = role
+                u.save()
                 return Faculty.objects.get(employee_id=emp_id)
             u = User.objects.create_user(
                 username=emp_id, password='vvit@1234',
@@ -84,7 +92,8 @@ class Command(BaseCommand):
 
         # DEO
         from accounts.models import DEOProfile
-        if not User.objects.filter(username='DEO001').exists():
+        deo_user = User.objects.filter(username='DEO001').first()
+        if not deo_user:
             u_deo = User.objects.create_user(
                 username='DEO001', password='vvit@1234',
                 first_name='Data Entry', last_name='Operator',
@@ -93,7 +102,15 @@ class Command(BaseCommand):
             DEOProfile.objects.create(
                 user=u_deo, employee_id='DEO001', branch=cse
             )
-            self.stdout.write(self.style.SUCCESS("[OK] DEO user created (password: vvit@1234)"))
+        else:
+            deo_user.set_password('vvit@1234')
+            deo_user.role = 'deo'
+            deo_user.save()
+            DEOProfile.objects.get_or_create(
+                user=deo_user,
+                defaults={'employee_id': 'DEO001', 'branch': cse}
+            )
+        self.stdout.write(self.style.SUCCESS("[OK] DEO user created (password: vvit@1234)"))
 
         # SUBJECTS
         def make_subject(code, name, branch, year, semester, faculty, is_lab=False):
@@ -153,13 +170,15 @@ class Command(BaseCommand):
             p_name = f"{random.choice(['Venkata', 'Srinivasa', 'Satya', 'Rama', 'Koteswara', 'Subba', 'Nageswara', 'Prasad'])} {lname}"
             p_mobile = f"9{random.randint(100000000, 999999999)}"
             if User.objects.filter(username=roll).exists():
+                u = User.objects.get(username=roll)
+                u.set_password('vvit@1234')
+                u.save()
                 stu = Student.objects.filter(roll_number=roll).first()
                 if stu:
                     stu.parent_name = p_name
                     stu.parent_mobile = p_mobile
                     stu.save()
                 else:
-                    u = User.objects.get(username=roll)
                     stu = Student.objects.create(
                         user=u, roll_number=roll,
                         branch=section.branch, year=section.year,
