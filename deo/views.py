@@ -21,6 +21,9 @@ def deo_required(view_func):
         try:
             request.deo_profile = request.user.deo_profile
             request.branch = request.deo_profile.branch
+            if not request.branch:
+                messages.error(request, "Access denied. DEO has no branch assigned. Please contact the administrator.")
+                return redirect('accounts:login')
         except DEOProfile.DoesNotExist:
             messages.error(request, "DEO Profile not found. Contact administrator.")
             return redirect('accounts:login')

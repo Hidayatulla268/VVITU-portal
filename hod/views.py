@@ -20,6 +20,9 @@ def hod_required(view_func):
         try:
             request.faculty = request.user.faculty_profile
             request.department = request.faculty.department
+            if not request.department:
+                messages.error(request, "Access denied. HOD has no department assigned. Please contact the administrator.")
+                return redirect('accounts:login')
         except Faculty.DoesNotExist:
             messages.error(request, "HOD Faculty Profile not found.")
             return redirect('accounts:login')

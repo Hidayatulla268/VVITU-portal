@@ -31,7 +31,16 @@ class UserAdmin(BaseUserAdmin):
     list_display  = ('username', 'get_full_name', 'email', 'role', 'phone', 'is_active')
     list_filter   = ('role', 'is_active', 'is_staff')
     search_fields = ('username', 'first_name', 'last_name', 'email')
-    inlines = [StudentInline, FacultyInline, DEOProfileInline]
+    def get_inlines(self, request, obj=None):
+        if not obj:
+            return []
+        if obj.role == 'student':
+            return [StudentInline]
+        elif obj.role in ['faculty', 'hod', 'lab_technician']:
+            return [FacultyInline]
+        elif obj.role == 'deo':
+            return [FacultyInline, DEOProfileInline]
+        return []
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
