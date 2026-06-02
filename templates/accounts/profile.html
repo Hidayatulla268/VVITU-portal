@@ -187,6 +187,41 @@
         </div>
       </div>
 
+      {% elif user.role == 'deo' %}
+      <!-- DEO Profile Fields -->
+      <div class="row g-4">
+        {% if faculty %}
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Employee / Staff ID</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ faculty.employee_id }}</div>
+          </div>
+        </div>
+        {% endif %}
+        {% if deo_profile and deo_profile.branch %}
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Assigned Branch</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ deo_profile.branch.name }} ({{ deo_profile.branch.code }})</div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Role</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">Data Entry Operator</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Access Level</div>
+            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--clr-success);">
+              <i class="fas fa-keyboard me-2"></i>Data Entry Access
+            </div>
+          </div>
+        </div>
+      </div>
+
       {% else %}
       <!-- Admin / Fallback Fields -->
       <div class="row g-4">

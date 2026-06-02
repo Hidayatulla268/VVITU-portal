@@ -124,12 +124,13 @@ def set_password(request):
 @login_required
 def profile_view(request):
     """
-    Render personal profile details for Students, Faculty, and Admin.
+    Render personal profile details for Students, Faculty, HOD, DEO, and Admin.
     """
     user = request.user
     student = None
     faculty = None
-    
+    deo_profile = None
+
     if user.role == 'student':
         try:
             student = user.student_profile
@@ -140,11 +141,23 @@ def profile_view(request):
             faculty = user.faculty_profile
         except Faculty.DoesNotExist:
             pass
-            
+    elif user.role == 'deo':
+        try:
+            from .models import DEOProfile
+            deo_profile = user.deo_profile
+            # Also load the Faculty record if the DEO was created via add_faculty
+            try:
+                faculty = user.faculty_profile
+            except Faculty.DoesNotExist:
+                pass
+        except Exception:
+            pass
+
     context = {
         'user': user,
         'student': student,
         'faculty': faculty,
+        'deo_profile': deo_profile,
     }
     return render(request, 'accounts/profile.html', context)
 
