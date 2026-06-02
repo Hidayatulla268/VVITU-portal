@@ -10,7 +10,12 @@
     <h1 class="ph-title"><i class="fas fa-tachometer-alt me-2 text-accent"></i>Faculty Dashboard</h1>
     <p class="ph-sub">Welcome, <strong>{{ faculty.user.get_full_name }}</strong> · {{ faculty.employee_id }}</p>
   </div>
-  <div class="ph-right">
+  <div class="ph-right d-flex align-items-center gap-2">
+    {% if user.role == 'hod' %}
+    <a href="{% url 'hod:dashboard' %}" class="btn-sm-accent text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 6px 12px; font-size: 0.8rem;">
+      <i class="fas fa-shield-alt"></i>HOD Panel
+    </a>
+    {% endif %}
     <span class="badge-section">{{ faculty.department.code|default:"" }} · {{ faculty.user.get_role_display }}</span>
   </div>
 </div>

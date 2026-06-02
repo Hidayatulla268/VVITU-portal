@@ -225,6 +225,30 @@
         <i class="fas fa-check-double nav-icon"></i><span>Attendance Overrides</span>
       </a>
 
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-title px-3 py-2 text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em; font-weight: 700; opacity: 0.75;">My Teaching</div>
+      <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Dashboard</span>
+      </a>
+      <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
+      </a>
+      <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-file-chart-line nav-icon"></i><span>Reports</span>
+      </a>
+      <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-user-graduate nav-icon"></i><span>My Students</span>
+      </a>
+      <a href="{% url 'faculty:student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-poll-h nav-icon"></i><span>Student Results</span>
+      </a>
+      <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_marks' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
+      </a>
+      <a href="{% url 'faculty:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
+      </a>
+
     {% elif user.role == 'deo' %}
       <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
         <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>

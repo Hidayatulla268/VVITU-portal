@@ -9,6 +9,11 @@
     <h1 class="ph-title"><i class="fas fa-shield-alt me-2 text-accent"></i>HOD Dashboard — {{ department.code }}</h1>
     <p class="ph-sub">Head of Department panel for {{ department.name }}</p>
   </div>
+  <div class="ph-right">
+    <a href="{% url 'faculty:dashboard' %}" class="btn-sm-accent text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 6px 12px; font-size: 0.8rem;">
+      <i class="fas fa-chalkboard-teacher"></i>Teaching Panel
+    </a>
+  </div>
 </div>
 {% endblock %}
 
