@@ -215,9 +215,15 @@ def manage_notices(request):
     else:
         branch = None
         if user.role == 'hod':
-            branch = user.faculty_profile.department
+            try:
+                branch = user.faculty_profile.department
+            except Exception:
+                pass
         elif user.role == 'deo':
-            branch = user.deo_profile.branch
+            try:
+                branch = user.deo_profile.branch
+            except Exception:
+                pass
 
         notices = Notification.objects.filter(
             Q(created_by=user) | Q(target_branch=branch)
@@ -246,9 +252,15 @@ def create_notification(request):
     # Scoped branch details for HOD and DEO
     branch = None
     if user.role == 'hod':
-        branch = user.faculty_profile.department
+        try:
+            branch = user.faculty_profile.department
+        except Exception:
+            pass
     elif user.role == 'deo':
-        branch = user.deo_profile.branch
+        try:
+            branch = user.deo_profile.branch
+        except Exception:
+            pass
 
     if branch:
         sections = Section.objects.filter(branch=branch).select_related('year')
@@ -311,6 +323,8 @@ def create_notification(request):
             if expires_str:
                 expires = parse_datetime(expires_str)
                 if expires:
+                    if timezone.is_naive(expires):
+                        expires = timezone.make_aware(expires)
                     n.expires_at = expires
 
             n.save()
@@ -352,9 +366,15 @@ def edit_notification(request, pk):
     # Scoped branch details for HOD and DEO
     branch = None
     if user.role == 'hod':
-        branch = user.faculty_profile.department
+        try:
+            branch = user.faculty_profile.department
+        except Exception:
+            pass
     elif user.role == 'deo':
-        branch = user.deo_profile.branch
+        try:
+            branch = user.deo_profile.branch
+        except Exception:
+            pass
 
     if branch:
         sections = Section.objects.filter(branch=branch).select_related('year')
@@ -435,6 +455,8 @@ def edit_notification(request, pk):
             if expires_str:
                 expires = parse_datetime(expires_str)
                 if expires:
+                    if timezone.is_naive(expires):
+                        expires = timezone.make_aware(expires)
                     n.expires_at = expires
             else:
                 n.expires_at = None
