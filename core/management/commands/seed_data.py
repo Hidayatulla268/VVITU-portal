@@ -24,10 +24,9 @@ class Command(BaseCommand):
         if Branch.objects.exists() or Student.objects.exists():
             self.stdout.write(
                 self.style.WARNING(
-                    "Database already has records (Branch or Student). Seeding skipped to prevent duplicate data."
+                    "Database already has some records (Branch or Student). Verifying/seeding missing default accounts..."
                 )
             )
-            return
 
         self.stdout.write(self.style.MIGRATE_HEADING("=" * 55))
         self.stdout.write(self.style.MIGRATE_HEADING("  VVIT Portal - Loading Sample Data"))
@@ -154,10 +153,23 @@ class Command(BaseCommand):
             p_name = f"{random.choice(['Venkata', 'Srinivasa', 'Satya', 'Rama', 'Koteswara', 'Subba', 'Nageswara', 'Prasad'])} {lname}"
             p_mobile = f"9{random.randint(100000000, 999999999)}"
             if User.objects.filter(username=roll).exists():
-                stu = Student.objects.get(roll_number=roll)
-                stu.parent_name = p_name
-                stu.parent_mobile = p_mobile
-                stu.save()
+                stu = Student.objects.filter(roll_number=roll).first()
+                if stu:
+                    stu.parent_name = p_name
+                    stu.parent_mobile = p_mobile
+                    stu.save()
+                else:
+                    u = User.objects.get(username=roll)
+                    stu = Student.objects.create(
+                        user=u, roll_number=roll,
+                        branch=section.branch, year=section.year,
+                        section=section,
+                        class_teacher=f_rajesh,
+                        counsellor=f_sunitha,
+                        admission_year=2024,
+                        parent_name=p_name,
+                        parent_mobile=p_mobile,
+                    )
             else:
                 u = User.objects.create_user(
                     username=roll, password='vvit@1234',
