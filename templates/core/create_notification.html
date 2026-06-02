@@ -60,7 +60,7 @@
             <label class="vvit-label" for="id_priority">Priority</label>
             <select id="id_priority" name="priority" class="vvit-input w-100">
               {% for val, label in priority_choices %}
-              <option value="{{ val }}" {% if notice.priority == val or (not notice and val == 'normal') %}selected{% endif %}>{{ label }}</option>
+              <option value="{{ val }}" {% if notice %}{% if notice.priority == val %}selected{% endif %}{% else %}{% if val == 'normal' %}selected{% endif %}{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
           </div>
