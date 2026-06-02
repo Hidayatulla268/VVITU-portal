@@ -1,0 +1,89 @@
+{% extends "core/base.html" %}
+{% block title %}Edit Student — {{ student.roll_number }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-edit me-2 text-accent"></i>Edit Student Profile</h1>
+    <p class="ph-sub">Modify details for {{ student.user.get_full_name }}</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:manage_students' %}" class="btn-vvit-outline"><i class="fas fa-arrow-left me-2"></i>Back</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-muted">Roll Number (Read-only)</label>
+            <input type="text" class="vvit-input" value="{{ student.roll_number }}" disabled>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">First Name</label>
+            <input type="text" name="first_name" class="vvit-input" value="{{ student.user.first_name }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Last Name</label>
+            <input type="text" name="last_name" class="vvit-input" value="{{ student.user.last_name }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Phone Number</label>
+            <input type="text" name="phone" class="vvit-input" value="{{ student.user.phone|default:'' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Year Level</label>
+            <select name="year" class="vvit-select" required>
+              {% for y in years %}
+              <option value="{{ y.id }}" {% if student.year.id == y.id %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Section</label>
+            <select name="section" class="vvit-select" required>
+              {% for sec in sections %}
+              <option value="{{ sec.id }}" {% if student.section.id == sec.id %}selected{% endif %}>{{ sec }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Class Teacher</label>
+            <select name="class_teacher" class="vvit-select">
+              <option value="">— Select —</option>
+              {% for fac in faculties %}
+              <option value="{{ fac.id }}" {% if student.class_teacher.id == fac.id %}selected{% endif %}>{{ fac.user.get_full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Counsellor</label>
+            <select name="counsellor" class="vvit-select">
+              <option value="">— Select —</option>
+              {% for fac in faculties %}
+              <option value="{{ fac.id }}" {% if student.counsellor.id == fac.id %}selected{% endif %}>{{ fac.user.get_full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Parent / Guardian Name</label>
+            <input type="text" name="parent_name" class="vvit-input" value="{{ student.parent_name|default:'' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Parent Mobile</label>
+            <input type="text" name="parent_mobile" class="vvit-input" value="{{ student.parent_mobile|default:'' }}">
+          </div>
+        </div>
+        <div class="mt-4">
+          <button type="submit" class="btn-vvit-primary w-100 py-3">Save Student Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

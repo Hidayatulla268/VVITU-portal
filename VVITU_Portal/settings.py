@@ -63,6 +63,8 @@ INSTALLED_APPS = [
     'student',
     'faculty',
     'admin_dashboard',
+    'hod',
+    'deo',
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'

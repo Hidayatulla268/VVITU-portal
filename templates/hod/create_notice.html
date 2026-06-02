@@ -1,0 +1,74 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Post Notice{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-bullhorn me-2 text-accent"></i>Circulate Department Notice</h1>
+    <p class="ph-sub">Push an announcement or alert to your branch or specific classes</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label text-muted">Notice Title</label>
+          <input type="text" name="title" class="vvit-input" placeholder="Enter title (e.g. Mid-Exam Schedule)" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Notice Body / Message</label>
+          <textarea name="message" rows="5" class="vvit-input" placeholder="Type notification content here..." required></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Notice Circulation Scope</label>
+          <select name="circulation" id="circulation-select" class="vvit-select" onchange="toggleSectionSelect()" required>
+            <option value="branch" selected>Branch-wide (Only CSE Faculty & Students)</option>
+            <option value="class">Class-specific (Specific Year & Section)</option>
+            <option value="college">College-wide (Pushed to Everyone)</option>
+          </select>
+        </div>
+
+        <div class="mb-4" id="section-select-wrapper" style="display: none;">
+          <label class="form-label text-muted">Select Target Class (Section)</label>
+          <select name="section" class="vvit-select">
+            <option value="">— Select Section —</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}">{{ sec }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn-vvit-primary w-100 py-3">
+          <i class="fas fa-paper-plane me-2"></i>Broadcast Notice
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleSectionSelect() {
+  var select = document.getElementById("circulation-select");
+  var wrapper = document.getElementById("section-select-wrapper");
+  if (select.value === "class") {
+    wrapper.style.display = "block";
+  } else {
+    wrapper.style.display = "none";
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Attendance Management{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-check-double me-2 text-accent"></i>Attendance Override</h1>
+    <p class="ph-sub">Manage and correct student attendance records at any time</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search Filters -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label text-muted">Select Section (Class)</label>
+      <select name="section" class="vvit-select" required>
+        <option value="">— Select Section —</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if selected_section_id == sec.id|stringformat:"s" %}selected{% endif %}>{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-5">
+      <label class="form-label text-muted">Select Date</label>
+      <input type="date" name="date" value="{{ selected_date }}" class="vvit-input" required>
+    </div>
+
+    <div class="col-md-2">
+      <button type="submit" class="btn-vvit-primary w-100">
+        <i class="fas fa-search me-2"></i>Search
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if selected_section_id and selected_date %}
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Subject</th>
+          <th>Faculty</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td><strong>{{ record.student.roll_number }}</strong></td>
+          <td>{{ record.student.user.get_full_name }}</td>
+          <td>{{ record.timetable_entry.subject.code }} — {{ record.timetable_entry.subject.name }}</td>
+          <td>{{ record.timetable_entry.faculty.user.get_full_name }}</td>
+          <td class="text-center">
+            {% if record.status == 'P' %}
+            <span class="badge bg-success">Present</span>
+            {% else %}
+            <span class="badge bg-danger">Absent</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <a href="{% url 'hod:edit_attendance' record.id %}" class="btn btn-sm btn-warning">
+              <i class="fas fa-edit me-1"></i>Override
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">No attendance records found for this section and date.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

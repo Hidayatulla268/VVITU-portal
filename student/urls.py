@@ -11,4 +11,5 @@ urlpatterns = [
     path('results/',           views.results,          name='results'),
     path('academic-calendar/', views.academic_calendar,name='academic_calendar'),
     path('question-papers/',   views.question_papers,  name='question_papers'),
+    path('achievements/add/',  views.add_achievement,  name='add_achievement'),
 ]

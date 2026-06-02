@@ -25,7 +25,7 @@ from django.db.models import Count, Q
 from django.conf import settings
 from django.views.decorators.http import require_POST
 
-from accounts.models import Faculty, Student
+from accounts.models import Faculty, Student, Achievement
 from core.models import (
     Section, Timetable, Attendance, Subject, Result
 )
@@ -657,3 +657,223 @@ def student_results(request):
         'results':             results,
     }
     return render(request, 'faculty/student_results.html', context)
+
+
+# ─────────────────────────────────────────────
+# FACULTY UPLOAD MARKS
+# ─────────────────────────────────────────────
+@faculty_required
+def upload_marks(request):
+    """
+    Allows faculty to input or upload marks for a specific subject, exam, and section (class).
+    """
+    import csv
+    import io
+    from django.db import transaction
+    
+    faculty = request.faculty
+    subjects = Subject.objects.filter(faculty=faculty).select_related('branch', 'year')
+    
+    # Filter exams
+    branch_ids = subjects.values_list('branch_id', flat=True).distinct()
+    year_ids = subjects.values_list('year_id', flat=True).distinct()
+    exams = Exam.objects.filter(branch_id__in=branch_ids, year_id__in=year_ids).order_by('-date')
+    
+    selected_subject_id = request.GET.get('subject', '')
+    selected_exam_id = request.GET.get('exam', '')
+    selected_section_id = request.GET.get('section', '')
+    
+    selected_subject = None
+    selected_exam = None
+    selected_section = None
+    sections = []
+    students = []
+    current_results = {}
+    
+    if selected_subject_id:
+        selected_subject = get_object_or_404(Subject, id=selected_subject_id, faculty=faculty)
+        # Find sections having timetable slots for this subject
+        sections = Section.objects.filter(timetable_entries__subject=selected_subject).distinct()
+        
+    if selected_exam_id:
+        selected_exam = get_object_or_404(Exam, id=selected_exam_id)
+        
+    if selected_section_id and selected_subject and selected_exam:
+        selected_section = get_object_or_404(Section, id=selected_section_id)
+        students = Student.objects.filter(section=selected_section, is_active=True).select_related('user').order_by('roll_number')
+        
+        # Load existing results for these students, exam, and subject
+        results_qs = Result.objects.filter(
+            student__in=students,
+            exam=selected_exam,
+            subject=selected_subject
+        )
+        current_results = {r.student_id: r for r in results_qs}
+        
+    if request.method == 'POST':
+        subj_id = request.POST.get('subject')
+        ex_id = request.POST.get('exam')
+        sec_id = request.POST.get('section')
+        
+        # Resolve objects
+        subj = get_object_or_404(Subject, id=subj_id, faculty=faculty)
+        ex = get_object_or_404(Exam, id=ex_id)
+        sec = get_object_or_404(Section, id=sec_id)
+        sec_students = Student.objects.filter(section=sec, is_active=True)
+        
+        # Check action type: CSV upload or Manual entry
+        action = request.POST.get('action')
+        
+        if action == 'csv':
+            if 'csv_file' not in request.FILES:
+                messages.error(request, "Please upload a CSV file.")
+                return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+                
+            csv_file = request.FILES['csv_file']
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, "Please upload a valid .csv file.")
+                return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+                
+            try:
+                data_set = csv_file.read().decode('utf-8-sig')
+                io_string = io.StringIO(data_set)
+                next(io_string, None) # skip header
+                
+                reader = csv.reader(io_string, delimiter=',', quotechar='"')
+                success_count = 0
+                errors = []
+                
+                with transaction.atomic():
+                    for row_idx, row in enumerate(reader, start=2):
+                        if not row or not row[0].strip():
+                            continue
+                        if len(row) < 2:
+                            errors.append(f"Row {row_idx}: Missing columns.")
+                            continue
+                            
+                        roll = row[0].strip().upper()
+                        marks_str = row[1].strip()
+                        max_str = row[2].strip() if len(row) > 2 and row[2].strip() else '100'
+                        
+                        try:
+                            marks_obt = float(marks_str)
+                            max_mks = float(max_str)
+                        except ValueError:
+                            errors.append(f"Row {row_idx}: Invalid marks format for {roll}.")
+                            continue
+                            
+                        try:
+                            # Verify student exists and belongs to the selected section
+                            student = sec_students.get(roll_number=roll)
+                            
+                            Result.objects.update_or_create(
+                                student=student,
+                                exam=ex,
+                                subject=subj,
+                                defaults={
+                                    'marks_obtained': marks_obt,
+                                    'max_marks': max_mks,
+                                    'grade': '' # reset grade so save() will recompute it
+                                }
+                            )
+                            success_count += 1
+                        except Student.DoesNotExist:
+                            errors.append(f"Row {row_idx}: Student {roll} not found in section {sec}.")
+                            
+                if errors:
+                    for err in errors[:5]:
+                        messages.error(request, err)
+                    if len(errors) > 5:
+                        messages.error(request, f"...and {len(errors) - 5} more errors.")
+                if success_count > 0:
+                    messages.success(request, f"Successfully uploaded marks for {success_count} students in {sec}.")
+                    
+            except Exception as e:
+                messages.error(request, f"Error uploading CSV: {e}")
+                
+        elif action == 'manual':
+            try:
+                success_count = 0
+                max_marks_default = float(request.POST.get('max_marks_default', '100'))
+                
+                with transaction.atomic():
+                    for stu in sec_students:
+                        marks_input = request.POST.get(f"marks_{stu.id}", '').strip()
+                        if marks_input == '':
+                            continue
+                            
+                        try:
+                            marks_obt = float(marks_input)
+                        except ValueError:
+                            messages.error(request, f"Invalid marks for student {stu.roll_number}.")
+                            return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+                            
+                        Result.objects.update_or_create(
+                            student=stu,
+                            exam=ex,
+                            subject=subj,
+                            defaults={
+                                'marks_obtained': marks_obt,
+                                'max_marks': max_marks_default,
+                                'grade': ''
+                            }
+                        )
+                        success_count += 1
+                        
+                messages.success(request, f"Successfully saved marks for {success_count} students in {sec}.")
+            except Exception as e:
+                messages.error(request, f"Error saving marks: {e}")
+                
+        return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+        
+    context = {
+        'subjects':            subjects,
+        'exams':               exams,
+        'selected_subject_id': selected_subject_id,
+        'selected_exam_id':    selected_exam_id,
+        'selected_section_id': selected_section_id,
+        'selected_subject':    selected_subject,
+        'selected_exam':       selected_exam,
+        'selected_section':    selected_section,
+        'sections':            sections,
+        'students':            students,
+        'current_results':     current_results,
+    }
+    return render(request, 'faculty/upload_marks.html', context)
+
+
+@faculty_required
+def add_achievement(request):
+    faculty = request.faculty
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        category = request.POST.get('category', '').strip()
+        date_str = request.POST.get('date_achieved', '').strip()
+
+        if not (title and description and category and date_str):
+            messages.error(request, "All fields are required.")
+        else:
+            try:
+                date_achieved = datetime.date.fromisoformat(date_str)
+                Achievement.objects.create(
+                    user=request.user,
+                    title=title,
+                    description=description,
+                    category=category,
+                    date_achieved=date_achieved
+                )
+                messages.success(request, "Achievement submitted successfully. Pending HOD verification.")
+                return redirect('faculty:add_achievement')
+            except ValueError:
+                messages.error(request, "Invalid date format.")
+            except Exception as e:
+                messages.error(request, f"Error saving achievement: {e}")
+
+    achievements = Achievement.objects.filter(user=request.user).order_by('-date_achieved')
+    return render(request, 'faculty/add_achievement.html', {
+        'faculty': faculty,
+        'achievements': achievements,
+    })
+
+

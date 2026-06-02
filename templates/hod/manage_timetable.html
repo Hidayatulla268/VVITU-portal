@@ -1,0 +1,45 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Manage Branch Timetables{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-alt me-2 text-accent"></i>Manage Timetables</h1>
+    <p class="ph-sub">Manage and edit the weekly class schedules for your department sections</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  {% for sec in sections %}
+  <div class="col-md-4">
+    <div class="glass-card text-center py-4">
+      <div class="mx-auto mb-3 d-flex align-items-center justify-content-center" 
+           style="width: 60px; height: 60px; border-radius: 12px; background: var(--accent-subtle); color: var(--accent-bright); font-size: 1.5rem;">
+        <i class="fas fa-school"></i>
+      </div>
+      <h4 class="fw-bold mb-1">{{ sec }}</h4>
+      <p class="text-muted small mb-4">{{ sec.branch.code }} — Year {{ sec.year.year }} — Section {{ sec.name }}</p>
+      
+      <a href="{% url 'hod:edit_timetable' sec.id %}" class="btn-vvit-primary w-75 mx-auto">
+        <i class="fas fa-edit me-2"></i>Edit Schedule
+      </a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12 text-center py-5 text-muted">
+    <i class="fas fa-exclamation-triangle fa-3x mb-3 text-warning"></i>
+    <h5>No sections configured</h5>
+    <p>Please configure branch sections under the admin panel before managing timetables.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

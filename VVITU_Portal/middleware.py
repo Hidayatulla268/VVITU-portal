@@ -17,14 +17,17 @@ ROLE_URL_MAP = {
     '/student/':     {'student'},
     '/faculty/':     {'faculty', 'hod', 'lab_technician'},
     '/admin-portal/':{'admin'},
+    '/hod/':         {'hod'},
+    '/deo/':         {'deo'},
 }
 
 ROLE_DASHBOARDS = {
     'student':        'student:dashboard',
     'faculty':        'faculty:dashboard',
-    'hod':            'faculty:dashboard',
+    'hod':            'hod:dashboard',
     'lab_technician': 'faculty:dashboard',
     'admin':          'admin_dashboard:dashboard',
+    'deo':            'deo:dashboard',
 }
 
 class RoleBasedAccessMiddleware:

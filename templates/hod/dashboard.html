@@ -1,0 +1,178 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}HOD Dashboard — {{ department.code }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-shield-alt me-2 text-accent"></i>HOD Dashboard — {{ department.code }}</h1>
+    <p class="ph-sub">Head of Department panel for {{ department.name }}</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-val">{{ student_count }}</span>
+        <div class="kpi-icon bg-blue"><i class="fas fa-user-graduate"></i></div>
+      </div>
+      <span class="kpi-lbl">Students in Branch</span>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-val">{{ faculty_count }}</span>
+        <div class="kpi-icon bg-orange"><i class="fas fa-chalkboard-teacher"></i></div>
+      </div>
+      <span class="kpi-lbl">Branch Faculty</span>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-val">{{ subject_count }}</span>
+        <div class="kpi-icon bg-purple"><i class="fas fa-book"></i></div>
+      </div>
+      <span class="kpi-lbl">Active Subjects</span>
+    </div>
+  </div>
+
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <span class="kpi-val">{{ present_today }} / {{ absent_today }}</span>
+        <div class="kpi-icon bg-green"><i class="fas fa-clipboard-check"></i></div>
+      </div>
+      <span class="kpi-lbl">Attendance Today (P / A)</span>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Quick Actions Panel -->
+  <div class="col-lg-6">
+    <div class="glass-card mb-4">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-directions me-2 text-accent"></i>Quick Administration Links</h3>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <a href="{% url 'notifications:manage' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-bullhorn text-accent me-2"></i>Notices & Announcements
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:subject_mapping' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-book text-accent me-2"></i>Subject-Faculty Mapping
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:assign_teacher' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-user-plus text-accent me-2"></i>Assign Teachers/Counsellors
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_timetable' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-calendar-alt text-accent me-2"></i>Manage Timetables
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_students' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-user-graduate text-accent me-2"></i>Students Directory
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_faculty' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-chalkboard-teacher text-accent me-2"></i>Faculty Directory
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:attendance_list' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-check-double text-accent me-2"></i>Attendance Overrides
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:verify_achievements' %}" class="btn-vvit-outline w-100 py-3 text-start">
+            <i class="fas fa-trophy text-accent me-2"></i>Verify Achievements
+            {% if pending_achievements %}
+            <span class="badge bg-danger ms-1">{{ pending_achievements|length }}</span>
+            {% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notice Board Summary -->
+    <div class="glass-card">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-bell me-2 text-accent"></i>Notice Board</h3>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for notice in notices %}
+        <div class="list-group-item bg-transparent text-white border-0 px-0 pb-3">
+          <div class="d-flex justify-content-between">
+            <h5 class="fw-bold mb-1" style="font-size:0.95rem; color:var(--accent-bright);">{{ notice.title }}</h5>
+            <small class="text-muted">{{ notice.created_at|date:"d M H:i" }}</small>
+          </div>
+          <p class="text-muted small mb-0">{{ notice.message }}</p>
+        </div>
+        {% empty %}
+        <p class="text-muted py-3 text-center mb-0">No active notices.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Achievements Review -->
+  <div class="col-lg-6">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-trophy me-2 text-accent"></i>Pending Achievements Verification</h3>
+      </div>
+      
+      <div class="row g-3">
+        {% for ach in pending_achievements %}
+        <div class="col-12">
+          <div class="p-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="fw-bold text-primary mb-1">{{ ach.title }}</h5>
+                <p class="text-muted small mb-2">{{ ach.description }}</p>
+                <div class="d-flex gap-2 align-items-center">
+                  <span class="badge {% if ach.category == 'curricular' %}bg-blue{% else %}bg-green{% endif %} text-uppercase" style="font-size: 0.65rem;">
+                    {{ ach.get_category_display }}
+                  </span>
+                  <span class="text-muted small">Submitted by: <strong>{{ ach.user.get_full_name }}</strong> ({{ ach.user.username }})</span>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <a href="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="btn btn-sm btn-success py-1 px-2" style="font-size:0.75rem;">
+                  <i class="fas fa-check"></i>
+                </a>
+                <a href="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="btn btn-sm btn-danger py-1 px-2" style="font-size:0.75rem;" onclick="return confirm('Reject this achievement?')">
+                  <i class="fas fa-times"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 text-muted">
+          <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+          <h5>All Clean!</h5>
+          <p class="small text-muted mb-0">No pending curricular or co-curricular achievements to verify.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

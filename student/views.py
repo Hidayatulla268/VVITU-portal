@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.db.models import Q
 from django.contrib import messages
 
-from accounts.models import Student
+from accounts.models import Student, Achievement
 from core.models import (
     Timetable, Attendance, Result, Exam,
     AcademicCalendar, QuestionPaper, Subject,
@@ -198,89 +198,89 @@ def timetable(request):
 @student_required
 def results(request):
     student = request.student
-    exam_id  = request.GET.get('exam',     '')
     semester = request.GET.get('semester', '')
+    if not semester:
+        # Default to the student's current year & semester level
+        semester = (student.year.year * 2) - 1 if student.year else 1
+
+    try:
+        semester = int(semester)
+    except ValueError:
+        semester = 1
     
-    selected_exam_obj = None
-    sgpa = 0.0
-    pass_status = "Pass"
-    revaluation_date = None
-    results_list = []
+    # Fetch all subjects for this student's branch, year, and selected semester
+    subjects = Subject.objects.filter(branch=student.branch, year=student.year, semester=semester).order_by('name')
     
-    # Filter exams matching the student's branch and year level
+    # Fetch all results for this student for exams in the selected semester
+    results_qs = Result.objects.filter(
+        student=student, 
+        subject__semester=semester
+    ).select_related('exam', 'subject')
+    
+    # Release check: Only show final grades if released by Admin
+    from core.models import ResultRelease
+    released_finals = set(ResultRelease.objects.filter(released=True).values_list('exam_id', flat=True))
+
+    # Align results by subject code
+    subject_report = []
+    grade_points = {
+        'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5,
+        'F': 0, 'Ab': 0
+    }
+    total_points = 0
+    total_credits = 0
+    has_fail = False
+    has_any_final = False
+    
+    for subj in subjects:
+        subj_results = results_qs.filter(subject=subj)
+        mid1 = subj_results.filter(exam__exam_type='mid1').first()
+        mid2 = subj_results.filter(exam__exam_type='mid2').first()
+        final = subj_results.filter(exam__exam_type='final').first()
+        
+        # Check if final exam result is released
+        show_final = False
+        if final:
+            if final.exam.id in released_finals:
+                show_final = True
+        
+        final_res = final if show_final else None
+        if final_res:
+            has_any_final = True
+        
+        report_item = {
+            'subject': subj,
+            'mid1': mid1,
+            'mid2': mid2,
+            'final': final_res,
+        }
+        subject_report.append(report_item)
+        
+        if final_res and final_res.grade:
+            g = final_res.grade
+            if g in ['F', 'Ab']:
+                has_fail = True
+            credits = subj.credits
+            points = grade_points.get(g, 0)
+            total_points += points * credits
+            total_credits += credits
+        elif final_res:
+            has_fail = True
+
+    sgpa = round(total_points / total_credits, 2) if total_credits > 0 else 0.0
+    pass_status = "Fail" if has_fail else "Pass" if has_any_final else "—"
+
+    # We still keep the original list of exams in case they want it
     exams = Exam.objects.filter(branch=student.branch, year=student.year).order_by('-date')
-
-    if exam_id:
-        try:
-            selected_exam_obj = Exam.objects.get(id=exam_id)
-            results_qs = Result.objects.filter(
-                student=student,
-                exam_id=exam_id,
-                exam__release__released=True
-            ).select_related('subject').order_by('subject__name')
-            
-            results_list = list(results_qs)
-            
-            # Calculate SGPA and Pass/Fail status dynamically according to R23 regulation
-            grade_points = {
-                'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5,
-                'F': 0, 'Ab': 0
-            }
-            total_points = 0
-            total_credits = 0
-            has_fail = False
-            
-            for r in results_list:
-                g = r.grade
-                if g in ['CP', 'NCP']:
-                    if g == 'NCP':
-                        has_fail = True
-                    continue
-                if g in ['F', 'Ab'] or not g:
-                    has_fail = True
-                
-                credits = r.subject.credits if r.subject else 3
-                points = grade_points.get(g, 0)
-                total_points += points * credits
-                total_credits += credits
-                
-            sgpa = round(total_points / total_credits, 2) if total_credits > 0 else 0.0
-            pass_status = "Fail" if has_fail else "Pass"
-            
-            if selected_exam_obj.date:
-                revaluation_date = selected_exam_obj.date + datetime.timedelta(days=40)
-            else:
-                revaluation_date = timezone.localdate() + datetime.timedelta(days=30)
-                
-        except Exam.DoesNotExist:
-            pass
-
-    # Standard general view (all results list)
-    qs = (
-        Result.objects
-        .filter(student=student, exam__release__released=True)
-        .select_related('exam', 'subject')
-        .order_by('-exam__date', 'subject__name')
-    )
-    if exam_id:
-        qs = qs.filter(exam_id=exam_id)
-    if semester:
-        qs = qs.filter(exam__semester=semester)
-
-    results_page = Paginator(qs, 15).get_page(request.GET.get('page', 1))
 
     return render(request, 'student/results.html', {
         'student':           student,
-        'results_page':      results_page,
-        'exams':             exams,
-        'selected_exam':     exam_id,
-        'selected_exam_obj': selected_exam_obj,
         'selected_sem':      semester,
         'semesters':         range(1, 9),
-        'results_list':      results_list,
+        'subject_report':    subject_report,
         'sgpa':              sgpa,
         'pass_status':       pass_status,
-        'revaluation_date':  revaluation_date,
+        'exams':             exams,
     })
 
 
@@ -339,3 +339,40 @@ def question_papers(request):
         'semesters':     range(1, 9),
         'years':         range(2018, timezone.now().year + 1),
     })
+
+
+@student_required
+def add_achievement(request):
+    student = request.student
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        category = request.POST.get('category', '').strip()
+        date_str = request.POST.get('date_achieved', '').strip()
+
+        if not (title and description and category and date_str):
+            messages.error(request, "All fields are required.")
+        else:
+            try:
+                date_achieved = datetime.date.fromisoformat(date_str)
+                Achievement.objects.create(
+                    user=request.user,
+                    title=title,
+                    description=description,
+                    category=category,
+                    date_achieved=date_achieved
+                )
+                messages.success(request, "Achievement submitted successfully. Pending HOD verification.")
+                return redirect('student:add_achievement')
+            except ValueError:
+                messages.error(request, "Invalid date format.")
+            except Exception as e:
+                messages.error(request, f"Error saving achievement: {e}")
+
+    # Fetch existing achievements for this user
+    achievements = Achievement.objects.filter(user=request.user).order_by('-date_achieved')
+    return render(request, 'student/add_achievement.html', {
+        'student': student,
+        'achievements': achievements,
+    })
+

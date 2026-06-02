@@ -1,18 +1,19 @@
 {% extends "core/base.html" %}
 {% load static %}
-{% load core_tags %}
-{% block title %}Manage Faculty{% endblock %}
+{% block title %}Manage Faculty — {{ department.code }}{% endblock %}
+
 {% block page_header %}
 <div class="page-header-strip">
   <div class="ph-left">
-    <h1 class="ph-title"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Manage Faculty</h1>
-    <p class="ph-sub">{{ faculties|length }} active faculty members</p>
+    <h1 class="ph-title"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Faculty Directory</h1>
+    <p class="ph-sub">{{ faculties|length }} faculty members in CSE department</p>
   </div>
   <div class="ph-right">
-    <a href="{% url 'admin_dashboard:add_faculty' %}" class="btn-vvit-primary"><i class="fas fa-user-plus me-2"></i>Add Faculty</a>
+    <a href="{% url 'hod:add_faculty' %}" class="btn-vvit-primary"><i class="fas fa-user-plus me-2"></i>Add Faculty</a>
   </div>
 </div>
 {% endblock %}
+
 {% block content %}
 <div class="glass-card">
   <div class="table-responsive">
@@ -27,17 +28,12 @@
           <td><a href="{% url 'accounts:faculty_detail' f.pk %}" style="color: var(--accent-bright); text-decoration: none; font-weight: bold;">{{ f.employee_id }}</a></td>
           <td>{{ f.user.get_full_name }}</td>
           <td><span class="badge-section small">{{ f.user.get_role_display }}</span></td>
-          <td>{{ f.department.code|default:"—" }}</td>
+          <td>{{ f.department.code }}</td>
           <td>{{ f.user.phone|default:"—" }}</td>
           <td>
-            <a href="{% url 'admin_dashboard:edit_faculty' f.pk %}" class="btn-sm-edit me-1">
+            <a href="{% url 'hod:edit_faculty' f.pk %}" class="btn-sm-edit me-1">
               <i class="fas fa-edit"></i>
             </a>
-            <form method="post" action="{% url 'admin_dashboard:delete_faculty' f.pk %}" class="d-inline"
-                  onsubmit="return confirm('Delete faculty {{ f.employee_id }}?')">
-              {% csrf_token %}
-              <button type="submit" class="btn-sm-danger"><i class="fas fa-trash"></i></button>
-            </form>
           </td>
         </tr>
         {% empty %}

@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+{% block title %}Edit Faculty — {{ fac.employee_id }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-edit me-2 text-accent"></i>Edit Faculty Profile</h1>
+    <p class="ph-sub">Modify details for {{ fac.user.get_full_name }}</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:manage_faculty' %}" class="btn-vvit-outline"><i class="fas fa-arrow-left me-2"></i>Back</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label text-muted">Employee ID (Read-only)</label>
+          <input type="text" class="vvit-input" value="{{ fac.employee_id }}" disabled>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">First Name</label>
+          <input type="text" name="first_name" class="vvit-input" value="{{ fac.user.first_name }}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Last Name</label>
+          <input type="text" name="last_name" class="vvit-input" value="{{ fac.user.last_name }}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Phone Number</label>
+          <input type="text" name="phone" class="vvit-input" value="{{ fac.user.phone|default:'' }}">
+        </div>
+        <div class="mb-4">
+          <label class="form-label text-muted">Designation</label>
+          <input type="text" name="designation" class="vvit-input" value="{{ fac.designation }}" required>
+        </div>
+        <button type="submit" class="btn-vvit-primary w-100 py-3">Save Faculty Profile</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

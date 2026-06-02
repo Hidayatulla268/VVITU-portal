@@ -1,0 +1,72 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}DEO Dashboard — {{ branch.code }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-keyboard me-2 text-accent"></i>DEO Dashboard — {{ branch.code }}</h1>
+    <p class="ph-sub">Data Entry Operator portal for {{ branch.name }} department</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Card -->
+<div class="glass-card mb-4 text-start">
+  <h3 class="fw-bold mb-2">Welcome Back, {{ request.user.get_full_name|default:request.user.username }}!</h3>
+  <p class="text-muted mb-0">
+    You are assigned to the <strong>{{ branch.name }} ({{ branch.code }})</strong> department. You have data entry rights for students, attendance records, and exam results within this department.
+  </p>
+</div>
+
+<!-- KPI Stats Row -->
+<div class="row g-3 mb-4 animate-fade-in">
+  <div class="col-md-6">
+    <div class="kpi-card text-center py-4">
+      <span class="kpi-val">{{ student_count }}</span>
+      <span class="kpi-lbl">Students in Branch</span>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="kpi-card text-center py-4">
+      <span class="kpi-val">{{ faculty_count }}</span>
+      <span class="kpi-lbl">Faculty Members</span>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Links Grid -->
+<div class="glass-card">
+  <div class="card-header-custom mb-3">
+    <h3 class="card-title-custom"><i class="fas fa-tasks me-2 text-accent"></i>Data Entry Utilities</h3>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-3">
+      <a href="{% url 'deo:manage_students' %}" class="btn-vvit-outline w-100 py-4 text-center d-flex flex-column align-items-center gap-2">
+        <i class="fas fa-user-graduate fa-2x text-accent"></i>
+        <span>Manage Students Directory</span>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'deo:attendance_list' %}" class="btn-vvit-outline w-100 py-4 text-center d-flex flex-column align-items-center gap-2">
+        <i class="fas fa-check-square fa-2x text-accent"></i>
+        <span>Enter/Update Attendance</span>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'deo:upload_marks' %}" class="btn-vvit-outline w-100 py-4 text-center d-flex flex-column align-items-center gap-2">
+        <i class="fas fa-file-upload fa-2x text-accent"></i>
+        <span>Upload Exam Marks</span>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'notifications:manage' %}" class="btn-vvit-outline w-100 py-4 text-center d-flex flex-column align-items-center gap-2">
+        <i class="fas fa-envelope-open-text fa-2x text-accent"></i>
+        <span>Manage Notices & Mails</span>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

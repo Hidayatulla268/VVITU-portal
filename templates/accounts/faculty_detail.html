@@ -1,0 +1,213 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Faculty Details — {{ faculty.employee_id }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Faculty Details</h1>
+    <p class="ph-sub">Professional profile of {{ faculty.user.get_full_name }}</p>
+  </div>
+  <div class="ph-right">
+    <button onclick="window.history.back();" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Left Side: Profile Card -->
+  <div class="col-lg-4">
+    <div class="glass-card text-center py-5 h-100">
+      <div class="mx-auto mb-4 d-flex align-items-center justify-content-center" 
+           style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #7f1d1d); border: 3px solid var(--accent-bright); box-shadow: var(--shadow-glow);">
+        {% if faculty.user.profile_picture %}
+          <img src="{{ faculty.user.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+        {% else %}
+          <span style="font-family: var(--font-display); font-weight: 700; font-size: 2.5rem; color: #fff; letter-spacing: 0.05em;">
+            {{ faculty.user.first_name|first|upper }}{{ faculty.user.last_name|first|upper }}
+          </span>
+        {% endif %}
+      </div>
+
+      <h3 style="font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: var(--text-primary); margin-bottom: 6px;">
+        {{ faculty.user.get_full_name }}
+      </h3>
+      <span class="badge-section mb-4 d-inline-block text-uppercase" style="font-size: 0.72rem; padding: 4px 14px;">
+        {{ faculty.employee_id }}
+      </span>
+
+      <div class="text-start px-4 mt-3" style="border-top: 1px solid var(--clr-border); padding-top: 20px;">
+        <div class="mb-3 d-flex align-items-center gap-3">
+          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <div>
+            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Email Address</div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem; word-break: break-all;">{{ faculty.user.email }}</div>
+          </div>
+        </div>
+
+        <div class="mb-0 d-flex align-items-center gap-3">
+          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-phone"></i>
+          </div>
+          <div>
+            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number</div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ faculty.user.phone|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Details Tabs -->
+  <div class="col-lg-8">
+    <!-- Registration Details -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-id-card me-2 text-accent"></i>Employment Details</h3>
+        <span class="card-badge">{{ faculty.designation|default:"Professor" }}</span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">Department</div>
+            <div class="fw-bold mt-1">{{ faculty.department.name }} ({{ faculty.department.code }})</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">Joining Date</div>
+            <div class="fw-bold mt-1">{{ faculty.joining_date|date:"d M Y"|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">Staff Role</div>
+            <div class="fw-bold mt-1 text-uppercase">{{ faculty.user.get_role_display }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">Account Status</div>
+            <div class="fw-bold mt-1 text-success">
+              <i class="fas fa-circle-check me-2"></i>Active Staff Member
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subjects Taught -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-book me-2 text-accent"></i>Assigned Subjects</h3>
+        <span class="card-badge bg-orange">{{ subjects|length }} Subjects</span>
+      </div>
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>Subject Code</th>
+              <th>Subject Name</th>
+              <th class="text-center">Branch</th>
+              <th class="text-center">Year Level</th>
+              <th class="text-center">Semester</th>
+              <th class="text-center">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in subjects %}
+            <tr>
+              <td><strong>{{ s.code }}</strong></td>
+              <td>{{ s.name }}</td>
+              <td class="text-center">{{ s.branch.code }}</td>
+              <td class="text-center">{{ s.year }}</td>
+              <td class="text-center">Sem {{ s.semester }}</td>
+              <td class="text-center">
+                {% if s.is_lab %}
+                <span class="badge bg-purple" style="font-size: 0.7rem;">Lab</span>
+                {% else %}
+                <span class="badge bg-blue" style="font-size: 0.7rem;">Theory</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">No subjects currently assigned.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Timetable Slots -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-calendar-alt me-2 text-accent"></i>Timetable Slots</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th class="text-center">Period</th>
+              <th>Subject</th>
+              <th class="text-center">Class / Section</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for slot in timetable_slots %}
+            <tr>
+              <td><strong>{{ slot.day }}</strong></td>
+              <td class="text-center">Period {{ slot.period }}</td>
+              <td>{{ slot.subject.code }} — {{ slot.subject.name }}</td>
+              <td class="text-center">{{ slot.section }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No timetable slots assigned.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="glass-card">
+      <div class="card-header-custom mb-3">
+        <h3 class="card-title-custom"><i class="fas fa-trophy me-2 text-accent"></i>Achievements & Publications</h3>
+      </div>
+      <div class="row g-3">
+        {% for ach in achievements %}
+        <div class="col-12">
+          <div class="p-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="fw-bold text-primary mb-1">{{ ach.title }}</h5>
+                <p class="text-muted small mb-2">{{ ach.description }}</p>
+                <span class="badge {% if ach.category == 'curricular' %}bg-blue{% else %}bg-green{% endif %} text-uppercase" style="font-size: 0.65rem;">
+                  {{ ach.get_category_display }}
+                </span>
+                <span class="text-muted small ms-2"><i class="far fa-calendar-alt me-1"></i>{{ ach.date_achieved|date:"d M Y" }}</span>
+              </div>
+              <div>
+                {% if ach.is_verified %}
+                <span class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i>Verified</span>
+                {% else %}
+                <span class="text-warning small fw-bold"><i class="fas fa-clock me-1"></i>Verification Pending</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-4 text-muted">No achievements recorded for this faculty member.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

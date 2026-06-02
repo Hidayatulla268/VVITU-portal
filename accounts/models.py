@@ -24,6 +24,7 @@ class User(AbstractUser):
         ('admin',         'Admin'),
         ('hod',           'Head of Department'),
         ('lab_technician','Lab Technician'),
+        ('deo',           'Data Entry Operator'),
     ]
 
     role  = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student', db_index=True)
@@ -52,9 +53,10 @@ class User(AbstractUser):
         role_map = {
             'student':       'student:dashboard',
             'faculty':       'faculty:dashboard',
-            'hod':           'faculty:dashboard',
+            'hod':           'hod:dashboard',
             'lab_technician':'faculty:dashboard',
             'admin':         'admin_dashboard:dashboard',
+            'deo':           'deo:dashboard',
         }
         return reverse(role_map.get(self.role, 'accounts:login'))
 
@@ -144,3 +146,54 @@ class Faculty(models.Model):
     @property
     def phone(self):
         return self.user.phone
+
+
+# ─────────────────────────────────────────────
+# DEO PROFILE
+# ─────────────────────────────────────────────
+class DEOProfile(models.Model):
+    """
+    Profile for Data Entry Operator.
+    Assigned to a specific branch/department.
+    """
+    user        = models.OneToOneField(User, on_delete=models.CASCADE, related_name='deo_profile', db_index=True)
+    employee_id = models.CharField(max_length=20, unique=True, db_index=True)
+    branch      = models.ForeignKey('core.Branch', on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
+    is_active   = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'DEO Profile'
+        verbose_name_plural = 'DEO Profiles'
+
+    def __str__(self):
+        return f"DEO: {self.employee_id} — {self.user.get_full_name() or self.user.username}"
+
+
+# ─────────────────────────────────────────────
+# ACHIEVEMENT
+# ─────────────────────────────────────────────
+class Achievement(models.Model):
+    """
+    Academic, Co-curricular, Extra-curricular achievements of students or faculty.
+    Verified by HOD or Admin.
+    """
+    CATEGORY_CHOICES = [
+        ('curricular', 'Curricular'),
+        ('cocurricular', 'Co-curricular'),
+    ]
+    user          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements', db_index=True)
+    title         = models.CharField(max_length=200)
+    description   = models.TextField()
+    category      = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='curricular', db_index=True)
+    date_achieved = models.DateField(db_index=True)
+    is_verified   = models.BooleanField(default=False, db_index=True)
+    verified_by   = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_achievements')
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Achievement'
+        verbose_name_plural = 'Achievements'
+        ordering = ['-date_achieved']
+
+    def __str__(self):
+        return f"{self.user.username} — {self.title} ({self.category})"

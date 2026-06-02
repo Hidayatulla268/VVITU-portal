@@ -1,0 +1,99 @@
+{% extends "core/base.html" %}
+{% block title %}Add Student{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-plus me-2 text-accent"></i>Add Student</h1>
+    <p class="ph-sub">Create a new student account in your branch</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'deo:manage_students' %}" class="btn-vvit-outline"><i class="fas fa-arrow-left me-2"></i>Back</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-muted">Roll Number / Username</label>
+            <input type="text" name="username" class="vvit-input" placeholder="24BQ1A4901" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Default Password</label>
+            <input type="text" name="password" class="vvit-input" value="vvit@1234" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">First Name</label>
+            <input type="text" name="first_name" class="vvit-input" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Last Name</label>
+            <input type="text" name="last_name" class="vvit-input" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Phone Number</label>
+            <input type="text" name="phone" class="vvit-input">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Year Level</label>
+            <select name="year" class="vvit-select" required>
+              <option value="1">I Year</option>
+              <option value="2">II Year</option>
+              <option value="3">III Year</option>
+              <option value="4">IV Year</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Section</label>
+            <select name="section" class="vvit-select" required>
+              <option value="">— Select Section —</option>
+              {% for sec in sections %}
+              <option value="{{ sec.id }}">{{ sec }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Admission Year</label>
+            <input type="number" name="admission_year" class="vvit-input" value="2024" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Class Teacher</label>
+            <select name="class_teacher" class="vvit-select">
+              <option value="">— Select —</option>
+              {% for fac in faculties %}
+              <option value="{{ fac.id }}">{{ fac.user.get_full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Counsellor</label>
+            <select name="counsellor" class="vvit-select">
+              <option value="">— Select —</option>
+              {% for fac in faculties %}
+              <option value="{{ fac.id }}">{{ fac.user.get_full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Parent Name</label>
+            <input type="text" name="parent_name" class="vvit-input">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Parent Mobile</label>
+            <input type="text" name="parent_mobile" class="vvit-input">
+          </div>
+        </div>
+        <div class="mt-4">
+          <button type="submit" class="btn-vvit-primary w-100 py-3">Create Student Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

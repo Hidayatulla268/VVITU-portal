@@ -1,0 +1,127 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Edit Timetable — {{ section }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-edit me-2 text-accent"></i>Edit Timetable — {{ section }}</h1>
+    <p class="ph-sub">Add, modify, or remove class slots for section {{ section }}</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:manage_timetable' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Timetables
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Interactive Form Card -->
+  <div class="col-lg-4">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-3">
+        <h4 class="card-title-custom"><i class="fas fa-plus-circle me-2 text-accent"></i>Add / Update Slot</h4>
+      </div>
+      
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+          <label class="form-label text-muted">Day of Week</label>
+          <select name="day" class="vvit-select" required>
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Class Period</label>
+          <select name="period" class="vvit-select" required>
+            {% for p in periods %}
+            <option value="{{ p }}">Period {{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Subject</label>
+          <select name="subject" class="vvit-select" required>
+            <option value="">— Select Subject —</option>
+            {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.code }} — {{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label text-muted">Faculty Instructor</label>
+          <select name="faculty" class="vvit-select" required>
+            <option value="">— Select Faculty —</option>
+            {% for f in faculties %}
+            <option value="{{ f.id }}">{{ f.user.get_full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn-vvit-primary flex-grow-1">
+            <i class="fas fa-save me-2"></i>Save Slot
+          </button>
+          <button type="submit" name="delete" value="true" class="btn btn-danger" onclick="return confirm('Delete this slot?')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Weekly Timetable Grid View -->
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <div class="card-header-custom mb-3">
+        <h4 class="card-title-custom"><i class="fas fa-th me-2 text-accent"></i>Weekly Class Grid</h4>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="vvit-table text-center" style="font-size:0.85rem;">
+          <thead>
+            <tr>
+              <th style="width: 100px;">Day</th>
+              {% for p in periods %}
+              <th>Period {{ p }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for day in days %}
+            <tr>
+              <td class="fw-bold bg-dark-50 text-start align-middle"><strong>{{ day }}</strong></td>
+              {% for p in periods %}
+              <td class="align-middle py-3" style="min-width: 100px; height: 80px; background: rgba(255,255,255,0.01); border: 1px solid var(--clr-border);">
+                {% with slot=grid|dict_get:day|dict_get:p %}
+                {% if slot %}
+                <div class="fw-bold text-accent" style="font-size:0.82rem;">{{ slot.subject.code }}</div>
+                <div class="text-muted small" style="font-size:0.75rem;">{{ slot.faculty.user.last_name|default:slot.faculty.user.first_name }}</div>
+                {% else %}
+                <span class="text-muted small" style="opacity:0.3;">—</span>
+                {% endif %}
+                {% endwith %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

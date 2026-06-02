@@ -1,51 +1,38 @@
 {% extends "core/base.html" %}
 {% load static %}
-{% load core_tags %}
 
 {% block title %}Exam Results{% endblock %}
 
 {% block page_header %}
 <div class="page-header-strip">
   <div class="ph-left">
-    <h1 class="ph-title"><i class="fas fa-chart-bar me-2 text-accent"></i>Exam Results</h1>
-    <p class="ph-sub">View and filter your academic performance records</p>
+    <h1 class="ph-title"><i class="fas fa-chart-bar me-2 text-accent"></i>Academic Performance Sheet</h1>
+    <p class="ph-sub">View and track your internal and external examination scores</p>
   </div>
 </div>
 {% endblock %}
 
 {% block content %}
 <!-- Filter Bar -->
-<div class="glass-card mb-4">
+<div class="glass-card mb-4 print-hide">
   <form method="get" class="row g-3 align-items-end">
-    <div class="col-md-4">
-      <label class="form-label text-muted">Exam</label>
-      <select name="exam" class="vvit-select">
-        <option value="">— All Exams —</option>
-        {% for exam in exams %}
-        <option value="{{ exam.id }}" {% if selected_exam == exam.id|stringformat:"s" %}selected{% endif %}>
-          {{ exam.name }}
-        </option>
+    <div class="col-md-6">
+      <label class="form-label text-muted">Select Academic Semester</label>
+      <select name="semester" class="vvit-select" onchange="this.form.submit()">
+        {% for s in semesters %}
+        <option value="{{ s }}" {% if selected_sem == s %}selected{% endif %}>Semester {{ s }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="col-md-3">
-      <label class="form-label text-muted">Semester</label>
-      <select name="semester" class="vvit-select">
-        <option value="">— All Semesters —</option>
-        {% for s in semesters %}
-        <option value="{{ s }}" {% if selected_sem == s|stringformat:"s" %}selected{% endif %}>Sem {{ s }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-2">
       <button type="submit" class="btn-vvit-primary w-100">
-        <i class="fas fa-filter me-2"></i>Filter
+        <i class="fas fa-filter me-2"></i>Apply Filter
       </button>
     </div>
-    <div class="col-md-2">
-      <a href="{% url 'student:results' %}" class="btn-vvit-outline w-100">
-        <i class="fas fa-times me-2"></i>Clear
-      </a>
+    <div class="col-md-3">
+      <button type="button" onclick="window.print();" class="btn-vvit-outline w-100">
+        <i class="fas fa-print me-2"></i>Print Sheet
+      </button>
     </div>
   </form>
 </div>
@@ -53,23 +40,17 @@
 <!-- Styles and Printing overrides -->
 <style>
 @media print {
-  /* Hide standard layout wrapper components */
   .vvit-navbar,
   .vvit-sidebar,
   .sidebar-overlay,
   .page-header-strip,
+  .print-hide,
   .glass-card:not(.print-sheet-card),
-  .print-controls-wrapper,
   .theme-toggle-btn,
   .vbot-icon-btn,
-  .vbot-chat-window,
-  .card-header-custom,
-  #vvit-navbar,
-  #vvit-sidebar {
+  .vbot-chat-window {
     display: none !important;
   }
-  
-  /* Reset background and text colors to clean print white */
   body, html {
     background: #fff !important;
     color: #000 !important;
@@ -82,8 +63,6 @@
     padding: 0 !important;
     max-width: 100% !important;
   }
-  
-  /* Reset print sheet margins and borders */
   .print-sheet-card {
     background: #fff !important;
     border: none !important;
@@ -93,7 +72,6 @@
     margin: 0 !important;
     width: 100% !important;
   }
-  
   .print-sheet-card h2,
   .print-sheet-card h4,
   .print-sheet-card h5,
@@ -102,26 +80,16 @@
   .print-sheet-card th {
     color: #000 !important;
   }
-  
-  /* High contrast colors for print compatibility */
   .print-sheet-card .text-danger {
-    color: #000 !important;
+    color: #c2410c !important;
     font-weight: bold !important;
   }
-  
   .print-header-logo-section h2 {
     color: #dc2626 !important;
   }
   .print-header-logo-section h4 {
     color: #ea580c !important;
   }
-  
-  .print-sheet-card div[style*="background"] {
-    background: #fff !important;
-    border: 1px solid #000 !important;
-  }
-  
-  /* Table formatting during printing */
   .vvit-table {
     width: 100% !important;
     border: 1px solid #000 !important;
@@ -142,11 +110,9 @@
 
 <!-- Results Panel -->
 <div class="glass-card print-sheet-card">
-  {% if selected_exam_obj and results_list %}
   <!-- Header Logo & College Name -->
-  <div class="text-center mb-4 print-header-logo-section pt-3">
+  <div class="text-center mb-4 pt-3">
     <div class="mx-auto mb-2" style="width: 70px; height: 70px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
-      <!-- SVG Logo inline to ensure seamless loading on print -->
       <svg width="50" height="50" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -165,22 +131,8 @@
       Autonomous
     </h5>
     <h4 class="text-accent fw-bold mb-3">
-      {{ selected_exam_obj.name }} Results
+      Consolidated Performance Report — Semester {{ selected_sem }}
     </h4>
-  </div>
-
-  <!-- Search / Print Row -->
-  <div class="print-controls-wrapper mb-4">
-    <div class="row align-items-center justify-content-center g-3">
-      <div class="col-auto">
-        <input type="text" value="{{ student.roll_number }}" readonly class="vvit-input text-center" style="width: 150px; font-weight: bold; background: rgba(0,0,0,0.25);">
-      </div>
-      <div class="col-auto">
-        <button onclick="window.print();" class="btn-vvit-primary px-4" style="background: linear-gradient(135deg, #f97316, #ea580c); border-color: #ea580c; box-shadow: 0 4px 12px rgba(234,88,12,0.3);">
-          <i class="fas fa-print me-2"></i>Print
-        </button>
-      </div>
-    </div>
   </div>
 
   <!-- Student Details Block -->
@@ -194,6 +146,10 @@
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Name</td>
         <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{ student.user.get_full_name }}</td>
       </tr>
+      <tr>
+        <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Branch / Department</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">{{ student.branch.name }}</td>
+      </tr>
     </table>
   </div>
 
@@ -202,31 +158,60 @@
     <table class="vvit-table text-start">
       <thead>
         <tr style="background: rgba(220, 38, 38, 0.1);">
-          <th style="width: 25%;">Subject Code</th>
-          <th>Subject</th>
-          <th style="width: 15%; text-align: center;">Grade</th>
-          <th style="width: 15%; text-align: center;">Credits</th>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th style="text-align: center;">Mid-1 Marks</th>
+          <th style="text-align: center;">Mid-2 Marks</th>
+          <th style="text-align: center;">Semester End Marks</th>
+          <th style="text-align: center;">Grade</th>
+          <th style="text-align: center;">Credits</th>
         </tr>
       </thead>
       <tbody>
-        {% for res in results_list %}
+        {% for entry in subject_report %}
         <tr>
-          <td><strong>{{ res.subject.code }}</strong></td>
+          <td><strong>{{ entry.subject.code }}</strong></td>
           <td>
-            <div class="subject-cell">
-              <span class="subject-code" style="font-weight: normal; font-size: 0.88rem;">{{ res.subject.name }}</span>
-            </div>
-          </td>
-          <td class="text-center">
-            {% if res.grade %}
-            <span class="grade-badge grade-{{ res.grade|lower|cut:'+' }}" style="font-size: 0.85rem; font-weight: 700;">{{ res.grade }}</span>
-            {% else %}
-            <span class="text-muted small">N/A</span>
+            {{ entry.subject.name }}
+            {% if entry.subject.is_lab %}
+            <span class="badge bg-purple ms-2" style="font-size: 0.65rem; padding: 2px 6px;">Lab Course</span>
             {% endif %}
           </td>
           <td class="text-center">
-            {{ res.subject.credits|default:'—' }}
+            {% if entry.mid1 %}
+            {{ entry.mid1.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.mid1.max_marks|floatformat:0 }}</span>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
           </td>
+          <td class="text-center">
+            {% if entry.mid2 %}
+            {{ entry.mid2.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.mid2.max_marks|floatformat:0 }}</span>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if entry.final %}
+            {{ entry.final.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.final.max_marks|floatformat:0 }}</span>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if entry.final and entry.final.grade %}
+            <span class="grade-badge grade-{{ entry.final.grade|lower|cut:'+' }}" style="font-size: 0.85rem; font-weight: 700;">{{ entry.final.grade }}</span>
+            {% else %}
+            <span class="text-muted small">Not Released</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {{ entry.subject.credits }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">No subjects registered for this semester.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -237,11 +222,11 @@
   <div class="mx-auto mt-4" style="max-width: 500px; border-top: 1px solid var(--clr-border); padding-top: 16px;">
     <table style="width: 100%; font-size: 0.95rem; border-collapse: collapse;">
       <tr>
-        <td style="width: 50%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Pass/Fail</td>
+        <td style="width: 50%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Semester Result Status</td>
         <td style="font-weight: 700; padding: 6px 0; {% if pass_status == 'Pass' %}color: var(--clr-success);{% else %}color: var(--clr-danger);{% endif %}">{{ pass_status }}</td>
       </tr>
       <tr>
-        <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">SGPA</td>
+        <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">SGPA (Semester GPA)</td>
         <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">{{ sgpa }}</td>
       </tr>
     </table>
@@ -249,105 +234,12 @@
 
   <!-- Footer Warning & Notes -->
   <div class="text-center mt-5 pt-3" style="font-size: 0.8rem; border-top: 1px solid var(--clr-border); line-height: 1.6;">
-    <p class="mb-1" style="font-weight: 600; color: var(--text-primary);">
-      Note: Last date for Recounting/Revaluation/Challenge by Revaluation is {{ revaluation_date|date:"d-m-Y" }}
-    </p>
     <p class="text-danger mb-1" style="font-weight: 600;">
-      Important!! The data provided on this site is purely for informational purpose.
+      Important Note: The marks displayed above represent both internal tests and labs. Semester end exams final grades are subject to release by the autonomous section.
     </p>
     <p class="text-muted mb-0">
-      Note: *CP-Completed *NCP-Not Completed
+      *CP - Course Completed | *NCP - Course Not Completed
     </p>
   </div>
-
-  {% else %}
-  <!-- Fallback: Standard general list views -->
-  <div class="card-header-custom">
-    <h3 class="card-title-custom"><i class="fas fa-table me-2 text-accent"></i>Results</h3>
-    <span class="card-badge">{{ results_page.paginator.count }} record{{ results_page.paginator.count|pluralize }}</span>
-  </div>
-
-  {% if results_page.object_list %}
-  <div class="table-responsive">
-    <table class="vvit-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Exam</th>
-          <th>Subject</th>
-          <th>Marks</th>
-          <th>Max</th>
-          <th>%</th>
-          <th>Grade</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for result in results_page %}
-        <tr>
-          <td class="text-muted small">{{ forloop.counter }}</td>
-          <td>
-            <div class="fw-600">{{ result.exam.name }}</div>
-            <small class="text-muted">Sem {{ result.exam.semester }}</small>
-          </td>
-          <td>
-            <div class="subject-cell">
-              <span class="subject-code">{{ result.subject.code }}</span>
-              <span class="subject-name-small">{{ result.subject.name }}</span>
-            </div>
-          </td>
-          <td>
-            <strong>{{ result.marks_obtained }}</strong>
-            {% if result.final_total_score %}
-            <br><small class="text-success" title="Weighted Overall Total">Overall: {{ result.final_total_score }}/100</small>
-            {% endif %}
-          </td>
-          <td class="text-muted">{{ result.max_marks }}</td>
-          <td>
-            <div class="pct-bar-wrap">
-              {% with pct=result.final_total_score|default:result.percentage %}
-              <div class="pct-bar-fill {% if pct >= 75 %}bar-green{% elif pct >= 50 %}bar-yellow{% else %}bar-red{% endif %}"
-                   style="width:{{ pct }}%"></div>
-              <span class="pct-label">{{ pct }}%</span>
-              {% endwith %}
-            </div>
-          </td>
-          <td>
-            {% if result.grade %}
-            <span class="grade-badge grade-{{ result.grade|lower|cut:'+' }}">{{ result.grade }}</span>
-            {% else %}
-            <span class="text-muted small">N/A</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Pagination -->
-  {% if results_page.has_other_pages %}
-  <div class="pagination-wrap">
-    {% if results_page.has_previous %}
-    <a href="?page={{ results_page.previous_page_number }}&exam={{ selected_exam }}&semester={{ selected_sem }}" class="page-btn">
-      <i class="fas fa-chevron-left"></i>
-    </a>
-    {% endif %}
-    <span class="page-info">Page {{ results_page.number }} of {{ results_page.paginator.num_pages }}</span>
-    {% if results_page.has_next %}
-    <a href="?page={{ results_page.next_page_number }}&exam={{ selected_exam }}&semester={{ selected_sem }}" class="page-btn">
-      <i class="fas fa-chevron-right"></i>
-    </a>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% else %}
-  <div class="empty-state py-5">
-    <i class="fas fa-folder-open empty-icon fa-3x mb-3"></i>
-    <h5>No results found</h5>
-    <p class="text-muted">Select an Exam filter above to load your printable results card format.</p>
-  </div>
-  {% endif %}
-  {% endif %}
 </div>
 {% endblock %}

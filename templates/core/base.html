@@ -163,8 +163,11 @@
       <a href="{% url 'student:question_papers' %}" class="nav-link {% if request.resolver_match.url_name == 'question_papers' %}active{% endif %}">
         <i class="fas fa-file-pdf nav-icon"></i><span>Question Papers</span>
       </a>
+      <a href="{% url 'student:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' %}active{% endif %}">
+        <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
+      </a>
 
-    {% elif user.role == 'faculty' or user.role == 'hod' or user.role == 'lab_technician' %}
+    {% elif user.role == 'faculty' or user.role == 'lab_technician' %}
       <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
         <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
       </a>
@@ -182,6 +185,64 @@
       </a>
       <a href="{% url 'faculty:student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' %}active{% endif %}">
         <i class="fas fa-poll-h nav-icon"></i><span>Student Results</span>
+      </a>
+      <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_marks' %}active{% endif %}">
+        <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
+      </a>
+      <a href="{% url 'faculty:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' %}active{% endif %}">
+        <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
+      </a>
+
+    {% elif user.role == 'hod' %}
+      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+      </a>
+      <a href="{% url 'hod:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-shield-alt nav-icon"></i><span>HOD Dashboard</span>
+      </a>
+      <a href="{% url 'hod:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-user-graduate nav-icon"></i><span>Students</span>
+      </a>
+      <a href="{% url 'hod:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty</span>
+      </a>
+      <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
+        <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
+      </a>
+      <a href="{% url 'hod:assign_teacher' %}" class="nav-link {% if 'assign_teacher' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-user-plus nav-icon"></i><span>Assign Teachers</span>
+      </a>
+      <a href="{% url 'hod:subject_mapping' %}" class="nav-link {% if 'subject_mapping' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-book nav-icon"></i><span>Subject Mapping</span>
+      </a>
+      <a href="{% url 'hod:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Timetables</span>
+      </a>
+      <a href="{% url 'hod:verify_achievements' %}" class="nav-link {% if 'achievements' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
+      </a>
+      <a href="{% url 'hod:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-check-double nav-icon"></i><span>Attendance Overrides</span>
+      </a>
+
+    {% elif user.role == 'deo' %}
+      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+      </a>
+      <a href="{% url 'deo:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'deo' %}active{% endif %}">
+        <i class="fas fa-keyboard nav-icon"></i><span>DEO Dashboard</span>
+      </a>
+      <a href="{% url 'deo:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}">
+        <i class="fas fa-user-graduate nav-icon"></i><span>Students</span>
+      </a>
+      <a href="{% url 'deo:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}">
+        <i class="fas fa-check-square nav-icon"></i><span>Attendance Entry</span>
+      </a>
+      <a href="{% url 'deo:upload_marks' %}" class="nav-link {% if 'upload_marks' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
+      </a>
+      <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
+        <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
 
     {% elif user.role == 'admin' %}
@@ -221,10 +282,8 @@
       <a href="{% url 'admin_dashboard:admin_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_attendance_report' %}active{% endif %}">
         <i class="fas fa-chart-pie nav-icon"></i><span>Attendance Report</span>
       </a>
-      <a href="{% url 'notifications:create' %}" class="nav-link">
-        <i class="fas fa-bell nav-icon"></i>
-        <span>Notifications</span>
-        <span class="sidebar-notif-badge" id="sidebarNotifBadge" style="display:none;"></span>
+      <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
+        <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
       <a href="/admin/" class="nav-link">
         <i class="fas fa-cog nav-icon"></i><span>Django Admin</span>

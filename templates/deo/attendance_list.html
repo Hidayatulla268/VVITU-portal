@@ -1,0 +1,104 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Attendance Management — DEO{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-check-double me-2 text-accent"></i>Attendance Override</h1>
+    <p class="ph-sub">Manage and correct attendance records (1-day edit limit applies)</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'deo:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search Filters -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label text-muted">Select Section (Class)</label>
+      <select name="section" class="vvit-select" required>
+        <option value="">— Select Section —</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if selected_section_id == sec.id|stringformat:"s" %}selected{% endif %}>{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-5">
+      <label class="form-label text-muted">Select Date</label>
+      <input type="date" name="date" value="{{ selected_date }}" class="vvit-input" required>
+    </div>
+
+    <div class="col-md-2">
+      <button type="submit" class="btn-vvit-primary w-100">
+        <i class="fas fa-search me-2"></i>Search
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if selected_section_id and selected_date %}
+<div class="glass-card">
+  <div class="card-header-custom mb-3 d-flex justify-content-between align-items-center">
+    <h4 class="card-title-custom"><i class="fas fa-list-ol me-2 text-accent"></i>Attendance Records</h4>
+    <div>
+      {% if allow_edit %}
+      <span class="badge bg-success"><i class="fas fa-unlock me-1"></i>Editable (Within 1 Day)</span>
+      {% else %}
+      <span class="badge bg-danger"><i class="fas fa-lock me-1"></i>Locked (HOD Approval Required)</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Subject</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td><strong>{{ record.student.roll_number }}</strong></td>
+          <td>{{ record.student.user.get_full_name }}</td>
+          <td>{{ record.timetable_entry.subject.code }} — {{ record.timetable_entry.subject.name }}</td>
+          <td class="text-center">
+            {% if record.status == 'P' %}
+            <span class="badge bg-success">Present</span>
+            {% else %}
+            <span class="badge bg-danger">Absent</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if allow_edit %}
+            <a href="{% url 'deo:edit_attendance' record.id %}" class="btn btn-sm btn-warning">
+              <i class="fas fa-edit me-1"></i>Override
+            </a>
+            {% else %}
+            <span class="text-muted small"><i class="fas fa-lock me-1"></i>Locked</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">No attendance records found for this section and date.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

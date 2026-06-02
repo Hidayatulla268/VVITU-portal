@@ -13,6 +13,8 @@ urlpatterns = [
     path('export/pdf/',          views.export_pdf,         name='export_pdf'),
     path('counselled-students/', views.counselled_students,name='counselled_students'),
     path('student-results/',     views.student_results,    name='student_results'),
+    path('upload-marks/',        views.upload_marks,       name='upload_marks'),
+    path('achievements/add/',    views.add_achievement,    name='add_achievement'),
 
     # AJAX endpoints
     path('ajax/students/',       views.ajax_get_students,  name='ajax_students'),

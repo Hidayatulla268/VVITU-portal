@@ -1,0 +1,51 @@
+{% extends "core/base.html" %}
+{% block title %}Add Faculty Member{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-plus me-2 text-accent"></i>Add Faculty Member</h1>
+    <p class="ph-sub">Create a new faculty account inside your department</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:manage_faculty' %}" class="btn-vvit-outline"><i class="fas fa-arrow-left me-2"></i>Back</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label text-muted">Employee ID / Username</label>
+          <input type="text" name="employee_id" class="vvit-input" placeholder="EMP004" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Default Password</label>
+          <input type="text" name="password" class="vvit-input" value="vvit@1234" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">First Name</label>
+          <input type="text" name="first_name" class="vvit-input" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Last Name</label>
+          <input type="text" name="last_name" class="vvit-input" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Phone Number</label>
+          <input type="text" name="phone" class="vvit-input">
+        </div>
+        <div class="mb-4">
+          <label class="form-label text-muted">Designation</label>
+          <input type="text" name="designation" class="vvit-input" value="Assistant Professor" required>
+        </div>
+        <button type="submit" class="btn-vvit-primary w-100 py-3">Create Faculty Account</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

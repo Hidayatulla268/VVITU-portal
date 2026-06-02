@@ -1,0 +1,79 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Verify Achievements{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-trophy me-2 text-accent"></i>Verify Achievements</h1>
+    <p class="ph-sub">Verify curricular and co-curricular milestones submitted by department members</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Submitted By</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Date Achieved</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ach in achievements %}
+        <tr>
+          <td>
+            <span class="badge {% if ach.category == 'curricular' %}bg-blue{% else %}bg-green{% endif %} text-uppercase" style="font-size:0.7rem;">
+              {{ ach.get_category_display }}
+            </span>
+          </td>
+          <td>
+            <div class="fw-bold">{{ ach.user.get_full_name }}</div>
+            <small class="text-muted text-uppercase">{{ ach.user.role }} — {{ ach.user.username }}</small>
+          </td>
+          <td><strong>{{ ach.title }}</strong></td>
+          <td class="small text-muted">{{ ach.description }}</td>
+          <td>{{ ach.date_achieved|date:"d M Y" }}</td>
+          <td class="text-center">
+            {% if ach.is_verified %}
+            <span class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i>Verified</span>
+            {% else %}
+            <span class="text-warning small fw-bold"><i class="fas fa-clock me-1"></i>Pending</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if not ach.is_verified %}
+            <div class="d-flex justify-content-center gap-2">
+              <a href="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="btn btn-sm btn-success" style="font-size:0.75rem;">
+                <i class="fas fa-check me-1"></i>Approve
+              </a>
+              <a href="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="btn btn-sm btn-danger" style="font-size:0.75rem;" onclick="return confirm('Reject and delete this achievement?')">
+                <i class="fas fa-trash me-1"></i>Reject
+              </a>
+            </div>
+            {% else %}
+            <span class="text-muted small">Verified by {{ ach.verified_by.first_name }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No achievements recorded in department.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

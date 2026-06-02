@@ -1,0 +1,68 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Subject-Faculty Mappings{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-book me-2 text-accent"></i>Subject-Faculty Mappings</h1>
+    <p class="ph-sub">Map faculty members to teach specific subjects in your department</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Year & Sem</th>
+          <th>Current Assigned Faculty</th>
+          <th style="width: 250px;">Assign / Update Faculty</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subj in subjects %}
+        <tr>
+          <td><strong>{{ subj.code }}</strong></td>
+          <td>{{ subj.name }}</td>
+          <td>Year {{ subj.year.year }} | Sem {{ subj.semester }}</td>
+          <td>
+            {% if subj.faculty %}
+            <span class="fw-bold text-success"><i class="fas fa-user-check me-2"></i>{{ subj.faculty.user.get_full_name }}</span>
+            {% else %}
+            <span class="text-muted"><i class="fas fa-user-slash me-2"></i>Not Assigned</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" class="d-flex gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="subject_id" value="{{ subj.id }}">
+              <select name="faculty_id" class="vvit-select py-1 px-2" style="font-size:0.85rem;" onchange="this.form.submit()">
+                <option value="">— Unassign —</option>
+                {% for fac in faculties %}
+                <option value="{{ fac.id }}" {% if subj.faculty.id == fac.id %}selected{% endif %}>
+                  {{ fac.user.get_full_name }}
+                </option>
+                {% endfor %}
+              </select>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted">No subjects found in department.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

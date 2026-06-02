@@ -80,7 +80,21 @@ class Command(BaseCommand):
         f_rajesh  = make_faculty('EMP001', 'Rajesh',  'Kumar',  cse, phone='9876543210')
         f_sunitha = make_faculty('EMP002', 'Sunitha', 'Reddy',  cse, phone='9876543211')
         f_prasad  = make_faculty('EMP003', 'Prasad',  'Varma',  ece, phone='9876543212')
-        self.stdout.write(self.style.SUCCESS("[OK] Faculty created (password: vvit@1234)"))
+        f_hod     = make_faculty('HOD001', 'HOD',     'CSE',    cse, role='hod', phone='9876543213')
+        self.stdout.write(self.style.SUCCESS("[OK] Faculty & HOD created (password: vvit@1234)"))
+
+        # DEO
+        from accounts.models import DEOProfile
+        if not User.objects.filter(username='DEO001').exists():
+            u_deo = User.objects.create_user(
+                username='DEO001', password='vvit@1234',
+                first_name='Data Entry', last_name='Operator',
+                email='deo@vvit.net', role='deo', phone='9876543214'
+            )
+            DEOProfile.objects.create(
+                user=u_deo, employee_id='DEO001', branch=cse
+            )
+            self.stdout.write(self.style.SUCCESS("[OK] DEO user created (password: vvit@1234)"))
 
         # SUBJECTS
         def make_subject(code, name, branch, year, semester, faculty, is_lab=False):
@@ -237,6 +251,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.MIGRATE_HEADING(""))
         self.stdout.write(self.style.MIGRATE_HEADING("Test login credentials (all passwords: vvit@1234)"))
         self.stdout.write(self.style.MIGRATE_HEADING("  Admin   : admin"))
+        self.stdout.write(self.style.MIGRATE_HEADING("  HOD     : HOD001 (CSE)"))
+        self.stdout.write(self.style.MIGRATE_HEADING("  DEO     : DEO001 (CSE)"))
         self.stdout.write(self.style.MIGRATE_HEADING("  Faculty : EMP001, EMP002, EMP003"))
         self.stdout.write(self.style.MIGRATE_HEADING("  Students: 24BQ1A4901 to 24BQ1A4906, 24BQ1A4942"))
         self.stdout.write(self.style.MIGRATE_HEADING(""))

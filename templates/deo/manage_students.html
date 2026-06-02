@@ -1,30 +1,28 @@
 {% extends "core/base.html" %}
 {% load static %}
-{% load core_tags %}
-{% block title %}Manage Students{% endblock %}
+{% block title %}Manage Students — {{ branch.code }}{% endblock %}
+
 {% block page_header %}
 <div class="page-header-strip">
   <div class="ph-left">
-    <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Manage Students</h1>
-    <p class="ph-sub">{{ page.paginator.count }} student records</p>
+    <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Students Directory</h1>
+    <p class="ph-sub">{{ page.paginator.count }} student records in {{ branch.code }} branch</p>
   </div>
-  <div class="ph-right d-flex gap-2">
-    <a href="{% url 'admin_dashboard:bulk_upload_students' %}" class="btn-vvit-outline">
-      <i class="fas fa-file-csv me-2"></i>Bulk Upload
-    </a>
-    <a href="{% url 'admin_dashboard:add_student' %}" class="btn-vvit-primary">
+  <div class="ph-right">
+    <a href="{% url 'deo:add_student' %}" class="btn-vvit-primary">
       <i class="fas fa-user-plus me-2"></i>Add Student
     </a>
   </div>
 </div>
 {% endblock %}
+
 {% block content %}
 <!-- Search -->
 <div class="glass-card mb-4">
   <form method="get" class="d-flex gap-3">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search by roll number or name…" class="vvit-input flex-grow-1"/>
+    <input type="text" name="q" value="{{ search }}" placeholder="Search students by roll number or name..." class="vvit-input flex-grow-1"/>
     <button type="submit" class="btn-vvit-primary"><i class="fas fa-search me-2"></i>Search</button>
-    {% if search %}<a href="{% url 'admin_dashboard:manage_students' %}" class="btn-vvit-outline">Clear</a>{% endif %}
+    {% if search %}<a href="{% url 'deo:manage_students' %}" class="btn-vvit-outline">Clear</a>{% endif %}
   </form>
 </div>
 
@@ -40,19 +38,12 @@
           <td class="text-muted small">{{ forloop.counter }}</td>
           <td><a href="{% url 'accounts:student_detail' st.pk %}" style="color: var(--accent-bright); text-decoration: none; font-weight: bold;">{{ st.roll_number }}</a></td>
           <td>{{ st.user.get_full_name }}</td>
-          <td>{{ st.branch.code|default:"—" }}</td>
+          <td>{{ st.branch.code }}</td>
           <td>{{ st.year|default:"—" }}</td>
           <td>{{ st.section.name|default:"—" }}</td>
           <td>{{ st.user.phone|default:"—" }}</td>
           <td>
-            <div class="action-btns">
-              <a href="{% url 'admin_dashboard:edit_student' st.pk %}" class="btn-sm-accent"><i class="fas fa-edit"></i></a>
-              <form method="post" action="{% url 'admin_dashboard:delete_student' st.pk %}" class="d-inline"
-                    onsubmit="return confirm('Delete student {{ st.roll_number }}?')">
-                {% csrf_token %}
-                <button type="submit" class="btn-sm-danger"><i class="fas fa-trash"></i></button>
-              </form>
-            </div>
+            <a href="{% url 'deo:edit_student' st.pk %}" class="btn-sm-accent"><i class="fas fa-edit"></i></a>
           </td>
         </tr>
         {% empty %}

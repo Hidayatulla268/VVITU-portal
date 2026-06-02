@@ -1,0 +1,161 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Upload Student Marks — DEO{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-file-upload me-2 text-accent"></i>Upload Student Marks</h1>
+    <p class="ph-sub">Record or upload student examination marks for your branch</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Selection Form -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label text-muted">Subject</label>
+      <select name="subject" class="vvit-select" onchange="this.form.submit()">
+        <option value="">— Select Subject —</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if selected_subject_id == s.id|stringformat:"s" %}selected{% endif %}>
+          {{ s.code }} — {{ s.name }} (Sem {{ s.semester }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label text-muted">Examination</label>
+      <select name="exam" class="vvit-select" {% if not selected_subject_id %}disabled{% endif %} onchange="this.form.submit()">
+        <option value="">— Select Exam —</option>
+        {% for ex in exams %}
+        <option value="{{ ex.id }}" {% if selected_exam_id == ex.id|stringformat:"s" %}selected{% endif %}>
+          {{ ex.name }} — {{ ex.branch.code }} (Sem {{ ex.semester }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label text-muted">Section (Class)</label>
+      <select name="section" class="vvit-select" {% if not selected_exam_id %}disabled{% endif %} onchange="this.form.submit()">
+        <option value="">— Select Section —</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if selected_section_id == sec.id|stringformat:"s" %}selected{% endif %}>
+          {{ sec }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+{% if selected_subject and selected_exam and selected_section %}
+<div class="row g-4">
+  <!-- CSV File Upload Card -->
+  <div class="col-lg-4">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-3">
+        <h4 class="card-title-custom"><i class="fas fa-file-csv me-2 text-accent"></i>Bulk CSV Upload</h4>
+      </div>
+      <p class="text-muted small mb-3">
+        Download the sample file, fill in student roll numbers and marks, and upload the completed CSV sheet.
+      </p>
+      
+      <!-- Sample CSV download -->
+      <a href="{% url 'admin_dashboard:sample_results_csv' %}" class="btn-vvit-outline btn-sm w-100 mb-4 text-center">
+        <i class="fas fa-download me-2"></i>Download Sample CSV
+      </a>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="subject" value="{{ selected_subject.id }}">
+        <input type="hidden" name="exam" value="{{ selected_exam.id }}">
+        <input type="hidden" name="section" value="{{ selected_section.id }}">
+        <input type="hidden" name="action" value="csv">
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Select CSV file</label>
+          <input type="file" name="csv_file" class="vvit-input" accept=".csv" required>
+        </div>
+
+        <button type="submit" class="btn-vvit-primary w-100">
+          <i class="fas fa-upload me-2"></i>Upload CSV Marks
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manual Entry Table -->
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="subject" value="{{ selected_subject.id }}">
+        <input type="hidden" name="exam" value="{{ selected_exam.id }}">
+        <input type="hidden" name="section" value="{{ selected_section.id }}">
+        <input type="hidden" name="action" value="manual">
+
+        <div class="card-header-custom mb-3 d-flex justify-content-between align-items-center">
+          <h4 class="card-title-custom">
+            <i class="fas fa-edit me-2 text-accent"></i>Manual Marks Entry
+          </h4>
+          <div class="d-flex align-items-center gap-2" style="width: 180px;">
+            <label class="text-muted small text-nowrap">Max Marks:</label>
+            <input type="number" name="max_marks_default" value="100" class="vvit-input py-1 px-2 text-center" style="font-size: 0.85rem;" required>
+          </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+          <table class="vvit-table">
+            <thead>
+              <tr>
+                <th>Roll Number</th>
+                <th>Student Name</th>
+                <th class="text-center" style="width: 150px;">Marks Obtained</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for stu in students %}
+              <tr>
+                <td><strong>{{ stu.roll_number }}</strong></td>
+                <td>{{ stu.user.get_full_name }}</td>
+                <td class="text-center">
+                  {% with res=current_results|dict_get:stu.id %}
+                  <input type="number" step="0.1" name="marks_{{ stu.id }}" 
+                         value="{% if res %}{{ res.marks_obtained }}{% endif %}"
+                         placeholder="—" class="vvit-input text-center py-1" style="width: 100px;">
+                  {% endwith %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">No active students in this section.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn-vvit-primary px-5">
+            <i class="fas fa-save me-2"></i>Save Entered Marks
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="glass-card text-center py-5">
+  <i class="fas fa-info-circle empty-icon fa-3x mb-3 text-accent"></i>
+  <h5>Select Class Details</h5>
+  <p class="text-muted mb-0">Please choose a subject, examination, and section (class) from the filters above to load the marks entry grid.</p>
+</div>
+{% endif %}
+{% endblock %}

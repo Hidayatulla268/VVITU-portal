@@ -1,0 +1,106 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-envelope-open-text me-2 text-accent"></i>Sent Notices</h1>
+    <p class="ph-sub">Manage, edit, or circulate announcements and notices to your target groups</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'notifications:create' %}" class="btn-vvit-primary">
+      <i class="fas fa-plus me-2"></i>Compose Notice
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Priority</th>
+          <th>Target Audience</th>
+          <th>Sent By</th>
+          <th>Date Sent</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for notice in notices %}
+        <tr>
+          <td class="fw-bold">{{ notice.title }}</td>
+          <td>
+            <span class="badge-section small notif-type-badge {{ notice.color_class }}" style="font-size: 0.65rem;">
+              {{ notice.get_notif_type_display }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if notice.priority == 'high' or notice.priority == 'urgent' %}bg-danger{% else %}bg-secondary{% endif %} text-uppercase" style="font-size:0.6rem; padding: 3px 6px;">
+              {{ notice.get_priority_display }}
+            </span>
+          </td>
+          <td>
+            <small class="text-muted">
+              {% if notice.target_all %}
+                <span class="badge bg-primary">Everyone</span>
+              {% elif notice.target_user %}
+                <span class="badge bg-info">User: {{ notice.target_user.username }}</span>
+              {% elif notice.target_section %}
+                <span class="badge bg-success">Class: {{ notice.target_section }}</span>
+              {% elif notice.target_branch %}
+                {% if notice.target_role %}
+                  <span class="badge bg-warning text-dark">{{ notice.target_branch.code }} {{ notice.target_role|capfirst }}s</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">{{ notice.target_branch.code }} Branch Wide</span>
+                {% endif %}
+              {% elif notice.target_role %}
+                <span class="badge bg-secondary">All {{ notice.target_role|capfirst }}s</span>
+              {% else %}
+                —
+              {% endif %}
+            </small>
+          </td>
+          <td>
+            <small class="text-muted">
+              {{ notice.created_by.get_full_name|default:notice.created_by.username }}
+            </small>
+          </td>
+          <td><small class="text-muted">{{ notice.created_at|date:"d M Y, H:i" }}</small></td>
+          <td>
+            <div class="action-btns">
+              {% if request.user.role == 'admin' or notice.created_by == request.user %}
+              <a href="{% url 'notifications:edit' notice.pk %}" class="btn-sm-edit me-1" title="Edit" style="padding: 4px 8px;">
+                <i class="fas fa-edit"></i>
+              </a>
+              <form method="post" action="{% url 'notifications:delete' notice.pk %}" class="d-inline"
+                    onsubmit="return confirm('Are you sure you want to delete this notice?')">
+                {% csrf_token %}
+                <button type="submit" class="btn-sm-danger" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+              </form>
+              {% else %}
+              <span class="text-muted small">Read-only</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="fas fa-envelope-open fa-3x mb-3 text-muted" style="opacity: 0.3;"></i>
+            <h5>No Sent Notices Found</h5>
+            <p class="small text-muted mb-0">Use the button above to broadcast your first notice / announcement.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

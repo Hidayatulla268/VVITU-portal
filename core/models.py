@@ -430,6 +430,8 @@ class Notification(models.Model):
                                      help_text="'student', 'faculty', 'admin', etc. — leave blank for all")
     target_branch = models.ForeignKey(Branch, null=True, blank=True,
                                       on_delete=models.SET_NULL, related_name='notifications')
+    target_section = models.ForeignKey(Section, null=True, blank=True,
+                                       on_delete=models.SET_NULL, related_name='notifications')
     target_user   = models.ForeignKey('accounts.User', null=True, blank=True,
                                       on_delete=models.SET_NULL, related_name='targeted_notifications')
 

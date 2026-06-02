@@ -1,0 +1,119 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Assign Class Teacher & Counsellor{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-users-cog me-2 text-accent"></i>Assign Teachers & Counsellors</h1>
+    <p class="ph-sub">Manage class teacher section mappings and counselor assignments</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Panel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Class Teacher Assignment -->
+  <div class="col-lg-5">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-3">
+        <h4 class="card-title-custom"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Assign Class Teacher</h4>
+      </div>
+      <p class="text-muted small mb-4">
+        Assign a primary faculty member to act as the class teacher for all students in a selected class section.
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="class_teacher">
+
+        <div class="mb-3">
+          <label class="form-label text-muted">Select Section (Class)</label>
+          <select name="section" class="vvit-select" required>
+            <option value="">— Select Section —</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}">{{ sec }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label text-muted">Select Faculty</label>
+          <select name="faculty" class="vvit-select" required>
+            <option value="">— Select Faculty —</option>
+            {% for fac in faculties %}
+            <option value="{{ fac.id }}">{{ fac.user.get_full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn-vvit-primary w-100">
+          <i class="fas fa-save me-2"></i>Assign Class Teacher
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Student-Counsellor Assignment -->
+  <div class="col-lg-7">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-3">
+        <h4 class="card-title-custom"><i class="fas fa-user-shield me-2 text-accent"></i>Counsellor Assignments</h4>
+      </div>
+
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="vvit-table text-start">
+          <thead>
+            <tr>
+              <th>Roll Number</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Assigned Counsellor</th>
+              <th style="width: 200px;">Assign Counsellor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stu in students %}
+            <tr>
+              <td><strong>{{ stu.roll_number }}</strong></td>
+              <td>{{ stu.user.get_full_name }}</td>
+              <td>{{ stu.section }}</td>
+              <td>
+                {% if stu.counsellor %}
+                <span class="text-success small fw-bold">{{ stu.counsellor.user.get_full_name }}</span>
+                {% else %}
+                <span class="text-muted small">Not Assigned</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" class="d-flex gap-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="counsellor">
+                  <input type="hidden" name="student" value="{{ stu.id }}">
+                  <select name="faculty" class="vvit-select py-1 px-2" style="font-size:0.85rem;" onchange="this.form.submit()">
+                    <option value="">— Unassign —</option>
+                    {% for fac in faculties %}
+                    <option value="{{ fac.id }}" {% if stu.counsellor.id == fac.id %}selected{% endif %}>
+                      {{ fac.user.get_full_name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">No students in department.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

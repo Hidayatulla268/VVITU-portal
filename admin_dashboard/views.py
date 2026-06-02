@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.db.models import Count
 from django.core.paginator import Paginator
 
-from accounts.models import User, Student, Faculty
+from accounts.models import User, Student, Faculty, DEOProfile
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
     Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease
@@ -115,11 +115,21 @@ def add_student(request):
             messages.error(request, f"Username '{username}' already exists.")
             return redirect('admin_dashboard:add_student')
 
+        first_name = p.get('first_name', '').strip()
+        last_name  = p.get('last_name',  '').strip()
+
+        if len(first_name) < 3:
+            messages.error(request, "First name must be at least 3 characters long.")
+            return redirect('admin_dashboard:add_student')
+        if len(last_name) < 1:
+            messages.error(request, "Last name must be at least 1 character long.")
+            return redirect('admin_dashboard:add_student')
+
         user = User.objects.create_user(
             username   = username,
             password   = p.get('password', 'vvit@1234'),
-            first_name = p.get('first_name', ''),
-            last_name  = p.get('last_name',  ''),
+            first_name = first_name,
+            last_name  = last_name,
             email      = f"{username}@vvit.net",
             role       = 'student',
             phone      = p.get('phone', ''),
@@ -153,9 +163,19 @@ def edit_student(request, pk):
 
     if request.method == 'POST':
         p = request.POST
+        first_name = p.get('first_name', '').strip()
+        last_name  = p.get('last_name',  '').strip()
+
+        if len(first_name) < 3:
+            messages.error(request, "First name must be at least 3 characters long.")
+            return redirect('admin_dashboard:edit_student', pk=pk)
+        if len(last_name) < 1:
+            messages.error(request, "Last name must be at least 1 character long.")
+            return redirect('admin_dashboard:edit_student', pk=pk)
+
         u = student.user
-        u.first_name = p.get('first_name', u.first_name)
-        u.last_name  = p.get('last_name',  u.last_name)
+        u.first_name = first_name
+        u.last_name  = last_name
         u.phone      = p.get('phone',      u.phone)
         u.save()
 
@@ -203,27 +223,44 @@ def add_faculty(request):
     branches = Branch.objects.all()
     if request.method == 'POST':
         p   = request.POST
+        first_name = p.get('first_name', '').strip()
+        last_name  = p.get('last_name',  '').strip()
+
+        if len(first_name) < 3:
+            messages.error(request, "First name must be at least 3 characters long.")
+            return redirect('admin_dashboard:add_faculty')
+        if len(last_name) < 1:
+            messages.error(request, "Last name must be at least 1 character long.")
+            return redirect('admin_dashboard:add_faculty')
+
         emp = p.get('employee_id', '').strip()
         if User.objects.filter(username=emp).exists():
             messages.error(request, f"Employee ID '{emp}' already exists.")
             return redirect('admin_dashboard:add_faculty')
 
+        role = p.get('role', 'faculty')
         user = User.objects.create_user(
             username   = emp,
             password   = p.get('password', 'vvit@1234'),
-            first_name = p.get('first_name', ''),
-            last_name  = p.get('last_name', ''),
+            first_name = first_name,
+            last_name  = last_name,
             email      = f"{emp}@vvit.net",
-            role       = p.get('role', 'faculty'),
+            role       = role,
             phone      = p.get('phone', ''),
         )
         Faculty.objects.create(
             user        = user,
             employee_id = emp,
-            department_id = p.get('department'),
-            designation = p.get('designation', ''),
+            department_id = p.get('department') or None,
+            designation = p.get('designation', '') or ('Data Entry Operator' if role == 'deo' else 'Associate Professor'),
         )
-        messages.success(request, f"Faculty {emp} created.")
+        if role == 'deo':
+            DEOProfile.objects.create(
+                user        = user,
+                employee_id = emp,
+                branch_id   = p.get('department') or None,
+            )
+        messages.success(request, f"Faculty/Staff {emp} created.")
         return redirect('admin_dashboard:manage_faculty')
 
     return render(request, 'admin_dashboard/add_faculty.html', {'branches': branches})
@@ -246,9 +283,19 @@ def edit_faculty(request, pk):
 
     if request.method == 'POST':
         p = request.POST
+        first_name = p.get('first_name', '').strip()
+        last_name  = p.get('last_name',  '').strip()
+
+        if len(first_name) < 3:
+            messages.error(request, "First name must be at least 3 characters long.")
+            return redirect('admin_dashboard:edit_faculty', pk=pk)
+        if len(last_name) < 1:
+            messages.error(request, "Last name must be at least 1 character long.")
+            return redirect('admin_dashboard:edit_faculty', pk=pk)
+
         u = fac.user
-        u.first_name = p.get('first_name', u.first_name)
-        u.last_name  = p.get('last_name',  u.last_name)
+        u.first_name = first_name
+        u.last_name  = last_name
         u.phone      = p.get('phone',      u.phone)
         role = p.get('role', u.role)
         if role in dict(u.ROLE_CHOICES):
@@ -257,8 +304,25 @@ def edit_faculty(request, pk):
 
         fac.department_id = p.get('department') or fac.department_id
         fac.designation   = p.get('designation', fac.designation)
+        
+        if role == 'deo':
+            if not fac.designation:
+                fac.designation = 'Data Entry Operator'
+            deo_prof, created = DEOProfile.objects.get_or_create(
+                user=u,
+                defaults={
+                    'employee_id': fac.employee_id,
+                    'branch_id': fac.department_id
+                }
+            )
+            if not created:
+                deo_prof.branch_id = fac.department_id
+                deo_prof.save()
+        else:
+            DEOProfile.objects.filter(user=u).delete()
+            
         fac.save()
-        messages.success(request, f"Faculty {fac.employee_id} updated.")
+        messages.success(request, f"Faculty/Staff {fac.employee_id} updated.")
         return redirect('admin_dashboard:manage_faculty')
 
     context = {
@@ -266,8 +330,10 @@ def edit_faculty(request, pk):
         'branches':  branches,
         'role_choices': [
             ('faculty',        'Faculty'),
-            ('hod',            'Head of Department'),
+            ('hod',            'Head of Department (HOD)'),
             ('lab_technician', 'Lab Technician'),
+            ('deo',            'Data Entry Operator (DEO)'),
+            ('admin',          'Admin'),
         ],
     }
     return render(request, 'admin_dashboard/edit_faculty.html', context)
