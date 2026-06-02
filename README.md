@@ -7,7 +7,11 @@ A production-grade college ERP web application built with Django, featuring a gl
 
 ## 🚀 Key Features
 
-*   **Role-Based Access Control**: Highly secure dashboard routing for Students, Faculty, and Admin.
+*   **Role-Based Access Control**: Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin.
+*   **HOD Dashboard**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and override branch attendance.
+*   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits must go through the HOD).
+*   **Unified Mail/Notices Board System**: Multi-scoped notifications system allowing Admin, HODs, and DEOs to compose and manage notices targeted to everyone, specific roles, specific branches, specific classes, or single users.
+*   **Achievements System**: Allows students and faculty to submit academic (curricular) and co-curricular achievements for HOD verification and display on profiles.
 *   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login, locking it against client modification (only admins can reset it).
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
 *   **Faculty Student Results View**: Class Teachers and Counsellors can monitor and review the grades of their assigned students.
@@ -38,27 +42,29 @@ VVITU_Portal/
 │   ├── urls.py           # Root URL routing
 │   └── middleware.py     # Role-based access and Login Rate Limiter
 │
-├── accounts/             # Custom User, Student, Faculty models + login
-├── core/                 # Shared academic models (Branch, Subject, Result, etc.)
-├── student/              # Student dashboard, timetable, results, calendar
-├── faculty/              # Mark attendance, reports, exports, counselling
-├── admin_dashboard/      # Admin CRUD controllers & bulk upload handlers
+├── accounts/             # Custom User, Student, Faculty, DEO models + details
+├── core/                 # Shared academic models, notifications logic, and tasks
+│   └── management/commands/ # Custom django-admin commands (seed_data, send_low_attendance_alerts)
+├── student/              # Student dashboard, results summary, achievements submit
+├── faculty/              # Mark attendance, reports, marks upload, achievements submit
+├── admin_dashboard/      # Admin settings, staff role management, global CRUD
+├── hod/                  # HOD dashboard, branch assignments, timetable publishing, approvals
+├── deo/                  # DEO dashboard, student CRUD, attendance entries, marks uploads
 │
 ├── templates/            # HTML templates (extends core/base.html)
-│   ├── core/base.html    # Master layout: navbar, sidebar, notifications
-│   ├── accounts/         # Login and first-time set password pages
-│   ├── student/          # Dashboard, timetable, results, calendar, papers
-│   ├── faculty/          # Dashboard, mark attendance, reports, results
-│   └── admin_dashboard/  # Admin management and CSV upload pages
+│   ├── core/base.html    # Master layout: navbar, sidebar, notifications dropdown
+│   ├── accounts/         # Profile details, login, and first-time password reset
+│   ├── student/          # Dashboard, results, calendar, past papers, achievements
+│   ├── faculty/          # Dashboard, attendance sheet, reports, marks upload
+│   ├── admin_dashboard/  # Admin staff/student managers, bulk CSV pages
+│   ├── hod/              # HOD department manager, approvals, timetable editors
+│   └── deo/              # DEO branch lists, attendance records, upload pages
 │
 ├── static/
 │   ├── css/main.css      # Complete glassmorphism design system
 │   ├── css/login.css     # Premium split-panel login page
-│   ├── js/main.js        # Sidebar, animations, AJAX utilities
+│   ├── js/main.js        # Sidebar, dropdowns, AJAX polling utilities
 │   └── images/           # Logo files
-│
-├── management/commands/
-│   └── send_low_attendance_alerts.py   # Email alert command
 │
 ├── sample_data.py        # Database seeding script (runs automatically on Render)
 ├── render.yaml           # One-click Render Blueprint Deployment config
@@ -129,7 +135,9 @@ DATABASE_URL=postgres://vvitu_user:pass@localhost:5432/vvitu_portal
 
 | Role      | Username    | Password   | Description |
 |-----------|-------------|------------|-------------|
-| Admin     | `admin`     | `vvit@1234`| Full CRUD Access |
+| Admin     | `admin`     | `vvit@1234`| Full System Access & CRUD |
+| HOD       | `HOD001`    | `vvit@1234`| HOD CSE (Full Branch Management) |
+| DEO       | `DEO001`    | `vvit@1234`| DEO CSE (Branch Data Operator) |
 | Faculty   | `EMP001`    | `vvit@1234`| Class Teacher & Counsellor |
 | Student   | `24BQ1A4942`| `vvit@1234`| Student Login (first login forces password setup) |
 
@@ -144,16 +152,21 @@ DATABASE_URL=postgres://vvitu_user:pass@localhost:5432/vvitu_portal
 |----------------------------------|------------------|---------------------------------|
 | `/accounts/login/`               | Everyone         | Main login page                 |
 | `/accounts/set-password/`        | Students (First) | Forces student to set custom permanent password |
-| `/student/`                      | Students         | Dashboard with chart + AI       |
-| `/student/timetable/`            | Students         | Section timetable grid          |
-| `/student/results/`              | Students         | Paginated exam results          |
-| `/student/academic-calendar/`    | Students         | Events / holidays               |
-| `/student/question-papers/`      | Students         | Download past papers            |
-| `/faculty/`                      | Faculty/HOD/Lab  | Faculty dashboard               |
-| `/faculty/mark-attendance/`      | Faculty/HOD/Lab  | AJAX radio-button attendance    |
-| `/faculty/reports/`              | Faculty/HOD/Lab  | Attendance report + export      |
-| `/faculty/student-results/`      | Faculty/HOD/Lab  | View results of assigned students |
-| `/faculty/counselled-students/`  | Faculty/HOD/Lab  | List of counselled students     |
+| `/accounts/students/<id>/detail/`| Staff / Owner    | Detailed read-only student profile, results, and achievements |
+| `/accounts/faculty/<id>/detail/` | Staff / Owner    | Detailed read-only faculty profile, timetable, and subjects |
+| `/student/`                      | Students         | Dashboard with charts + AI Prediction |
+| `/student/results/`              | Students         | Consolidated results (Mid1, Mid2, Sem Final) |
+| `/student/add-achievement/`      | Students         | Submit academic or co-curricular achievements |
+| `/faculty/`                      | Faculty/HOD/Lab  | Faculty dashboard & assignments |
+| `/faculty/upload-marks/`         | Faculty          | Subject/Exam/Class upload page  |
+| `/faculty/add-achievement/`      | Faculty          | Submit faculty achievements     |
+| `/hod/`                          | HODs             | HOD Dashboard with branch stats |
+| `/hod/timetable/`                | HODs             | Assign faculty & publish timetables |
+| `/hod/verify-achievements/`      | HODs             | Review and approve achievements |
+| `/deo/`                          | DEOs             | DEO Dashboard (restricted to branch) |
+| `/deo/attendance/`               | DEOs             | List/edit attendance (1-day limit) |
+| `/deo/upload-marks/`             | DEOs             | Upload branch exam marks        |
+| `/notifications/manage/`         | Admin/HOD/DEO    | notice composition & target manager |
 | `/admin-portal/`                 | Admin            | Statistics overview             |
 | `/admin-portal/students/`        | Admin            | CRUD student management         |
 | `/admin-portal/students/bulk-upload/` | Admin       | Bulk upload students via CSV    |
