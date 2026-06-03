@@ -62,6 +62,11 @@
                 {{ entry.faculty.user.get_full_name|truncatechars:18 }}
               </div>
               {% endif %}
+              {% if entry.start_time or entry.end_time %}
+              <div class="tt-time mt-1 text-muted-50" style="font-size: 0.72rem; font-weight: 500; opacity: 0.85;">
+                <i class="far fa-clock me-1"></i>{{ entry.start_time|time:"H:i" }} - {{ entry.end_time|time:"H:i" }}
+              </div>
+              {% endif %}
             </div>
             {% else %}
             <div class="tt-slot empty">

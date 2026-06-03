@@ -1,0 +1,110 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Manage Subjects — Admin Panel{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-book-open me-2 text-accent"></i>Manage Subjects</h1>
+    <p class="ph-sub">Academic subjects directory for all departments</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <a href="{% url 'admin_dashboard:add_subject' %}" class="btn-vvit-primary">
+      <i class="fas fa-plus me-2"></i>Add Subject
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Filters -->
+<div class="glass-card mb-4">
+  <form method="get" class="row g-3 align-items-center">
+    <div class="col-md-5">
+      <input type="text" name="q" value="{{ search }}" placeholder="Search subjects by name or code..." class="vvit-input w-100"/>
+    </div>
+    <div class="col-md-4">
+      <select name="branch" class="vvit-select">
+        <option value="">— All Branches —</option>
+        {% for br in branches %}
+        <option value="{{ br.id }}" {% if branch_filter == br.id|stringformat:"i" %}selected{% endif %}>{{ br }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-grow-1"><i class="fas fa-search me-2"></i>Filter</button>
+      {% if search or branch_filter %}
+        <a href="{% url 'admin_dashboard:manage_subjects' %}" class="btn-vvit-outline">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Branch</th>
+          <th>Year Level</th>
+          <th>Semester</th>
+          <th>Faculty Instructor</th>
+          <th>Credits</th>
+          <th>Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in page %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td><span class="badge bg-dark border border-secondary text-light px-2 py-1">{{ sub.code }}</span></td>
+          <td class="fw-bold">{{ sub.name }}</td>
+          <td>{{ sub.branch.code }}</td>
+          <td>{{ sub.year }}</td>
+          <td>Sem {{ sub.semester }}</td>
+          <td>
+            {% if sub.faculty %}
+              {{ sub.faculty.user.get_full_name }}
+            {% else %}
+              <span class="text-muted small italic">Unassigned</span>
+            {% endif %}
+          </td>
+          <td><span class="badge bg-secondary">{{ sub.credits }}</span></td>
+          <td>
+            {% if sub.is_lab %}
+              <span class="badge bg-info text-dark">Laboratory</span>
+            {% else %}
+              <span class="badge bg-success text-dark">Theory</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="action-btns">
+              <form method="post" action="{% url 'admin_dashboard:delete_subject' sub.pk %}" class="d-inline"
+                    onsubmit="return confirm('Are you sure you want to delete subject: {{ sub.code }} - {{ sub.name }}?')">
+                {% csrf_token %}
+                <button type="submit" class="btn-sm-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="text-center text-muted py-4">No subjects found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page.has_other_pages %}
+  <div class="pagination-wrap">
+    {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&q={{ search }}&branch={{ branch_filter }}" class="page-btn"><i class="fas fa-chevron-left"></i></a>{% endif %}
+    <span class="page-info">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a href="?page={{ page.next_page_number }}&q={{ search }}&branch={{ branch_filter }}" class="page-btn"><i class="fas fa-chevron-right"></i></a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

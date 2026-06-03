@@ -39,4 +39,9 @@ urlpatterns = [
     path('attendance/',              views.attendance_list,      name='attendance_list'),
     path('attendance/<int:pk>/edit/',views.edit_attendance,      name='edit_attendance'),
     path('attendance/report/',       views.admin_attendance_report, name='admin_attendance_report'),
+
+    # Subjects
+    path('subjects/',                views.manage_subjects,      name='manage_subjects'),
+    path('subjects/add/',            views.add_subject,          name='add_subject'),
+    path('subjects/<int:pk>/delete/',views.delete_subject,       name='delete_subject'),
 ]

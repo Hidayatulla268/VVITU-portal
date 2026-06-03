@@ -1,0 +1,81 @@
+{% extends "core/base.html" %}
+{% block title %}Add Subject — {{ department.code }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-plus me-2 text-accent"></i>Add Subject</h1>
+    <p class="ph-sub">Create a new academic subject inside {{ department.name }} department</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'hod:manage_subjects' %}" class="btn-vvit-outline"><i class="fas fa-arrow-left me-2"></i>Back</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-muted">Subject Code *</label>
+            <input type="text" name="code" class="vvit-input" placeholder="e.g. 20CS41T" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Subject Name *</label>
+            <input type="text" name="name" class="vvit-input" placeholder="e.g. Database Management Systems" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Year Level *</label>
+            <select name="year" class="vvit-select" required>
+              <option value="">— Select Year —</option>
+              {% for yr in years %}
+              <option value="{{ yr.id }}">{{ yr }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Semester *</label>
+            <select name="semester" class="vvit-select" required>
+              <option value="">— Select Semester —</option>
+              {% for num, name in semester_choices %}
+              <option value="{{ num }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Faculty Instructor</label>
+            <select name="faculty" class="vvit-select">
+              <option value="">— Select Faculty —</option>
+              {% for fac in faculties %}
+              <option value="{{ fac.id }}">{{ fac.user.get_full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Credits *</label>
+            <input type="number" name="credits" class="vvit-input" value="3" min="1" max="10" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-muted d-block">Subject Type</label>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="is_lab" id="typeTheory" value="false" checked>
+              <label class="form-check-label text-light" for="typeTheory">Theory</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="is_lab" id="typeLab" value="true">
+              <label class="form-check-label text-light" for="typeLab">Laboratory</label>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <button type="submit" class="btn-vvit-primary w-100 py-3">Create Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

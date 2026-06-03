@@ -1,0 +1,94 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Manage Subjects — {{ department.code }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-book-open me-2 text-accent"></i>Manage Subjects</h1>
+    <p class="ph-sub">Academic subjects directory for {{ department.name }}</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <a href="{% url 'hod:add_subject' %}" class="btn-vvit-primary">
+      <i class="fas fa-plus me-2"></i>Add Subject
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search -->
+<div class="glass-card mb-4">
+  <form method="get" class="d-flex gap-3">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search subjects by name or code..." class="vvit-input flex-grow-1"/>
+    <button type="submit" class="btn-vvit-primary"><i class="fas fa-search me-2"></i>Search</button>
+    {% if search %}<a href="{% url 'hod:manage_subjects' %}" class="btn-vvit-outline">Clear</a>{% endif %}
+  </form>
+</div>
+
+<div class="glass-card">
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Year Level</th>
+          <th>Semester</th>
+          <th>Faculty Instructor</th>
+          <th>Credits</th>
+          <th>Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in page %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td><span class="badge bg-dark border border-secondary text-light px-2 py-1">{{ sub.code }}</span></td>
+          <td class="fw-bold">{{ sub.name }}</td>
+          <td>{{ sub.year }}</td>
+          <td>Sem {{ sub.semester }}</td>
+          <td>
+            {% if sub.faculty %}
+              {{ sub.faculty.user.get_full_name }}
+            {% else %}
+              <span class="text-muted small italic">Unassigned</span>
+            {% endif %}
+          </td>
+          <td><span class="badge bg-secondary">{{ sub.credits }}</span></td>
+          <td>
+            {% if sub.is_lab %}
+              <span class="badge bg-info text-dark">Laboratory</span>
+            {% else %}
+              <span class="badge bg-success text-dark">Theory</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="action-btns">
+              <form method="post" action="{% url 'hod:delete_subject' sub.pk %}" class="d-inline"
+                    onsubmit="return confirm('Are you sure you want to delete subject: {{ sub.code }} - {{ sub.name }}?')">
+                {% csrf_token %}
+                <button type="submit" class="btn-sm-danger"><i class="fas fa-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">No subjects found for your department.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page.has_other_pages %}
+  <div class="pagination-wrap">
+    {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&q={{ search }}" class="page-btn"><i class="fas fa-chevron-left"></i></a>{% endif %}
+    <span class="page-info">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a href="?page={{ page.next_page_number }}&q={{ search }}" class="page-btn"><i class="fas fa-chevron-right"></i></a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

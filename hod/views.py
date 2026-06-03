@@ -237,10 +237,17 @@ def edit_timetable(request, section_id):
         else:
             subj = get_object_or_404(Subject, id=subject_id, branch=dept)
             fac = get_object_or_404(Faculty, id=faculty_id, department=dept)
+            start_time = request.POST.get('start_time') or None
+            end_time = request.POST.get('end_time') or None
             
             Timetable.objects.update_or_create(
                 section=section, day=day, period=period,
-                defaults={'subject': subj, 'faculty': fac}
+                defaults={
+                    'subject': subj,
+                    'faculty': fac,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                }
             )
             messages.success(request, f"Timetable slot updated: {day} Period {period} -> {subj.code}.")
             
@@ -610,3 +617,84 @@ def release_results(request):
         'release_map': release_map,
     }
     return render(request, 'hod/release_results.html', context)
+
+
+# ─────────────────────────────────────────────
+# SUBJECT CRUD
+# ─────────────────────────────────────────────
+@hod_required
+def manage_subjects(request):
+    dept = request.department
+    qs = Subject.objects.filter(branch=dept).select_related('year', 'faculty__user').order_by('year', 'semester', 'name')
+    
+    search = request.GET.get('q', '')
+    if search:
+        qs = qs.filter(
+            Q(name__icontains=search) | 
+            Q(code__icontains=search)
+        )
+        
+    paginator = Paginator(qs, 25)
+    page = paginator.get_page(request.GET.get('page', 1))
+    return render(request, 'hod/manage_subjects.html', {'page': page, 'search': search, 'department': dept})
+
+
+@hod_required
+def add_subject(request):
+    dept = request.department
+    years = Year.objects.all()
+    faculties = Faculty.objects.filter(department=dept, is_active=True).select_related('user')
+    
+    if request.method == 'POST':
+        p = request.POST
+        name = p.get('name', '').strip()
+        code = p.get('code', '').strip().upper()
+        year_id = p.get('year')
+        semester = p.get('semester')
+        faculty_id = p.get('faculty') or None
+        credits_val = p.get('credits', '3')
+        is_lab = p.get('is_lab') == 'true'
+        
+        if not name or not code or not year_id or not semester:
+            messages.error(request, "Please fill in all required fields.")
+            return redirect('hod:add_subject')
+            
+        if Subject.objects.filter(code=code).exists():
+            messages.error(request, f"Subject code '{code}' already exists.")
+            return redirect('hod:add_subject')
+            
+        try:
+            credits_int = int(credits_val)
+        except ValueError:
+            credits_int = 3
+            
+        Subject.objects.create(
+            name=name,
+            code=code,
+            branch=dept,
+            year_id=year_id,
+            semester=semester,
+            faculty_id=faculty_id,
+            credits=credits_int,
+            is_lab=is_lab
+        )
+        messages.success(request, f"Subject '{name}' created successfully.")
+        return redirect('hod:manage_subjects')
+        
+    return render(request, 'hod/add_subject.html', {
+        'years': years,
+        'faculties': faculties,
+        'department': dept,
+        'semester_choices': Subject.SEMESTER_CHOICES,
+    })
+
+
+@hod_required
+def delete_subject(request, pk):
+    dept = request.department
+    subject = get_object_or_404(Subject, pk=pk, branch=dept)
+    if request.method == 'POST':
+        subject.delete()
+        messages.success(request, "Subject deleted successfully.")
+    return redirect('hod:manage_subjects')
+

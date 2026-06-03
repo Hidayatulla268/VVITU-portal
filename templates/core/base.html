@@ -215,6 +215,9 @@
       <a href="{% url 'hod:subject_mapping' %}" class="nav-link {% if 'subject_mapping' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-book nav-icon"></i><span>Subject Mapping</span>
       </a>
+      <a href="{% url 'hod:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-book-open nav-icon"></i><span>Manage Subjects</span>
+      </a>
       <a href="{% url 'hod:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-calendar-alt nav-icon"></i><span>Timetables</span>
       </a>
@@ -287,6 +290,9 @@
       </a>
       <a href="{% url 'admin_dashboard:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-calendar-alt nav-icon"></i><span>Timetable</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-book-open nav-icon"></i><span>Manage Subjects</span>
       </a>
       <a href="{% url 'admin_dashboard:assign_class_teacher' %}" class="nav-link">
         <i class="fas fa-user-tie nav-icon"></i><span>Assign Teacher</span>

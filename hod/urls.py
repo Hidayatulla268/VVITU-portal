@@ -26,4 +26,9 @@ urlpatterns = [
     path('attendance/',              views.attendance_list,           name='attendance_list'),
     path('attendance/<int:pk>/edit/',views.edit_attendance,           name='edit_attendance'),
     path('release-results/',         views.release_results,           name='release_results'),
+
+    # Branch Scoped Subjects CRUD
+    path('subjects/',                views.manage_subjects,           name='manage_subjects'),
+    path('subjects/add/',            views.add_subject,               name='add_subject'),
+    path('subjects/<int:pk>/delete/',views.delete_subject,            name='delete_subject'),
 ]

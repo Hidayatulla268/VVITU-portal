@@ -18,7 +18,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.core.paginator import Paginator
 
 from accounts.models import User, Student, Faculty, DEOProfile
@@ -393,6 +393,8 @@ def manage_timetable(request):
 
     if request.method == 'POST':
         p = request.POST
+        start_time = p.get('start_time') or None
+        end_time   = p.get('end_time') or None
         Timetable.objects.update_or_create(
             section_id = p.get('section'),
             day        = p.get('day'),
@@ -400,6 +402,8 @@ def manage_timetable(request):
             defaults   = {
                 'subject_id': p.get('subject'),
                 'faculty_id': p.get('faculty'),
+                'start_time': start_time,
+                'end_time':   end_time,
             }
         )
         messages.success(request, "Timetable entry saved.")
@@ -1035,4 +1039,95 @@ def download_sample_students_csv(request):
     writer.writerow(['24BQ1A4998', 'Priya', 'Reddy', 'priya@example.com', '9876543211', 'CSE', '1', 'B', '2024'])
     
     return response
+
+
+# ═══════════════════════════════════════════════
+# SUBJECT CRUD
+# ═══════════════════════════════════════════════
+@admin_required
+def manage_subjects(request):
+    qs = Subject.objects.select_related('branch', 'year', 'faculty__user').order_by('branch', 'year', 'semester', 'name')
+    
+    search = request.GET.get('q', '')
+    branch_filter = request.GET.get('branch', '')
+    
+    if search:
+        qs = qs.filter(
+            Q(name__icontains=search) | 
+            Q(code__icontains=search)
+        )
+    if branch_filter:
+        qs = qs.filter(branch_id=branch_filter)
+        
+    paginator = Paginator(qs, 25)
+    page = paginator.get_page(request.GET.get('page', 1))
+    branches = Branch.objects.all()
+    
+    return render(request, 'admin_dashboard/manage_subjects.html', {
+        'page': page,
+        'search': search,
+        'branch_filter': branch_filter,
+        'branches': branches
+    })
+
+
+@admin_required
+def add_subject(request):
+    branches = Branch.objects.all()
+    years = Year.objects.all()
+    faculties = Faculty.objects.filter(is_active=True).select_related('user', 'department')
+    
+    if request.method == 'POST':
+        p = request.POST
+        name = p.get('name', '').strip()
+        code = p.get('code', '').strip().upper()
+        branch_id = p.get('branch')
+        year_id = p.get('year')
+        semester = p.get('semester')
+        faculty_id = p.get('faculty') or None
+        credits_val = p.get('credits', '3')
+        is_lab = p.get('is_lab') == 'true'
+        
+        if not name or not code or not branch_id or not year_id or not semester:
+            messages.error(request, "Please fill in all required fields.")
+            return redirect('admin_dashboard:add_subject')
+            
+        if Subject.objects.filter(code=code).exists():
+            messages.error(request, f"Subject code '{code}' already exists.")
+            return redirect('admin_dashboard:add_subject')
+            
+        try:
+            credits_int = int(credits_val)
+        except ValueError:
+            credits_int = 3
+            
+        Subject.objects.create(
+            name=name,
+            code=code,
+            branch_id=branch_id,
+            year_id=year_id,
+            semester=semester,
+            faculty_id=faculty_id,
+            credits=credits_int,
+            is_lab=is_lab
+        )
+        messages.success(request, f"Subject '{name}' created successfully.")
+        return redirect('admin_dashboard:manage_subjects')
+        
+    return render(request, 'admin_dashboard/add_subject.html', {
+        'branches': branches,
+        'years': years,
+        'faculties': faculties,
+        'semester_choices': Subject.SEMESTER_CHOICES,
+    })
+
+
+@admin_required
+def delete_subject(request, pk):
+    subject = get_object_or_404(Subject, pk=pk)
+    if request.method == 'POST':
+        subject.delete()
+        messages.success(request, "Subject deleted successfully.")
+    return redirect('admin_dashboard:manage_subjects')
+
 
