@@ -7,7 +7,8 @@ from django.core.paginator import Paginator
 from functools import wraps
 
 from accounts.models import User, Student, Faculty, Achievement
-from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification
+from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification, ResultRelease
+from admin_dashboard.views import _send_result_emails
 
 # ─────────────────────────────────────────────
 # DECORATOR
@@ -548,3 +549,64 @@ def edit_attendance(request, pk):
             return redirect(f"/hod/attendance/?section={record.student.section.id}&date={record.date.strftime('%Y-%m-%d')}")
             
     return render(request, 'hod/edit_attendance.html', {'record': record})
+
+@hod_required
+def release_results(request):
+    dept = request.department
+    exams = (
+        Exam.objects
+        .filter(branch=dept)
+        .select_related('year')
+        .prefetch_related('release')
+        .order_by('-date')
+    )
+
+    # Build a status dict {exam_id: ResultRelease}
+    release_map = {}
+    for exam in exams:
+        try:
+            release_map[exam.id] = exam.release
+        except ResultRelease.DoesNotExist:
+            release_map[exam.id] = None
+
+    if request.method == 'POST':
+        exam_id = request.POST.get('exam_id')
+        action  = request.POST.get('action')   # 'release' or 'unrelease'
+
+        # Ensure HOD can only release results for their branch's exams
+        exam = get_object_or_404(Exam, pk=exam_id, branch=dept)
+
+        release_obj, _ = ResultRelease.objects.get_or_create(exam=exam)
+
+        if action == 'release':
+            release_obj.released    = True
+            release_obj.released_at = timezone.now()
+            release_obj.released_by = request.user
+            release_obj.save()
+
+            # Send emails if not already sent
+            if not release_obj.email_sent:
+                sent, failed = _send_result_emails(exam, request)
+                release_obj.email_sent = True
+                release_obj.save()
+                messages.success(
+                    request,
+                    f"Results released for '{exam.name}'. "
+                    f"Emails sent: {sent}, Failed: {failed}."
+                )
+            else:
+                messages.success(request, f"Results released for '{exam.name}'.")
+
+        elif action == 'unrelease':
+            release_obj.released = False
+            release_obj.save()
+            messages.warning(request, f"Results hidden for '{exam.name}'.")
+
+        return redirect('hod:release_results')
+
+    context = {
+        'department':  dept,
+        'exams':       exams,
+        'release_map': release_map,
+    }
+    return render(request, 'hod/release_results.html', context)

@@ -224,6 +224,9 @@
       <a href="{% url 'hod:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-check-double nav-icon"></i><span>Attendance Overrides</span>
       </a>
+      <a href="{% url 'hod:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}">
+        <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
+      </a>
 
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-title px-3 py-2 text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em; font-weight: 700; opacity: 0.75;">My Teaching</div>

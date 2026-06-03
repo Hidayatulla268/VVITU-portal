@@ -217,9 +217,9 @@ def results(request):
         subject__semester=semester
     ).select_related('exam', 'subject')
     
-    # Release check: Only show final grades if released by Admin
+    # Release check: Only show grades/marks if released by Admin or HOD
     from core.models import ResultRelease
-    released_finals = set(ResultRelease.objects.filter(released=True).values_list('exam_id', flat=True))
+    released_exams = set(ResultRelease.objects.filter(released=True).values_list('exam_id', flat=True))
 
     # Align results by subject code
     subject_report = []
@@ -238,20 +238,21 @@ def results(request):
         mid2 = subj_results.filter(exam__exam_type='mid2').first()
         final = subj_results.filter(exam__exam_type='final').first()
         
-        # Check if final exam result is released
-        show_final = False
-        if final:
-            if final.exam.id in released_finals:
-                show_final = True
+        # Check if exam results are released
+        show_mid1 = (mid1.exam.id in released_exams) if mid1 else False
+        show_mid2 = (mid2.exam.id in released_exams) if mid2 else False
+        show_final = (final.exam.id in released_exams) if final else False
         
+        mid1_res = mid1 if show_mid1 else None
+        mid2_res = mid2 if show_mid2 else None
         final_res = final if show_final else None
         if final_res:
             has_any_final = True
         
         report_item = {
             'subject': subj,
-            'mid1': mid1,
-            'mid2': mid2,
+            'mid1': mid1_res,
+            'mid2': mid2_res,
             'final': final_res,
         }
         subject_report.append(report_item)

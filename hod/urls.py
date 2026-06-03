@@ -25,4 +25,5 @@ urlpatterns = [
     # Scoped Attendance Override
     path('attendance/',              views.attendance_list,           name='attendance_list'),
     path('attendance/<int:pk>/edit/',views.edit_attendance,           name='edit_attendance'),
+    path('release-results/',         views.release_results,           name='release_results'),
 ]
