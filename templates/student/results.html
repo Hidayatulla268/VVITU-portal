@@ -113,19 +113,11 @@
   <!-- Header Logo & College Name -->
   <div class="text-center mb-4 pt-3">
     <div class="mx-auto mb-2" style="width: 70px; height: 70px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
-      <svg width="50" height="50" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#dc2626"/>
-            <stop offset="100%" stop-color="#7f1d1d"/>
-          </linearGradient>
-        </defs>
-        <path d="M20 2 L6 8 V20 C6 29 12 35 20 38 C28 35 34 29 34 20 V8 L20 2 Z" fill="url(#shieldGrad)" stroke="#dc2626" stroke-width="1.5"/>
-        <text x="20" y="25" fill="#ffffff" font-family="'Rajdhani', sans-serif" font-weight="900" font-size="14" text-anchor="middle">VVIT</text>
-      </svg>
+      <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT Logo" style="width: 50px; height: 50px; object-fit: contain;"
+           onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"/>
     </div>
     <h2 style="font-family: var(--font-display); font-weight: 700; color: var(--accent-bright); margin-bottom: 2px;">
-      Vasireddy Venkatadri Institute of Technology (VVITU)
+      Vasireddy Venkatadri International Technological University
     </h2>
     <h5 class="text-muted small text-uppercase" style="letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600;">
       Autonomous
