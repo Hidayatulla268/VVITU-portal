@@ -236,17 +236,17 @@ class Result(models.Model):
             mid2_pct = 0
             
             try:
-                m1 = Result.objects.get(student=self.student, subject=self.subject, exam__exam_type='mid1', exam__semester=self.exam.semester)
-                if m1.max_marks > 0:
+                m1 = Result.objects.filter(student=self.student, subject=self.subject, exam__exam_type='mid1', exam__semester=self.exam.semester).first()
+                if m1 and m1.max_marks > 0:
                     mid1_pct = float(m1.marks_obtained) / float(m1.max_marks) * 100
-            except Result.DoesNotExist:
+            except Exception:
                 pass
                 
             try:
-                m2 = Result.objects.get(student=self.student, subject=self.subject, exam__exam_type='mid2', exam__semester=self.exam.semester)
-                if m2.max_marks > 0:
+                m2 = Result.objects.filter(student=self.student, subject=self.subject, exam__exam_type='mid2', exam__semester=self.exam.semester).first()
+                if m2 and m2.max_marks > 0:
                     mid2_pct = float(m2.marks_obtained) / float(m2.max_marks) * 100
-            except Result.DoesNotExist:
+            except Exception:
                 pass
                 
             # 2. 80/20 Rule for Mids
