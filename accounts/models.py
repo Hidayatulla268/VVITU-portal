@@ -112,6 +112,29 @@ class Student(models.Model):
     def phone(self):
         return self.user.phone
 
+    def calculate_cgpa(self):
+        """Calculate CGPA for the student across all released final results."""
+        from core.models import Result
+        grade_points = {
+            'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5,
+            'F': 0, 'Ab': 0
+        }
+        cgpa_results = Result.objects.filter(
+            student=self,
+            exam__exam_type='final',
+            exam__release__released=True
+        ).select_related('subject')
+        
+        cgpa_points = 0
+        cgpa_credits = 0
+        for r in cgpa_results:
+            if r.grade and r.grade not in ['CP', 'NCP']:
+                points = grade_points.get(r.grade, 0)
+                cgpa_points += points * r.subject.credits
+                cgpa_credits += r.subject.credits
+                
+        return round(cgpa_points / cgpa_credits, 2) if cgpa_credits > 0 else 0.0
+
 
 # ─────────────────────────────────────────────
 # FACULTY PROFILE

@@ -20,7 +20,7 @@
       <label class="form-label text-muted">Select Academic Semester</label>
       <select name="semester" class="vvit-select" onchange="this.form.submit()">
         {% for s in semesters %}
-        <option value="{{ s }}" {% if selected_sem == s %}selected{% endif %}>Semester {{ s }}</option>
+        <option value="{{ s }}" {% if selected_sem==s %}selected{% endif %}>Semester {{ s }}</option>
         {% endfor %}
       </select>
     </div>
@@ -39,82 +39,98 @@
 
 <!-- Styles and Printing overrides -->
 <style>
-@media print {
-  .vvit-navbar,
-  .vvit-sidebar,
-  .sidebar-overlay,
-  .page-header-strip,
-  .print-hide,
-  .glass-card:not(.print-sheet-card),
-  .theme-toggle-btn,
-  .vbot-icon-btn,
-  .vbot-chat-window {
-    display: none !important;
+  @media print {
+
+    .vvit-navbar,
+    .vvit-sidebar,
+    .sidebar-overlay,
+    .page-header-strip,
+    .print-hide,
+    .glass-card:not(.print-sheet-card),
+    .theme-toggle-btn,
+    .vbot-icon-btn,
+    .vbot-chat-window {
+      display: none !important;
+    }
+
+    body,
+    html {
+      background: #fff !important;
+      color: #000 !important;
+    }
+
+    .vvit-main {
+      margin-left: 0 !important;
+      padding: 0 !important;
+    }
+
+    .content-body {
+      padding: 0 !important;
+      max-width: 100% !important;
+    }
+
+    .print-sheet-card {
+      background: #fff !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #000 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+
+    .print-sheet-card h2,
+    .print-sheet-card h4,
+    .print-sheet-card h5,
+    .print-sheet-card p,
+    .print-sheet-card td,
+    .print-sheet-card th {
+      color: #000 !important;
+    }
+
+    .print-sheet-card .text-danger {
+      color: #c2410c !important;
+      font-weight: bold !important;
+    }
+
+    .print-header-logo-section h2 {
+      color: #dc2626 !important;
+    }
+
+    .print-header-logo-section h4 {
+      color: #ea580c !important;
+    }
+
+    .vvit-table {
+      width: 100% !important;
+      border: 1px solid #000 !important;
+      border-collapse: collapse !important;
+    }
+
+    .vvit-table th,
+    .vvit-table td {
+      border: 1px solid #000 !important;
+      padding: 8px 12px !important;
+      color: #000 !important;
+    }
+
+    .vvit-table thead tr {
+      background: #f3f4f6 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
   }
-  body, html {
-    background: #fff !important;
-    color: #000 !important;
-  }
-  .vvit-main {
-    margin-left: 0 !important;
-    padding: 0 !important;
-  }
-  .content-body {
-    padding: 0 !important;
-    max-width: 100% !important;
-  }
-  .print-sheet-card {
-    background: #fff !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: #000 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-  }
-  .print-sheet-card h2,
-  .print-sheet-card h4,
-  .print-sheet-card h5,
-  .print-sheet-card p,
-  .print-sheet-card td,
-  .print-sheet-card th {
-    color: #000 !important;
-  }
-  .print-sheet-card .text-danger {
-    color: #c2410c !important;
-    font-weight: bold !important;
-  }
-  .print-header-logo-section h2 {
-    color: #dc2626 !important;
-  }
-  .print-header-logo-section h4 {
-    color: #ea580c !important;
-  }
-  .vvit-table {
-    width: 100% !important;
-    border: 1px solid #000 !important;
-    border-collapse: collapse !important;
-  }
-  .vvit-table th, .vvit-table td {
-    border: 1px solid #000 !important;
-    padding: 8px 12px !important;
-    color: #000 !important;
-  }
-  .vvit-table thead tr {
-    background: #f3f4f6 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}
 </style>
 
 <!-- Results Panel -->
 <div class="glass-card print-sheet-card">
   <!-- Header Logo & College Name -->
   <div class="text-center mb-4 pt-3">
-    <div class="mx-auto mb-2" style="width: 70px; height: 70px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
-      <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT Logo" style="width: 50px; height: 50px; object-fit: contain;"
-           onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"/>
+    <div class="mx-auto mb-2"
+      style="width: 70px; height: 70px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+      <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT Logo"
+        style="width: 50px; height: 50px; object-fit: contain;"
+        onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'" />
     </div>
     <h2 style="font-family: var(--font-display); font-weight: 700; color: var(--accent-bright); margin-bottom: 2px;">
       Vasireddy Venkatadri International Technological University
@@ -128,7 +144,8 @@
   </div>
 
   <!-- Student Details Block -->
-  <div class="mx-auto mb-4" style="max-width: 500px; border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 16px; background: rgba(0,0,0,0.15);">
+  <div class="mx-auto mb-4"
+    style="max-width: 500px; border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 16px; background: rgba(0,0,0,0.15);">
     <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
       <tr>
         <td style="width: 40%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">HallTicket No</td>
@@ -136,7 +153,8 @@
       </tr>
       <tr>
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Name</td>
-        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{ student.user.get_full_name }}</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{
+          student.user.get_full_name }}</td>
       </tr>
       <tr>
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Branch / Department</td>
@@ -171,28 +189,32 @@
           </td>
           <td class="text-center">
             {% if entry.mid1 %}
-            {{ entry.mid1.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.mid1.max_marks|floatformat:0 }}</span>
+            {{ entry.mid1.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{
+              entry.mid1.max_marks|floatformat:0 }}</span>
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}
           </td>
           <td class="text-center">
             {% if entry.mid2 %}
-            {{ entry.mid2.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.mid2.max_marks|floatformat:0 }}</span>
+            {{ entry.mid2.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{
+              entry.mid2.max_marks|floatformat:0 }}</span>
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}
           </td>
           <td class="text-center">
             {% if entry.final %}
-            {{ entry.final.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.final.max_marks|floatformat:0 }}</span>
+            {{ entry.final.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{
+              entry.final.max_marks|floatformat:0 }}</span>
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}
           </td>
           <td class="text-center">
             {% if entry.final and entry.final.grade %}
-            <span class="grade-badge grade-{{ entry.final.grade|lower|cut:'+' }}" style="font-size: 0.85rem; font-weight: 700;">{{ entry.final.grade }}</span>
+            <span class="grade-badge grade-{{ entry.final.grade|lower|cut:'+' }}"
+              style="font-size: 0.85rem; font-weight: 700;">{{ entry.final.grade }}</span>
             {% else %}
             <span class="text-muted small">Not Released</span>
             {% endif %}
@@ -214,20 +236,29 @@
   <div class="mx-auto mt-4" style="max-width: 500px; border-top: 1px solid var(--clr-border); padding-top: 16px;">
     <table style="width: 100%; font-size: 0.95rem; border-collapse: collapse;">
       <tr>
-        <td style="width: 50%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Semester Result Status</td>
-        <td style="font-weight: 700; padding: 6px 0; {% if pass_status == 'Pass' %}color: var(--clr-success);{% else %}color: var(--clr-danger);{% endif %}">{{ pass_status }}</td>
+        <td style="width: 50%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Semester Result Status
+        </td>
+        <td
+          style="font-weight: 700; padding: 6px 0; {% if pass_status == 'Pass' %}color: var(--clr-success);{% else %}color: var(--clr-danger);{% endif %}">
+          {{ pass_status }}</td>
       </tr>
       <tr>
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">SGPA (Semester GPA)</td>
         <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">{{ sgpa }}</td>
       </tr>
+      <tr>
+        <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">CGPA (Cumulative GPA)</td>
+        <td style="font-weight: 700; color: var(--accent-bright); padding: 6px 0;">{{ cgpa }}</td>
+      </tr>
     </table>
   </div>
 
   <!-- Footer Warning & Notes -->
-  <div class="text-center mt-5 pt-3" style="font-size: 0.8rem; border-top: 1px solid var(--clr-border); line-height: 1.6;">
+  <div class="text-center mt-5 pt-3"
+    style="font-size: 0.8rem; border-top: 1px solid var(--clr-border); line-height: 1.6;">
     <p class="text-danger mb-1" style="font-weight: 600;">
-      Important Note: The marks displayed above represent both internal tests and labs. Semester end exams final grades are subject to release by the autonomous section.
+      Important Note: The marks displayed above represent both internal tests and labs. Semester end exams final grades
+      are subject to release by the autonomous section.
     </p>
     <p class="text-muted mb-0">
       *CP - Course Completed | *NCP - Course Not Completed

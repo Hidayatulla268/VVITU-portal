@@ -23,7 +23,7 @@
 <div class="row g-4 mb-4">
 
   <!-- Overall Attendance -->
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-md-4 col-xl-2">
     <div class="kpi-card {% if overall >= 75 %}kpi-success{% elif overall >= 60 %}kpi-warning{% else %}kpi-danger{% endif %}">
       <div class="kpi-icon"><i class="fas fa-percentage"></i></div>
       <div class="kpi-body">
@@ -37,13 +37,24 @@
                   stroke-dasharray="{{ overall }} 100"
                   stroke-dashoffset="25"/>
         </svg>
-        <span class="donut-center-text">{{ overall }}%</span>
+        <span class="donut-center-text" style="font-size: 0.65rem;">{{ overall }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cumulative GPA (CGPA) -->
+  <div class="col-sm-6 col-md-4 col-xl-2">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ cgpa|default:"0.00" }}</span>
+        <span class="kpi-label">Cumulative GPA (CGPA)</span>
       </div>
     </div>
   </div>
 
   <!-- Subjects Count -->
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-md-4 col-xl-2">
     <div class="kpi-card kpi-info">
       <div class="kpi-icon"><i class="fas fa-book-open"></i></div>
       <div class="kpi-body">
@@ -54,7 +65,7 @@
   </div>
 
   <!-- Class Teacher -->
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-md-6 col-xl-3">
     <div class="kpi-card kpi-neutral">
       <div class="kpi-icon"><i class="fas fa-chalkboard-teacher"></i></div>
       <div class="kpi-body">
@@ -70,7 +81,7 @@
   </div>
 
   <!-- Counsellor -->
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-md-6 col-xl-3">
     <div class="kpi-card kpi-neutral">
       <div class="kpi-icon"><i class="fas fa-user-friends"></i></div>
       <div class="kpi-body">

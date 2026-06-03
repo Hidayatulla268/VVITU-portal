@@ -152,6 +152,7 @@ def dashboard(request):
 
     class_teacher = student.class_teacher.user if student.class_teacher else None
     counsellor    = student.counsellor.user    if student.counsellor    else None
+    cgpa          = student.calculate_cgpa()
 
     return render(request, 'student/dashboard.html', {
         'student':       student,
@@ -160,6 +161,7 @@ def dashboard(request):
         'daily':         daily,
         'class_teacher': class_teacher,
         'counsellor':    counsellor,
+        'cgpa':          cgpa,
         'ai_prediction': _predict_attendance(student),
         'chart_labels':  [s['code'] for s in stats],
         'chart_data':    [s['percentage'] for s in stats],
@@ -259,6 +261,10 @@ def results(request):
         
         if final_res and final_res.grade:
             g = final_res.grade
+            if g in ['CP', 'NCP']:
+                if g == 'NCP':
+                    has_fail = True
+                continue
             if g in ['F', 'Ab']:
                 has_fail = True
             credits = subj.credits
@@ -269,6 +275,7 @@ def results(request):
             has_fail = True
 
     sgpa = round(total_points / total_credits, 2) if total_credits > 0 else 0.0
+    cgpa = student.calculate_cgpa()
     pass_status = "Fail" if has_fail else "Pass" if has_any_final else "—"
 
     # We still keep the original list of exams in case they want it
@@ -280,6 +287,7 @@ def results(request):
         'semesters':         range(1, 9),
         'subject_report':    subject_report,
         'sgpa':              sgpa,
+        'cgpa':              cgpa,
         'pass_status':       pass_status,
         'exams':             exams,
     })
