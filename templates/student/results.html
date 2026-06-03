@@ -20,7 +20,7 @@
       <label class="form-label text-muted">Select Academic Semester</label>
       <select name="semester" class="vvit-select" onchange="this.form.submit()">
         {% for s in semesters %}
-        <option value="{{ s }}" {% if selected_sem==s %}selected{% endif %}>Semester {{ s }}</option>
+        <option value="{{ s }}" {% if selected_sem == s %}selected{% endif %}>Semester {{ s }}</option>
         {% endfor %}
       </select>
     </div>

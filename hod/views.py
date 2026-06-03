@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db.models import Q, Count
 from django.utils import timezone
 from django.core.paginator import Paginator
+import datetime as dt
 from functools import wraps
 
 from accounts.models import User, Student, Faculty, Achievement
@@ -527,7 +528,7 @@ def attendance_list(request):
     if section_id and date_str:
         try:
             selected_section = Section.objects.get(id=section_id, branch=dept)
-            selected_date = timezone.datetime.strptime(date_str, '%Y-%m-%d').date()
+            selected_date = dt.datetime.strptime(date_str, '%Y-%m-%d').date()
             records = Attendance.objects.filter(
                 student__section=selected_section,
                 date=selected_date

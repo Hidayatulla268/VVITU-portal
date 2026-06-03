@@ -773,7 +773,7 @@ def upload_marks(request):
                                 defaults={
                                     'marks_obtained': marks_obt,
                                     'max_marks': max_mks,
-                                    'grade': '' # reset grade so save() will recompute it
+                                    'grade': ''  # cleared so save() will auto-recompute
                                 }
                             )
                             success_count += 1
@@ -815,7 +815,7 @@ def upload_marks(request):
                             defaults={
                                 'marks_obtained': marks_obt,
                                 'max_marks': max_marks_default,
-                                'grade': ''
+                                'grade': ''  # cleared so save() will auto-recompute
                             }
                         )
                         success_count += 1

@@ -20,6 +20,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
+from django.core.mail import send_mail
+from django.conf import settings as django_settings
 
 from accounts.models import User, Student, Faculty, DEOProfile
 from core.models import (
@@ -476,13 +478,6 @@ def edit_attendance(request, pk):
     return render(request, 'admin_dashboard/edit_attendance.html', {'record': record})
 
 
-# ═══════════════════════════════════════════════
-# RESULT RELEASE
-# ═══════════════════════════════════════════════
-from django.core.mail import send_mail
-from django.utils import timezone as tz
-from django.conf import settings as django_settings
-
 
 @admin_required
 def release_results(request):
@@ -517,7 +512,7 @@ def release_results(request):
 
         if action == 'release':
             release_obj.released    = True
-            release_obj.released_at = tz.now()
+            release_obj.released_at = timezone.now()
             release_obj.released_by = request.user
             release_obj.save()
 

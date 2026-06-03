@@ -201,9 +201,23 @@ def timetable(request):
 def results(request):
     student = request.student
     semester = request.GET.get('semester', '')
+
+    # Guard: student must have branch and year assigned
+    if not student.branch or not student.year:
+        return render(request, 'student/results.html', {
+            'student':        student,
+            'selected_sem':   1,
+            'semesters':      range(1, 9),
+            'subject_report': [],
+            'sgpa':           0.0,
+            'cgpa':           0.0,
+            'pass_status':    '—',
+            'exams':          [],
+        })
+
     if not semester:
         # Default to the student's current year & semester level
-        semester = (student.year.year * 2) - 1 if student.year else 1
+        semester = (student.year.year * 2) - 1
 
     try:
         semester = int(semester)

@@ -307,7 +307,7 @@ def create_notification(request):
                 elif target == 'user' and user_id:
                     n.target_user = User.objects.filter(id=user_id).first()
             else:
-                # HOD or DEO
+                # HOD or DEO — always scope to their branch, never broadcast globally
                 n.target_all = False
                 n.target_branch = branch
                 if target == 'branch':
@@ -440,7 +440,8 @@ def edit_notification(request, pk):
                 elif target == 'user' and user_id:
                     n.target_user = User.objects.filter(id=user_id).first()
             else:
-                # HOD or DEO
+                # HOD or DEO — always scope to their branch, never broadcast globally
+                n.target_all = False
                 n.target_branch = branch
                 if target == 'branch':
                     pass
