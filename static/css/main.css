@@ -431,10 +431,10 @@ a:hover { color: var(--text-primary); }
 /* ── 10. KPI CARDS ────────────────────────────────────────────────── */
 .kpi-card {
   border-radius: var(--radius-lg);
-  padding: 1.2rem 1.4rem;
+  padding: 0.95rem 1.0rem;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   border: 1px solid var(--clr-border);
   background: var(--clr-surface);
   backdrop-filter: var(--blur-sm);
@@ -464,10 +464,10 @@ a:hover { color: var(--text-primary); }
 .kpi-neutral::before  { background: linear-gradient(90deg, var(--accent), transparent); }
 
 .kpi-icon {
-  width: 46px; height: 46px;
-  border-radius: 12px;
+  width: 38px; height: 38px;
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
 }
 
@@ -486,7 +486,7 @@ a:hover { color: var(--text-primary); }
 
 .kpi-value {
   font-family: var(--font-display);
-  font-size: 1.65rem;
+  font-size: 1.4rem;
   font-weight: 700;
   line-height: 1;
   overflow: hidden;
@@ -495,7 +495,7 @@ a:hover { color: var(--text-primary); }
 }
 
 .kpi-label {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -503,7 +503,7 @@ a:hover { color: var(--text-primary); }
 }
 
 .kpi-phone {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--clr-success);
   margin-top: 4px;
   display: block;
@@ -511,12 +511,12 @@ a:hover { color: var(--text-primary); }
 }
 .kpi-phone:hover { color: #6ee7b7; }
 
-.kpi-compact { padding: 0.9rem 1rem; }
-.kpi-compact .kpi-value { font-size: 1.3rem; }
-.kpi-compact .kpi-icon { width: 38px; height: 38px; font-size: 1rem; }
+.kpi-compact { padding: 0.8rem 0.9rem; }
+.kpi-compact .kpi-value { font-size: 1.15rem; }
+.kpi-compact .kpi-icon { width: 32px; height: 32px; font-size: 0.9rem; }
 
 /* Donut chart in KPI card */
-.kpi-donut { position: relative; width: 54px; height: 54px; flex-shrink: 0; }
+.kpi-donut { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
 .donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .donut-track {
   fill: none;
@@ -540,7 +540,7 @@ a:hover { color: var(--text-primary); }
   position: absolute;
   inset: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 700;
   color: var(--text-primary);
 }

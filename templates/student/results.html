@@ -151,8 +151,7 @@
       </tr>
       <tr>
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Name</td>
-        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{
-          student.user.get_full_name }}</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{ student.user.get_full_name }}</td>
       </tr>
       <tr>
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Branch / Department</td>
@@ -187,24 +186,21 @@
           </td>
           <td class="text-center">
             {% if entry.mid1 %}
-            {{ entry.mid1.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{
-              entry.mid1.max_marks|floatformat:0 }}</span>
+            {{ entry.mid1.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.mid1.max_marks|floatformat:0 }}</span>
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}
           </td>
           <td class="text-center">
             {% if entry.mid2 %}
-            {{ entry.mid2.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{
-              entry.mid2.max_marks|floatformat:0 }}</span>
+            {{ entry.mid2.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.mid2.max_marks|floatformat:0 }}</span>
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}
           </td>
           <td class="text-center">
             {% if entry.final %}
-            {{ entry.final.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{
-              entry.final.max_marks|floatformat:0 }}</span>
+            {{ entry.final.marks_obtained|floatformat:1 }} <span class="text-muted" style="font-size:0.75rem;">/ {{ entry.final.max_marks|floatformat:0 }}</span>
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}
