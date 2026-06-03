@@ -523,6 +523,9 @@ a:hover { color: var(--text-primary); }
   stroke: rgba(255,255,255,0.08);
   stroke-width: 4;
 }
+[data-theme="light"] .donut-track {
+  stroke: rgba(0,0,0,0.08);
+}
 .donut-fill {
   fill: none;
   stroke: var(--clr-success);
@@ -530,6 +533,9 @@ a:hover { color: var(--text-primary); }
   stroke-linecap: round;
   transition: stroke-dasharray 0.8s ease;
 }
+.kpi-success .donut-fill { stroke: var(--clr-success); }
+.kpi-danger .donut-fill  { stroke: var(--clr-danger); }
+.kpi-warning .donut-fill { stroke: var(--clr-warning); }
 .donut-center-text {
   position: absolute;
   inset: 0;
@@ -1651,7 +1657,7 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
 .brand-logo-ring {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 8px;
   background: #ffffff;
   border: 2px solid var(--accent);
   overflow: hidden;
@@ -1688,7 +1694,7 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
 .sidebar-logo-ring {
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  border-radius: 8px;
   background: #ffffff;
   border: 2px solid var(--clr-border);
   overflow: hidden;
@@ -1716,7 +1722,7 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
 .results-logo-ring {
   width: 70px;
   height: 70px;
-  border-radius: 50%;
+  border-radius: 12px;
   background: #ffffff;
   border: 2px solid var(--clr-border);
   overflow: hidden;
