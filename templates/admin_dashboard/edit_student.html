@@ -25,6 +25,10 @@
           <input type="text" name="last_name" class="vvit-input" value="{{ student.user.last_name }}"/>
         </div>
         <div class="col-md-6">
+          <label class="form-label text-muted">Email ID (Optional)</label>
+          <input type="email" name="email" class="vvit-input" value="{{ student.user.email|default:'' }}" placeholder="e.g. name@example.com"/>
+        </div>
+        <div class="col-md-6">
           <label class="form-label text-muted">Phone</label>
           <input type="tel" name="phone" class="vvit-input" value="{{ student.user.phone|default:'' }}"/>
         </div>

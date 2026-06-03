@@ -563,12 +563,19 @@ def student_results(request):
     """
     faculty = request.faculty
     
-    # Get students where faculty is class_teacher or counsellor
-    students = Student.objects.filter(
-        Q(class_teacher=faculty) | Q(counsellor=faculty),
-        is_active=True,
-        user__is_deleted=False
-    ).select_related('user')
+    # Get students where faculty is class_teacher or counsellor (HOD sees all students in branch)
+    if request.user.role == 'hod':
+        students = Student.objects.filter(
+            branch=faculty.department,
+            is_active=True,
+            user__is_deleted=False
+        ).select_related('user')
+    else:
+        students = Student.objects.filter(
+            Q(class_teacher=faculty) | Q(counsellor=faculty),
+            is_active=True,
+            user__is_deleted=False
+        ).select_related('user')
     
     selected_student_id = request.GET.get('student', '')
     selected_exam_id = request.GET.get('exam', '')
@@ -673,12 +680,15 @@ def upload_marks(request):
     from django.db import transaction
     
     faculty = request.faculty
-    subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
+    if request.user.role == 'hod':
+        subjects = Subject.objects.filter(branch=faculty.department, is_deleted=False).select_related('branch', 'year')
+    else:
+        subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
     
-    # Filter exams
+    # Filter exams (exclude Semester Final exams for non-admins)
     branch_ids = subjects.values_list('branch_id', flat=True).distinct()
     year_ids = subjects.values_list('year_id', flat=True).distinct()
-    exams = Exam.objects.filter(branch_id__in=branch_ids, year_id__in=year_ids).order_by('-date')
+    exams = Exam.objects.filter(branch_id__in=branch_ids, year_id__in=year_ids).exclude(exam_type='final').order_by('-date')
     
     selected_subject_id = request.GET.get('subject', '')
     selected_exam_id = request.GET.get('exam', '')
@@ -692,15 +702,24 @@ def upload_marks(request):
     current_results = {}
     
     if selected_subject_id:
-        selected_subject = get_object_or_404(Subject, id=selected_subject_id, faculty=faculty)
-        # Find sections having timetable slots for this subject
-        sections = Section.objects.filter(timetable_entries__subject=selected_subject).distinct()
+        if request.user.role == 'hod':
+            selected_subject = get_object_or_404(Subject, id=selected_subject_id, branch=faculty.department)
+            sections = Section.objects.filter(branch=faculty.department, year=selected_subject.year).distinct()
+        else:
+            selected_subject = get_object_or_404(Subject, id=selected_subject_id, faculty=faculty)
+            sections = Section.objects.filter(timetable_entries__subject=selected_subject).distinct()
         
     if selected_exam_id:
         selected_exam = get_object_or_404(Exam, id=selected_exam_id)
+        if selected_exam.exam_type == 'final':
+            messages.error(request, "Only the Administrator is authorized to upload Semester Final exam results.")
+            return redirect('faculty:upload_marks')
         
     if selected_section_id and selected_subject and selected_exam:
-        selected_section = get_object_or_404(Section, id=selected_section_id)
+        if request.user.role == 'hod':
+            selected_section = get_object_or_404(Section, id=selected_section_id, branch=faculty.department)
+        else:
+            selected_section = get_object_or_404(Section, id=selected_section_id)
         students = Student.objects.filter(section=selected_section, is_active=True, user__is_deleted=False).select_related('user').order_by('roll_number')
         
         # Load existing results for these students, exam, and subject
@@ -717,9 +736,18 @@ def upload_marks(request):
         sec_id = request.POST.get('section')
         
         # Resolve objects
-        subj = get_object_or_404(Subject, id=subj_id, faculty=faculty)
+        if request.user.role == 'hod':
+            subj = get_object_or_404(Subject, id=subj_id, branch=faculty.department)
+            sec = get_object_or_404(Section, id=sec_id, branch=faculty.department)
+        else:
+            subj = get_object_or_404(Subject, id=subj_id, faculty=faculty)
+            sec = get_object_or_404(Section, id=sec_id)
+            
         ex = get_object_or_404(Exam, id=ex_id)
-        sec = get_object_or_404(Section, id=sec_id)
+        if ex.exam_type == 'final':
+            messages.error(request, "Only the Administrator is authorized to upload Semester Final exam results.")
+            return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+            
         sec_students = Student.objects.filter(section=sec, is_active=True, user__is_deleted=False)
         
         # Check action type: CSV upload or Manual entry
@@ -825,6 +853,21 @@ def upload_marks(request):
             except Exception as e:
                 messages.error(request, f"Error saving marks: {e}")
                 
+        if success_count > 0 and request.user.role == 'hod':
+            try:
+                from core.models import Notification
+                Notification.objects.create(
+                    title="HOD Marks Uploaded",
+                    message=f"HOD {request.user.get_full_name() or request.user.username} uploaded marks for {subj.code} in section {sec.name} for exam {ex.name}.",
+                    notif_type=Notification.TYPE_SYSTEM,
+                    priority=Notification.PRIORITY_HIGH,
+                    target_all=False,
+                    target_role='admin',
+                    created_by=request.user
+                )
+            except Exception:
+                pass
+
         return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
         
     context = {

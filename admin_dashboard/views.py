@@ -92,12 +92,15 @@ def manage_students(request):
     )
     search = request.GET.get('q', '')
     if search:
+        from django.db.models import Q
         qs = qs.filter(
-            roll_number__icontains=search
-        ) | qs.filter(
-            user__first_name__icontains=search
-        ) | qs.filter(
-            user__last_name__icontains=search
+            Q(roll_number__icontains=search) | 
+            Q(user__first_name__icontains=search) | 
+            Q(user__last_name__icontains=search) |
+            Q(branch__code__icontains=search) |
+            Q(branch__name__icontains=search) |
+            Q(section__name__icontains=search) |
+            Q(year__year__icontains=search)
         )
     paginator = Paginator(qs, 25)
     page      = paginator.get_page(request.GET.get('page', 1))
@@ -129,12 +132,16 @@ def add_student(request):
             messages.error(request, "Last name must be at least 1 character long.")
             return redirect('admin_dashboard:add_student')
 
+        email = p.get('email', '').strip()
+        if not email:
+            email = f"{username}@vvitu.net"
+
         user = User.objects.create_user(
             username   = username,
             password   = p.get('password', 'vvit@1234'),
             first_name = first_name,
             last_name  = last_name,
-            email      = f"{username}@vvit.net",
+            email      = email,
             role       = 'student',
             phone      = p.get('phone', ''),
         )
@@ -181,6 +188,8 @@ def edit_student(request, pk):
         u.first_name = first_name
         u.last_name  = last_name
         u.phone      = p.get('phone',      u.phone)
+        email = p.get('email', '').strip()
+        u.email = email or f"{student.roll_number}@vvitu.net"
         u.save()
 
         student.branch_id    = p.get('branch',        student.branch_id)
@@ -250,12 +259,13 @@ def add_faculty(request):
             return redirect('admin_dashboard:add_faculty')
 
         role = p.get('role', 'faculty')
+        email = p.get('email', '').strip()
         user = User.objects.create_user(
             username   = emp,
             password   = p.get('password', 'vvit@1234'),
             first_name = first_name,
             last_name  = last_name,
-            email      = f"{emp}@vvit.net",
+            email      = email,
             role       = role,
             phone      = p.get('phone', ''),
         )
@@ -315,6 +325,7 @@ def edit_faculty(request, pk):
         u.first_name = first_name
         u.last_name  = last_name
         u.phone      = p.get('phone',      u.phone)
+        u.email      = p.get('email', '').strip()
         role = p.get('role', u.role)
         if role in dict(u.ROLE_CHOICES):
             u.role = role
@@ -994,6 +1005,9 @@ def bulk_upload_students(request):
                     if User.objects.filter(username=roll_number).exists():
                         errors.append(f"Row {row_idx}: User with username '{roll_number}' already exists.")
                         continue
+                        
+                    if not email:
+                        email = f"{roll_number}@vvitu.net"
                         
                     user = User.objects.create_user(
                         username=roll_number,

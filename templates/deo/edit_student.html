@@ -37,6 +37,10 @@
             <input type="text" name="phone" class="vvit-input" value="{{ student.user.phone|default:'' }}">
           </div>
           <div class="col-md-6">
+            <label class="form-label text-muted">Email ID (Optional)</label>
+            <input type="email" name="email" class="vvit-input" value="{{ student.user.email|default:'' }}" placeholder="e.g. name@example.com">
+          </div>
+          <div class="col-md-6">
             <label class="form-label text-muted">Year Level</label>
             <select name="year" class="vvit-select" required>
               {% for y in years %}

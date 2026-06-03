@@ -115,6 +115,17 @@ class Student(models.Model):
     def phone(self):
         return self.user.phone
 
+    @property
+    def calculate_attendance_pct(self):
+        """Calculate overall attendance percentage dynamically."""
+        from core.models import Attendance
+        records = Attendance.objects.filter(student=self)
+        total = records.count()
+        if total == 0:
+            return 0.0
+        present = records.filter(status='P').count()
+        return round(present / total * 100, 1)
+
     def calculate_cgpa(self):
         """Calculate CGPA for the student across all released final results."""
         from core.models import Result

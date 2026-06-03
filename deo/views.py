@@ -93,12 +93,16 @@ def add_student(request):
             messages.error(request, f"Student Roll Number '{username}' already exists.")
             return redirect('deo:add_student')
             
+        email = p.get('email', '').strip()
+        if not email:
+            email = f"{username}@vvitu.net"
+
         user = User.objects.create_user(
             username=username,
             password=p.get('password', 'vvit@1234'),
             first_name=first_name,
             last_name=last_name,
-            email=f"{username}@vvit.net",
+            email=email,
             role='student',
             phone=p.get('phone', ''),
         )
@@ -148,6 +152,8 @@ def edit_student(request, pk):
         u.first_name = first_name
         u.last_name = last_name
         u.phone = p.get('phone', u.phone)
+        email = p.get('email', '').strip()
+        u.email = email or f"{student.roll_number}@vvitu.net"
         u.save()
         
         student.year_id = p.get('year', student.year_id)
@@ -241,7 +247,7 @@ def upload_marks(request):
     
     branch = request.branch
     subjects = Subject.objects.filter(branch=branch, is_deleted=False).select_related('year')
-    exams = Exam.objects.filter(branch=branch).order_by('-date')
+    exams = Exam.objects.filter(branch=branch).exclude(exam_type='final').order_by('-date')
     
     selected_subject_id = request.GET.get('subject', '')
     selected_exam_id = request.GET.get('exam', '')
@@ -260,6 +266,9 @@ def upload_marks(request):
         
     if selected_exam_id:
         selected_exam = get_object_or_404(Exam, id=selected_exam_id, branch=branch)
+        if selected_exam.exam_type == 'final':
+            messages.error(request, "Only the Administrator is authorized to upload Semester Final exam results.")
+            return redirect('deo:upload_marks')
         
     if selected_section_id and selected_subject and selected_exam:
         selected_section = get_object_or_404(Section, id=selected_section_id, branch=branch)
@@ -279,6 +288,10 @@ def upload_marks(request):
         
         subj = get_object_or_404(Subject, id=subj_id, branch=branch)
         ex = get_object_or_404(Exam, id=ex_id, branch=branch)
+        if ex.exam_type == 'final':
+            messages.error(request, "Only the Administrator is authorized to upload Semester Final exam results.")
+            return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+            
         sec = get_object_or_404(Section, id=sec_id, branch=branch)
         sec_students = Student.objects.filter(section=sec, is_active=True, user__is_deleted=False)
         

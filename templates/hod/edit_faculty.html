@@ -35,6 +35,10 @@
           <label class="form-label text-muted">Phone Number</label>
           <input type="text" name="phone" class="vvit-input" value="{{ fac.user.phone|default:'' }}">
         </div>
+        <div class="mb-3">
+          <label class="form-label text-muted">Email ID (Optional)</label>
+          <input type="email" name="email" class="vvit-input" value="{{ fac.user.email|default:'' }}" placeholder="e.g. name@example.com">
+        </div>
         <div class="mb-4">
           <label class="form-label text-muted">Designation</label>
           <input type="text" name="designation" class="vvit-input" value="{{ fac.designation }}" required>

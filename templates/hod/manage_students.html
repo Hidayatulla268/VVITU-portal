@@ -31,7 +31,7 @@
   <div class="table-responsive">
     <table class="vvit-table">
       <thead>
-        <tr><th>#</th><th>Roll Number</th><th>Name</th><th>Branch</th><th>Year</th><th>Section</th><th>Phone</th><th>Actions</th></tr>
+        <tr><th>#</th><th>Roll Number</th><th>Name</th><th>Branch</th><th>Year</th><th>Section</th><th>Attendance</th><th>CGPA</th><th>Phone</th><th>Actions</th></tr>
       </thead>
       <tbody>
         {% for st in page %}
@@ -42,6 +42,8 @@
           <td>{{ st.branch.code }}</td>
           <td>{{ st.year|default:"—" }}</td>
           <td>{{ st.section.name|default:"—" }}</td>
+          <td>{% if st.calculate_attendance_pct is not None %}{{ st.calculate_attendance_pct }}%{% else %}—{% endif %}</td>
+          <td>{{ st.calculate_cgpa }}</td>
           <td>{{ st.user.phone|default:"—" }}</td>
           <td>
             <div class="action-btns">

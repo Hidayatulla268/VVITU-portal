@@ -315,7 +315,11 @@ def manage_students(request):
         qs = qs.filter(
             Q(roll_number__icontains=search) | 
             Q(user__first_name__icontains=search) | 
-            Q(user__last_name__icontains=search)
+            Q(user__last_name__icontains=search) |
+            Q(branch__code__icontains=search) |
+            Q(branch__name__icontains=search) |
+            Q(section__name__icontains=search) |
+            Q(year__year__icontains=search)
         )
         
     paginator = Paginator(qs, 25)
@@ -347,12 +351,16 @@ def add_student(request):
             messages.error(request, f"Student Roll Number '{username}' already exists.")
             return redirect('hod:add_student')
             
+        email = p.get('email', '').strip()
+        if not email:
+            email = f"{username}@vvitu.net"
+
         user = User.objects.create_user(
             username=username,
             password=p.get('password', 'vvit@1234'),
             first_name=first_name,
             last_name=last_name,
-            email=f"{username}@vvit.net",
+            email=email,
             role='student',
             phone=p.get('phone', ''),
         )
@@ -369,6 +377,17 @@ def add_student(request):
             parent_name=p.get('parent_name', '').strip() or None,
             parent_mobile=p.get('parent_mobile', '').strip() or None,
         )
+        
+        Notification.objects.create(
+            title="Student Account Created by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} created student {first_name} {last_name} ({username}) in department {dept.code}.",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
+        
         messages.success(request, f"Student {username} created successfully.")
         return redirect('hod:manage_students')
         
@@ -403,6 +422,8 @@ def edit_student(request, pk):
         u.first_name = first_name
         u.last_name = last_name
         u.phone = p.get('phone', u.phone)
+        email = p.get('email', '').strip()
+        u.email = email or f"{student.roll_number}@vvitu.net"
         u.save()
         
         student.year_id = p.get('year', student.year_id)
@@ -412,6 +433,16 @@ def edit_student(request, pk):
         student.parent_name = p.get('parent_name', '').strip() or None
         student.parent_mobile = p.get('parent_mobile', '').strip() or None
         student.save()
+        
+        Notification.objects.create(
+            title="Student Account Updated by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} updated student {first_name} {last_name} ({student.roll_number}) details.",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
         
         messages.success(request, f"Student {student.roll_number} updated.")
         return redirect('hod:manage_students')
@@ -435,6 +466,17 @@ def delete_student(request, pk):
         from django.utils import timezone
         user.deleted_at = timezone.now()
         user.save()
+        
+        Notification.objects.create(
+            title="Student Account Deleted by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} deleted student {student.roll_number}.",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
+        
         messages.success(request, "Student profile soft-deleted successfully.")
     return redirect('hod:manage_students')
 
@@ -465,12 +507,13 @@ def add_faculty(request):
             messages.error(request, f"Employee ID '{emp_id}' already exists.")
             return redirect('hod:add_faculty')
             
+        email = p.get('email', '').strip()
         user = User.objects.create_user(
             username=emp_id,
             password=p.get('password', 'vvit@1234'),
             first_name=first_name,
             last_name=last_name,
-            email=f"{emp_id}@vvit.net",
+            email=email,
             role='faculty',
             phone=p.get('phone', ''),
         )
@@ -481,6 +524,17 @@ def add_faculty(request):
             department=dept,
             designation=p.get('designation', 'Assistant Professor'),
         )
+        
+        Notification.objects.create(
+            title="Faculty Account Created by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} created faculty member {first_name} {last_name} ({emp_id}).",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
+        
         messages.success(request, f"Faculty {emp_id} created successfully.")
         return redirect('hod:manage_faculty')
         
@@ -507,10 +561,22 @@ def edit_faculty(request, pk):
         u.first_name = first_name
         u.last_name = last_name
         u.phone = p.get('phone', u.phone)
+        u.email = p.get('email', '').strip()
         u.save()
         
         fac.designation = p.get('designation', fac.designation)
         fac.save()
+        
+        Notification.objects.create(
+            title="Faculty Account Updated by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} updated faculty member {first_name} {last_name} ({fac.employee_id}) details.",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
+        
         messages.success(request, f"Faculty {fac.employee_id} updated.")
         return redirect('hod:manage_faculty')
         
@@ -612,10 +678,30 @@ def release_results(request):
             else:
                 messages.success(request, f"Results released for '{exam.name}'.")
 
+            Notification.objects.create(
+                title="Results Released by HOD",
+                message=f"HOD {request.user.get_full_name() or request.user.username} released results for exam {exam.name}.",
+                notif_type=Notification.TYPE_SYSTEM,
+                priority=Notification.PRIORITY_HIGH,
+                target_all=False,
+                target_role='admin',
+                created_by=request.user
+            )
+
         elif action == 'unrelease':
             release_obj.released = False
             release_obj.save()
             messages.warning(request, f"Results hidden for '{exam.name}'.")
+
+            Notification.objects.create(
+                title="Results Hidden by HOD",
+                message=f"HOD {request.user.get_full_name() or request.user.username} hid results for exam {exam.name}.",
+                notif_type=Notification.TYPE_SYSTEM,
+                priority=Notification.PRIORITY_HIGH,
+                target_all=False,
+                target_role='admin',
+                created_by=request.user
+            )
 
         return redirect('hod:release_results')
 
@@ -686,6 +772,17 @@ def add_subject(request):
             credits=credits_int,
             is_lab=is_lab
         )
+        
+        Notification.objects.create(
+            title="Subject Created by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} created subject {name} ({code}) in department {dept.code}.",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
+        
         messages.success(request, f"Subject '{name}' created successfully.")
         return redirect('hod:manage_subjects')
         
@@ -707,6 +804,17 @@ def delete_subject(request, pk):
         from django.utils import timezone
         subject.deleted_at = timezone.now()
         subject.save()
+        
+        Notification.objects.create(
+            title="Subject Deleted by HOD",
+            message=f"HOD {request.user.get_full_name() or request.user.username} soft-deleted subject {subject.name} ({subject.code}) in department {dept.code}.",
+            notif_type=Notification.TYPE_SYSTEM,
+            priority=Notification.PRIORITY_HIGH,
+            target_all=False,
+            target_role='admin',
+            created_by=request.user
+        )
+        
         messages.success(request, "Subject soft-deleted successfully.")
     return redirect('hod:manage_subjects')
 
