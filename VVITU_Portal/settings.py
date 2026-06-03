@@ -1,6 +1,6 @@
 """
 VVITU Portal — Django Settings
-Production-ready configuration for Vasireddy Venkatadri International Institute of Technology ERP.
+Production-ready configuration for Vasireddy Venkatadri International Technological University ERP.
 """
 
 import os
@@ -218,7 +218,7 @@ LOW_ATTENDANCE_THRESHOLD = 75     # Alert if below 75%
 # ─────────────────────────────────────────────
 # COLLEGE INFO
 # ─────────────────────────────────────────────
-COLLEGE_NAME = 'Vasireddy Venkatadri International Institute of Technology'
+COLLEGE_NAME = 'Vasireddy Venkatadri International Technological University'
 COLLEGE_SHORT = 'VVITU'
 COLLEGE_LOCATION = 'Nambur, Guntur District, Andhra Pradesh'
 COLLEGE_WEBSITE = 'https://www.vvitu.ac.in'
