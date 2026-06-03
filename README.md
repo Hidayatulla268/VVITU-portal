@@ -143,13 +143,16 @@ DATABASE_URL=postgres://vvitu_user:pass@localhost:5432/vvitu_portal
 
 ## Default Login Credentials (after loading sample data)
 
-| Role      | Username      | Password     | Description |
-|-----------|---------------|--------------|-------------|
-| Admin     | `admin`       | `vvit@1234`  | Full System Access & CRUD |
-| HOD       | `HOD001`      | `vvit@1234`  | HOD CSE (Full Branch Management + Faculty Panel) |
-| DEO       | `DEO001`      | `vvit@1234`  | DEO CSE (Branch Data Operator) |
-| Faculty   | `EMP001`      | `vvit@1234`  | Class Teacher & Counsellor |
-| Student   | `24BQ1A4942`  | `vvit@1234`  | Student Login (first login forces password setup) |
+All accounts share the default password: **`vvit@1234`**
+
+| Role | Username / Range | Branch / Scope | Description |
+|---|---|---|---|
+| **Admin** | `admin` | Global | Full System Access & CRUD |
+| **HODs** | `HOD001` to `HOD008` | CSE (`HOD001`), ECE (`HOD002`), EEE (`HOD003`), IT (`HOD004`), CSM (`HOD005`), CSD (`HOD006`), CIVIL (`HOD007`), MECH (`HOD008`) | Full Branch Management & Teaching Panel |
+| **DEOs** | `DEO001` to `DEO008` | CSE (`DEO001`), ECE (`DEO002`), EEE (`DEO003`), IT (`DEO004`), CSM (`DEO005`), CSD (`DEO006`), CIVIL (`DEO007`), MECH (`DEO008`) | Branch-scoped Data Operator |
+| **Faculty** | `EMP001` to `EMP016` | 2 per branch (e.g. `EMP001`-`EMP002` CSE, `EMP003`-`EMP004` ECE, etc.) | Class Teachers, Counsellors, and Subject Instructors |
+| **Students** | `24BQ1A4942` (CSE A) <br> `24BQ1A0401` (ECE A) <br> `24BQ1A4201` (CSM A) <br> (66 total students across branches) | Various | Students across Years 1-4 with branch-specific roll numbers |
+
 
 > [!WARNING]
 > **Production Password Security**: Change these default passwords immediately when deploying in any live or public-facing environment.
