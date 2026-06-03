@@ -36,8 +36,8 @@ def deo_required(view_func):
 @deo_required
 def dashboard(request):
     branch = request.branch
-    student_count = Student.objects.filter(branch=branch, is_active=True).count()
-    faculty_count = Faculty.objects.filter(department=branch, is_active=True).count()
+    student_count = Student.objects.filter(branch=branch, is_active=True, user__is_deleted=False).count()
+    faculty_count = Faculty.objects.filter(department=branch, is_active=True, user__is_deleted=False).count()
     
     context = {
         'deo_profile': request.deo_profile,
@@ -53,7 +53,7 @@ def dashboard(request):
 @deo_required
 def manage_students(request):
     branch = request.branch
-    qs = Student.objects.filter(branch=branch).select_related('user', 'year', 'section').order_by('roll_number')
+    qs = Student.objects.filter(branch=branch, user__is_deleted=False).select_related('user', 'year', 'section').order_by('roll_number')
     
     search = request.GET.get('q', '')
     if search:
@@ -73,7 +73,7 @@ def add_student(request):
     branch = request.branch
     years = Year.objects.all()
     sections = Section.objects.filter(branch=branch).select_related('year')
-    faculties = Faculty.objects.filter(department=branch, is_active=True).select_related('user')
+    faculties = Faculty.objects.filter(department=branch, is_active=True, user__is_deleted=False).select_related('user')
     
     if request.method == 'POST':
         p = request.POST
@@ -130,7 +130,7 @@ def edit_student(request, pk):
     student = get_object_or_404(Student, pk=pk, branch=branch)
     years = Year.objects.all()
     sections = Section.objects.filter(branch=branch).select_related('year')
-    faculties = Faculty.objects.filter(department=branch, is_active=True).select_related('user')
+    faculties = Faculty.objects.filter(department=branch, is_active=True, user__is_deleted=False).select_related('user')
     
     if request.method == 'POST':
         p = request.POST
@@ -240,7 +240,7 @@ def upload_marks(request):
     import io
     
     branch = request.branch
-    subjects = Subject.objects.filter(branch=branch).select_related('year')
+    subjects = Subject.objects.filter(branch=branch, is_deleted=False).select_related('year')
     exams = Exam.objects.filter(branch=branch).order_by('-date')
     
     selected_subject_id = request.GET.get('subject', '')
@@ -263,7 +263,7 @@ def upload_marks(request):
         
     if selected_section_id and selected_subject and selected_exam:
         selected_section = get_object_or_404(Section, id=selected_section_id, branch=branch)
-        students = Student.objects.filter(section=selected_section, is_active=True).select_related('user').order_by('roll_number')
+        students = Student.objects.filter(section=selected_section, is_active=True, user__is_deleted=False).select_related('user').order_by('roll_number')
         
         results_qs = Result.objects.filter(
             student__in=students,
@@ -280,7 +280,7 @@ def upload_marks(request):
         subj = get_object_or_404(Subject, id=subj_id, branch=branch)
         ex = get_object_or_404(Exam, id=ex_id, branch=branch)
         sec = get_object_or_404(Section, id=sec_id, branch=branch)
-        sec_students = Student.objects.filter(section=sec, is_active=True)
+        sec_students = Student.objects.filter(section=sec, is_active=True, user__is_deleted=False)
         
         action = request.POST.get('action')
         

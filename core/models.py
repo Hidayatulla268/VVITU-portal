@@ -87,6 +87,9 @@ class Subject(models.Model):
     )
     credits  = models.IntegerField(default=3)
     is_lab   = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_by_name = models.CharField(max_length=150, blank=True, null=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ['branch', 'year', 'name']
@@ -449,6 +452,9 @@ class Notification(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True,
                                       help_text='Notification hidden after this date/time')
     is_active  = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_by_name = models.CharField(max_length=150, blank=True, null=True)
+    deleted_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         verbose_name        = 'Notification'
@@ -497,3 +503,18 @@ class NotificationRead(models.Model):
 
     def __str__(self):
         return f"{self.user.username} read '{self.notification.title}'"
+
+
+class DatabaseBackup(models.Model):
+    """Tracks database backups created by administrators."""
+    filename = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
+    file_size = models.IntegerField()  # size in bytes
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Backup: {self.filename} ({self.created_at})"
+

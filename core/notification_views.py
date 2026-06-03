@@ -36,7 +36,7 @@ from accounts.models import User
 def get_user_notifications(user, limit=None):
     """Return active, non-expired Notifications visible to this user, newest first."""
     now = timezone.now()
-    qs = Notification.objects.filter(is_active=True).filter(
+    qs = Notification.objects.filter(is_active=True, is_deleted=False).filter(
         Q(expires_at__isnull=True) | Q(expires_at__gt=now)
     )
 
@@ -211,7 +211,7 @@ def manage_notices(request):
 
     user = request.user
     if user.role == 'admin':
-        notices = Notification.objects.all().select_related('created_by', 'target_branch', 'target_section').order_by('-created_at')
+        notices = Notification.objects.filter(is_deleted=False).select_related('created_by', 'target_branch', 'target_section').order_by('-created_at')
     else:
         branch = None
         if user.role == 'hod':
@@ -225,7 +225,7 @@ def manage_notices(request):
             except Exception:
                 pass
 
-        notices = Notification.objects.filter(
+        notices = Notification.objects.filter(is_deleted=False).filter(
             Q(created_by=user) | Q(target_branch=branch)
         ).select_related('created_by', 'target_branch', 'target_section').order_by('-created_at')
 
@@ -493,6 +493,11 @@ def delete_notification(request, pk):
     if request.user.role != 'admin' and n.created_by != request.user:
         messages.error(request, 'You are not authorized to delete this notice.')
     else:
-        n.delete()
-        messages.success(request, 'Notice deleted successfully.')
+        n.is_deleted = True
+        n.deleted_by_name = f"{request.user.get_full_name() or request.user.username} ({request.user.role.upper()})"
+        from django.utils import timezone
+        n.deleted_at = timezone.now()
+        n.save()
+        messages.success(request, 'Notice soft-deleted successfully.')
     return redirect('notifications:manage')
+

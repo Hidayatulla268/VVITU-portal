@@ -225,7 +225,7 @@ def results(request):
         semester = 1
     
     # Fetch all subjects for this student's branch, year, and selected semester
-    subjects = Subject.objects.filter(branch=student.branch, year=student.year, semester=semester).order_by('name')
+    subjects = Subject.objects.filter(branch=student.branch, year=student.year, semester=semester, is_deleted=False).order_by('name')
     
     # Fetch all results for this student for exams in the selected semester
     results_qs = Result.objects.filter(
@@ -355,7 +355,7 @@ def question_papers(request):
 
     return render(request, 'student/question_papers.html', {
         'papers_page':   papers_page,
-        'subjects':      Subject.objects.filter(branch=student.branch).order_by('name'),
+        'subjects':      Subject.objects.filter(branch=student.branch, is_deleted=False).order_by('name'),
         'selected_subj': subj_id,
         'selected_year': yr,
         'selected_sem':  semester,

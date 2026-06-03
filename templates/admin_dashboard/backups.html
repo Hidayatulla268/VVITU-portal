@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-database me-2 text-accent"></i>System Backups & Data Export</h1>
+    <p class="ph-sub">Download database snapshots, restore historical system states, and export consolidated institutional PDF reports.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <!-- System Utilities & Exports -->
+  <div class="col-xl-4">
+    <div class="glass-card h-100">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-tools me-2 text-accent"></i>Backup Utilities</h3>
+      </div>
+      <div class="p-3">
+        <p class="text-secondary small mb-4">
+          Perform a database backup or download the complete system audit report. All database backups are serialized securely to JSON files and saved externally to protect against server database corruption.
+        </p>
+        
+        <div class="d-flex flex-column gap-3">
+          <a href="{% url 'admin_dashboard:create_backup' %}" class="btn-vvit-primary text-center py-2" style="text-decoration:none;">
+            <i class="fas fa-plus-circle me-2"></i>Create Database Backup
+          </a>
+          
+          <a href="{% url 'admin_dashboard:export_database_pdf' %}" class="btn-vvit-outline text-center py-2" style="text-decoration:none;">
+            <i class="fas fa-file-pdf me-2"></i>Download DB Audit PDF
+          </a>
+
+          <a href="{% url 'admin_dashboard:export_student_results_pdf' %}" class="btn-vvit-outline text-center py-2" style="text-decoration:none;">
+            <i class="fas fa-chart-line me-2"></i>Download Student Results PDF
+          </a>
+        </div>
+
+        <div class="mt-4 p-3 border border-danger-subtle rounded-3 bg-danger-subtle text-danger-emphasis small">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>Important Security Notice:</strong> Backups contain sensitive academic records, emails, and credentials. Store downloads securely and only restore snapshots verified as authentic.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup Snapshot List -->
+  <div class="col-xl-8">
+    <div class="glass-card h-100">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-history me-2 text-accent"></i>Backup Snapshots</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="vvit-table text-start">
+          <thead>
+            <tr>
+              <th>Backup File</th>
+              <th>Created At</th>
+              <th class="text-end">Size</th>
+              <th>Created By</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in backups %}
+            <tr>
+              <td><strong>{{ b.filename }}</strong></td>
+              <td>{{ b.created_at|date:"d M Y, h:i A" }}</td>
+              <td class="text-end">{{ b.file_size|filesizeformat }}</td>
+              <td>{{ b.created_by.get_full_name|default:b.created_by.username }}</td>
+              <td class="text-center">
+                {% if b.exists %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.75rem; padding: 4px 8px;">Available on Disk</span>
+                {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.75rem; padding: 4px 8px;">Missing on Disk</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                  {% if b.exists %}
+                  <!-- Download -->
+                  <a href="{% url 'admin_dashboard:download_backup' b.pk %}" class="btn-vvit-icon text-info" title="Download Snapshot">
+                    <i class="fas fa-download"></i>
+                  </a>
+                  <!-- Restore -->
+                  <button type="button" onclick="confirmRestore('{% url 'admin_dashboard:restore_backup' b.pk %}', '{{ b.filename }}')" class="btn-vvit-icon text-warning" title="Restore Snapshot">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                  {% endif %}
+                  <!-- Delete -->
+                  <form method="post" action="{% url 'admin_dashboard:delete_backup' b.pk %}" onsubmit="return confirm('Are you sure you want to permanently delete backup {{ b.filename }}?')" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-vvit-icon text-danger" title="Delete Backup">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-5">
+                <i class="fas fa-database fa-3x mb-3 text-secondary"></i>
+                <p class="mb-0">No system backups have been created yet.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Restoration Warning Modal / Script -->
+<script>
+function confirmRestore(restoreUrl, filename) {
+  const confirmed = confirm(
+    `🚨 WARNING: RESTORING DATABASE STATE\n\n` +
+    `Are you sure you want to restore the database from "${filename}"?\n\n` +
+    `This action will overwrite all current student marks, attendance lists, and user records. If the snapshot contains different passwords or accounts, you may be logged out immediately.\n\n` +
+    `Do you wish to proceed?`
+  );
+  if (confirmed) {
+    window.location.href = restoreUrl;
+  }
+}
+</script>
+{% endblock %}

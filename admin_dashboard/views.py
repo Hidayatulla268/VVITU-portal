@@ -15,6 +15,7 @@ import json
 from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
@@ -51,9 +52,9 @@ def admin_required(view_func):
 def dashboard(request):
     """High-level statistics card view for the admin home page."""
     stats = {
-        'total_students': Student.objects.filter(is_active=True).count(),
-        'total_faculty':  Faculty.objects.filter(is_active=True).count(),
-        'total_subjects': Subject.objects.count(),
+        'total_students': Student.objects.filter(is_active=True, user__is_deleted=False).count(),
+        'total_faculty':  Faculty.objects.filter(is_active=True, user__is_deleted=False).count(),
+        'total_subjects': Subject.objects.filter(is_deleted=False).count(),
         'total_sections': Section.objects.count(),
         'total_branches': Branch.objects.count(),
     }
@@ -85,6 +86,7 @@ def dashboard(request):
 def manage_students(request):
     qs = (
         Student.objects
+        .filter(user__is_deleted=False)
         .select_related('user', 'branch', 'year', 'section')
         .order_by('roll_number')
     )
@@ -206,9 +208,16 @@ def edit_student(request, pk):
 def delete_student(request, pk):
     student = get_object_or_404(Student, pk=pk)
     if request.method == 'POST':
-        student.user.delete()   # cascades to Student
-        messages.success(request, "Student deleted.")
+        user = student.user
+        user.is_active = False
+        user.is_deleted = True
+        user.deleted_by_name = f"{request.user.get_full_name() or request.user.username} ({request.user.role.upper()})"
+        from django.utils import timezone
+        user.deleted_at = timezone.now()
+        user.save()
+        messages.success(request, "Student soft-deleted successfully.")
     return redirect('admin_dashboard:manage_students')
+
 
 
 # ═══════════════════════════════════════════════
@@ -216,7 +225,7 @@ def delete_student(request, pk):
 # ═══════════════════════════════════════════════
 @admin_required
 def manage_faculty(request):
-    qs = Faculty.objects.select_related('user', 'department').filter(is_active=True).order_by('employee_id')
+    qs = Faculty.objects.select_related('user', 'department').filter(is_active=True, user__is_deleted=False).order_by('employee_id')
     return render(request, 'admin_dashboard/manage_faculty.html', {'faculties': qs})
 
 
@@ -272,9 +281,16 @@ def add_faculty(request):
 def delete_faculty(request, pk):
     fac = get_object_or_404(Faculty, pk=pk)
     if request.method == 'POST':
-        fac.user.delete()
-        messages.success(request, "Faculty deleted.")
+        user = fac.user
+        user.is_active = False
+        user.is_deleted = True
+        user.deleted_by_name = f"{request.user.get_full_name() or request.user.username} ({request.user.role.upper()})"
+        from django.utils import timezone
+        user.deleted_at = timezone.now()
+        user.save()
+        messages.success(request, "Faculty soft-deleted successfully.")
     return redirect('admin_dashboard:manage_faculty')
+
 
 
 @admin_required
@@ -1041,7 +1057,7 @@ def download_sample_students_csv(request):
 # ═══════════════════════════════════════════════
 @admin_required
 def manage_subjects(request):
-    qs = Subject.objects.select_related('branch', 'year', 'faculty__user').order_by('branch', 'year', 'semester', 'name')
+    qs = Subject.objects.filter(is_deleted=False).select_related('branch', 'year', 'faculty__user').order_by('branch', 'year', 'semester', 'name')
     
     search = request.GET.get('q', '')
     branch_filter = request.GET.get('branch', '')
@@ -1121,8 +1137,531 @@ def add_subject(request):
 def delete_subject(request, pk):
     subject = get_object_or_404(Subject, pk=pk)
     if request.method == 'POST':
-        subject.delete()
-        messages.success(request, "Subject deleted successfully.")
+        subject.is_deleted = True
+        subject.deleted_by_name = f"{request.user.get_full_name() or request.user.username} ({request.user.role.upper()})"
+        from django.utils import timezone
+        subject.deleted_at = timezone.now()
+        subject.save()
+        messages.success(request, "Subject soft-deleted successfully.")
     return redirect('admin_dashboard:manage_subjects')
+
+
+# ═══════════════════════════════════════════════
+# DATABASE BACKUPS & EXPORTS
+# ═══════════════════════════════════════════════
+@admin_required
+def backup_list(request):
+    """View to list all database backups."""
+    from core.models import DatabaseBackup
+    import os
+    from django.conf import settings
+
+    backups_dir = os.path.join(settings.BASE_DIR, 'backups')
+    if not os.path.exists(backups_dir):
+        os.makedirs(backups_dir)
+
+    backups = DatabaseBackup.objects.select_related('created_by').order_by('-created_at')
+    
+    # Verify file existence on disk
+    for b in backups:
+        path = os.path.join(backups_dir, b.filename)
+        b.exists = os.path.exists(path)
+
+    return render(request, 'admin_dashboard/backups.html', {
+        'backups': backups,
+        'page_title': 'System Backups & Data Export'
+    })
+
+
+@admin_required
+def create_backup(request):
+    """Create a new database JSON dump file and log it."""
+    from django.core.management import call_command
+    from core.models import DatabaseBackup
+    import os
+    import io
+    from django.conf import settings
+    from django.utils import timezone
+
+    backups_dir = os.path.join(settings.BASE_DIR, 'backups')
+    if not os.path.exists(backups_dir):
+        os.makedirs(backups_dir)
+
+    timestamp = timezone.now().strftime('%Y%md_%H%M%S')
+    filename = f"db_backup_{timestamp}.json"
+    filepath = os.path.join(backups_dir, filename)
+
+    try:
+        # Dump data excluding contenttypes and permissions
+        out = io.StringIO()
+        call_command('dumpdata', exclude=['contenttypes', 'auth.Permission'], stdout=out)
+        
+        # Write to backups directory
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(out.getvalue())
+
+        # Log in database
+        file_size = os.path.getsize(filepath)
+        DatabaseBackup.objects.create(
+            filename=filename,
+            created_by=request.user,
+            file_size=file_size
+        )
+        messages.success(request, f"Backup file '{filename}' created successfully.")
+    except Exception as e:
+        messages.error(request, f"Error creating backup: {str(e)}")
+
+    return redirect('admin_dashboard:backup_list')
+
+
+@admin_required
+def download_backup(request, pk):
+    """Serve a backup file for download."""
+    from core.models import DatabaseBackup
+    import os
+    from django.conf import settings
+    from django.http import HttpResponse, Http404
+
+    backup = get_object_or_404(DatabaseBackup, pk=pk)
+    backups_dir = os.path.join(settings.BASE_DIR, 'backups')
+    filepath = os.path.join(backups_dir, backup.filename)
+
+    if not os.path.exists(filepath):
+        raise Http404("Backup file not found on disk.")
+
+    with open(filepath, 'rb') as f:
+        response = HttpResponse(f.read(), content_type='application/json')
+        response['Content-Disposition'] = f'attachment; filename="{backup.filename}"'
+        return response
+
+
+@admin_required
+def restore_backup(request, pk):
+    """Restore database from a selected JSON backup file."""
+    from django.core.management import call_command
+    from core.models import DatabaseBackup
+    import os
+    from django.conf import settings
+
+    backup = get_object_or_404(DatabaseBackup, pk=pk)
+    backups_dir = os.path.join(settings.BASE_DIR, 'backups')
+    filepath = os.path.join(backups_dir, backup.filename)
+
+    if not os.path.exists(filepath):
+        messages.error(request, f"Backup file '{backup.filename}' not found on disk.")
+        return redirect('admin_dashboard:backup_list')
+
+    try:
+        # Load data from backup file
+        call_command('loaddata', filepath)
+        messages.success(request, f"Database restored successfully from '{backup.filename}'.")
+    except Exception as e:
+        messages.error(request, f"Error restoring database: {str(e)}")
+
+    return redirect('admin_dashboard:backup_list')
+
+
+@admin_required
+def delete_backup(request, pk):
+    """Delete a backup record and its corresponding file on disk."""
+    from core.models import DatabaseBackup
+    import os
+    from django.conf import settings
+
+    if request.method == 'POST':
+        backup = get_object_or_404(DatabaseBackup, pk=pk)
+        backups_dir = os.path.join(settings.BASE_DIR, 'backups')
+        filepath = os.path.join(backups_dir, backup.filename)
+
+        # Delete file from disk
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
+
+        # Delete DB log
+        backup.delete()
+        messages.success(request, f"Backup record '{backup.filename}' deleted.")
+
+    return redirect('admin_dashboard:backup_list')
+
+
+@admin_required
+def export_database_pdf(request):
+    """Generate and download a beautifully styled PDF of all system data and student results."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    import io
+    
+    from accounts.models import Student, Faculty
+    from core.models import Subject, Branch, Section, Attendance
+
+    # Fetch data
+    active_students = Student.objects.filter(user__is_deleted=False).select_related('user', 'branch', 'section', 'year').order_by('roll_number')
+    active_faculty = Faculty.objects.filter(user__is_deleted=False).select_related('user', 'department').order_by('employee_id')
+    active_subjects = Subject.objects.filter(is_deleted=False).select_related('branch', 'year').order_by('branch', 'code')
+    branches = Branch.objects.all()
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=40, bottomMargin=40)
+    story = []
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'TitleStyle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=20,
+        textColor=colors.HexColor('#991b1b'),
+        spaceAfter=15,
+        alignment=1 # Center
+    )
+    subtitle_style = ParagraphStyle(
+        'SubtitleStyle',
+        parent=styles['Heading2'],
+        fontName='Helvetica',
+        fontSize=12,
+        textColor=colors.HexColor('#4b5563'),
+        spaceAfter=25,
+        alignment=1 # Center
+    )
+    section_heading = ParagraphStyle(
+        'SectionHeading',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        textColor=colors.HexColor('#1f2937'),
+        spaceBefore=15,
+        spaceAfter=10
+    )
+    body_style = ParagraphStyle(
+        'BodyStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        textColor=colors.HexColor('#374151')
+    )
+    header_cell_style = ParagraphStyle(
+        'HeaderCellStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        textColor=colors.white
+    )
+
+    # 1. Cover Page
+    story.append(Spacer(1, 100))
+    story.append(Paragraph("VASIREDDY VENKATADRI INTERNATIONAL TECHNOLOGICAL UNIVERSITY", title_style))
+    story.append(Paragraph("Consolidated Institutional Data Audit & Student Results Report", subtitle_style))
+    story.append(Spacer(1, 50))
+    
+    meta_data = [
+        [Paragraph("<b>Report Generated On:</b>", body_style), Paragraph(timezone.now().strftime("%d %B %Y, %I:%M %p"), body_style)],
+        [Paragraph("<b>Generated By:</b>", body_style), Paragraph(f"{request.user.get_full_name()} ({request.user.username})", body_style)],
+        [Paragraph("<b>Role:</b>", body_style), Paragraph("Portal Administrator", body_style)],
+        [Paragraph("<b>Database Status:</b>", body_style), Paragraph("Active / Verified", body_style)],
+    ]
+    t_meta = Table(meta_data, colWidths=[150, 250])
+    t_meta.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LINEBELOW', (0,0), (-1,-1), 0.5, colors.lightgrey),
+    ]))
+    story.append(t_meta)
+    story.append(PageBreak())
+
+    # 2. Institutional Overview
+    story.append(Paragraph("1. Institutional Overview & Statistics", section_heading))
+    overview_data = [
+        [Paragraph("<b>Entity</b>", header_cell_style), Paragraph("<b>Active Count</b>", header_cell_style)],
+        [Paragraph("Academic Branches / Depts", body_style), Paragraph(str(branches.count()), body_style)],
+        [Paragraph("Registered Students", body_style), Paragraph(str(active_students.count()), body_style)],
+        [Paragraph("Faculty Members", body_style), Paragraph(str(active_faculty.count()), body_style)],
+        [Paragraph("Registered Subjects", body_style), Paragraph(str(active_subjects.count()), body_style)],
+    ]
+    t_overview = Table(overview_data, colWidths=[200, 200])
+    t_overview.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#991b1b')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(t_overview)
+    story.append(Spacer(1, 20))
+
+    # 3. Student Registry Table
+    story.append(Paragraph("2. Active Student Registry", section_heading))
+    stud_headers = [
+        Paragraph("<b>Roll No</b>", header_cell_style),
+        Paragraph("<b>Name</b>", header_cell_style),
+        Paragraph("<b>Branch</b>", header_cell_style),
+        Paragraph("<b>Year & Sec</b>", header_cell_style),
+        Paragraph("<b>Email</b>", header_cell_style),
+    ]
+    stud_table_data = [stud_headers]
+    for s in active_students:
+        stud_table_data.append([
+            Paragraph(s.roll_number, body_style),
+            Paragraph(s.user.get_full_name(), body_style),
+            Paragraph(s.branch.code if s.branch else "—", body_style),
+            Paragraph(f"{s.year.year if s.year else '—'} Year / {s.section.name if s.section else '—'}", body_style),
+            Paragraph(s.user.email, body_style),
+        ])
+    t_stud = Table(stud_table_data, colWidths=[80, 120, 60, 90, 150])
+    t_stud.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f2937')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_stud)
+    story.append(PageBreak())
+
+    # 4. Faculty Registry Table
+    story.append(Paragraph("3. Faculty Directory", section_heading))
+    fac_headers = [
+        Paragraph("<b>Employee ID</b>", header_cell_style),
+        Paragraph("<b>Name</b>", header_cell_style),
+        Paragraph("<b>Department</b>", header_cell_style),
+        Paragraph("<b>Designation</b>", header_cell_style),
+        Paragraph("<b>Phone</b>", header_cell_style),
+    ]
+    fac_table_data = [fac_headers]
+    for f in active_faculty:
+        fac_table_data.append([
+            Paragraph(f.employee_id, body_style),
+            Paragraph(f.user.get_full_name(), body_style),
+            Paragraph(f.department.code if f.department else "—", body_style),
+            Paragraph(f.designation or "—", body_style),
+            Paragraph(f.user.phone or "—", body_style),
+        ])
+    t_fac = Table(fac_table_data, colWidths=[80, 120, 80, 120, 100])
+    t_fac.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f2937')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_fac)
+    story.append(PageBreak())
+
+    # 4. Curriculum Summary Table
+    story.append(Paragraph("4. Curriculum Summary", section_heading))
+    sub_headers = [
+        Paragraph("<b>Code</b>", header_cell_style),
+        Paragraph("<b>Subject Name</b>", header_cell_style),
+        Paragraph("<b>Branch</b>", header_cell_style),
+        Paragraph("<b>Year</b>", header_cell_style),
+        Paragraph("<b>Credits</b>", header_cell_style),
+    ]
+    sub_table_data = [sub_headers]
+    for sub in active_subjects:
+        sub_table_data.append([
+            Paragraph(sub.code, body_style),
+            Paragraph(sub.name, body_style),
+            Paragraph(sub.branch.code if sub.branch else "—", body_style),
+            Paragraph(sub.year.get_year_display() if sub.year else "—", body_style),
+            Paragraph(str(sub.credits), body_style),
+        ])
+    t_sub = Table(sub_table_data, colWidths=[80, 180, 80, 100, 60])
+    t_sub.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f2937')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_sub)
+    story.append(PageBreak())
+
+    # 5. Consolidated Student Results Table
+    story.append(Paragraph("5. Consolidated Student Results & CGPA Summary", section_heading))
+    res_headers = [
+        Paragraph("<b>Roll No</b>", header_cell_style),
+        Paragraph("<b>Student Name</b>", header_cell_style),
+        Paragraph("<b>Branch</b>", header_cell_style),
+        Paragraph("<b>Overall Attendance</b>", header_cell_style),
+        Paragraph("<b>CGPA</b>", header_cell_style),
+    ]
+    res_table_data = [res_headers]
+    
+    for s in active_students:
+        cgpa = s.calculate_cgpa()
+        att_recs = Attendance.objects.filter(student=s)
+        total_att = att_recs.count()
+        present = att_recs.filter(status='P').count()
+        att_pct = round((present / total_att * 100), 2) if total_att > 0 else 0.0
+
+        res_table_data.append([
+            Paragraph(s.roll_number, body_style),
+            Paragraph(s.user.get_full_name(), body_style),
+            Paragraph(s.branch.code if s.branch else "—", body_style),
+            Paragraph(f"{att_pct}%", body_style),
+            Paragraph(f"{cgpa:.2f}", body_style),
+        ])
+    t_res = Table(res_table_data, colWidths=[80, 150, 80, 110, 80])
+    t_res.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#991b1b')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_res)
+
+    doc.build(story)
+    response = HttpResponse(buf.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="VVITU_Portal_Database_Audit_Report.pdf"'
+    return response
+
+
+@admin_required
+def export_student_results_pdf(request):
+    """Generate and download a beautifully styled PDF of all student results."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    import io
+    
+    from accounts.models import Student
+    from core.models import Result
+
+    # Fetch active students with their results
+    active_students = Student.objects.filter(user__is_deleted=False).select_related('user', 'branch', 'section', 'year').order_by('roll_number')
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=40, bottomMargin=40)
+    story = []
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'TitleStyle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=20,
+        textColor=colors.HexColor('#991b1b'),
+        spaceAfter=15,
+        alignment=1 # Center
+    )
+    subtitle_style = ParagraphStyle(
+        'SubtitleStyle',
+        parent=styles['Heading2'],
+        fontName='Helvetica',
+        fontSize=12,
+        textColor=colors.HexColor('#4b5563'),
+        spaceAfter=25,
+        alignment=1 # Center
+    )
+    student_header_style = ParagraphStyle(
+        'StudentHeaderStyle',
+        parent=styles['Heading2'],
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        textColor=colors.HexColor('#991b1b'),
+        spaceBefore=15,
+        spaceAfter=5
+    )
+    student_sub_style = ParagraphStyle(
+        'StudentSubStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        textColor=colors.HexColor('#4b5563'),
+        spaceAfter=10
+    )
+    body_style = ParagraphStyle(
+        'BodyStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        textColor=colors.HexColor('#374151')
+    )
+    header_cell_style = ParagraphStyle(
+        'HeaderCellStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        textColor=colors.white
+    )
+
+    # 1. Cover Page
+    story.append(Spacer(1, 100))
+    story.append(Paragraph("VASIREDDY VENKATADRI INTERNATIONAL TECHNOLOGICAL UNIVERSITY", title_style))
+    story.append(Paragraph("Detailed Student Academic Results Registry", subtitle_style))
+    story.append(Spacer(1, 50))
+    
+    meta_data = [
+        [Paragraph("<b>Report Generated On:</b>", body_style), Paragraph(timezone.now().strftime("%d %B %Y, %I:%M %p"), body_style)],
+        [Paragraph("<b>Generated By:</b>", body_style), Paragraph(f"{request.user.get_full_name()} ({request.user.username})", body_style)],
+        [Paragraph("<b>Role:</b>", body_style), Paragraph("Portal Administrator", body_style)],
+        [Paragraph("<b>Report Content:</b>", body_style), Paragraph("All registered student exam marks, grades, and subjects.", body_style)],
+    ]
+    t_meta = Table(meta_data, colWidths=[150, 250])
+    t_meta.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LINEBELOW', (0,0), (-1,-1), 0.5, colors.lightgrey),
+    ]))
+    story.append(t_meta)
+    story.append(PageBreak())
+
+    # 2. Detailed Results by Student
+    for student in active_students:
+        results = Result.objects.filter(student=student).select_related('exam', 'subject').order_by('exam__date', 'subject__code')
+        
+        # Student Section Header
+        story.append(Paragraph(f"{student.roll_number} — {student.user.get_full_name()}", student_header_style))
+        story.append(Paragraph(
+            f"<b>Branch:</b> {student.branch.name if student.branch else '—'} | "
+            f"<b>Year/Section:</b> {student.year.get_year_display() if student.year else '—'} / {student.section.name if student.section else '—'} | "
+            f"<b>Current CGPA:</b> {student.calculate_cgpa():.2f}",
+            student_sub_style
+        ))
+
+        if results.exists():
+            res_headers = [
+                Paragraph("<b>Exam</b>", header_cell_style),
+                Paragraph("<b>Subject Code</b>", header_cell_style),
+                Paragraph("<b>Subject Name</b>", header_cell_style),
+                Paragraph("<b>Marks</b>", header_cell_style),
+                Paragraph("<b>Grade</b>", header_cell_style),
+            ]
+            res_table_data = [res_headers]
+            for r in results:
+                marks_str = f"{r.marks_obtained} / {r.max_marks}"
+                res_table_data.append([
+                    Paragraph(r.exam.name, body_style),
+                    Paragraph(r.subject.code, body_style),
+                    Paragraph(r.subject.name, body_style),
+                    Paragraph(marks_str, body_style),
+                    Paragraph(r.grade or "—", body_style),
+                ])
+            t_res = Table(res_table_data, colWidths=[100, 80, 160, 100, 60])
+            t_res.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f2937')),
+                ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+                ('TOPPADDING', (0,0), (-1,-1), 4),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ]))
+            story.append(t_res)
+        else:
+            story.append(Paragraph("<i>No examination results recorded for this student.</i>", body_style))
+            
+        story.append(Spacer(1, 20))
+
+    doc.build(story)
+    response = HttpResponse(buf.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="VVITU_Portal_All_Student_Results.pdf"'
+    return response
+
+
 
 

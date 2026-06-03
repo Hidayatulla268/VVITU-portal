@@ -44,4 +44,14 @@ urlpatterns = [
     path('subjects/',                views.manage_subjects,      name='manage_subjects'),
     path('subjects/add/',            views.add_subject,          name='add_subject'),
     path('subjects/<int:pk>/delete/',views.delete_subject,       name='delete_subject'),
+
+    # Backups & PDF Export
+    path('backups/',                 views.backup_list,          name='backup_list'),
+    path('backups/create/',          views.create_backup,        name='create_backup'),
+    path('backups/download/<int:pk>/', views.download_backup,    name='download_backup'),
+    path('backups/restore/<int:pk>/', views.restore_backup,      name='restore_backup'),
+    path('backups/delete/<int:pk>/',  views.delete_backup,        name='delete_backup'),
+    path('export/database-pdf/',     views.export_database_pdf,  name='export_database_pdf'),
+    path('export/results-pdf/',      views.export_student_results_pdf, name='export_student_results_pdf'),
 ]
+

@@ -320,6 +320,9 @@
       <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
         <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
+      <a href="{% url 'admin_dashboard:backup_list' %}" class="nav-link {% if 'backup' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-database nav-icon"></i><span>Backups & Export</span>
+      </a>
       <a href="/admin/" class="nav-link">
         <i class="fas fa-cog nav-icon"></i><span>Django Admin</span>
       </a>

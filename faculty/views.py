@@ -89,7 +89,7 @@ def dashboard(request):
         .distinct()
     )
     section_count = sections.count()
-    student_count = Student.objects.filter(section__in=sections).count()
+    student_count = Student.objects.filter(section__in=sections, user__is_deleted=False).count()
 
     # Today's attendance count
     today_att = Attendance.objects.filter(
@@ -122,7 +122,7 @@ def ajax_get_students(request):
         return JsonResponse({'error': 'section_id required'}, status=400)
     students = (
         Student.objects
-        .filter(section_id=section_id, is_active=True)
+        .filter(section_id=section_id, is_active=True, user__is_deleted=False)
         .select_related('user')
         .order_by('roll_number')
         .only('id', 'roll_number', 'user__first_name', 'user__last_name')
@@ -218,7 +218,7 @@ def mark_attendance(request):
             return redirect('faculty:mark_attendance')
 
         slot = get_object_or_404(Timetable, id=slot_id)
-        students_in_section = Student.objects.filter(section_id=section_id, is_active=True)
+        students_in_section = Student.objects.filter(section_id=section_id, is_active=True, user__is_deleted=False)
 
         saved_count = 0
         for student in students_in_section:
@@ -265,7 +265,7 @@ def reports(request):
         .distinct()
     )
     sections = Section.objects.filter(id__in=section_ids).select_related('branch', 'year')
-    subjects = Subject.objects.filter(faculty=faculty).select_related('branch', 'year')
+    subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
 
     # Read filter params
     section_id = request.GET.get('section')
@@ -508,7 +508,7 @@ def counselled_students(request):
     # 1. Counselled Students
     counselled_list = (
         Student.objects
-        .filter(counsellor=faculty, is_active=True)
+        .filter(counsellor=faculty, is_active=True, user__is_deleted=False)
         .select_related('user', 'branch', 'year', 'section')
         .order_by('roll_number')
     )
@@ -516,7 +516,7 @@ def counselled_students(request):
     # 2. Class Students
     class_list = (
         Student.objects
-        .filter(class_teacher=faculty, is_active=True)
+        .filter(class_teacher=faculty, is_active=True, user__is_deleted=False)
         .select_related('user', 'branch', 'year', 'section')
         .order_by('roll_number')
     )
@@ -535,7 +535,7 @@ def counselled_students(request):
             
     subject_list = (
         Student.objects
-        .filter(section_id__in=section_ids, is_active=True)
+        .filter(section_id__in=section_ids, is_active=True, user__is_deleted=False)
         .select_related('user', 'branch', 'year', 'section')
         .order_by('section__name', 'roll_number')
     )
@@ -566,7 +566,8 @@ def student_results(request):
     # Get students where faculty is class_teacher or counsellor
     students = Student.objects.filter(
         Q(class_teacher=faculty) | Q(counsellor=faculty),
-        is_active=True
+        is_active=True,
+        user__is_deleted=False
     ).select_related('user')
     
     selected_student_id = request.GET.get('student', '')
@@ -672,7 +673,7 @@ def upload_marks(request):
     from django.db import transaction
     
     faculty = request.faculty
-    subjects = Subject.objects.filter(faculty=faculty).select_related('branch', 'year')
+    subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
     
     # Filter exams
     branch_ids = subjects.values_list('branch_id', flat=True).distinct()
@@ -700,7 +701,7 @@ def upload_marks(request):
         
     if selected_section_id and selected_subject and selected_exam:
         selected_section = get_object_or_404(Section, id=selected_section_id)
-        students = Student.objects.filter(section=selected_section, is_active=True).select_related('user').order_by('roll_number')
+        students = Student.objects.filter(section=selected_section, is_active=True, user__is_deleted=False).select_related('user').order_by('roll_number')
         
         # Load existing results for these students, exam, and subject
         results_qs = Result.objects.filter(
@@ -719,7 +720,7 @@ def upload_marks(request):
         subj = get_object_or_404(Subject, id=subj_id, faculty=faculty)
         ex = get_object_or_404(Exam, id=ex_id)
         sec = get_object_or_404(Section, id=sec_id)
-        sec_students = Student.objects.filter(section=sec, is_active=True)
+        sec_students = Student.objects.filter(section=sec, is_active=True, user__is_deleted=False)
         
         # Check action type: CSV upload or Manual entry
         action = request.POST.get('action')

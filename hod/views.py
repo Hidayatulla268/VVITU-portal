@@ -42,7 +42,7 @@ def dashboard(request):
     # Department stats
     student_count = Student.objects.filter(branch=dept, is_active=True).count()
     faculty_count = Faculty.objects.filter(department=dept, is_active=True).count()
-    subject_count = Subject.objects.filter(branch=dept).count()
+    subject_count = Subject.objects.filter(branch=dept, is_deleted=False).count()
     section_count = Section.objects.filter(branch=dept).count()
     
     # Attendance today
@@ -52,7 +52,7 @@ def dashboard(request):
     absent_today = att_today.filter(status='A').count()
     
     # Department notices
-    notices = Notification.objects.filter(
+    notices = Notification.objects.filter(is_active=True, is_deleted=False).filter(
         Q(target_branch=dept) | Q(target_all=True)
     ).order_by('-created_at')[:5]
     
@@ -129,7 +129,7 @@ def create_notice(request):
 @hod_required
 def subject_mapping(request):
     dept = request.department
-    subjects = Subject.objects.filter(branch=dept).select_related('faculty__user', 'year')
+    subjects = Subject.objects.filter(branch=dept, is_deleted=False).select_related('faculty__user', 'year')
     faculties = Faculty.objects.filter(department=dept, is_active=True).select_related('user')
     
     if request.method == 'POST':
@@ -207,7 +207,7 @@ def manage_timetable(request):
 def edit_timetable(request, section_id):
     dept = request.department
     section = get_object_or_404(Section, id=section_id, branch=dept)
-    subjects = Subject.objects.filter(branch=dept, year=section.year)
+    subjects = Subject.objects.filter(branch=dept, year=section.year, is_deleted=False)
     faculties = Faculty.objects.filter(department=dept, is_active=True).select_related('user')
     
     entries = Timetable.objects.filter(section=section).select_related('subject', 'faculty__user').order_by('day', 'period')
@@ -308,7 +308,7 @@ def verify_achievement_action(request, pk, action_type):
 @hod_required
 def manage_students(request):
     dept = request.department
-    qs = Student.objects.filter(branch=dept).select_related('user', 'year', 'section').order_by('roll_number')
+    qs = Student.objects.filter(branch=dept, user__is_deleted=False).select_related('user', 'year', 'section').order_by('roll_number')
     
     search = request.GET.get('q', '')
     if search:
@@ -428,14 +428,21 @@ def delete_student(request, pk):
     dept = request.department
     student = get_object_or_404(Student, pk=pk, branch=dept)
     if request.method == 'POST':
-        student.user.delete()
-        messages.success(request, "Student profile deleted.")
+        user = student.user
+        user.is_active = False
+        user.is_deleted = True
+        user.deleted_by_name = f"{request.user.get_full_name() or request.user.username} ({request.user.role.upper()})"
+        from django.utils import timezone
+        user.deleted_at = timezone.now()
+        user.save()
+        messages.success(request, "Student profile soft-deleted successfully.")
     return redirect('hod:manage_students')
+
 
 @hod_required
 def manage_faculty(request):
     dept = request.department
-    faculties = Faculty.objects.filter(department=dept).select_related('user').order_by('employee_id')
+    faculties = Faculty.objects.filter(department=dept, user__is_deleted=False).select_related('user').order_by('employee_id')
     return render(request, 'hod/manage_faculty.html', {'faculties': faculties, 'department': dept})
 
 @hod_required
@@ -626,7 +633,7 @@ def release_results(request):
 @hod_required
 def manage_subjects(request):
     dept = request.department
-    qs = Subject.objects.filter(branch=dept).select_related('year', 'faculty__user').order_by('year', 'semester', 'name')
+    qs = Subject.objects.filter(branch=dept, is_deleted=False).select_related('year', 'faculty__user').order_by('year', 'semester', 'name')
     
     search = request.GET.get('q', '')
     if search:
@@ -695,7 +702,11 @@ def delete_subject(request, pk):
     dept = request.department
     subject = get_object_or_404(Subject, pk=pk, branch=dept)
     if request.method == 'POST':
-        subject.delete()
-        messages.success(request, "Subject deleted successfully.")
+        subject.is_deleted = True
+        subject.deleted_by_name = f"{request.user.get_full_name() or request.user.username} ({request.user.role.upper()})"
+        from django.utils import timezone
+        subject.deleted_at = timezone.now()
+        subject.save()
+        messages.success(request, "Subject soft-deleted successfully.")
     return redirect('hod:manage_subjects')
 
