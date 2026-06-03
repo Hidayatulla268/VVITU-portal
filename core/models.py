@@ -256,7 +256,9 @@ class Result(models.Model):
             mid_contribution = weighted_mid_pct * 0.30  # Max 30 marks
             
             # 3. Sem Rule
-            sem_pct = float(self.marks_obtained) / float(self.max_marks) * 100
+            sem_pct = 0
+            if self.max_marks and float(self.max_marks) > 0 and self.marks_obtained is not None:
+                sem_pct = float(self.marks_obtained) / float(self.max_marks) * 100
             sem_contribution = sem_pct * 0.70  # Max 70 marks
             
             # 4. Total and Grading
@@ -272,7 +274,12 @@ class Result(models.Model):
             return 'S'
             
         # Fallback for supplementary or unknown types
-        pct = float(self.marks_obtained) / float(self.max_marks) * 100
+        pct = 0
+        if self.max_marks and float(self.max_marks) > 0 and self.marks_obtained is not None:
+            pct = float(self.marks_obtained) / float(self.max_marks) * 100
+        else:
+            return 'F'
+            
         if pct < 40: return 'F'
         if pct <= 50: return 'E'
         if pct <= 60: return 'D'
@@ -288,7 +295,7 @@ class Result(models.Model):
 
     @property
     def percentage(self):
-        if self.max_marks:
+        if self.max_marks and float(self.max_marks) > 0 and self.marks_obtained is not None:
             return round(float(self.marks_obtained) / float(self.max_marks) * 100, 2)
         return 0
 
