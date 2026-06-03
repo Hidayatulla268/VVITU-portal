@@ -146,8 +146,8 @@
   {% if selected_student and selected_exam_obj and results_list %}
   <!-- Header Logo & College Name -->
   <div class="text-center mb-4 print-header-logo-section pt-3">
-    <div class="mx-auto mb-2" style="width: 70px; height: 70px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
-      <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT Logo" style="width: 50px; height: 50px; object-fit: contain;"
+    <div class="mx-auto mb-2 results-logo-ring">
+      <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT Logo" class="results-logo"
            onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"/>
     </div>
     <h2 style="font-family: var(--font-display); font-weight: 700; color: var(--accent-bright); margin-bottom: 2px;">
