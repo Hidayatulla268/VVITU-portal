@@ -751,3 +751,144 @@
   font-size: 0.7rem;
   color: #9ca3af;
 }
+
+/* ── PREMIUM LOGIN ANIMATIONS & INTERACTIVE STYLES ────────────────────────── */
+
+/* Lockout error alert shake */
+@keyframes alert-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+.alert.vvit-alert.alert-error {
+  animation: alert-shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.15);
+}
+
+/* Staggered fade in/up for branding elements */
+.left-content > * {
+  animation: fadeInUp 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+.logo-showcase { animation-delay: 0.05s; }
+.college-title { animation-delay: 0.12s; }
+.college-location { animation-delay: 0.18s; }
+.college-tagline { animation-delay: 0.24s; }
+.stats-strip { animation-delay: 0.3s; }
+.accreditation-row { animation-delay: 0.36s; }
+.campus-img-strip { animation-delay: 0.42s; }
+.left-footer-note { animation-delay: 0.48s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Rotating floating background orbs with scaling */
+@keyframes float-rotate-1 {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-25px) rotate(180deg) scale(1.1); }
+  100% { transform: translateY(0) rotate(360deg) scale(1); }
+}
+@keyframes float-rotate-2 {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-20px) rotate(-180deg) scale(0.9); }
+  100% { transform: translateY(0) rotate(-360deg) scale(1); }
+}
+.orb-1 {
+  animation: float-rotate-1 22s linear infinite !important;
+}
+.orb-2 {
+  animation: float-rotate-2 18s linear infinite !important;
+}
+.orb-3 {
+  animation: float-rotate-1 14s linear infinite !important;
+}
+
+/* Enhanced Login Card glow on hover */
+.login-card {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.login-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.65),
+    0 0 50px rgba(220, 38, 38, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.28) !important;
+}
+
+/* Hardened Input Focus Halo and Icon animations */
+.input-wrapper .vvit-input {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+.input-wrapper .vvit-input:focus {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border-color: rgba(220, 38, 38, 0.65) !important;
+  box-shadow: 0 0 15px rgba(220, 38, 38, 0.25) !important;
+}
+
+/* Input Icon bouncing interaction on focus */
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-55%) scale(1.08); }
+}
+.input-wrapper:focus-within .input-icon {
+  animation: icon-bounce 0.6s ease infinite alternate;
+}
+
+/* Button Shimmer dynamic hover scaling */
+.btn-login {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.btn-login:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.45) !important;
+}
+
+/* ── Parallax Background Wrapper ─────────────────────────────────────── */
+.parallax-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transform: translate3d(var(--mouse-x, 0px), var(--mouse-y, 0px), 0);
+  transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  will-change: transform;
+}
+
+/* ── Staggered Entrance Animations for Right Login Card ───────────────── */
+.login-card .mobile-logo-ring,
+.login-card .d-block.d-lg-none.text-center,
+.login-card .form-header,
+.login-card .vvit-alert,
+.login-card .login-form .form-group-float,
+.login-card .login-form .btn-login,
+.login-card .form-footer {
+  animation: fadeInUp 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+.login-card .mobile-logo-ring { animation-delay: 0.05s; }
+.login-card .d-block.d-lg-none.text-center { animation-delay: 0.1s; }
+.login-card .form-header { animation-delay: 0.15s; }
+.login-card .vvit-alert { animation-delay: 0.22s; }
+.login-card .login-form .form-group-float:nth-of-type(1) { animation-delay: 0.25s; }
+.login-card .login-form .form-group-float:nth-of-type(2) { animation-delay: 0.32s; }
+.login-card .login-form .btn-login { animation-delay: 0.39s; }
+.login-card .form-footer { animation-delay: 0.46s; }
+
+/* ── Active Breathing Pulse Glow for Inputs & Buttons ─────────────────── */
+@keyframes input-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.25); }
+  50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.25); }
+}
+.input-wrapper .vvit-input:focus {
+  animation: input-pulse 2s infinite ease-in-out;
+}

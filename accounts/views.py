@@ -39,6 +39,16 @@ def login_view(request):
 
         user = authenticate(request, username=resolved_username, password=password)
         if user is not None:
+            # Clear login attempts on success to reset brute-force counters
+            from django.core.cache import cache
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0].strip()
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+            cache.delete(f"login_attempts_{ip}")
+            cache.delete(f"login_attempts_user_{resolved_username.lower()}")
+
             login(request, user)
             messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
             # Honour ?next= param if present, else go to role dashboard
