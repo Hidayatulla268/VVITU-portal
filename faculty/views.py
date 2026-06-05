@@ -27,7 +27,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.models import Faculty, Student, Achievement
 from core.models import (
-    Section, Timetable, Attendance, Subject, Result, Exam
+    Section, Timetable, Attendance, Subject, Result, Exam, Year
 )
 
 
