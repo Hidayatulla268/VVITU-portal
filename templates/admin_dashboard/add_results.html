@@ -23,20 +23,42 @@
         <h5 class="card-title-custom">1. Select Target Class & Exam</h5>
       </div>
       <form method="get" class="row g-3">
-        <div class="col-md-3">
-          <label class="form-label">Exam</label>
-          <select name="exam" class="vvit-select" required>
-            <option value="">-- Select Exam --</option>
-            {% for ex in exams %}
-            <option value="{{ ex.id }}" {% if exam_id|stringformat:"s" == ex.id|stringformat:"s" %}selected{% endif %}>
-              {{ ex.name }} ({{ ex.branch.code }} Y{{ ex.year.year }} S{{ ex.semester }})
+        <div class="col-md-2">
+          <label class="form-label">Branch</label>
+          <select name="branch" class="vvit-select" required onchange="this.form.submit()">
+            <option value="">-- Select Branch --</option>
+            {% for br in branches %}
+            <option value="{{ br.id }}" {% if branch_id|stringformat:"s" == br.id|stringformat:"s" %}selected{% endif %}>
+              {{ br.code }}
             </option>
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <label class="form-label">Year</label>
+          <select name="year" class="vvit-select" required onchange="this.form.submit()">
+            <option value="">-- Select Year --</option>
+            {% for y in years %}
+            <option value="{{ y.id }}" {% if year_id|stringformat:"s" == y.id|stringformat:"s" %}selected{% endif %}>
+              {{ y.get_year_display }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Exam</label>
+          <select name="exam" class="vvit-select" required {% if not branch_id or not year_id %}disabled{% endif %}>
+            <option value="">-- Select Exam --</option>
+            {% for ex in exams %}
+            <option value="{{ ex.id }}" {% if exam_id|stringformat:"s" == ex.id|stringformat:"s" %}selected{% endif %}>
+              {{ ex.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
           <label class="form-label">Subject</label>
-          <select name="subject" class="vvit-select" required>
+          <select name="subject" class="vvit-select" required {% if not branch_id or not year_id %}disabled{% endif %}>
             <option value="">-- Select Subject --</option>
             {% for sub in subjects %}
             <option value="{{ sub.id }}" {% if subject_id|stringformat:"s" == sub.id|stringformat:"s" %}selected{% endif %}>
@@ -45,19 +67,19 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-2">
           <label class="form-label">Section</label>
-          <select name="section" class="vvit-select" required>
+          <select name="section" class="vvit-select" required {% if not branch_id or not year_id %}disabled{% endif %}>
             <option value="">-- Select Section --</option>
             {% for sec in sections %}
             <option value="{{ sec.id }}" {% if section_id|stringformat:"s" == sec.id|stringformat:"s" %}selected{% endif %}>
-              {{ sec.branch.code }} - Year {{ sec.year.year }} - Sec {{ sec.name }}
+              Sec {{ sec.name }}
             </option>
             {% endfor %}
           </select>
         </div>
         <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn-vvit-primary w-100">
+          <button type="submit" class="btn-vvit-primary w-100" {% if not branch_id or not year_id %}disabled{% endif %}>
             <i class="fas fa-search me-2"></i>Load Students
           </button>
         </div>
@@ -70,6 +92,8 @@
   <div class="col-12">
     <form method="post">
       {% csrf_token %}
+      <input type="hidden" name="branch" value="{{ branch_id }}">
+      <input type="hidden" name="year" value="{{ year_id }}">
       <input type="hidden" name="exam" value="{{ exam_id }}">
       <input type="hidden" name="subject" value="{{ subject_id }}">
       <input type="hidden" name="section" value="{{ section_id }}">

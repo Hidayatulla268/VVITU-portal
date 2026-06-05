@@ -24,23 +24,53 @@
         </a>
       </div>
       
+      <!-- GET Filter Form -->
+      <form method="get" class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Select Branch</label>
+          <select name="branch" class="vvit-select" required onchange="this.form.submit()">
+            <option value="">-- Choose Branch --</option>
+            {% for br in branches %}
+            <option value="{{ br.id }}" {% if branch_id|stringformat:"s" == br.id|stringformat:"s" %}selected{% endif %}>
+              {{ br.code }} — {{ br.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Select Academic Year</label>
+          <select name="year" class="vvit-select" required onchange="this.form.submit()">
+            <option value="">-- Choose Year --</option>
+            {% for y in years %}
+            <option value="{{ y.id }}" {% if year_id|stringformat:"s" == y.id|stringformat:"s" %}selected{% endif %}>
+              {{ y.get_year_display }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+
+      <!-- POST Upload Form -->
       <form method="post" enctype="multipart/form-data" class="mt-3">
         {% csrf_token %}
+        <input type="hidden" name="branch" value="{{ branch_id|default:'' }}">
+        <input type="hidden" name="year" value="{{ year_id|default:'' }}">
         
         <div class="row g-3 mb-4">
           <div class="col-md-6">
             <label class="form-label fw-bold">Select Exam</label>
-            <select name="exam" class="vvit-select" required>
+            <select name="exam" class="vvit-select" required {% if not branch_id or not year_id %}disabled{% endif %}>
               <option value="">-- Choose Exam --</option>
               {% for ex in exams %}
-              <option value="{{ ex.id }}">{{ ex.name }} ({{ ex.branch.code }} Y{{ ex.year.year }} S{{ ex.semester }})</option>
+              <option value="{{ ex.id }}">{{ ex.name }}</option>
               {% endfor %}
             </select>
           </div>
           
           <div class="col-md-6">
             <label class="form-label fw-bold">Select Subject</label>
-            <select name="subject" class="vvit-select" required>
+            <select name="subject" class="vvit-select" required {% if not branch_id or not year_id %}disabled{% endif %}>
               <option value="">-- Choose Subject --</option>
               {% for sub in subjects %}
               <option value="{{ sub.id }}">{{ sub.code }} - {{ sub.name }}</option>
@@ -49,11 +79,11 @@
           </div>
         </div>
 
-        <div class="upload-area p-5 text-center border rounded mb-4" style="background: var(--bg-card); border: 2px dashed var(--primary-accent) !important; cursor: pointer;">
+        <div class="upload-area p-5 text-center border rounded mb-4" style="background: var(--bg-card); border: 2px dashed var(--primary-accent) !important; cursor: pointer; {% if not branch_id or not year_id %}opacity: 0.5; pointer-events: none;{% endif %}">
           <i class="fas fa-file-csv fa-4x mb-3 text-primary"></i>
           <h5>Drag & Drop your CSV file here</h5>
           <p class="text-muted mb-3">or click to browse your files</p>
-          <input type="file" name="csv_file" class="form-control w-75 mx-auto" accept=".csv" required>
+          <input type="file" name="csv_file" class="form-control w-75 mx-auto" accept=".csv" required {% if not branch_id or not year_id %}disabled{% endif %}>
         </div>
 
         <div class="alert alert-info">
@@ -62,7 +92,7 @@
         </div>
         
         <div class="text-end">
-          <button type="submit" class="btn-vvit-success btn-lg">
+          <button type="submit" class="btn-vvit-success btn-lg" {% if not branch_id or not year_id %}disabled{% endif %}>
             <i class="fas fa-cloud-upload-alt me-2"></i>Upload & Process Results
           </button>
         </div>

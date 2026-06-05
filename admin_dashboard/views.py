@@ -737,13 +737,39 @@ def add_results(request):
     Admin directly adds marks for a specific Exam, Subject, and Section.
     Shows a grid of students in the section to input marks_obtained and max_marks.
     """
-    exams    = Exam.objects.select_related('branch', 'year').order_by('-date')
-    subjects = Subject.objects.select_related('branch', 'year').all()
-    sections = Section.objects.select_related('branch', 'year').all()
+    branches = Branch.objects.all()
+    years    = Year.objects.all()
+
+    branch_id = request.GET.get('branch') or request.POST.get('branch')
+    year_id   = request.GET.get('year') or request.POST.get('year')
 
     exam_id    = request.GET.get('exam') or request.POST.get('exam')
     subject_id = request.GET.get('subject') or request.POST.get('subject')
     section_id = request.GET.get('section') or request.POST.get('section')
+
+    # Validate cross-parameters to prevent mismatch errors
+    if branch_id and year_id:
+        if exam_id and not Exam.objects.filter(id=exam_id, branch_id=branch_id, year_id=year_id).exists():
+            exam_id = None
+        if subject_id and not Subject.objects.filter(id=subject_id, branch_id=branch_id, year_id=year_id, is_deleted=False).exists():
+            subject_id = None
+        if section_id and not Section.objects.filter(id=section_id, branch_id=branch_id, year_id=year_id).exists():
+            section_id = None
+    else:
+        # If branch or year are not both selected, clear subsequent selections
+        exam_id = None
+        subject_id = None
+        section_id = None
+
+    # Filter querysets based on branch and year
+    if branch_id and year_id:
+        exams    = Exam.objects.filter(branch_id=branch_id, year_id=year_id).order_by('-date')
+        subjects = Subject.objects.filter(branch_id=branch_id, year_id=year_id, is_deleted=False).select_related('branch', 'year')
+        sections = Section.objects.filter(branch_id=branch_id, year_id=year_id).select_related('branch', 'year')
+    else:
+        exams    = Exam.objects.none()
+        subjects = Subject.objects.none()
+        sections = Section.objects.none()
 
     students = []
     if exam_id and subject_id and section_id:
@@ -794,9 +820,13 @@ def add_results(request):
                     pass
         
         messages.success(request, f"Successfully saved results for {saved_count} students.")
-        return redirect(f"{request.path}?exam={exam_id}&subject={subject_id}&section={section_id}")
+        return redirect(f"{request.path}?branch={branch_id}&year={year_id}&exam={exam_id}&subject={subject_id}&section={section_id}")
 
     context = {
+        'branches': branches,
+        'years': years,
+        'branch_id': branch_id,
+        'year_id': year_id,
         'exams': exams,
         'subjects': subjects,
         'sections': sections,
@@ -821,8 +851,19 @@ def bulk_upload_results(request):
     import csv
     import io
     
-    exams = Exam.objects.select_related('branch', 'year').order_by('-date')
-    subjects = Subject.objects.select_related('branch', 'year').all()
+    branches = Branch.objects.all()
+    years    = Year.objects.all()
+
+    branch_id = request.GET.get('branch') or request.POST.get('branch')
+    year_id   = request.GET.get('year') or request.POST.get('year')
+
+    # Filter querysets based on branch and year
+    if branch_id and year_id:
+        exams = Exam.objects.filter(branch_id=branch_id, year_id=year_id).order_by('-date')
+        subjects = Subject.objects.filter(branch_id=branch_id, year_id=year_id, is_deleted=False).select_related('branch', 'year')
+    else:
+        exams = Exam.objects.none()
+        subjects = Subject.objects.none()
     
     if request.method == 'POST':
         exam_id = request.POST.get('exam')
@@ -900,9 +941,13 @@ def bulk_upload_results(request):
         except Exception as e:
             messages.error(request, f"Error processing file: {e}")
             
-        return redirect('admin_dashboard:bulk_upload_results')
+        return redirect(f"/admin-dashboard/bulk-upload-results/?branch={branch_id}&year={year_id}")
 
     context = {
+        'branches': branches,
+        'years': years,
+        'branch_id': branch_id,
+        'year_id': year_id,
         'exams': exams,
         'subjects': subjects,
     }

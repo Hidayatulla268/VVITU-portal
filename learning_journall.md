@@ -51,6 +51,10 @@ Adding features to a live college ERP platform isn't just about expanding functi
 *   **What it is:** Micro-animations on the login page including card hover lifts, dynamic background orb drifts, sequential loading delays, horizontal error shakes, and input focus bouncing.
 *   **Why it is useful:** Wows users during authentication, directing attention and reinforcing a premium, polished user experience.
 
+### L. Dynamic Cascading Dropdowns for Results Uploads
+*   **What it is:** Filtering the Subject, Exam, and Section dropdown selectors by Branch and Academic Year on all student results addition and marks uploading views.
+*   **Why it is useful:** Prevents administrative human errors. In large academic databases, operators and HODs could easily select mismatched combinations (e.g. uploading CSE marks to an ECE exam slot), causing silent data corruption. Cascading selectors guarantee that only valid, related subjects/exams are shown.
+
 ---
 
 ## 2. Directory Structure & File Roles
@@ -374,4 +378,24 @@ document.addEventListener('mousemove', function(e) {
     container.style.setProperty('--mouse-y', `${y}px`);
   }
 });
+```
+
+### J. Cascading Dropdown Filtering Implementation
+In `admin_dashboard/views.py` and `faculty/views.py`, the dropdown querysets are dynamically filtered when branch and year query parameters are selected, automatically clearing invalid selections:
+```python
+# Extract branch and year selections
+branch_id = request.GET.get('branch') or request.POST.get('branch')
+year_id = request.GET.get('year') or request.POST.get('year')
+
+# Filter subject and exam choices accordingly
+if branch_id and year_id:
+    exams = Exam.objects.filter(branch_id=branch_id, year_id=year_id).order_by('-date')
+    subjects = Subject.objects.filter(branch_id=branch_id, year_id=year_id, is_deleted=False)
+else:
+    exams = Exam.objects.none()
+    subjects = Subject.objects.none()
+```
+And similarly in templates, the dropdowns are conditionally disabled until both filters are set:
+```html
+<select name="subject" class="vvit-select" required {% if not branch_id or not year_id %}disabled{% endif %}>
 ```

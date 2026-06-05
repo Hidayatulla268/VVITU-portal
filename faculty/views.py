@@ -680,20 +680,40 @@ def upload_marks(request):
     from django.db import transaction
     
     faculty = request.faculty
+    years = Year.objects.all()
+    year_id = request.GET.get('year') or request.POST.get('year')
+
     if request.user.role == 'hod':
         subjects = Subject.objects.filter(branch=faculty.department, is_deleted=False).select_related('branch', 'year')
     else:
         subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
-    
-    # Filter exams (exclude Semester Final exams for non-admins)
-    branch_ids = subjects.values_list('branch_id', flat=True).distinct()
-    year_ids = subjects.values_list('year_id', flat=True).distinct()
-    exams = Exam.objects.filter(branch_id__in=branch_ids, year_id__in=year_ids).exclude(exam_type='final').order_by('-date')
-    
+
     selected_subject_id = request.GET.get('subject', '')
     selected_exam_id = request.GET.get('exam', '')
     selected_section_id = request.GET.get('section', '')
-    
+
+    # Validate parameters based on selected year
+    if year_id:
+        if selected_subject_id and not subjects.filter(id=selected_subject_id, year_id=year_id).exists():
+            selected_subject_id = ''
+        if selected_exam_id and not Exam.objects.filter(id=selected_exam_id, year_id=year_id).exists():
+            selected_exam_id = ''
+        if selected_section_id and not Section.objects.filter(id=selected_section_id, year_id=year_id).exists():
+            selected_section_id = ''
+    else:
+        selected_subject_id = ''
+        selected_exam_id = ''
+        selected_section_id = ''
+
+    # Apply year filtering
+    if year_id:
+        subjects = subjects.filter(year_id=year_id)
+        branch_ids = subjects.values_list('branch_id', flat=True).distinct()
+        exams = Exam.objects.filter(branch_id__in=branch_ids, year_id=year_id).exclude(exam_type='final').order_by('-date')
+    else:
+        subjects = Subject.objects.none()
+        exams = Exam.objects.none()
+
     selected_subject = None
     selected_exam = None
     selected_section = None
@@ -868,9 +888,11 @@ def upload_marks(request):
             except Exception:
                 pass
 
-        return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+        return redirect(f"{request.path}?year={year_id}&subject={subj_id}&exam={ex_id}&section={sec_id}")
         
     context = {
+        'years':               years,
+        'year_id':             year_id,
         'subjects':            subjects,
         'exams':               exams,
         'selected_subject_id': selected_subject_id,

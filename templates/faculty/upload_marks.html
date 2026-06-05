@@ -17,9 +17,29 @@
 <!-- Selection Form -->
 <div class="glass-card mb-4">
   <form method="get" class="row g-3 align-items-end">
-    <div class="col-md-4">
+    {% if request.user.role == 'hod' %}
+    <div class="col-md-3">
+      <label class="form-label text-muted">Branch</label>
+      <input type="text" class="vvit-input" value="{{ faculty.department.code }} — {{ faculty.department.name }}" disabled>
+      <input type="hidden" name="branch" value="{{ faculty.department.id }}">
+    </div>
+    {% endif %}
+
+    <div class="{% if request.user.role == 'hod' %}col-md-2{% else %}col-md-3{% endif %}">
+      <label class="form-label text-muted">Academic Year</label>
+      <select name="year" class="vvit-select" required onchange="this.form.submit()">
+        <option value="">— Select Year —</option>
+        {% for y in years %}
+        <option value="{{ y.id }}" {% if year_id|stringformat:"s" == y.id|stringformat:"s" %}selected{% endif %}>
+          {{ y.get_year_display }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="{% if request.user.role == 'hod' %}col-md-3{% else %}col-md-3{% endif %}">
       <label class="form-label text-muted">Subject</label>
-      <select name="subject" class="vvit-select" onchange="this.form.submit()">
+      <select name="subject" class="vvit-select" {% if not year_id %}disabled{% endif %} onchange="this.form.submit()">
         <option value="">— Select Subject —</option>
         {% for s in subjects %}
         <option value="{{ s.id }}" {% if selected_subject_id == s.id|stringformat:"s" %}selected{% endif %}>
@@ -29,19 +49,19 @@
       </select>
     </div>
 
-    <div class="col-md-4">
+    <div class="{% if request.user.role == 'hod' %}col-md-2{% else %}col-md-3{% endif %}">
       <label class="form-label text-muted">Examination</label>
       <select name="exam" class="vvit-select" {% if not selected_subject_id %}disabled{% endif %} onchange="this.form.submit()">
         <option value="">— Select Exam —</option>
         {% for ex in exams %}
         <option value="{{ ex.id }}" {% if selected_exam_id == ex.id|stringformat:"s" %}selected{% endif %}>
-          {{ ex.name }} — {{ ex.branch.code }} (Sem {{ ex.semester }})
+          {{ ex.name }}
         </option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="col-md-4">
+    <div class="{% if request.user.role == 'hod' %}col-md-2{% else %}col-md-3{% endif %}">
       <label class="form-label text-muted">Section (Class)</label>
       <select name="section" class="vvit-select" {% if not selected_exam_id %}disabled{% endif %} onchange="this.form.submit()">
         <option value="">— Select Section —</option>
@@ -74,6 +94,7 @@
 
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year_id }}">
         <input type="hidden" name="subject" value="{{ selected_subject.id }}">
         <input type="hidden" name="exam" value="{{ selected_exam.id }}">
         <input type="hidden" name="section" value="{{ selected_section.id }}">
@@ -96,6 +117,7 @@
     <div class="glass-card">
       <form method="post">
         {% csrf_token %}
+        <input type="hidden" name="year" value="{{ year_id }}">
         <input type="hidden" name="subject" value="{{ selected_subject.id }}">
         <input type="hidden" name="exam" value="{{ selected_exam.id }}">
         <input type="hidden" name="section" value="{{ selected_section.id }}">
