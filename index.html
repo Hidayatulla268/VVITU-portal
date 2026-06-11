@@ -797,6 +797,180 @@
   }
 
   /* ═══════════════════════════════════════════
+     ARCHITECTURE SECTION
+  ═══════════════════════════════════════════ */
+  #architecture { background: rgba(0,0,0,0.3); }
+
+  /* Layer rows */
+  .arch-diagram {
+    margin-top: 3.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  /* Animated connector between rows */
+  .arch-connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 52px;
+    position: relative;
+    z-index: 2;
+  }
+  .arch-connector svg {
+    overflow: visible;
+  }
+  .flow-line {
+    stroke: url(#flowGrad);
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 8 5;
+    animation: dash-flow 1.8s linear infinite;
+  }
+  .flow-arrow {
+    fill: var(--accent-b);
+    filter: drop-shadow(0 0 4px rgba(239,68,68,0.7));
+  }
+  @keyframes dash-flow {
+    to { stroke-dashoffset: -26; }
+  }
+
+  /* Layer label */
+  .arch-layer-label {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 0.9rem;
+  }
+
+  /* Row of nodes */
+  .arch-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Individual arch node */
+  .arch-node {
+    flex: 0 0 auto;
+    min-width: 130px;
+    max-width: 180px;
+    background: rgba(8,8,18,0.70);
+    backdrop-filter: blur(18px);
+    border-radius: 14px;
+    padding: 1.1rem 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.07);
+    transition: transform 0.35s cubic-bezier(0.22,1,0.36,1),
+                box-shadow 0.35s ease;
+    cursor: default;
+  }
+  /* top accent line */
+  .arch-node::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--node-top, linear-gradient(90deg, var(--accent), transparent));
+    border-radius: 14px 14px 0 0;
+  }
+  /* subtle inner sheen */
+  .arch-node::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .arch-node:hover {
+    transform: translateY(-5px) perspective(600px) rotateX(4deg);
+    box-shadow:
+      0 16px 40px rgba(0,0,0,0.5),
+      0 0 20px var(--node-glow, rgba(220,38,38,0.15));
+    border-color: var(--node-border, rgba(220,38,38,0.3));
+  }
+  .arch-node-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--node-clr, #ef4444);
+    filter: drop-shadow(0 0 6px var(--node-clr, rgba(239,68,68,0.5)));
+    display: block;
+  }
+  .arch-node-name {
+    font-family: var(--font-d);
+    font-size: 0.9rem; font-weight: 700;
+    color: var(--text); margin-bottom: 3px;
+  }
+  .arch-node-tag {
+    font-size: 0.65rem; color: var(--faint);
+    letter-spacing: 0.06em;
+  }
+
+  /* Wide single-node hero layer */
+  .arch-node-wide {
+    min-width: 260px; max-width: 380px;
+    padding: 1.2rem 2rem;
+  }
+
+  /* Django apps row — special wider grid */
+  .arch-apps-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.8rem;
+    max-width: 880px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .arch-apps-row .arch-node {
+    min-width: unset; max-width: unset;
+  }
+
+  /* Middleware / infra layer (horizontal pill) */
+  .arch-middleware-row {
+    display: flex; gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .arch-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 22px; border-radius: 40px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.09);
+    font-size: 0.82rem; font-weight: 600;
+    font-family: var(--font-d); letter-spacing: 0.04em;
+    color: var(--text);
+    transition: all 0.3s ease;
+    position: relative; overflow: hidden;
+  }
+  .arch-pill::before {
+    content: '';
+    position: absolute; inset: -1px; border-radius: inherit;
+    background: linear-gradient(135deg,
+      rgba(220,38,38,0.35), rgba(139,92,246,0.25), rgba(59,130,246,0.2), rgba(220,38,38,0.3));
+    background-size: 300% 300%;
+    animation: iris 8s ease-in-out infinite;
+    z-index: -1;
+  }
+  .arch-pill:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 14px var(--pill-glow, rgba(220,38,38,0.15));
+  }
+  .arch-pill i { color: var(--pill-clr, var(--accent-b)); font-size: 0.9rem; }
+
+  /* Data layer — bottom nodes */
+  .arch-data-row {
+    display: flex; gap: 1rem;
+    justify-content: center; flex-wrap: wrap;
+    max-width: 900px; margin: 0 auto; width: 100%;
+  }
+
+  /* ═══════════════════════════════════════════
      RESPONSIVE
   ═══════════════════════════════════════════ */
   @media (max-width: 768px) {
@@ -806,6 +980,8 @@
     .hero-stats { padding: 14px 20px; }
     .stat-val { font-size: 1.2rem; }
     .hero h1 { font-size: 2.4rem; }
+    .arch-node-wide { min-width: 200px; }
+    .arch-apps-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
   }
   </style>
 </head>
@@ -835,6 +1011,7 @@
     <a href="#stack" class="nav-link"><i class="fas fa-layer-group"></i> Stack</a>
     <a href="#roles" class="nav-link"><i class="fas fa-users"></i> Roles</a>
     <a href="#credentials" class="nav-link"><i class="fas fa-key"></i> Credentials</a>
+    <a href="#architecture" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
     <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="nav-link">
       <i class="fab fa-github"></i> GitHub
     </a>
@@ -981,6 +1158,241 @@
         <p class="feature-desc">Branch-scoped operators add/edit students, upload marks, and edit attendance within a strict 1-day editing window.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section id="architecture">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><i class="fas fa-sitemap"></i> System Architecture</div>
+      <h2 class="section-title">How Everything Fits Together</h2>
+      <p class="section-desc">A layered, production-grade Django architecture — from the browser through middleware, role-scoped apps, ORM, AI engine, and cloud storage.</p>
+    </div>
+
+    <div class="arch-diagram">
+
+      <!-- SVG gradient defs (hidden) -->
+      <svg width="0" height="0" style="position:absolute">
+        <defs>
+          <linearGradient id="flowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ef4444" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.7"/>
+          </linearGradient>
+          <linearGradient id="flowGradH" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.7"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- LAYER 1: Browser / Client -->
+      <div class="arch-layer-label reveal">Client Layer</div>
+      <div class="arch-row reveal">
+        <div class="arch-node arch-node-wide"
+             style="--node-top:linear-gradient(90deg,#60a5fa,transparent);
+                    --node-clr:#60a5fa;--node-glow:rgba(96,165,250,0.2);
+                    --node-border:rgba(96,165,250,0.3);">
+          <i class="fas fa-globe arch-node-icon"></i>
+          <div class="arch-node-name">Browser / Client</div>
+          <div class="arch-node-tag">Bootstrap 5 · Chart.js 4 · Font Awesome 6 · Custom CSS</div>
+        </div>
+      </div>
+
+      <!-- Connector 1 -->
+      <div class="arch-connector reveal">
+        <svg width="40" height="52" viewBox="0 0 40 52">
+          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
+          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
+        </svg>
+      </div>
+
+      <!-- LAYER 2: Web Server + Middleware -->
+      <div class="arch-layer-label reveal">Server & Middleware Layer</div>
+      <div class="arch-middleware-row reveal">
+        <div class="arch-pill" style="--pill-clr:#fbbf24;--pill-glow:rgba(251,191,36,0.2);">
+          <i class="fas fa-server"></i> Gunicorn WSGI
+        </div>
+        <div class="arch-pill" style="--pill-clr:#ef4444;--pill-glow:rgba(239,68,68,0.2);">
+          <i class="fas fa-shield-alt"></i> Rate Limiter (5/min per IP)
+        </div>
+        <div class="arch-pill" style="--pill-clr:#a78bfa;--pill-glow:rgba(167,139,250,0.2);">
+          <i class="fas fa-lock"></i> RBAC Middleware
+        </div>
+        <div class="arch-pill" style="--pill-clr:#34d399;--pill-glow:rgba(52,211,153,0.2);">
+          <i class="fas fa-cookie-bite"></i> HSTS · SameSite · HttpOnly
+        </div>
+      </div>
+
+      <!-- Connector 2 -->
+      <div class="arch-connector reveal">
+        <svg width="40" height="52" viewBox="0 0 40 52">
+          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
+          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
+        </svg>
+      </div>
+
+      <!-- LAYER 3: Django Application Layer -->
+      <div class="arch-layer-label reveal">Django Application Layer</div>
+      <div class="arch-apps-row reveal">
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#ef4444,transparent);
+                    --node-clr:#ef4444;--node-glow:rgba(239,68,68,0.18);
+                    --node-border:rgba(239,68,68,0.3);">
+          <i class="fas fa-user-circle arch-node-icon"></i>
+          <div class="arch-node-name">accounts</div>
+          <div class="arch-node-tag">Login · Profile · Auth</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#fbbf24,transparent);
+                    --node-clr:#fbbf24;--node-glow:rgba(251,191,36,0.18);
+                    --node-border:rgba(251,191,36,0.3);">
+          <i class="fas fa-user-graduate arch-node-icon"></i>
+          <div class="arch-node-name">student</div>
+          <div class="arch-node-tag">Dashboard · Results · Calendar</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#34d399,transparent);
+                    --node-clr:#34d399;--node-glow:rgba(52,211,153,0.18);
+                    --node-border:rgba(52,211,153,0.3);">
+          <i class="fas fa-chalkboard-teacher arch-node-icon"></i>
+          <div class="arch-node-name">faculty</div>
+          <div class="arch-node-tag">Attendance · Marks · Reports</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#a78bfa,transparent);
+                    --node-clr:#a78bfa;--node-glow:rgba(167,139,250,0.18);
+                    --node-border:rgba(167,139,250,0.3);">
+          <i class="fas fa-user-tie arch-node-icon"></i>
+          <div class="arch-node-name">hod</div>
+          <div class="arch-node-tag">Branch · Timetable · Approvals</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#60a5fa,transparent);
+                    --node-clr:#60a5fa;--node-glow:rgba(96,165,250,0.18);
+                    --node-border:rgba(96,165,250,0.3);">
+          <i class="fas fa-keyboard arch-node-icon"></i>
+          <div class="arch-node-name">deo</div>
+          <div class="arch-node-tag">Data Entry · Attendance</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#f97316,transparent);
+                    --node-clr:#f97316;--node-glow:rgba(249,115,22,0.18);
+                    --node-border:rgba(249,115,22,0.3);">
+          <i class="fas fa-tachometer-alt arch-node-icon"></i>
+          <div class="arch-node-name">admin</div>
+          <div class="arch-node-tag">CRUD · Global Access</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#22d3ee,transparent);
+                    --node-clr:#22d3ee;--node-glow:rgba(34,211,238,0.18);
+                    --node-border:rgba(34,211,238,0.3);">
+          <i class="fas fa-bell arch-node-icon"></i>
+          <div class="arch-node-name">core</div>
+          <div class="arch-node-tag">Notifications · Models · Tasks</div>
+        </div>
+      </div>
+
+      <!-- Connector 3 -->
+      <div class="arch-connector reveal">
+        <svg width="40" height="52" viewBox="0 0 40 52">
+          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
+          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
+        </svg>
+      </div>
+
+      <!-- LAYER 4: ORM / Models -->
+      <div class="arch-layer-label reveal">ORM & Models Layer</div>
+      <div class="arch-row reveal">
+        <div class="arch-node arch-node-wide"
+             style="--node-top:linear-gradient(90deg,#8b5cf6,#3b82f6);
+                    --node-clr:#a78bfa;--node-glow:rgba(139,92,246,0.2);
+                    --node-border:rgba(139,92,246,0.3);">
+          <i class="fas fa-database arch-node-icon"></i>
+          <div class="arch-node-name">Django ORM</div>
+          <div class="arch-node-tag">User · Student · Faculty · Branch · Section · Subject · Timetable · Notification · Achievement</div>
+        </div>
+      </div>
+
+      <!-- Connector 4 -->
+      <div class="arch-connector reveal">
+        <svg width="40" height="52" viewBox="0 0 40 52">
+          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
+          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
+        </svg>
+      </div>
+
+      <!-- LAYER 5: Data / AI / Exports -->
+      <div class="arch-layer-label reveal">Data, AI & Export Layer</div>
+      <div class="arch-data-row reveal">
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#336791,transparent);
+                    --node-clr:#60a5fa;--node-glow:rgba(96,165,250,0.2);
+                    --node-border:rgba(96,165,250,0.3);">
+          <i class="fas fa-database arch-node-icon"></i>
+          <div class="arch-node-name">PostgreSQL</div>
+          <div class="arch-node-tag">Production DB</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#dc382d,transparent);
+                    --node-clr:#f87171;--node-glow:rgba(248,113,113,0.2);
+                    --node-border:rgba(248,113,113,0.3);">
+          <i class="fas fa-bolt arch-node-icon"></i>
+          <div class="arch-node-name">Redis</div>
+          <div class="arch-node-tag">Cache Layer</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#f97316,transparent);
+                    --node-clr:#fb923c;--node-glow:rgba(251,146,60,0.2);
+                    --node-border:rgba(251,146,60,0.3);">
+          <i class="fas fa-robot arch-node-icon"></i>
+          <div class="arch-node-name">scikit-learn</div>
+          <div class="arch-node-tag">AI Predictor</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#10b981,transparent);
+                    --node-clr:#34d399;--node-glow:rgba(52,211,153,0.2);
+                    --node-border:rgba(52,211,153,0.3);">
+          <i class="fas fa-file-excel arch-node-icon"></i>
+          <div class="arch-node-name">openpyxl</div>
+          <div class="arch-node-tag">Excel Export</div>
+        </div>
+        <div class="arch-node"
+             style="--node-top:linear-gradient(90deg,#ef4444,transparent);
+                    --node-clr:#f87171;--node-glow:rgba(239,68,68,0.2);
+                    --node-border:rgba(239,68,68,0.3);">
+          <i class="fas fa-file-pdf arch-node-icon"></i>
+          <div class="arch-node-name">ReportLab</div>
+          <div class="arch-node-tag">PDF Export</div>
+        </div>
+      </div>
+
+      <!-- Connector 5 -->
+      <div class="arch-connector reveal">
+        <svg width="40" height="52" viewBox="0 0 40 52">
+          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
+          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
+        </svg>
+      </div>
+
+      <!-- LAYER 6: Cloud / Deployment -->
+      <div class="arch-layer-label reveal">Deployment & Cloud Layer</div>
+      <div class="arch-middleware-row reveal">
+        <div class="arch-pill" style="--pill-clr:#34d399;--pill-glow:rgba(52,211,153,0.2);">
+          <i class="fab fa-github"></i> GitHub Source
+        </div>
+        <div class="arch-pill" style="--pill-clr:#a78bfa;--pill-glow:rgba(167,139,250,0.2);">
+          <i class="fas fa-cloud-upload-alt"></i> Render Blueprint
+        </div>
+        <div class="arch-pill" style="--pill-clr:#fbbf24;--pill-glow:rgba(251,191,36,0.2);">
+          <i class="fas fa-cogs"></i> Auto-Migrate &amp; Seed
+        </div>
+        <div class="arch-pill" style="--pill-clr:#60a5fa;--pill-glow:rgba(96,165,250,0.2);">
+          <i class="fas fa-network-wired"></i> PostgreSQL + Redis Managed
+        </div>
+      </div>
+
+    </div><!-- /arch-diagram -->
   </div>
 </section>
 
