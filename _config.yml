@@ -1,0 +1,4 @@
+# GitHub Pages configuration
+# Serve the custom index.html instead of processing README with Jekyll
+theme: null
+plugins: []

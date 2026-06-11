@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VVITU Portal — Complete ERP System</title>
+  <meta name="description" content="A production-grade college ERP built with Django — glassmorphism UI, role-based access control, AI attendance prediction, and scalability for 300,000+ students."/>
+  <meta property="og:title" content="VVITU Portal — Complete ERP System"/>
+  <meta property="og:description" content="Production-grade Django ERP for Vasireddy Venkatadri International Technological University"/>
+  <meta property="og:type" content="website"/>
+  <meta name="theme-color" content="#dc2626"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+  /* ═══════════════════════════════════════════
+     TOKENS
+  ═══════════════════════════════════════════ */
+  :root {
+    --bg:          #03030a;
+    --accent:      #dc2626;
+    --accent-b:    #ef4444;
+    --gold:        #fbbf24;
+    --violet:      #8b5cf6;
+    --blue:        #3b82f6;
+    --text:        #f0f0f5;
+    --muted:       #9ca3af;
+    --faint:       #6b7280;
+    --glass:       rgba(10,10,22,0.55);
+    --border:      rgba(255,255,255,0.09);
+    --blur:        saturate(200%) blur(22px);
+    --r-sm:        10px;
+    --r-md:        16px;
+    --r-lg:        22px;
+    --r-xl:        30px;
+    --font-d:      'Rajdhani', sans-serif;
+    --font-b:      'Inter', sans-serif;
+    --font-m:      'JetBrains Mono', monospace;
+  }
+
+  /* ═══════════════════════════════════════════
+     RESET & BASE
+  ═══════════════════════════════════════════ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-b);
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  a { color: var(--accent-b); text-decoration: none; }
+  a:hover { color: var(--text); }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.5); border-radius: 3px; }
+
+  /* ═══════════════════════════════════════════
+     CANVAS PARTICLE FIELD
+  ═══════════════════════════════════════════ */
+  #canvas {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.55;
+  }
+
+  /* ═══════════════════════════════════════════
+     BACKGROUND LAYERS
+  ═══════════════════════════════════════════ */
+  .bg-mesh {
+    position: fixed; inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 30%, rgba(220,38,38,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 70%, rgba(139,92,246,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 50% 10%, rgba(59,130,246,0.07) 0%, transparent 60%);
+    animation: mesh-drift 20s ease-in-out infinite alternate;
+  }
+  @keyframes mesh-drift {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 5% 5%; }
+  }
+
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(220,38,38,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(220,38,38,0.035) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: grid-scroll 30s linear infinite;
+  }
+  @keyframes grid-scroll {
+    to { background-position: 50px 50px; }
+  }
+
+  /* Film grain */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 9000;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    opacity: 0.025;
+    animation: grain 0.2s steps(1) infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes grain {
+    0%  { transform: translate(0,0); }
+    20% { transform: translate(-3%,-2%); }
+    40% { transform: translate(2%,3%); }
+    60% { transform: translate(-2%,1%); }
+    80% { transform: translate(3%,-3%); }
+  }
+
+  /* Cinematic vignette */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 8990;
+    pointer-events: none;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%,
+      transparent 40%, rgba(0,0,0,0.32) 70%, rgba(0,0,0,0.72) 100%);
+    mix-blend-mode: multiply;
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: fixed; border-radius: 50%;
+    pointer-events: none; z-index: 0;
+    filter: blur(1px);
+  }
+  .orb-1 {
+    width: 500px; height: 500px; top: -100px; left: -100px;
+    background: radial-gradient(circle, rgba(220,38,38,0.10) 0%, transparent 70%);
+    animation: orb-drift 18s ease-in-out infinite alternate;
+  }
+  .orb-2 {
+    width: 350px; height: 350px; bottom: 0; right: -80px;
+    background: radial-gradient(circle, rgba(139,92,246,0.09) 0%, transparent 70%);
+    animation: orb-drift 14s ease-in-out infinite alternate-reverse;
+  }
+  .orb-3 {
+    width: 280px; height: 280px; top: 40%; left: 55%;
+    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+    animation: orb-drift 22s ease-in-out infinite alternate;
+  }
+  @keyframes orb-drift {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(30px, 40px) scale(1.12); }
+    100% { transform: translate(-20px, 20px) scale(0.92); }
+  }
+
+  /* ═══════════════════════════════════════════
+     NAV
+  ═══════════════════════════════════════════ */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    height: 66px;
+    background: rgba(3,3,10,0.78);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 4px 24px rgba(0,0,0,0.6);
+    display: flex; align-items: center;
+    padding: 0 2rem;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  /* Volumetric light sweep */
+  .nav::before {
+    content: '';
+    position: absolute; top: 0; left: -60%; right: -60%; height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%, rgba(220,38,38,0.7) 35%,
+      rgba(251,191,36,0.5) 50%, rgba(139,92,246,0.6) 65%, transparent 100%);
+    animation: nav-sweep 6s ease-in-out infinite;
+  }
+  @keyframes nav-sweep {
+    0%   { opacity:0; transform: translateX(-40%); }
+    30%  { opacity:1; }
+    70%  { opacity:1; }
+    100% { opacity:0; transform: translateX(40%); }
+  }
+
+  .nav-brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .nav-logo-ring {
+    width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid rgba(220,38,38,0.55);
+    background: rgba(220,38,38,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-d); font-weight: 700;
+    font-size: 1.05rem; color: var(--accent-b);
+    animation: logo-pulse 3s ease-in-out infinite;
+    box-shadow: 0 0 16px rgba(220,38,38,0.3), 0 0 32px rgba(220,38,38,0.1);
+  }
+  @keyframes logo-pulse {
+    0%,100% { box-shadow: 0 0 12px rgba(220,38,38,0.3), 0 0 24px rgba(220,38,38,0.1); }
+    50%      { box-shadow: 0 0 22px rgba(220,38,38,0.55), 0 0 44px rgba(220,38,38,0.2); }
+  }
+  .nav-title {
+    display: flex; flex-direction: column; line-height: 1.1;
+  }
+  .nav-title-main {
+    font-family: var(--font-d); font-weight: 700;
+    font-size: 1.3rem; color: var(--accent-b); letter-spacing: 0.06em;
+  }
+  .nav-title-sub {
+    font-size: 0.65rem; color: var(--muted);
+    letter-spacing: 0.12em; text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: var(--r-sm);
+    font-size: 0.82rem; font-weight: 500;
+    color: var(--muted); border: 1px solid transparent;
+    transition: all 0.25s ease;
+  }
+  .nav-link:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .nav-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 20px; border-radius: var(--r-sm);
+    font-size: 0.85rem; font-weight: 600;
+    font-family: var(--font-d); letter-spacing: 0.05em;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(220,38,38,0.4), 0 0 0 1px rgba(255,255,255,0.07);
+    transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+    position: relative; overflow: hidden;
+    cursor: pointer;
+  }
+  .nav-cta::after {
+    content: '';
+    position: absolute; top: -50%; left: -75%;
+    width: 50%; height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+  }
+  .nav-cta:hover::after { left: 125%; }
+  .nav-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(220,38,38,0.55), 0 0 40px rgba(220,38,38,0.2);
+    color: #fff;
+  }
+
+  /* ═══════════════════════════════════════════
+     HERO
+  ═══════════════════════════════════════════ */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 7rem 2rem 5rem;
+    position: relative; z-index: 1;
+  }
+  .hero-inner { max-width: 860px; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 18px; border-radius: 30px;
+    background: rgba(220,38,38,0.12);
+    border: 1px solid rgba(220,38,38,0.28);
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--accent-b);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: badge-float 4s ease-in-out infinite;
+  }
+  @keyframes badge-float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+  .badge-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-b);
+    box-shadow: 0 0 8px var(--accent-b);
+    animation: dot-blink 1.8s ease-in-out infinite;
+  }
+  @keyframes dot-blink {
+    0%,100% { opacity:1; }
+    50%      { opacity:0.3; }
+  }
+
+  .hero h1 {
+    font-family: var(--font-d); font-weight: 700;
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg,
+      #ffffff 0%, #f0f0f5 30%,
+      #ef4444 55%, #fbbf24 75%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% 200%;
+    animation: hero-grad 8s ease-in-out infinite alternate;
+  }
+  @keyframes hero-grad {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+  }
+
+  .hero-sub {
+    font-size: 1.05rem; color: var(--muted);
+    max-width: 660px; margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+  .hero-sub strong { color: var(--text); }
+
+  .hero-actions {
+    display: flex; gap: 14px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 3.5rem;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 13px 28px; border-radius: var(--r-md);
+    font-family: var(--font-d); font-size: 1rem; font-weight: 700;
+    letter-spacing: 0.06em;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    color: #fff; border: none;
+    box-shadow: 0 6px 24px rgba(220,38,38,0.45), 0 0 0 1px rgba(255,255,255,0.07);
+    transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+    position: relative; overflow: hidden;
+    cursor: pointer;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute; top: -50%; left: -75%;
+    width: 50%; height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+  }
+  .btn-primary:hover::after { left: 125%; }
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(220,38,38,0.55), 0 0 50px rgba(220,38,38,0.2);
+    color: #fff;
+  }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 13px 28px; border-radius: var(--r-md);
+    font-family: var(--font-d); font-size: 1rem; font-weight: 700;
+    letter-spacing: 0.06em;
+    background: transparent; color: var(--text);
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .btn-outline:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(220,38,38,0.4);
+    color: var(--accent-b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220,38,38,0.12);
+  }
+
+  /* Stats bar */
+  .hero-stats {
+    display: flex; justify-content: center; gap: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--r-xl);
+    padding: 18px 32px;
+    max-width: 580px; margin: 0 auto;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4);
+    animation: float3d 6s ease-in-out infinite;
+  }
+  @keyframes float3d {
+    0%,100% { transform: translateY(0) rotateX(0deg); }
+    50%      { transform: translateY(-6px) rotateX(1deg); }
+  }
+  .stat-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
+  }
+  .stat-val {
+    font-family: var(--font-d); font-size: 1.5rem; font-weight: 700;
+    color: var(--accent-b);
+    text-shadow: 0 0 14px rgba(239,68,68,0.55);
+    animation: num-glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes num-glow {
+    0%   { text-shadow: 0 0 8px rgba(239,68,68,0.45); }
+    100% { text-shadow: 0 0 22px rgba(239,68,68,0.9), 0 0 40px rgba(239,68,68,0.35); }
+  }
+  .stat-lbl {
+    font-size: 0.65rem; color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .stat-div {
+    width: 1px; height: 38px;
+    background: rgba(255,255,255,0.08);
+    align-self: center;
+  }
+
+  /* 3D Scroll indicator */
+  .scroll-hint {
+    position: absolute; bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    opacity: 0.4; animation: scroll-fade 2.5s ease-in-out infinite;
+  }
+  @keyframes scroll-fade {
+    0%,100% { opacity: 0.35; transform: translateX(-50%) translateY(0); }
+    50%      { opacity: 0.7;  transform: translateX(-50%) translateY(-5px); }
+  }
+  .scroll-hint span { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  .scroll-arrow { font-size: 1.1rem; color: var(--accent); }
+
+  /* ═══════════════════════════════════════════
+     SECTION BASE
+  ═══════════════════════════════════════════ */
+  section { position: relative; z-index: 1; padding: 6rem 2rem; }
+  .section-inner { max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent-b);
+    margin-bottom: 1rem;
+  }
+  .section-label::before {
+    content: ''; display: block;
+    width: 20px; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--violet));
+    border-radius: 1px;
+  }
+  .section-title {
+    font-family: var(--font-d); font-weight: 700;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    line-height: 1.15; margin-bottom: 1rem;
+    color: var(--text);
+  }
+  .section-desc { font-size: 0.95rem; color: var(--muted); max-width: 620px; }
+
+  /* ═══════════════════════════════════════════
+     GLASS CARD
+  ═══════════════════════════════════════════ */
+  .glass-card {
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border-radius: var(--r-lg);
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease;
+  }
+  /* Iridescent border via pseudo */
+  .glass-card::before {
+    content: '';
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+      rgba(220,38,38,0.4), rgba(139,92,246,0.3),
+      rgba(59,130,246,0.25), rgba(251,191,36,0.2),
+      rgba(220,38,38,0.4));
+    background-size: 300% 300%;
+    animation: iris 9s ease-in-out infinite;
+    z-index: -1;
+  }
+  /* Inner sheen */
+  .glass-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+      rgba(255,255,255,0.07) 0%, transparent 50%,
+      rgba(255,255,255,0.03) 100%);
+    pointer-events: none;
+  }
+  @keyframes iris {
+    0%   { background-position: 0% 0%; }
+    50%  { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+  }
+  .glass-card:hover {
+    transform: translateY(-6px) perspective(800px) rotateX(2deg);
+    box-shadow:
+      0 24px 60px rgba(0,0,0,0.5),
+      0 0 30px rgba(220,38,38,0.14),
+      0 0 60px rgba(139,92,246,0.07);
+  }
+
+  /* ═══════════════════════════════════════════
+     FEATURES SECTION
+  ═══════════════════════════════════════════ */
+  #features { background: rgba(0,0,0,0.25); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem; margin-top: 3.5rem;
+  }
+  .feature-card {
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    border-radius: var(--r-lg);
+    padding: 2rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease;
+    cursor: default;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+      rgba(220,38,38,0.35), rgba(139,92,246,0.25),
+      rgba(59,130,246,0.2), rgba(220,38,38,0.35));
+    background-size: 300% 300%;
+    animation: iris 10s ease-in-out infinite;
+    z-index: -1;
+  }
+  .feature-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--top-line, linear-gradient(90deg, var(--accent), transparent));
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+  .feature-card:hover {
+    transform: translateY(-8px) perspective(800px) rotateX(3deg);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 30px rgba(220,38,38,0.14);
+  }
+  .feature-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem; margin-bottom: 1.2rem;
+    background: var(--icon-bg, rgba(220,38,38,0.14));
+    color: var(--icon-clr, #ef4444);
+    box-shadow: 0 0 12px var(--icon-shadow, rgba(239,68,68,0.2));
+    transition: all 0.3s ease;
+  }
+  .feature-card:hover .feature-icon {
+    transform: scale(1.1) rotateY(15deg);
+    box-shadow: 0 0 20px var(--icon-shadow, rgba(239,68,68,0.35));
+  }
+  .feature-title {
+    font-family: var(--font-d); font-size: 1.1rem; font-weight: 700;
+    color: var(--text); margin-bottom: 0.6rem;
+  }
+  .feature-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.65; }
+
+  /* ═══════════════════════════════════════════
+     TECH STACK
+  ═══════════════════════════════════════════ */
+  #stack { }
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-top: 3rem;
+  }
+  .stack-item {
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(14px);
+    border-radius: var(--r-md);
+    padding: 1.4rem 1.2rem;
+    border: 1px solid rgba(255,255,255,0.07);
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px; text-align: center;
+    transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+    position: relative; overflow: hidden;
+  }
+  .stack-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--stack-clr, #dc2626), transparent);
+    border-radius: var(--r-md) var(--r-md) 0 0;
+  }
+  .stack-item:hover {
+    transform: translateY(-5px);
+    border-color: rgba(220,38,38,0.3);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 16px rgba(220,38,38,0.08);
+  }
+  .stack-icon {
+    font-size: 1.8rem;
+    color: var(--stack-clr, #dc2626);
+    filter: drop-shadow(0 0 8px var(--stack-clr, rgba(220,38,38,0.4)));
+  }
+  .stack-name { font-family: var(--font-d); font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .stack-role { font-size: 0.72rem; color: var(--faint); }
+
+  /* ═══════════════════════════════════════════
+     ROLES SECTION
+  ═══════════════════════════════════════════ */
+  #roles { background: rgba(0,0,0,0.2); }
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem; margin-top: 3rem;
+  }
+  .role-card {
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    border-radius: var(--r-lg);
+    padding: 1.8rem 1.4rem;
+    text-align: center;
+    position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+    cursor: default;
+  }
+  .role-card:hover {
+    transform: translateY(-8px) perspective(600px) rotateX(4deg);
+    border-color: rgba(220,38,38,0.3);
+    box-shadow: 0 24px 50px rgba(0,0,0,0.5), 0 0 25px rgba(220,38,38,0.1);
+  }
+  .role-avatar {
+    width: 68px; height: 68px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; margin: 0 auto 1.2rem;
+    background: var(--role-bg, rgba(220,38,38,0.14));
+    color: var(--role-clr, #ef4444);
+    border: 2px solid var(--role-border, rgba(220,38,38,0.25));
+    box-shadow: 0 0 16px var(--role-glow, rgba(239,68,68,0.2));
+    transition: all 0.4s ease;
+  }
+  .role-card:hover .role-avatar {
+    transform: rotateY(360deg);
+    box-shadow: 0 0 28px var(--role-glow, rgba(239,68,68,0.4));
+  }
+  .role-name {
+    font-family: var(--font-d); font-size: 1.05rem; font-weight: 700;
+    color: var(--text); margin-bottom: 0.5rem;
+  }
+  .role-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+  /* ═══════════════════════════════════════════
+     CREDENTIALS
+  ═══════════════════════════════════════════ */
+  #credentials { }
+  .cred-table-wrap {
+    margin-top: 3rem; overflow-x: auto;
+    border-radius: var(--r-lg);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .cred-table-wrap::before {
+    content: '';
+    position: absolute; inset: -1px; border-radius: var(--r-lg);
+    background: linear-gradient(135deg,
+      rgba(220,38,38,0.4), rgba(139,92,246,0.25), rgba(59,130,246,0.2), rgba(220,38,38,0.35));
+    background-size: 300% 300%;
+    animation: iris 9s ease-in-out infinite;
+    z-index: -1;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: rgba(6,6,14,0.85);
+    backdrop-filter: blur(20px);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    font-size: 0.85rem;
+  }
+  thead { background: rgba(220,38,38,0.12); }
+  thead th {
+    padding: 14px 16px;
+    font-family: var(--font-d); font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s ease; }
+  tbody tr:last-child { border: none; }
+  tbody tr:hover { background: rgba(220,38,38,0.06); }
+  td { padding: 13px 16px; color: var(--text); vertical-align: middle; }
+  .role-badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 700;
+    font-family: var(--font-d); letter-spacing: 0.04em;
+    background: rgba(220,38,38,0.14);
+    color: var(--accent-b);
+    border: 1px solid rgba(220,38,38,0.28);
+  }
+  .code-span {
+    font-family: var(--font-m); font-size: 0.8rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 2px 8px;
+    color: var(--gold);
+  }
+
+  /* Warning banner */
+  .warn-banner {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.28);
+    border-radius: var(--r-md);
+    padding: 16px 20px;
+    margin-top: 1.5rem;
+    font-size: 0.85rem; color: #fbbf24;
+  }
+  .warn-banner i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* ═══════════════════════════════════════════
+     DEPLOY SECTION
+  ═══════════════════════════════════════════ */
+  #deploy { background: rgba(0,0,0,0.25); }
+  .deploy-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.4rem; margin-top: 3rem;
+  }
+  .deploy-step {
+    background: var(--glass);
+    backdrop-filter: var(--blur);
+    border-radius: var(--r-lg);
+    padding: 1.8rem;
+    border: 1px solid rgba(255,255,255,0.07);
+    position: relative; overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+  }
+  .deploy-step:hover {
+    transform: translateY(-6px);
+    border-color: rgba(220,38,38,0.25);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  }
+  .step-num {
+    font-family: var(--font-d); font-size: 3.5rem; font-weight: 700;
+    line-height: 1; color: rgba(220,38,38,0.15);
+    position: absolute; top: 12px; right: 18px;
+    pointer-events: none;
+  }
+  .step-title {
+    font-family: var(--font-d); font-size: 1rem; font-weight: 700;
+    color: var(--text); margin-bottom: 0.5rem;
+  }
+  .step-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+  /* Code blocks */
+  .code-block {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--r-md);
+    padding: 1.2rem 1.4rem;
+    font-family: var(--font-m); font-size: 0.82rem;
+    color: #a3e635; line-height: 1.75;
+    overflow-x: auto;
+    margin-top: 1.5rem;
+  }
+  .code-block .comment { color: #6b7280; }
+  .code-block .cmd     { color: #93c5fd; }
+
+  /* ═══════════════════════════════════════════
+     FOOTER
+  ═══════════════════════════════════════════ */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(20px);
+    padding: 2.5rem 2rem;
+    text-align: center;
+  }
+  .footer-logo { margin-bottom: 1rem; }
+  .footer-logo span {
+    font-family: var(--font-d); font-weight: 700;
+    font-size: 1.4rem; color: var(--accent-b); letter-spacing: 0.08em;
+    text-shadow: 0 0 16px rgba(239,68,68,0.4);
+  }
+  .footer-copy { font-size: 0.78rem; color: var(--faint); }
+  .footer-copy a { color: var(--accent-b); }
+
+  /* ═══════════════════════════════════════════
+     ENTRANCE ANIMATIONS
+  ═══════════════════════════════════════════ */
+  .reveal {
+    opacity: 0;
+    transform: perspective(800px) translateZ(-40px) translateY(24px);
+    transition: opacity 0.75s cubic-bezier(0.22,1,0.36,1),
+                transform 0.75s cubic-bezier(0.22,1,0.36,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: perspective(800px) translateZ(0) translateY(0);
+  }
+
+  /* ═══════════════════════════════════════════
+     RESPONSIVE
+  ═══════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    section { padding: 4rem 1.2rem; }
+    .hero { padding: 6rem 1.2rem 4rem; }
+    .hero-stats { padding: 14px 20px; }
+    .stat-val { font-size: 1.2rem; }
+    .hero h1 { font-size: 2.4rem; }
+  }
+  </style>
+</head>
+<body>
+
+<!-- CANVAS PARTICLE FIELD -->
+<canvas id="canvas"></canvas>
+
+<!-- BACKGROUND LAYERS -->
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo-ring">VV</div>
+    <div class="nav-title">
+      <span class="nav-title-main">VVITU</span>
+      <span class="nav-title-sub">Academic Portal</span>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="#features" class="nav-link"><i class="fas fa-rocket"></i> Features</a>
+    <a href="#stack" class="nav-link"><i class="fas fa-layer-group"></i> Stack</a>
+    <a href="#roles" class="nav-link"><i class="fas fa-users"></i> Roles</a>
+    <a href="#credentials" class="nav-link"><i class="fas fa-key"></i> Credentials</a>
+    <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="nav-link">
+      <i class="fab fa-github"></i> GitHub
+    </a>
+  </div>
+  <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="nav-cta">
+    <i class="fas fa-star"></i> Star on GitHub
+  </a>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Production-Grade ERP System
+    </div>
+
+    <h1>VVITU Portal —<br/>Complete ERP System</h1>
+
+    <p class="hero-sub">
+      A <strong>production-grade college ERP</strong> for
+      <strong>Vasireddy Venkatadri International Technological University</strong>,
+      Nambur, Guntur — built with Django, glassmorphism UI, role-based access control,
+      AI attendance prediction, and scalability for <strong>300,000+ concurrent students</strong>.
+    </p>
+
+    <div class="hero-actions">
+      <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="btn-primary">
+        <i class="fab fa-github"></i> View on GitHub
+      </a>
+      <a href="#features" class="btn-outline">
+        <i class="fas fa-rocket"></i> Explore Features
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-val">20K+</span>
+        <span class="stat-lbl">Students</span>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <span class="stat-val">500+</span>
+        <span class="stat-lbl">Faculty</span>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <span class="stat-val">5</span>
+        <span class="stat-lbl">Roles</span>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <span class="stat-val">NAAC</span>
+        <span class="stat-lbl">A+ Accredited</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <i class="fas fa-chevron-down scroll-arrow"></i>
+  </div>
+</section>
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section id="features">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><i class="fas fa-rocket"></i> Key Features</div>
+      <h2 class="section-title">Everything a University Needs</h2>
+      <p class="section-desc">A complete ERP with tightly scoped roles, secure data pipelines, and AI-powered analytics — all wrapped in a glassmorphism interface.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#dc2626,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(220,38,38,0.14);--icon-clr:#ef4444;--icon-shadow:rgba(239,68,68,0.2);">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="feature-title">Role-Based Access Control</div>
+        <p class="feature-desc">Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin — each with tailored sidebar navigation and scoped permissions.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#8b5cf6,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(139,92,246,0.14);--icon-clr:#a78bfa;--icon-shadow:rgba(139,92,246,0.2);">
+          <i class="fas fa-brain"></i>
+        </div>
+        <div class="feature-title">AI Attendance Predictor</div>
+        <p class="feature-desc">Scikit-learn linear regression analyzes student attendance records and predicts semester-end outcomes with visual trend indicators.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#3b82f6,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(59,130,246,0.14);--icon-clr:#60a5fa;--icon-shadow:rgba(59,130,246,0.2);">
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="feature-title">Unified Notification System</div>
+        <p class="feature-desc">Multi-scoped notices targeted to everyone, specific roles, branches, classes, or single users with real-time delivery and quick compose.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#10b981,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(16,185,129,0.14);--icon-clr:#34d399;--icon-shadow:rgba(16,185,129,0.2);">
+          <i class="fas fa-file-excel"></i>
+        </div>
+        <div class="feature-title">Excel & PDF Exports</div>
+        <p class="feature-desc">Dynamically generated attendance and marks reports available for download on demand via openpyxl and reportlab.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#fbbf24,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(251,191,36,0.14);--icon-clr:#fbbf24;--icon-shadow:rgba(251,191,36,0.2);">
+          <i class="fas fa-upload"></i>
+        </div>
+        <div class="feature-title">Bulk CSV Uploads</div>
+        <p class="feature-desc">Instantly upload spreadsheets to create thousands of student profiles and populate test marks in seconds.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#ef4444,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(239,68,68,0.14);--icon-clr:#ef4444;--icon-shadow:rgba(239,68,68,0.2);">
+          <i class="fas fa-lock"></i>
+        </div>
+        <div class="feature-title">Advanced Security Hardening</div>
+        <p class="feature-desc">Rate limiting (5 attempts/min per IP), HSTS, SameSite/HttpOnly session cookies, Referrer-Policy headers, and first-time password flow.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#06b6d4,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(6,182,212,0.14);--icon-clr:#22d3ee;--icon-shadow:rgba(6,182,212,0.2);">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="feature-title">HOD Timetable Management</div>
+        <p class="feature-desc">Publish and manage branch timetables, assign faculty to subjects/classes, and designate counselors and class teachers.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#f97316,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(249,115,22,0.14);--icon-clr:#fb923c;--icon-shadow:rgba(249,115,22,0.2);">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <div class="feature-title">Achievements System</div>
+        <p class="feature-desc">Students and faculty submit academic and co-curricular achievements for HOD verification and public profile display.</p>
+      </div>
+
+      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#ec4899,transparent);">
+        <div class="feature-icon" style="--icon-bg:rgba(236,72,153,0.14);--icon-clr:#f472b6;--icon-shadow:rgba(236,72,153,0.2);">
+          <i class="fas fa-user-edit"></i>
+        </div>
+        <div class="feature-title">DEO Data Entry Panel</div>
+        <p class="feature-desc">Branch-scoped operators add/edit students, upload marks, and edit attendance within a strict 1-day editing window.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TECH STACK ═══════════ -->
+<section id="stack">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><i class="fas fa-layer-group"></i> Technology Stack</div>
+      <h2 class="section-title">Built on Proven Technologies</h2>
+      <p class="section-desc">Every layer carefully chosen for performance, scalability and developer experience.</p>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-item reveal" style="--stack-clr:#44b883;">
+        <i class="fab fa-python stack-icon" style="--stack-clr:#3b82f6;"></i>
+        <div class="stack-name">Django 4.2</div>
+        <div class="stack-role">Backend Framework</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#7952b3;">
+        <i class="fab fa-bootstrap stack-icon" style="--stack-clr:#7952b3;"></i>
+        <div class="stack-name">Bootstrap 5</div>
+        <div class="stack-role">Responsive UI</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#FF6384;">
+        <i class="fas fa-chart-bar stack-icon" style="--stack-clr:#FF6384;"></i>
+        <div class="stack-name">Chart.js 4</div>
+        <div class="stack-role">Data Visualisation</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#336791;">
+        <i class="fas fa-database stack-icon" style="--stack-clr:#336791;"></i>
+        <div class="stack-name">PostgreSQL</div>
+        <div class="stack-role">Production Database</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#dc382d;">
+        <i class="fas fa-bolt stack-icon" style="--stack-clr:#dc382d;"></i>
+        <div class="stack-name">Redis</div>
+        <div class="stack-role">Caching Layer</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#f7931e;">
+        <i class="fas fa-robot stack-icon" style="--stack-clr:#f7931e;"></i>
+        <div class="stack-name">scikit-learn</div>
+        <div class="stack-role">AI / ML Predictor</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#10b981;">
+        <i class="fas fa-file-excel stack-icon" style="--stack-clr:#10b981;"></i>
+        <div class="stack-name">openpyxl</div>
+        <div class="stack-role">Excel Export</div>
+      </div>
+      <div class="stack-item reveal" style="--stack-clr:#ef4444;">
+        <i class="fas fa-file-pdf stack-icon" style="--stack-clr:#ef4444;"></i>
+        <div class="stack-name">ReportLab</div>
+        <div class="stack-role">PDF Generation</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ROLES ═══════════ -->
+<section id="roles">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><i class="fas fa-users"></i> User Roles</div>
+      <h2 class="section-title">Five Carefully Scoped Access Levels</h2>
+      <p class="section-desc">Each role has a tailored dashboard, navigation, and strictly enforced permission scope.</p>
+    </div>
+
+    <div class="roles-grid">
+      <div class="role-card reveal"
+           style="--role-bg:rgba(239,68,68,0.14);--role-clr:#ef4444;--role-border:rgba(239,68,68,0.28);--role-glow:rgba(239,68,68,0.22);">
+        <div class="role-avatar"><i class="fas fa-user-shield"></i></div>
+        <div class="role-name">Admin</div>
+        <p class="role-desc">Full system access — CRUD for all entities, global reports, backup management.</p>
+      </div>
+      <div class="role-card reveal"
+           style="--role-bg:rgba(139,92,246,0.14);--role-clr:#a78bfa;--role-border:rgba(139,92,246,0.28);--role-glow:rgba(139,92,246,0.22);">
+        <div class="role-avatar"><i class="fas fa-user-tie"></i></div>
+        <div class="role-name">HOD</div>
+        <p class="role-desc">Branch management, timetables, approvals, and a personal faculty teaching panel.</p>
+      </div>
+      <div class="role-card reveal"
+           style="--role-bg:rgba(59,130,246,0.14);--role-clr:#60a5fa;--role-border:rgba(59,130,246,0.28);--role-glow:rgba(59,130,246,0.22);">
+        <div class="role-avatar"><i class="fas fa-keyboard"></i></div>
+        <div class="role-name">DEO</div>
+        <p class="role-desc">Branch-scoped data entry — students, marks, attendance with time-locked edits.</p>
+      </div>
+      <div class="role-card reveal"
+           style="--role-bg:rgba(16,185,129,0.14);--role-clr:#34d399;--role-border:rgba(16,185,129,0.28);--role-glow:rgba(16,185,129,0.22);">
+        <div class="role-avatar"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="role-name">Faculty</div>
+        <p class="role-desc">Mark attendance, upload marks, view student results, submit achievements.</p>
+      </div>
+      <div class="role-card reveal"
+           style="--role-bg:rgba(251,191,36,0.14);--role-clr:#fbbf24;--role-border:rgba(251,191,36,0.28);--role-glow:rgba(251,191,36,0.22);">
+        <div class="role-avatar"><i class="fas fa-user-graduate"></i></div>
+        <div class="role-name">Student</div>
+        <p class="role-desc">View results, attendance, timetable, AI prediction, and submit achievements.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CREDENTIALS ═══════════ -->
+<section id="credentials">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><i class="fas fa-key"></i> Default Credentials</div>
+      <h2 class="section-title">Test Accounts After Seeding</h2>
+      <p class="section-desc">All accounts share the default password <code class="code-span">vvit@1234</code> after running <code class="code-span">python manage.py seed_data</code>.</p>
+    </div>
+
+    <div class="cred-table-wrap reveal">
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Username / Range</th>
+            <th>Branch / Scope</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="role-badge">Admin</span></td>
+            <td><code class="code-span">admin</code></td>
+            <td>Global</td>
+            <td>Full System Access & CRUD</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge">HOD</span></td>
+            <td><code class="code-span">HOD001</code> – <code class="code-span">HOD008</code></td>
+            <td>CSE, ECE, EEE, IT, CSM, CSD, CIVIL, MECH</td>
+            <td>Full Branch Management & Teaching Panel</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge">DEO</span></td>
+            <td><code class="code-span">DEO001</code> – <code class="code-span">DEO008</code></td>
+            <td>Branch-scoped</td>
+            <td>Branch-scoped Data Operator</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge">Faculty</span></td>
+            <td><code class="code-span">EMP001</code> – <code class="code-span">EMP016</code></td>
+            <td>2 per branch</td>
+            <td>Class Teachers, Counsellors, Subject Instructors</td>
+          </tr>
+          <tr>
+            <td><span class="role-badge">Student</span></td>
+            <td><code class="code-span">24BQ1A4942</code> (CSE A) …</td>
+            <td>Various (66 total)</td>
+            <td>Students across Years 1–4 with branch roll numbers</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn-banner reveal">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div><strong>Production Security:</strong> Change all default passwords immediately when deploying to any live or public-facing environment.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SETUP & DEPLOY ═══════════ -->
+<section id="deploy">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label"><i class="fas fa-terminal"></i> Quick Start</div>
+      <h2 class="section-title">Up & Running in 5 Steps</h2>
+      <p class="section-desc">Clone, install, migrate, seed, and launch — the entire flow takes under 5 minutes.</p>
+    </div>
+
+    <div class="deploy-steps">
+      <div class="deploy-step reveal">
+        <div class="step-num">01</div>
+        <div class="step-title">Clone & Virtualenv</div>
+        <p class="step-desc">Clone the repo and create a Python virtual environment.</p>
+      </div>
+      <div class="deploy-step reveal">
+        <div class="step-num">02</div>
+        <div class="step-title">Install Dependencies</div>
+        <p class="step-desc">Run <code class="code-span">pip install -r requirements.txt</code> to get all packages.</p>
+      </div>
+      <div class="deploy-step reveal">
+        <div class="step-num">03</div>
+        <div class="step-title">Apply Migrations</div>
+        <p class="step-desc">Run <code class="code-span">python manage.py migrate</code> to set up the database schema.</p>
+      </div>
+      <div class="deploy-step reveal">
+        <div class="step-num">04</div>
+        <div class="step-title">Seed Sample Data</div>
+        <p class="step-desc">Run <code class="code-span">python manage.py seed_data</code> to create branches, accounts, timetables and attendance records.</p>
+      </div>
+      <div class="deploy-step reveal">
+        <div class="step-num">05</div>
+        <div class="step-title">Launch Dev Server</div>
+        <p class="step-desc">Run <code class="code-span">python manage.py runserver</code> and open <code class="code-span">http://127.0.0.1:8000/</code>.</p>
+      </div>
+      <div class="deploy-step reveal">
+        <div class="step-num">☁</div>
+        <div class="step-title">One-Click Render</div>
+        <p class="step-desc">Push to GitHub and link to Render — the <code class="code-span">render.yaml</code> blueprint auto-provisions PostgreSQL, runs migrations, and seeds data.</p>
+      </div>
+    </div>
+
+    <div class="code-block reveal">
+      <span class="comment"># Windows — quick start</span><br/>
+      <span class="cmd">python -m venv venv && venv\Scripts\activate</span><br/>
+      <span class="cmd">pip install -r requirements.txt</span><br/>
+      <span class="cmd">python manage.py migrate</span><br/>
+      <span class="cmd">python manage.py seed_data</span><br/>
+      <span class="cmd">python manage.py runserver</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-logo">
+    <span>VVITU Portal</span>
+  </div>
+  <p class="footer-copy">
+    &copy; <span id="yr"></span> Vasireddy Venkatadri International Technological University, Nambur, Guntur, Andhra Pradesh.<br/>
+    Built with ❤️ — <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener">View on GitHub</a>
+  </p>
+</footer>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script>
+/* ── Copyright year ── */
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ──────────────────────────────────────────
+   PARTICLE CANVAS
+──────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('canvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  const COLORS = [
+    'rgba(220,38,38,', 'rgba(139,92,246,',
+    'rgba(59,130,246,', 'rgba(251,191,36,'
+  ];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function Particle() {
+    this.reset();
+  }
+  Particle.prototype.reset = function() {
+    this.x    = Math.random() * W;
+    this.y    = Math.random() * H;
+    this.r    = Math.random() * 1.8 + 0.4;
+    this.clr  = COLORS[Math.floor(Math.random() * COLORS.length)];
+    this.a    = Math.random() * 0.55 + 0.1;
+    this.vx   = (Math.random() - 0.5) * 0.4;
+    this.vy   = (Math.random() - 0.5) * 0.4;
+    this.life = 0;
+    this.maxLife = Math.random() * 300 + 150;
+  };
+  Particle.prototype.update = function() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+    if (this.life > this.maxLife ||
+        this.x < -5 || this.x > W + 5 ||
+        this.y < -5 || this.y > H + 5) this.reset();
+  };
+  Particle.prototype.draw = function() {
+    const t = this.life / this.maxLife;
+    const a = this.a * (t < 0.1 ? t * 10
+                        : t > 0.9 ? (1 - t) * 10
+                        : 1);
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.clr + a + ')';
+    ctx.fill();
+  };
+
+  // Connection lines between close particles
+  function drawConnections() {
+    const MAX_DIST = 110;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < MAX_DIST) {
+          const a = (1 - dist / MAX_DIST) * 0.12;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(220,38,38,${a})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // Init particles
+  const COUNT = Math.min(120, Math.floor(W * H / 8000));
+  for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    drawConnections();
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // Mouse interaction
+  let mx = -999, my = -999;
+  window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  window.addEventListener('mouseleave', () => { mx = -999; my = -999; });
+  // Repel nearby particles from cursor
+  setInterval(() => {
+    particles.forEach(p => {
+      const dx = p.x - mx, dy = p.y - my;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 80) {
+        p.vx += (dx / dist) * 0.3;
+        p.vy += (dy / dist) * 0.3;
+        // clamp speed
+        const spd = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+        if (spd > 2) { p.vx /= spd / 2; p.vy /= spd / 2; }
+      }
+    });
+  }, 30);
+})();
+
+/* ──────────────────────────────────────────
+   SCROLL REVEAL (IntersectionObserver)
+──────────────────────────────────────────── */
+const revealEls = document.querySelectorAll('.reveal');
+const observer  = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      // stagger siblings
+      const siblings = Array.from(entry.target.parentNode.children)
+        .filter(el => el.classList.contains('reveal'));
+      const idx = siblings.indexOf(entry.target);
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, idx * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+revealEls.forEach(el => observer.observe(el));
+
+/* ──────────────────────────────────────────
+   3D CARD TILT on mouse move
+──────────────────────────────────────────── */
+document.querySelectorAll('.feature-card, .glass-card, .role-card, .stack-item').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cx = rect.width  / 2;
+    const cy = rect.height / 2;
+    const rotX =  ((y - cy) / cy) * -5;
+    const rotY =  ((x - cx) / cx) *  6;
+    card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+
+/* ──────────────────────────────────────────
+   SMOOTH SCROLL for nav links
+──────────────────────────────────────────── */
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>
