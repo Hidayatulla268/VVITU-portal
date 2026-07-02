@@ -1,0 +1,798 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   VVITU PORTAL — CINEMATIC GLASSMORPHISM & 3D UPGRADE
+   Adds: iridescent glass · 3D depth · particle fields · cinematic FX
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. CINEMATIC TOKENS ──────────────────────────────────────────────── */
+:root {
+  --glass-blur:       saturate(200%) blur(24px);
+  --glass-border:     1px solid rgba(255,255,255,0.13);
+  --glass-bg:         rgba(10,10,18,0.55);
+  --glass-sheen:      rgba(255,255,255,0.06);
+  --iris-1:           rgba(220,38,38,0.35);
+  --iris-2:           rgba(139,92,246,0.25);
+  --iris-3:           rgba(59,130,246,0.2);
+  --iris-4:           rgba(251,191,36,0.18);
+  --neon-red:         #ff2d55;
+  --neon-gold:        #fbbf24;
+  --neon-blue:        #3b82f6;
+  --neon-violet:      #8b5cf6;
+  --scan-color:       rgba(255,255,255,0.015);
+  --grain-opacity:    0.028;
+  --dof-inner:        rgba(0,0,0,0);
+  --dof-outer:        rgba(0,0,0,0.72);
+  --perspective:      1200px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   2. GLOBAL CINEMATIC BODY LAYER
+══════════════════════════════════════════════════════════════════ */
+
+/* Film-grain texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9990;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: screen;
+  animation: grain-shift 0.18s steps(1) infinite;
+}
+
+@keyframes grain-shift {
+  0%  { transform: translate(0,0);    }
+  10% { transform: translate(-3%,-2%); }
+  20% { transform: translate(2%, 3%); }
+  30% { transform: translate(-1%, 1%); }
+  40% { transform: translate(3%,-3%); }
+  50% { transform: translate(-2%, 2%); }
+  60% { transform: translate(1%,-1%); }
+  70% { transform: translate(-3%, 3%); }
+  80% { transform: translate(2%, 0%); }
+  90% { transform: translate(-1%,-2%); }
+}
+
+/* Cinematic vignette — DOF/lens effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9980;
+  background: radial-gradient(ellipse 80% 70% at 50% 50%,
+    transparent 40%, rgba(0,0,0,0.30) 70%, rgba(0,0,0,0.68) 100%);
+  mix-blend-mode: multiply;
+}
+
+/* CRT scanlines — subtle */
+.vvit-navbar::after,
+.vvit-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    var(--scan-color),
+    var(--scan-color) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 10;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   3. IRIDESCENT GLASSMORPHISM OVERRIDES
+══════════════════════════════════════════════════════════════════ */
+
+/* All glass-card elements get iridescent rainbow border */
+.glass-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: none !important;
+  position: relative;
+  overflow: visible;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    var(--iris-1), var(--iris-2), var(--iris-3), var(--iris-4),
+    var(--iris-1));
+  background-size: 300% 300%;
+  animation: iris-shift 8s ease-in-out infinite;
+  z-index: -1;
+  filter: blur(0.5px);
+}
+
+.glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.065) 0%,
+    transparent 50%,
+    rgba(255,255,255,0.025) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes iris-shift {
+  0%   { background-position: 0% 0%;   }
+  33%  { background-position: 100% 50%;}
+  66%  { background-position: 0% 100%; }
+  100% { background-position: 0% 0%;   }
+}
+
+/* KPI cards — 3D tilt + iris border */
+.kpi-card {
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  background: rgba(8,8,16,0.60) !important;
+  border: none !important;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.4s ease !important;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    var(--iris-1), transparent, var(--iris-2), transparent, var(--iris-3));
+  background-size: 200% 200%;
+  animation: iris-shift 6s ease-in-out infinite;
+  z-index: -1;
+}
+
+.kpi-card:hover {
+  transform: translateY(-6px) rotateX(4deg) rotateY(-2deg) !important;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.55),
+    0 0 30px rgba(220,38,38,0.18),
+    0 0 60px rgba(139,92,246,0.08) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   4. ENHANCED NAVBAR — Cinematic Glass
+══════════════════════════════════════════════════════════════════ */
+
+.vvit-navbar {
+  background: rgba(4,4,8,0.78) !important;
+  backdrop-filter: saturate(180%) blur(28px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04),
+    0 4px 24px rgba(0,0,0,0.6),
+    0 0 80px rgba(220,38,38,0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Volumetric light streak on navbar */
+.vvit-navbar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -30%; right: -30%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(220,38,38,0.6) 30%,
+    rgba(251,191,36,0.4) 50%,
+    rgba(139,92,246,0.5) 70%,
+    transparent 100%);
+  animation: navbar-light-sweep 6s ease-in-out infinite;
+}
+
+@keyframes navbar-light-sweep {
+  0%   { opacity: 0; transform: translateX(-30%); }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(30%); }
+}
+
+/* Brand logo — pulsing glow */
+.brand-logo-ring {
+  box-shadow: 0 0 12px rgba(220,38,38,0.4), 0 0 24px rgba(220,38,38,0.15) !important;
+  animation: logo-breathe 3s ease-in-out infinite;
+}
+
+@keyframes logo-breathe {
+  0%, 100% { box-shadow: 0 0 10px rgba(220,38,38,0.35), 0 0 20px rgba(220,38,38,0.12); }
+  50%       { box-shadow: 0 0 18px rgba(220,38,38,0.6), 0 0 36px rgba(220,38,38,0.22); }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   5. ENHANCED SIDEBAR — Deep Glass
+══════════════════════════════════════════════════════════════════ */
+
+.vvit-sidebar {
+  background: rgba(4,4,9,0.88) !important;
+  backdrop-filter: saturate(150%) blur(20px) !important;
+  -webkit-backdrop-filter: saturate(150%) blur(20px) !important;
+  border-right: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sidebar subtle gradient sheen */
+.vvit-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: 1px;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(220,38,38,0.3) 30%,
+    rgba(139,92,246,0.2) 60%,
+    transparent);
+  animation: sidebar-glow 5s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+@keyframes sidebar-glow {
+  0%   { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* Sidebar logo ring */
+.sidebar-logo-ring {
+  box-shadow: 0 0 10px rgba(220,38,38,0.3), 0 0 20px rgba(220,38,38,0.1) !important;
+}
+
+/* Nav links — 3D push hover */
+.sidebar-nav .nav-link {
+  transform-style: preserve-3d;
+  transition: all 0.25s cubic-bezier(0.22,1,0.36,1) !important;
+  position: relative;
+}
+
+.sidebar-nav .nav-link::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(220,38,38,0.6), transparent);
+  border-radius: 4px 0 0 4px;
+  transition: width 0.25s ease;
+}
+
+.sidebar-nav .nav-link:hover::before,
+.sidebar-nav .nav-link.active::before {
+  width: 3px;
+}
+
+.sidebar-nav .nav-link:hover {
+  transform: translateX(4px) translateZ(2px) !important;
+  text-shadow: 0 0 12px rgba(239,68,68,0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   6. 3D LOGIN CARD — CINEMATIC UPGRADE
+══════════════════════════════════════════════════════════════════ */
+
+.login-body {
+  perspective: var(--perspective);
+  overflow: hidden;
+}
+
+/* Multi-layer animated bg on login body */
+.login-body .bg-grid {
+  background-image:
+    linear-gradient(rgba(220,38,38,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220,38,38,0.04) 1px, transparent 1px),
+    linear-gradient(rgba(139,92,246,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.02) 1px, transparent 1px) !important;
+  background-size: 44px 44px, 44px 44px, 88px 88px, 88px 88px !important;
+  animation: grid-scroll 25s linear infinite;
+}
+
+@keyframes grid-scroll {
+  0%   { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 44px 44px, 44px 44px, 88px 88px, 88px 88px; }
+}
+
+/* Login card — true 3D glass */
+.login-card {
+  background: rgba(6,6,14,0.62) !important;
+  backdrop-filter: saturate(200%) blur(32px) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(32px) !important;
+  border: none !important;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.5s ease !important;
+}
+
+/* Iridescent border on login card */
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 25px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    var(--iris-1), var(--iris-2), var(--iris-3), var(--iris-4), var(--iris-1)
+  );
+  animation: spin-border 6s linear infinite;
+  z-index: -1;
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes spin-border {
+  to { --border-angle: 360deg; }
+}
+
+/* Inner glass sheen */
+.login-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.07) 0%,
+    transparent 45%,
+    rgba(255,255,255,0.03) 100%);
+  pointer-events: none;
+}
+
+/* Login left panel — deep volumetric glass */
+.login-left {
+  background: linear-gradient(145deg,
+    rgba(80,5,5,0.30) 0%,
+    rgba(3,3,8,0.85) 50%,
+    rgba(3,3,8,0.96) 100%) !important;
+  backdrop-filter: saturate(180%) blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated crimson spotlight on left panel */
+.login-left::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(ellipse,
+    rgba(220,38,38,0.12) 0%,
+    transparent 65%);
+  animation: spotlight-drift 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes spotlight-drift {
+  0%   { transform: translate(0,0) scale(1); }
+  33%  { transform: translate(15%,20%) scale(1.2); }
+  66%  { transform: translate(25%,5%) scale(0.9); }
+  100% { transform: translate(10%,30%) scale(1.1); }
+}
+
+/* Logo 3D rotation on hover */
+.logo-showcase {
+  transform-style: preserve-3d;
+  perspective: 600px;
+}
+
+.logo-outer-ring {
+  transition: transform 0.8s cubic-bezier(0.22,1,0.36,1) !important;
+  box-shadow: 0 0 20px rgba(220,38,38,0.3), 0 0 40px rgba(220,38,38,0.1) !important;
+}
+
+.logo-showcase:hover .logo-outer-ring {
+  transform: rotateY(360deg) rotateX(15deg) !important;
+  box-shadow: 0 0 30px rgba(251,191,36,0.7), 0 0 60px rgba(251,191,36,0.3) !important;
+}
+
+/* Triple pulse rings */
+.logo-pulse-ring {
+  border: 1px solid rgba(220,38,38,0.22) !important;
+  box-shadow: 0 0 8px rgba(220,38,38,0.15);
+}
+
+/* Stats strip — glass */
+.stats-strip {
+  background: rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 4px 16px rgba(0,0,0,0.4) !important;
+}
+
+.stat-num {
+  text-shadow: 0 0 12px rgba(239,68,68,0.6) !important;
+  animation: num-glow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes num-glow {
+  0%   { text-shadow: 0 0 8px rgba(239,68,68,0.5); }
+  100% { text-shadow: 0 0 18px rgba(239,68,68,0.9), 0 0 30px rgba(239,68,68,0.35); }
+}
+
+/* Accreditation badges — neon */
+.accr-badge {
+  box-shadow: 0 0 8px rgba(220,38,38,0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.accr-badge:hover {
+  background: rgba(220,38,38,0.22) !important;
+  box-shadow: 0 0 14px rgba(220,38,38,0.5) !important;
+  transform: translateY(-2px);
+}
+
+/* Campus image — cinematic overlay */
+.campus-img-strip {
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(220,38,38,0.12),
+    inset 0 0 40px rgba(0,0,0,0.3) !important;
+}
+
+/* Login button — neon shine */
+.btn-login {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+  box-shadow:
+    0 6px 20px rgba(220,38,38,0.45),
+    0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  transition: all 0.3s cubic-bezier(0.22,1,0.36,1) !important;
+}
+
+.btn-login:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  box-shadow:
+    0 10px 32px rgba(220,38,38,0.6),
+    0 0 40px rgba(220,38,38,0.25),
+    0 0 0 1px rgba(255,255,255,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+/* Input focus — neon outline */
+.input-wrapper .vvit-input:focus {
+  border-color: rgba(220,38,38,0.7) !important;
+  box-shadow:
+    0 0 0 3px rgba(220,38,38,0.12),
+    0 0 20px rgba(220,38,38,0.18) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   7. PARTICLE CANVAS (login page background)
+══════════════════════════════════════════════════════════════════ */
+
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   8. FLOATING 3D AMBIENT ORBS — LOGIN UPGRADE
+══════════════════════════════════════════════════════════════════ */
+
+/* Enhanced background orbs */
+.orb-1 {
+  width: 450px !important;
+  height: 450px !important;
+  background: radial-gradient(circle,
+    rgba(220,38,38,0.12) 0%,
+    rgba(139,92,246,0.06) 50%,
+    transparent 70%) !important;
+  filter: blur(2px);
+}
+
+.orb-2 {
+  width: 320px !important;
+  height: 320px !important;
+  background: radial-gradient(circle,
+    rgba(59,130,246,0.10) 0%,
+    rgba(220,38,38,0.06) 50%,
+    transparent 70%) !important;
+  filter: blur(1px);
+}
+
+.orb-3 {
+  width: 250px !important;
+  height: 250px !important;
+  background: radial-gradient(circle,
+    rgba(251,191,36,0.08) 0%,
+    rgba(220,38,38,0.05) 50%,
+    transparent 70%) !important;
+  filter: blur(1px);
+}
+
+/* Extra orbs for cinematic depth */
+.orb-4 {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  left: 60%;
+  background: radial-gradient(circle,
+    rgba(139,92,246,0.08) 0%,
+    transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-rotate-1 20s linear infinite;
+  filter: blur(1px);
+}
+
+.orb-5 {
+  position: fixed;
+  width: 180px;
+  height: 180px;
+  top: 30%;
+  right: 20%;
+  background: radial-gradient(circle,
+    rgba(251,191,36,0.07) 0%,
+    transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: float-rotate-2 16s linear infinite;
+  filter: blur(1px);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   9. 3D CARD TILT ENGINE — ALL GLASS CARDS
+══════════════════════════════════════════════════════════════════ */
+
+/* JS-controlled CSS vars for 3D tilt */
+.glass-card.tilt-active,
+.kpi-card.tilt-active {
+  transform: perspective(1000px)
+    rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg))
+    translateZ(2px);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   10. TABLE ROWS — Holographic hover
+══════════════════════════════════════════════════════════════════ */
+
+.vvit-table tbody tr {
+  transition: background 0.2s ease, transform 0.2s ease !important;
+}
+
+.vvit-table tbody tr:hover {
+  background: linear-gradient(90deg,
+    rgba(220,38,38,0.06) 0%,
+    rgba(139,92,246,0.04) 50%,
+    rgba(59,130,246,0.03) 100%) !important;
+  transform: translateX(2px);
+  box-shadow: inset 2px 0 0 rgba(220,38,38,0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   11. PAGE HEADER STRIP — Cinematic
+══════════════════════════════════════════════════════════════════ */
+
+.page-header-strip {
+  background: linear-gradient(90deg,
+    rgba(220,38,38,0.10) 0%,
+    rgba(139,92,246,0.05) 50%,
+    transparent 100%) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header-strip::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(220,38,38,0.7) 0%,
+    rgba(139,92,246,0.4) 40%,
+    rgba(59,130,246,0.3) 70%,
+    transparent 100%);
+  animation: header-shine 4s ease-in-out infinite;
+}
+
+@keyframes header-shine {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   12. BUTTONS — Neon Glow on Hover
+══════════════════════════════════════════════════════════════════ */
+
+.btn-vvit-primary:hover {
+  box-shadow:
+    0 8px 24px rgba(220,38,38,0.5),
+    0 0 30px rgba(220,38,38,0.25) !important;
+}
+
+.btn-vvit-success:hover {
+  box-shadow:
+    0 8px 24px rgba(16,185,129,0.5),
+    0 0 30px rgba(16,185,129,0.2) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   13. SCROLLBAR — Neon
+══════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(220,38,38,0.7), rgba(139,92,246,0.5)) !important;
+  box-shadow: 0 0 6px rgba(220,38,38,0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   14. TOASTS — Glass upgrade
+══════════════════════════════════════════════════════════════════ */
+
+.vvit-toast {
+  backdrop-filter: saturate(200%) blur(20px) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(220,38,38,0.08) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   15. NOTIFICATION DROPDOWN — Glass
+══════════════════════════════════════════════════════════════════ */
+
+.glass-dropdown {
+  backdrop-filter: saturate(200%) blur(28px) !important;
+  background: rgba(5,5,12,0.90) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.6),
+    0 0 30px rgba(220,38,38,0.06) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   16. ENTRANCE ANIMATIONS — 3D
+══════════════════════════════════════════════════════════════════ */
+
+@keyframes float3d-in {
+  from {
+    opacity: 0;
+    transform: perspective(800px) translateZ(-60px) rotateX(8deg) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(800px) translateZ(0) rotateX(0deg) translateY(0);
+  }
+}
+
+.glass-card {
+  animation: float3d-in 0.7s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.kpi-card:nth-child(1) { animation: float3d-in 0.7s 0.05s cubic-bezier(0.22,1,0.36,1) both; }
+.kpi-card:nth-child(2) { animation: float3d-in 0.7s 0.12s cubic-bezier(0.22,1,0.36,1) both; }
+.kpi-card:nth-child(3) { animation: float3d-in 0.7s 0.19s cubic-bezier(0.22,1,0.36,1) both; }
+.kpi-card:nth-child(4) { animation: float3d-in 0.7s 0.26s cubic-bezier(0.22,1,0.36,1) both; }
+.kpi-card:nth-child(5) { animation: float3d-in 0.7s 0.33s cubic-bezier(0.22,1,0.36,1) both; }
+.kpi-card:nth-child(6) { animation: float3d-in 0.7s 0.40s cubic-bezier(0.22,1,0.36,1) both; }
+
+/* ══════════════════════════════════════════════════════════════════
+   17. ICON BTN — Neon Ring
+══════════════════════════════════════════════════════════════════ */
+
+.icon-btn:hover {
+  box-shadow: 0 0 12px rgba(220,38,38,0.3) !important;
+}
+
+.notif-bell-btn.bell-ringing i {
+  filter: drop-shadow(0 0 6px rgba(220,38,38,0.8));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   18. USER CHIP — Holographic
+══════════════════════════════════════════════════════════════════ */
+
+.user-chip-btn:hover {
+  box-shadow: 0 0 16px rgba(220,38,38,0.2) !important;
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, #dc2626, #7f1d1d) !important;
+  box-shadow: 0 0 10px rgba(220,38,38,0.35) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   19. FORM CONTROLS — Glass Style
+══════════════════════════════════════════════════════════════════ */
+
+.vvit-input,
+.vvit-select {
+  background: rgba(0,0,0,0.45) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.vvit-input:focus,
+.vvit-select:focus {
+  background: rgba(0,0,0,0.6) !important;
+  border-color: rgba(220,38,38,0.6) !important;
+  box-shadow:
+    0 0 0 3px rgba(220,38,38,0.12),
+    0 0 20px rgba(220,38,38,0.15) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   20. CINEMATIC EVENT ITEMS
+══════════════════════════════════════════════════════════════════ */
+
+.event-item:hover {
+  background: rgba(220,38,38,0.07) !important;
+  border-color: rgba(220,38,38,0.25) !important;
+  box-shadow: 0 0 20px rgba(220,38,38,0.08);
+  transform: translateX(6px) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   21. AI GAUGE — Neon Fill
+══════════════════════════════════════════════════════════════════ */
+
+.ai-gauge-fill {
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   22. SIDEBAR ACTIVE NAV — Neon
+══════════════════════════════════════════════════════════════════ */
+
+.sidebar-nav .nav-link.active {
+  text-shadow: 0 0 10px rgba(239,68,68,0.5) !important;
+  box-shadow: inset 3px 0 0 var(--accent), 0 0 12px rgba(220,38,38,0.08) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   23. MODAL / OFFCANVAS — Glass
+══════════════════════════════════════════════════════════════════ */
+
+.modal-content {
+  background: rgba(8,8,16,0.88) !important;
+  backdrop-filter: saturate(180%) blur(24px) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   24. RESPONSIVE — keep effects on mobile
+══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 991.98px) {
+  body::after { opacity: 0.018; }
+  .login-card::before { animation-duration: 12s; }
+  .glass-card::before { animation-duration: 12s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { display: none; }
+  .login-card::before,
+  .glass-card::before { animation: none; }
+  .kpi-card:hover { transform: translateY(-3px) !important; }
+}

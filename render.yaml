@@ -42,17 +42,7 @@ services:
 
       - key: WEB_CONCURRENCY
         value: 4
-
       - key: DATABASE_URL
-        fromDatabase:
-          name: vvitu-portal-db
-          property: connectionString
+        sync: false   # Input your external (e.g. Aiven.io) PostgreSQL connection string manually in Render Dashboard
 
-databases:
-  # ── PostgreSQL Database ──────────────────────────────
-  - name: vvitu-portal-db
-    plan: free
-    region: singapore
-    databaseName: vvitu_portal
-    user: vvitu_user
 

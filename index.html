@@ -1016,8 +1016,8 @@
       <i class="fab fa-github"></i> GitHub
     </a>
   </div>
-  <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="nav-cta">
-    <i class="fas fa-star"></i> Star on GitHub
+  <a href="/accounts/login/" class="nav-cta portal-link" data-path="/accounts/login/">
+    <i class="fas fa-sign-in-alt"></i> Enter Portal
   </a>
 </nav>
 
@@ -1039,7 +1039,10 @@
     </p>
 
     <div class="hero-actions">
-      <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="btn-primary">
+      <a href="/accounts/login/" class="btn-primary portal-link" data-path="/accounts/login/">
+        <i class="fas fa-sign-in-alt"></i> Enter ERP Portal
+      </a>
+      <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="btn-outline">
         <i class="fab fa-github"></i> View on GitHub
       </a>
       <a href="#features" class="btn-outline">
@@ -1781,6 +1784,19 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
+});
+
+/* ──────────────────────────────────────────
+   PORTAL URL MAPPING
+   Configure your Render / Railway backend URL here.
+   Example: 'https://vvit-portal.onrender.com'
+   Leave as empty string '' for relative path routing.
+──────────────────────────────────────────── */
+const PORTAL_URL = '';
+
+document.querySelectorAll('.portal-link').forEach(el => {
+  const path = el.getAttribute('data-path') || '/accounts/login/';
+  el.href = PORTAL_URL ? (PORTAL_URL.replace(/\/$/, '') + path) : path;
 });
 </script>
 </body>

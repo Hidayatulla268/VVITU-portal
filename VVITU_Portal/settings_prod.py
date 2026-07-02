@@ -37,12 +37,23 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '')
 if DATABASE_URL:
     try:
         import dj_database_url
-        DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+        db_config = dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+        
+        # Enforce SSL require mode for external database providers like Aiven
+        if 'aivencloud' in DATABASE_URL or os.environ.get('DATABASE_SSL_REQUIRE', 'True').lower() == 'true':
+            db_config.setdefault('OPTIONS', {})['sslmode'] = 'require'
+            
+        DATABASES = {'default': db_config}
     except ImportError:
         # dj-database-url not installed — parse the URL manually
-        # Format: postgres://USER:PASSWORD@HOST:PORT/NAME
+        # Format: postgres://USER:PASSWORD@HOST:PORT/NAME?sslmode=...
         import urllib.parse as up
         r = up.urlparse(DATABASE_URL)
+        
+        # Extract sslmode parameter if present, otherwise default to require if Aiven host
+        query_params = up.parse_qs(r.query)
+        ssl_mode = query_params.get('sslmode', ['require' if 'aivencloud' in (r.hostname or '') else None])[0]
+        
         DATABASES = {
             'default': {
                 'ENGINE':   'django.db.backends.postgresql',
@@ -54,6 +65,10 @@ if DATABASE_URL:
                 'CONN_MAX_AGE': 600,  # Keep database connections open for reuse
             }
         }
+        if ssl_mode:
+            DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = ssl_mode
+        elif os.environ.get('DATABASE_SSL_REQUIRE', 'True').lower() == 'true':
+            DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = 'require'
 # If DATABASE_URL is absent we keep the SQLite default from settings.py.
 
 # ── Static files (WhiteNoise serves them directly from Gunicorn) ─────────────
