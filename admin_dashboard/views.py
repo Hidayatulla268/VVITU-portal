@@ -812,7 +812,8 @@ def add_results(request):
                         subject=subject,
                         defaults={
                             'marks_obtained': marks_obt,
-                            'max_marks': max_mks
+                            'max_marks': max_mks,
+                            'grade': '',  # Clear grade so Result.save() recalculates it
                         }
                     )
                     saved_count += 1
@@ -923,7 +924,8 @@ def bulk_upload_results(request):
                         subject=subject,
                         defaults={
                             'marks_obtained': marks_obt,
-                            'max_marks': max_mks
+                            'max_marks': max_mks,
+                            'grade': '',  # Clear grade so Result.save() recalculates it
                         }
                     )
                     success_count += 1
@@ -1075,16 +1077,18 @@ def bulk_upload_students(request):
                         admission_year=adm_year_int
                     )
                     success_count += 1
-                    
-            if errors:
-                for err in errors[:5]:
-                    messages.error(request, err)
-                if len(errors) > 5:
-                    messages.error(request, f"...and {len(errors) - 5} more errors. Database transaction rolled back.")
-                raise Exception("Upload failed due to data errors.")
-            else:
-                messages.success(request, f"Successfully imported {success_count} students.")
-                return redirect('admin_dashboard:manage_students')
+
+                # Inside atomic block: raise to trigger rollback if any errors
+                if errors:
+                    for err in errors[:5]:
+                        messages.error(request, err)
+                    if len(errors) > 5:
+                        messages.error(request, f"...and {len(errors) - 5} more errors. No data was saved (transaction rolled back).")
+                    raise Exception("Upload failed due to data errors.")
+
+            # Atomic block exited cleanly — success message only shown here
+            messages.success(request, f"Successfully imported {success_count} students.")
+            return redirect('admin_dashboard:manage_students')
                 
         except Exception as e:
             if not errors:
@@ -1246,7 +1250,7 @@ def create_backup(request):
     if not os.path.exists(backups_dir):
         os.makedirs(backups_dir)
 
-    timestamp = timezone.now().strftime('%Y%md_%H%M%S')
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
     filename = f"db_backup_{timestamp}.json"
     filepath = os.path.join(backups_dir, filename)
 

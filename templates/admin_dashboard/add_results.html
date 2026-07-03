@@ -125,15 +125,15 @@
                   <td class="fw-bold">{{ student.roll_number }}</td>
                   <td>{{ student.user.get_full_name }}</td>
                   <td>
-                    <input type="number" step="0.01" class="vvit-input" 
+                     <input type="number" step="0.01" class="vvit-input" 
                            name="marks_obtained_{{ sid }}" 
-                           value="{{ existing_results|dict_get:sid|default:''|dict_get:'marks_obtained'|default:'' }}" 
+                           value="{{ existing_results|dict_get:sid|default:{}|dict_get:'marks_obtained'|default:'' }}" 
                            placeholder="0.00" required>
                   </td>
                   <td>
-                    <input type="number" step="0.01" class="vvit-input" 
+                     <input type="number" step="0.01" class="vvit-input" 
                            name="max_marks_{{ sid }}" 
-                           value="{{ existing_results|dict_get:sid|default:''|dict_get:'max_marks'|default:'100' }}" 
+                           value="{{ existing_results|dict_get:sid|default:{}|dict_get:'max_marks'|default:'100' }}" 
                            placeholder="100.00" required>
                   </td>
                 </tr>
