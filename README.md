@@ -193,6 +193,20 @@ All accounts share the default password: **`vvit@1234`**
 
 ## 🔧 Recent Fixes & Improvements
 
+### Bug Fixes — July 2026
+
+- **Backup filename format bug** (`admin_dashboard/views.py`): Corrected a malformed `strftime` format string `'%Y%md_%H%M%S'` that embedded a literal `d` in every backup filename (e.g. `db_backup_202607d_123456.json`). Fixed to `'%Y%m%d_%H%M%S'` for correct ISO-style dates.
+
+- **Grade not recalculated on result update** (`admin_dashboard/views.py`): `Result.save()` auto-computes grade only when `self.grade` is falsy. When updating existing records via "Add Results" or "Bulk Upload Results", the old stale grade was retained even after marks changed. Fixed by explicitly passing `'grade': ''` in the `update_or_create` defaults for both the manual entry and CSV bulk-upload result flows, forcing a fresh grade calculation on every save.
+
+- **Broken `transaction.atomic()` rollback in Bulk Upload Students** (`admin_dashboard/views.py`): The `raise Exception(...)` that was intended to trigger a database rollback on CSV errors was placed **outside** the `with transaction.atomic()` block, meaning the rollback never actually occurred. Additionally, a misleading **"Successfully imported X students"** flash message was queued to the request before the exception propagated, so users saw a success notice even when all data was being silently rolled back. Fixed by moving the error-check-and-raise **inside** the atomic block, and placing the success message after the block exits cleanly.
+
+- **Chained `dict_get` template filter broken in Add Results form** (`templates/admin_dashboard/add_results.html`): The expression `existing_results|dict_get:sid|default:''|dict_get:'marks_obtained'` used `|default:''` as a mid-chain fallback. When a student had no existing result, `dict_get` returned `None`, then `|default:''` converted it to the empty string `''`, and the second `dict_get` was called on a string — not a dict — always returning `None`. This prevented existing marks from being pre-filled in the form. Fixed by changing `|default:''` → `|default:{}` (empty dict), so the second `dict_get` receives a dict and the trailing `|default` value renders correctly.
+
+---
+
+### Earlier Fixes
+
 - **Notification "Send" button**: Quick-compose link in the navbar dropdown is now visible to HOD and DEO users, not just Admin.
 - **Sidebar active state accuracy**: Faculty sidebar navigation links now correctly use `app_name` matching to prevent false active highlights when HOD users browse from the "My Teaching" section.
 - **DEO profile page**: DEO users now see their assigned branch, employee ID, and access level on their personal profile page.
