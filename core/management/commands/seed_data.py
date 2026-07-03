@@ -456,21 +456,47 @@ class Command(BaseCommand):
             if not b_students or not b_subjs:
                 continue
                 
-            mid1, _ = Exam.objects.get_or_create(
+            mid1_qs = Exam.objects.filter(
                 name=f'{bcode} Mid Term 1', exam_type='mid1', semester=3,
-                year=y2, branch=b_obj,
-                defaults={'date': today - datetime.timedelta(days=30)}
+                year=y2, branch=b_obj
             )
-            mid2, _ = Exam.objects.get_or_create(
+            if mid1_qs.exists():
+                mid1 = mid1_qs.first()
+                mid1_qs.exclude(id=mid1.id).delete()
+            else:
+                mid1 = Exam.objects.create(
+                    name=f'{bcode} Mid Term 1', exam_type='mid1', semester=3,
+                    year=y2, branch=b_obj,
+                    date=today - datetime.timedelta(days=30)
+                )
+
+            mid2_qs = Exam.objects.filter(
                 name=f'{bcode} Mid Term 2', exam_type='mid2', semester=3,
-                year=y2, branch=b_obj,
-                defaults={'date': today - datetime.timedelta(days=5)}
+                year=y2, branch=b_obj
             )
-            final_exam, _ = Exam.objects.get_or_create(
+            if mid2_qs.exists():
+                mid2 = mid2_qs.first()
+                mid2_qs.exclude(id=mid2.id).delete()
+            else:
+                mid2 = Exam.objects.create(
+                    name=f'{bcode} Mid Term 2', exam_type='mid2', semester=3,
+                    year=y2, branch=b_obj,
+                    date=today - datetime.timedelta(days=5)
+                )
+
+            final_qs = Exam.objects.filter(
                 name=f'{bcode} Semester Final', exam_type='final', semester=3,
-                year=y2, branch=b_obj,
-                defaults={'date': today - datetime.timedelta(days=2)}
+                year=y2, branch=b_obj
             )
+            if final_qs.exists():
+                final_exam = final_qs.first()
+                final_qs.exclude(id=final_exam.id).delete()
+            else:
+                final_exam = Exam.objects.create(
+                    name=f'{bcode} Semester Final', exam_type='final', semester=3,
+                    year=y2, branch=b_obj,
+                    date=today - datetime.timedelta(days=2)
+                )
             exams_created += 3
             
             for stu in b_students:
