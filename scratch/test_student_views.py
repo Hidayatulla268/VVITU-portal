@@ -3,7 +3,7 @@ import sys
 import django
 import traceback
 
-sys.path.append('c:/Users/HP/OneDrive/Desktop/vvit/vvit_portal_v8_THEME_CALENDAR/vvit_portal')
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'VVITU_Portal.settings')
 django.setup()
