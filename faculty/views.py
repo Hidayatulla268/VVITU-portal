@@ -287,8 +287,17 @@ def reports(request):
         if subject_id:
             att_qs = att_qs.filter(timetable_entry__subject_id=subject_id)
 
-        # Aggregate per student
-        student_map = {}
+        # Aggregate per student — pre-populate with all section students
+        section_students = Student.objects.filter(section_id=section_id, is_active=True, user__is_deleted=False).select_related('user')
+        student_map = {
+            st.id: {
+                'roll':    st.roll_number,
+                'name':    st.user.get_full_name(),
+                'total':   0,
+                'present': 0,
+            }
+            for st in section_students
+        }
         for rec in att_qs:
             sid = rec.student.id
             if sid not in student_map:

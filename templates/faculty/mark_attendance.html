@@ -14,16 +14,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="row g-4">
-  <!-- Filter Panel -->
-  <div class="col-xl-4">
-    <div class="glass-card sticky-top" style="top:80px">
-      <div class="card-header-custom">
-        <h3 class="card-title-custom"><i class="fas fa-sliders me-2 text-accent"></i>Select Class</h3>
-      </div>
-
-      <form id="attendanceForm" method="post" action="{% url 'faculty:mark_attendance' %}">
-        {% csrf_token %}
+<form id="attendanceForm" method="post" action="{% url 'faculty:mark_attendance' %}">
+  {% csrf_token %}
+  <div class="row g-4">
+    <!-- Filter Panel -->
+    <div class="col-xl-4">
+      <div class="glass-card sticky-top" style="top:80px">
+        <div class="card-header-custom">
+          <h3 class="card-title-custom"><i class="fas fa-sliders me-2 text-accent"></i>Select Class</h3>
+        </div>
 
         <!-- Section -->
         <div class="mb-3">
@@ -70,9 +69,8 @@
         <button type="submit" id="saveBtn" class="btn-vvit-success w-100 d-none">
           <i class="fas fa-save me-2"></i>Save Attendance
         </button>
-      </form>
+      </div>
     </div>
-  </div>
 
   <!-- Student Attendance Panel -->
   <div class="col-xl-8">
@@ -149,6 +147,7 @@
     </div>
   </div>
 </div>
+</form>
 {% endblock %}
 
 {% block extra_js %}
@@ -245,13 +244,13 @@ loadBtn.addEventListener('click', async () => {
         <td><strong>${st.roll_number}</strong></td>
         <td>${st.name}</td>
         <td class="text-center">
-          <input type="radio" name="attendance_${st.id}" value="P"
+          <input type="radio" name="attendance_${st.id}" value="P" form="attendanceForm"
                  id="p_${st.id}" class="att-radio att-radio-present" checked
                  onchange="updateCounts()"/>
           <label for="p_${st.id}" class="radio-label-present">P</label>
         </td>
         <td class="text-center">
-          <input type="radio" name="attendance_${st.id}" value="A"
+          <input type="radio" name="attendance_${st.id}" value="A" form="attendanceForm"
                  id="a_${st.id}" class="att-radio att-radio-absent"
                  onchange="updateCounts()"/>
           <label for="a_${st.id}" class="radio-label-absent">A</label>
