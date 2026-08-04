@@ -197,17 +197,25 @@ REST_FRAMEWORK = {
 }
 
 # ─────────────────────────────────────────────
-# EMAIL (configure for production)
+# EMAIL CONFIGURATION (SMTP & LIVE MAILING)
 # ─────────────────────────────────────────────
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# Production:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
-DEFAULT_FROM_EMAIL = 'noreply@vvitu.ac.in'
+# Automatically switches to SMTP Backend when EMAIL_HOST_USER & EMAIL_HOST_PASSWORD exist in environment.
+EMAIL_HOST          = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ['true', '1', 'yes']
+EMAIL_USE_SSL       = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ['true', '1', 'yes']
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER') or os.environ.get('EMAIL_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD') or os.environ.get('EMAIL_PASSWORD', '')
+
+DEFAULT_FROM_EMAIL  = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    f"VVITU Portal <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'VVITU Portal <noreply@vvitu.ac.in>'
+)
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # ─────────────────────────────────────────────
 # ATTENDANCE CONFIG
@@ -227,20 +235,6 @@ COLLEGE_WEBSITE = 'https://www.vvitu.ac.in'
 ADMIN_SITE_HEADER = 'VVITU Portal Administration'
 ADMIN_SITE_TITLE  = 'VVITU Admin'
 ADMIN_INDEX_TITLE = 'VVITU Site Administration'
-
-# ─────────────────────────────────────────────
-# EMAIL CONFIGURATION
-# For local testing — emails print to terminal
-# For production — change to SMTP settings below
-# ─────────────────────────────────────────────
-# ── Uncomment below for real Gmail sending in production ──
-# EMAIL_BACKEND    = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST       = 'smtp.gmail.com'
-# EMAIL_PORT       = 587
-# EMAIL_USE_TLS    = True
-# EMAIL_HOST_USER  = os.environ.get('EMAIL_USER')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')  # Gmail App Password
-# DEFAULT_FROM_EMAIL  = 'VVITU Portal <noreply@vvitu.ac.in>'
 
 # ---------------------------------------------
 # AI CHATBOT (VBot)  Gemini API

@@ -111,12 +111,22 @@ CSRF_COOKIE_SAMESITE    = 'Lax'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # ── Email (configure via environment variables) ──────────────────────────────
-EMAIL_BACKEND       = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST          = os.environ.get('EMAIL_HOST', '')
+EMAIL_HOST          = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS       = True
-EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ['true', '1', 'yes']
+EMAIL_USE_SSL       = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ['true', '1', 'yes']
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER') or os.environ.get('EMAIL_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD') or os.environ.get('EMAIL_PASSWORD', '')
+
+DEFAULT_FROM_EMAIL  = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    f"VVITU Portal <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'VVITU Portal <noreply@vvitu.ac.in>'
+)
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+else:
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 
 # ── Caching & Session Hardening (Redis Cluster) ─────────────────────────────
 # Automatically switches cache and session engine to Redis if REDIS_URL is set in environment
