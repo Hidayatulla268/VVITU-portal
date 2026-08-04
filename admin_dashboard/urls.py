@@ -29,6 +29,10 @@ urlpatterns = [
     # Timetable
     path('timetable/',               views.manage_timetable,     name='manage_timetable'),
 
+    # Sections Management
+    path('sections/',                views.manage_sections,      name='manage_sections'),
+    path('sections/<int:pk>/delete/',views.delete_section,       name='delete_section'),
+
     # Results
     path('bulk-upload-results/',     views.bulk_upload_results,  name='bulk_upload_results'),
     path('sample-results-csv/',      views.download_sample_results_csv, name='sample_results_csv'),

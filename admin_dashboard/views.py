@@ -471,6 +471,80 @@ def manage_timetable(request):
 
 
 # ═══════════════════════════════════════════════
+# SECTION MANAGEMENT (CUSTOM SECTIONS PER BRANCH & YEAR)
+# ═══════════════════════════════════════════════
+@admin_required
+def manage_sections(request):
+    """
+    Allows Admin to view, create, and manage custom sections 
+    for any Branch and Year as per their preference.
+    """
+    ensure_sections_for_all_branches()
+    branches = Branch.objects.all()
+    years = Year.objects.all().order_by('year')
+
+    selected_branch_id = request.GET.get('branch', '')
+    selected_year_id   = request.GET.get('year', '')
+
+    if request.method == 'POST':
+        branch_id = request.POST.get('branch')
+        year_id   = request.POST.get('year')
+        sec_name  = request.POST.get('name', '').strip().upper()
+
+        if not branch_id or not year_id or not sec_name:
+            messages.error(request, "Branch, Year, and Section Name are all required.")
+        else:
+            branch = get_object_or_404(Branch, id=branch_id)
+            year   = get_object_or_404(Year, id=year_id)
+
+            if Section.objects.filter(branch=branch, year=year, name=sec_name).exists():
+                messages.error(request, f"Section '{sec_name}' already exists for {branch.code} — {year}.")
+            else:
+                new_sec = Section.objects.create(branch=branch, year=year, name=sec_name)
+                messages.success(request, f"Section '{new_sec}' created successfully!")
+                return redirect(f"{request.path}?branch={branch_id}&year={year_id}")
+
+    sections_qs = Section.objects.select_related('branch', 'year').annotate(student_count=Count('student'))
+
+    if selected_branch_id:
+        sections_qs = sections_qs.filter(branch_id=selected_branch_id)
+    if selected_year_id:
+        sections_qs = sections_qs.filter(year_id=selected_year_id)
+
+    sections = sections_qs.order_by('branch__name', 'year__year', 'name')
+
+    context = {
+        'branches': branches,
+        'years': years,
+        'sections': sections,
+        'selected_branch_id': selected_branch_id,
+        'selected_year_id': selected_year_id,
+    }
+    return render(request, 'admin_dashboard/manage_sections.html', context)
+
+
+@admin_required
+def delete_section(request, pk):
+    """Allows Admin to delete a section if no students are assigned to it."""
+    section = get_object_or_404(Section, pk=pk)
+    sec_name = str(section)
+
+    if request.method == 'POST':
+        if section.student_set.exists():
+            messages.error(request, f"Cannot delete '{sec_name}': {section.student_set.count()} students are assigned to this section.")
+            return redirect('admin_dashboard:manage_sections')
+
+        section.delete()
+        messages.success(request, f"Section '{sec_name}' deleted successfully.")
+        return redirect('admin_dashboard:manage_sections')
+
+    return render(request, 'admin_dashboard/confirm_delete.html', {
+        'object_name': f"Section {sec_name}",
+        'cancel_url': 'admin_dashboard:manage_sections'
+    })
+
+
+# ═══════════════════════════════════════════════
 # ATTENDANCE OVERRIDE
 # ═══════════════════════════════════════════════
 @admin_required

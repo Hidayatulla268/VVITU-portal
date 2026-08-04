@@ -297,6 +297,9 @@
       <a href="{% url 'admin_dashboard:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty</span>
       </a>
+      <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-cubes nav-icon"></i><span>Manage Sections</span>
+      </a>
       <a href="{% url 'admin_dashboard:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-calendar-alt nav-icon"></i><span>Timetable</span>
       </a>
