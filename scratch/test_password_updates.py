@@ -135,6 +135,20 @@ def run_tests():
         assert res.status_code == 302, f"Faculty self-service change password should redirect, got {res.status_code}"
         print("[SUCCESS] Faculty self-service password change correctly blocked & redirected!")
 
+    # Clean up test passwords so subsequent tests pass cleanly
+    if admin_user:
+        admin_user.set_password('vvit@1234')
+        admin_user.save()
+    if student_obj and student_obj.user:
+        student_obj.user.set_password('vvit@1234')
+        student_obj.user.save()
+    if faculty_obj and faculty_obj.user:
+        faculty_obj.user.set_password('vvit@1234')
+        faculty_obj.user.save()
+    if hod_user:
+        hod_user.set_password('vvit@1234')
+        hod_user.save()
+
     print("--- ALL VERIFICATION TESTS PASSED SUCCESSFULLY! ---")
 
 if __name__ == '__main__':
