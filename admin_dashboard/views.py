@@ -722,13 +722,13 @@ Exam        : {exam.name}
 Branch      : {student.branch.code if student.branch else 'N/A'}
 Year        : {student.year} | Semester : {exam.semester}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+--------------------------------------------------
 SUBJECT RESULTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+--------------------------------------------------
 {chr(10).join(lines)}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+--------------------------------------------------
 Overall Percentage : {overall_pct}%
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+--------------------------------------------------
 
 You can also view your detailed results by logging into the VVIT Portal:
 {django_settings.COLLEGE_WEBSITE}/student/results/
