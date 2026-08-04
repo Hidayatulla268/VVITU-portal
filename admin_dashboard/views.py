@@ -190,6 +190,15 @@ def edit_student(request, pk):
         u.phone      = p.get('phone',      u.phone)
         email = p.get('email', '').strip()
         u.email = email or f"{student.roll_number}@vvitu.net"
+
+        password = p.get('password', '').strip()
+        if password:
+            if len(password) < 6:
+                messages.error(request, "Password must be at least 6 characters long.")
+                return redirect('admin_dashboard:edit_student', pk=pk)
+            u.set_password(password)
+            student.is_first_login = False
+
         u.save()
 
         student.branch_id    = p.get('branch',        student.branch_id)
@@ -200,7 +209,7 @@ def edit_student(request, pk):
         student.parent_name  = p.get('parent_name', '').strip() or None
         student.parent_mobile = p.get('parent_mobile', '').strip() or None
         student.save()
-        messages.success(request, "Student updated.")
+        messages.success(request, "Student details and password updated successfully.")
         return redirect('admin_dashboard:manage_students')
 
     context = {
@@ -329,6 +338,14 @@ def edit_faculty(request, pk):
         role = p.get('role', u.role)
         if role in dict(u.ROLE_CHOICES):
             u.role = role
+
+        password = p.get('password', '').strip()
+        if password:
+            if len(password) < 6:
+                messages.error(request, "Password must be at least 6 characters long.")
+                return redirect('admin_dashboard:edit_faculty', pk=pk)
+            u.set_password(password)
+
         u.save()
 
         fac.department_id = p.get('department') or fac.department_id

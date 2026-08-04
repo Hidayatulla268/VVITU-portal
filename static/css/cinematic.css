@@ -169,16 +169,18 @@ body::before {
 ══════════════════════════════════════════════════════════════════ */
 
 .vvit-navbar {
-  background: rgba(4,4,8,0.78) !important;
+  background: rgba(4,4,8,0.85) !important;
   backdrop-filter: saturate(180%) blur(28px) !important;
   -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
   box-shadow:
     0 1px 0 rgba(255,255,255,0.04),
     0 4px 24px rgba(0,0,0,0.6),
     0 0 80px rgba(220,38,38,0.06);
-  position: relative;
-  overflow: hidden;
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 1000 !important;
+  overflow: visible !important;
 }
 
 /* Volumetric light streak on navbar */
@@ -194,6 +196,7 @@ body::before {
     rgba(139,92,246,0.5) 70%,
     transparent 100%);
   animation: navbar-light-sweep 6s ease-in-out infinite;
+  pointer-events: none;
 }
 
 @keyframes navbar-light-sweep {
@@ -219,13 +222,17 @@ body::before {
 ══════════════════════════════════════════════════════════════════ */
 
 .vvit-sidebar {
-  background: rgba(4,4,9,0.88) !important;
+  background: rgba(4,4,9,0.92) !important;
   backdrop-filter: saturate(150%) blur(20px) !important;
   -webkit-backdrop-filter: saturate(150%) blur(20px) !important;
-  border-right: 1px solid rgba(255,255,255,0.06) !important;
+  border-right: 1px solid rgba(255,255,255,0.08) !important;
   box-shadow: 4px 0 30px rgba(0,0,0,0.5);
-  position: relative;
-  overflow: hidden;
+  position: fixed !important;
+  top: var(--navbar-h); bottom: 0; left: 0;
+  width: var(--sidebar-w);
+  z-index: 990 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 /* Sidebar subtle gradient sheen */

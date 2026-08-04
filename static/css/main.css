@@ -681,10 +681,12 @@ a:hover { color: var(--text-primary); }
 
 /* ── 14. BUTTONS ──────────────────────────────────────────────────── */
 .btn-vvit-primary,
+.btn-vvit-secondary,
 .btn-vvit-outline,
 .btn-vvit-success,
 .btn-sm-accent,
 .btn-sm-danger,
+.btn-sm-edit,
 .btn-download {
   display: inline-flex;
   align-items: center;
@@ -695,7 +697,7 @@ a:hover { color: var(--text-primary); }
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
-  transition: all var(--t-fast);
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
   border: 1px solid transparent;
   text-decoration: none;
   white-space: nowrap;
@@ -703,58 +705,99 @@ a:hover { color: var(--text-primary); }
 
 .btn-vvit-primary {
   background: linear-gradient(135deg, var(--accent), #991b1b);
-  color: #fff;
+  color: #ffffff !important;
   border-color: var(--accent);
-  box-shadow: 0 4px 14px rgba(220,38,38,0.3);
+  box-shadow: 0 4px 14px rgba(220,38,38,0.35);
 }
 .btn-vvit-primary:hover {
   background: linear-gradient(135deg, var(--accent-bright), var(--accent));
-  color: #fff;
-  box-shadow: 0 6px 20px rgba(220,38,38,0.45);
-  transform: translateY(-1px);
+  color: #ffffff !important;
+  box-shadow: 0 6px 22px rgba(220,38,38,0.55);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-vvit-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary) !important;
+  border-color: var(--clr-border-2);
+}
+.btn-vvit-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.12);
 }
 
 .btn-vvit-outline {
   background: transparent;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   border-color: var(--clr-border-2);
 }
 .btn-vvit-outline:hover {
-  background: rgba(255,255,255,0.05);
-  border-color: var(--accent);
-  color: var(--accent-bright);
+  background: rgba(220, 38, 38, 0.12);
+  border-color: var(--accent-bright);
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
 }
 
 .btn-vvit-success {
   background: linear-gradient(135deg, #059669, #065f46);
-  color: #fff;
+  color: #ffffff !important;
   border-color: #059669;
 }
 .btn-vvit-success:hover {
   background: linear-gradient(135deg, #10b981, #059669);
-  color: #fff;
-  transform: translateY(-1px);
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transform: translateY(-2px) scale(1.02);
 }
 
 .btn-sm-accent {
   padding: 5px 12px;
   font-size: 0.75rem;
   background: var(--accent-subtle);
-  color: var(--accent-bright);
+  color: var(--accent-bright) !important;
   border-color: rgba(220,38,38,0.3);
   border-radius: 6px;
 }
-.btn-sm-accent:hover { background: var(--accent); color: #fff; }
+.btn-sm-accent:hover {
+  background: var(--accent);
+  color: #ffffff !important;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(220,38,38,0.35);
+}
+
+.btn-sm-edit {
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.35);
+  border-radius: 6px;
+}
+.btn-sm-edit:hover {
+  background: #f59e0b;
+  color: #000000 !important;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
 
 .btn-sm-danger {
   padding: 5px 12px;
   font-size: 0.75rem;
-  background: rgba(239,68,68,0.12);
-  color: var(--clr-danger);
-  border-color: rgba(239,68,68,0.3);
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--clr-danger) !important;
+  border-color: rgba(239, 68, 68, 0.3);
   border-radius: 6px;
 }
-.btn-sm-danger:hover { background: var(--clr-danger); color: #fff; }
+.btn-sm-danger:hover {
+  background: var(--clr-danger);
+  color: #ffffff !important;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
 
 .btn-download {
   background: linear-gradient(135deg, var(--accent), #7f1d1d);

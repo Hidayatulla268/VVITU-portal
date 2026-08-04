@@ -33,6 +33,10 @@
           <input type="tel" name="phone" class="vvit-input" value="{{ student.user.phone|default:'' }}"/>
         </div>
         <div class="col-md-6">
+          <label class="form-label text-muted">New Password (Optional)</label>
+          <input type="password" name="password" class="vvit-input" placeholder="Leave blank to keep current password" minlength="6"/>
+        </div>
+        <div class="col-md-6">
           <label class="form-label text-muted">Parent Name</label>
           <input type="text" name="parent_name" class="vvit-input" value="{{ student.parent_name|default:'' }}" placeholder="e.g. Satyanarayana"/>
         </div>

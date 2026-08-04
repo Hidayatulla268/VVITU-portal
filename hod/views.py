@@ -424,6 +424,15 @@ def edit_student(request, pk):
         u.phone = p.get('phone', u.phone)
         email = p.get('email', '').strip()
         u.email = email or f"{student.roll_number}@vvitu.net"
+
+        password = p.get('password', '').strip()
+        if password:
+            if len(password) < 6:
+                messages.error(request, "Password must be at least 6 characters long.")
+                return redirect('hod:edit_student', pk=pk)
+            u.set_password(password)
+            student.is_first_login = False
+
         u.save()
         
         student.year_id = p.get('year', student.year_id)
@@ -562,6 +571,14 @@ def edit_faculty(request, pk):
         u.last_name = last_name
         u.phone = p.get('phone', u.phone)
         u.email = p.get('email', '').strip()
+
+        password = p.get('password', '').strip()
+        if password:
+            if len(password) < 6:
+                messages.error(request, "Password must be at least 6 characters long.")
+                return redirect('hod:edit_faculty', pk=pk)
+            u.set_password(password)
+
         u.save()
         
         fac.designation = p.get('designation', fac.designation)

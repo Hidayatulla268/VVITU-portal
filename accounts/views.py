@@ -171,3 +171,46 @@ def profile_view(request):
     }
     return render(request, 'accounts/profile.html', context)
 
+
+# ─────────────────────────────────────────────
+# SELF-SERVICE CHANGE PASSWORD FOR ALL USERS
+# ─────────────────────────────────────────────
+@login_required
+def change_password(request):
+    """
+    Allow any logged-in user (Student, Faculty, HOD, DEO, Admin) to change their password.
+    """
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not current_password or not new_password or not confirm_password:
+            messages.error(request, "All password fields are required.")
+        elif not request.user.check_password(current_password):
+            messages.error(request, "Current password is incorrect.")
+        elif new_password != confirm_password:
+            messages.error(request, "New passwords do not match.")
+        elif len(new_password) < 6:
+            messages.error(request, "New password must be at least 6 characters long.")
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+
+            # If user is a student on first login, update flag
+            try:
+                if hasattr(request.user, 'student_profile') and request.user.student_profile.is_first_login:
+                    request.user.student_profile.is_first_login = False
+                    request.user.student_profile.save()
+            except Exception:
+                pass
+
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+
+            messages.success(request, "Your password has been changed successfully!")
+            return redirect('accounts:profile')
+
+    return render(request, 'accounts/change_password.html')
+
+

@@ -8,12 +8,14 @@ A production-grade college ERP web application built with Django, featuring a gl
 ## 🚀 Key Features
 
 *   **Role-Based Access Control**: Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin — each with tailored sidebar navigation and scoped permissions.
+*   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) for all authenticated users, plus administrative password reset capabilities for Admin, HOD, and DEO roles when editing student, faculty, or staff profiles.
 *   **HOD Dashboard**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and override branch attendance at any time.
 *   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits must go through the HOD).
 *   **HOD + Teaching Dual-Panel**: HOD users can seamlessly toggle between their HOD administrative panel and their personal Faculty teaching panel using header toggle buttons — both fully accessible from a single login.
 *   **Unified Mail/Notices Board System**: Multi-scoped notifications system allowing Admin, HODs, and DEOs to compose and manage notices targeted to everyone, specific roles, specific branches, specific classes, or single users. Quick "Send" shortcut available in the navbar notification dropdown for all authorized roles.
 *   **Achievements System**: Allows students and faculty to submit academic (curricular) and co-curricular achievements for HOD verification and display on profiles.
-*   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login, locking it against client modification (only admins can reset it).
+*   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login, locking it against client modification (only admins/HODs/DEOs can reset it).
+*   **Glassmorphism & Cinematic UI**: Fully responsive dark mode visual design built with custom CSS tokens, backdrop blur effects, animated gradients, high-contrast typography, and smooth micro-animations.
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
 *   **Faculty Student Results View**: Class Teachers and Counsellors can monitor and review the grades of their assigned students.
 *   **Comprehensive Profile Pages**: Each role (Student, Faculty/HOD, DEO, Admin) has a tailored profile page displaying relevant details — branch, department, employee ID, joining date, and access level.
@@ -165,6 +167,7 @@ All accounts share the default password: **`vvit@1234`**
 |-----------------------------------------|----------------------|---------------------------------------------------|
 | `/accounts/login/`                      | Everyone             | Main login page                                   |
 | `/accounts/profile/`                    | All roles            | Personal profile page (role-specific details)     |
+| `/accounts/change-password/`            | All roles            | Self-service password change page                 |
 | `/accounts/set-password/`               | Students (First)     | Forces student to set custom permanent password   |
 | `/accounts/students/<id>/detail/`       | Admin / HOD / DEO    | Read-only student profile, results, achievements  |
 | `/accounts/faculty/<id>/detail/`        | Admin / HOD / DEO    | Read-only faculty profile, subjects               |
