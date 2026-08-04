@@ -27,7 +27,8 @@ from django.conf import settings as django_settings
 from accounts.models import User, Student, Faculty, DEOProfile
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
-    Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease
+    Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
+    ensure_sections_for_all_branches
 )
 
 
@@ -433,6 +434,7 @@ def assign_counsellor(request):
 # ═══════════════════════════════════════════════
 @admin_required
 def manage_timetable(request):
+    ensure_sections_for_all_branches()
     sections  = Section.objects.select_related('branch', 'year').all()
     subjects  = Subject.objects.select_related('branch', 'year').all()
     faculties = Faculty.objects.select_related('user').filter(is_active=True)

@@ -30,6 +30,35 @@ class Branch(models.Model):
     def __str__(self):
         return f"{self.code} — {self.name}"
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        # Automatically create default sections (A & B) for all 4 academic years on branch creation
+        try:
+            for y_val in [1, 2, 3, 4]:
+                year_obj, _ = Year.objects.get_or_create(year=y_val)
+                for sec_name in ['A', 'B']:
+                    Section.objects.get_or_create(
+                        name=sec_name,
+                        branch=self,
+                        year=year_obj
+                    )
+        except Exception:
+            pass
+
+
+def ensure_sections_for_all_branches():
+    """Ensure every branch in the database has default sections A and B across years 1 to 4."""
+    try:
+        branches = Branch.objects.all()
+        years = [Year.objects.get_or_create(year=y)[0] for y in [1, 2, 3, 4]]
+        for b in branches:
+            for y in years:
+                for sec_name in ['A', 'B']:
+                    Section.objects.get_or_create(name=sec_name, branch=b, year=y)
+    except Exception:
+        pass
+
 
 # ─────────────────────────────────────────────
 # YEAR

@@ -8,7 +8,7 @@ import datetime as dt
 from functools import wraps
 
 from accounts.models import User, Student, Faculty, Achievement
-from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification, ResultRelease
+from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification, ResultRelease, ensure_sections_for_all_branches
 from admin_dashboard.views import _send_result_emails
 
 # ─────────────────────────────────────────────
@@ -199,8 +199,9 @@ def assign_teacher(request):
 # ─────────────────────────────────────────────
 @hod_required
 def manage_timetable(request):
+    ensure_sections_for_all_branches()
     dept = request.department
-    sections = Section.objects.filter(branch=dept).select_related('year')
+    sections = Section.objects.filter(branch=dept).select_related('year', 'branch')
     return render(request, 'hod/manage_timetable.html', {'sections': sections})
 
 @hod_required
