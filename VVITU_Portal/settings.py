@@ -200,16 +200,16 @@ REST_FRAMEWORK = {
 # EMAIL CONFIGURATION (SMTP & LIVE MAILING)
 # ─────────────────────────────────────────────
 # Automatically switches to SMTP Backend when EMAIL_HOST_USER & EMAIL_HOST_PASSWORD exist in environment.
-EMAIL_HOST          = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ['true', '1', 'yes']
-EMAIL_USE_SSL       = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ['true', '1', 'yes']
-EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER') or os.environ.get('EMAIL_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD') or os.environ.get('EMAIL_PASSWORD', '')
+EMAIL_HOST          = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT          = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS       = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL       = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER     = config('EMAIL_HOST_USER', default=config('EMAIL_USER', default=''))
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default=config('EMAIL_PASSWORD', default=''))
 
-DEFAULT_FROM_EMAIL  = os.environ.get(
+DEFAULT_FROM_EMAIL  = config(
     'DEFAULT_FROM_EMAIL',
-    f"VVITU Portal <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'VVITU Portal <noreply@vvitu.ac.in>'
+    default=f"VVITU Portal <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'VVITU Portal <noreply@vvitu.ac.in>'
 )
 
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:

@@ -2,6 +2,16 @@ import os
 import sys
 import django
 
+# Load .env file manually if present
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+if os.path.exists(env_path):
+    with open(env_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                os.environ[k.strip()] = v.strip()
+
 # Setup Django Environment
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'VVITU_Portal.settings')
@@ -12,7 +22,7 @@ from django.core.mail import send_mail
 
 def test_live_smtp_send():
     sender = os.environ.get('EMAIL_HOST_USER') or "hidayatullashaik2006@gmail.com"
-    app_password = os.environ.get('EMAIL_HOST_PASSWORD') or os.environ.get('EMAIL_PASSWORD')
+    app_password = os.environ.get('EMAIL_HOST_PASSWORD') or os.environ.get('EMAIL_PASSWORD') or "cmgk bnoi thlu devh"
     recipient = "hidayatullashaik268@gmail.com"
 
     print("============================================================")
