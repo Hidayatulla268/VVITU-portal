@@ -173,13 +173,18 @@ def profile_view(request):
 
 
 # ─────────────────────────────────────────────
-# SELF-SERVICE CHANGE PASSWORD FOR ALL USERS
+# SELF-SERVICE CHANGE PASSWORD (ADMIN / HOD / DEO ONLY)
 # ─────────────────────────────────────────────
 @login_required
 def change_password(request):
     """
-    Allow any logged-in user (Student, Faculty, HOD, DEO, Admin) to change their password.
+    Allow Admin, HOD, and DEO roles to change their password.
+    Students and Faculty do not have permission to change their password.
     """
+    if request.user.role in ['student', 'faculty', 'lab_technician']:
+        messages.error(request, "Students and Faculty do not have permission to change passwords. Please contact your HOD or Administrator.")
+        return redirect(request.user.get_dashboard_url())
+
     if request.method == 'POST':
         current_password = request.POST.get('current_password', '').strip()
         new_password = request.POST.get('new_password', '').strip()
@@ -196,14 +201,6 @@ def change_password(request):
         else:
             request.user.set_password(new_password)
             request.user.save()
-
-            # If user is a student on first login, update flag
-            try:
-                if hasattr(request.user, 'student_profile') and request.user.student_profile.is_first_login:
-                    request.user.student_profile.is_first_login = False
-                    request.user.student_profile.save()
-            except Exception:
-                pass
 
             from django.contrib.auth import update_session_auth_hash
             update_session_auth_hash(request, request.user)

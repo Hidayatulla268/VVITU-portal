@@ -116,11 +116,13 @@
               <i class="fas fa-user-circle me-2"></i>My Profile
             </a>
           </li>
+          {% if user.role not in 'student faculty lab_technician' %}
           <li>
             <a class="dropdown-item" href="{% url 'accounts:change_password' %}">
               <i class="fas fa-key me-2"></i>Change Password
             </a>
           </li>
+          {% endif %}
           <li><hr class="dropdown-divider" style="border-color: var(--clr-border);"></li>
           <li>
             <a class="dropdown-item" href="{% url 'accounts:logout' %}">

@@ -114,8 +114,26 @@ def run_tests():
 
         response = change_password(req)
         admin_user.refresh_from_db()
-        assert admin_user.check_password('newadminpass999'), "Self-service change password failed!"
-        print("[SUCCESS] Self-service password change verified!")
+        assert admin_user.check_password('newadminpass999'), "Self-service change password failed for admin!"
+        print("[SUCCESS] Self-service password change verified for authorized Admin role!")
+
+    # 5. Test Student & Faculty self-service change password IS RESTRICTED
+    student_obj = Student.objects.first()
+    if student_obj:
+        st_user = student_obj.user
+        req = make_req(factory, 'GET', '/accounts/change-password/')
+        req.user = st_user
+        res = change_password(req)
+        assert res.status_code == 302, f"Student self-service change password should redirect, got {res.status_code}"
+        print("[SUCCESS] Student self-service password change correctly blocked & redirected!")
+
+    fac_user_test = User.objects.filter(role='faculty').first()
+    if fac_user_test:
+        req = make_req(factory, 'GET', '/accounts/change-password/')
+        req.user = fac_user_test
+        res = change_password(req)
+        assert res.status_code == 302, f"Faculty self-service change password should redirect, got {res.status_code}"
+        print("[SUCCESS] Faculty self-service password change correctly blocked & redirected!")
 
     print("--- ALL VERIFICATION TESTS PASSED SUCCESSFULLY! ---")
 

@@ -8,7 +8,7 @@ A production-grade college ERP web application built with Django, featuring a gl
 ## 🚀 Key Features
 
 *   **Role-Based Access Control**: Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin — each with tailored sidebar navigation and scoped permissions.
-*   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) for all authenticated users, plus administrative password reset capabilities for Admin, HOD, and DEO roles when editing student, faculty, or staff profiles.
+*   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) restricted to authorized roles (Admin, HOD, DEO). Students and Faculty are prevented from self-service password changes, requiring password resets to be handled by Admin, HOD, or DEO roles through user management views.
 *   **HOD Dashboard**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and override branch attendance at any time.
 *   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits must go through the HOD).
 *   **HOD + Teaching Dual-Panel**: HOD users can seamlessly toggle between their HOD administrative panel and their personal Faculty teaching panel using header toggle buttons — both fully accessible from a single login.

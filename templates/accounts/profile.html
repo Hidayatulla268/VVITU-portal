@@ -58,11 +58,19 @@
           </div>
         </div>
 
+        {% if user.role not in 'student faculty lab_technician' %}
         <div class="mt-4 pt-3 text-center" style="border-top: 1px dashed var(--clr-border);">
           <a href="{% url 'accounts:change_password' %}" class="btn-vvit-primary w-100 py-2">
             <i class="fas fa-key me-2"></i>Change Password
           </a>
         </div>
+        {% else %}
+        <div class="mt-4 pt-3 text-center" style="border-top: 1px dashed var(--clr-border);">
+          <div class="text-muted small" style="font-size: 0.78rem;">
+            <i class="fas fa-lock me-1 text-accent"></i>Password changes restricted. Contact your HOD or Administrator for password resets.
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
