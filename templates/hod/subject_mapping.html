@@ -33,7 +33,7 @@
       <tbody>
         {% for subj in subjects %}
         <tr>
-          <td><strong>{{ subj.code }}</strong></td>
+          <td><span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size:0.85rem;">{{ subj.short_name }}</span></td>
           <td>{{ subj.name }}</td>
           <td>Year {{ subj.year.year }} | Sem {{ subj.semester }}</td>
           <td>

@@ -112,7 +112,7 @@
             <tr>
               <td><span class="period-badge">P{{ slot.period }}</span></td>
               <td>
-                <div class="fw-600">{{ slot.subject.code }}</div>
+                <div class="fw-bold text-accent" style="font-size:0.9rem;">{{ slot.subject.short_name }}</div>
                 <small class="text-muted">{{ slot.subject.name }}</small>
               </td>
               <td><span class="badge-section small">{{ slot.section }}</span></td>
@@ -155,7 +155,7 @@
             <tr>
               <td><span class="period-badge bg-info text-white">P{{ tr.timetable_entry.period }}</span></td>
               <td>
-                <div class="fw-600">{{ tr.timetable_entry.subject.code }} — {{ tr.timetable_entry.section }}</div>
+                <div class="fw-bold text-accent" style="font-size:0.9rem;">{{ tr.timetable_entry.subject.short_name }} — {{ tr.timetable_entry.section }}</div>
                 <small class="text-muted">{{ tr.timetable_entry.subject.name }}</small>
               </td>
               <td>
@@ -197,7 +197,10 @@
             <tr>
               <td><strong>{{ slot.day }}</strong></td>
               <td><span class="period-badge">P{{ slot.period }}</span></td>
-              <td>{{ slot.subject.code }} <small class="text-muted">({{ slot.subject.name }})</small></td>
+              <td>
+                <span class="badge bg-accent text-dark fw-bold px-2 py-1 me-1" style="font-size:0.8rem;">{{ slot.subject.short_name }}</span>
+                <small class="text-light">{{ slot.subject.name }}</small>
+              </td>
               <td><span class="badge-section small">{{ slot.section }}</span></td>
               <td><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</td>
             </tr>
@@ -247,7 +250,7 @@
         {% for tr in transferred_given_today %}
         <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
           <div>
-            <strong>P{{ tr.timetable_entry.period }}: {{ tr.timetable_entry.subject.code }}</strong> ({{ tr.timetable_entry.section }})
+            <strong>P{{ tr.timetable_entry.period }}: {{ tr.timetable_entry.subject.short_name }}</strong> ({{ tr.timetable_entry.section }})
             <br>
             <small class="text-muted">Substitute: {{ tr.substitute_faculty.user.get_full_name }}</small>
           </div>
@@ -267,7 +270,7 @@
       <div class="subject-pill-list">
         {% for subj in subjects %}
         <div class="subject-pill">
-          <span class="pill-code">{{ subj.code }}</span>
+          <span class="badge bg-accent text-dark fw-bold px-2 py-1 me-1" style="font-size:0.8rem;">{{ subj.short_name }}</span>
           <span class="pill-name">{{ subj.name }}</span>
           <span class="pill-year text-muted small">{{ subj.branch.code }} Y{{ subj.year.year }}</span>
         </div>
@@ -301,7 +304,7 @@
             <select name="timetable_id" class="form-select" required>
               <option value="">-- Choose Class Slot --</option>
               {% for slot in timetable_today %}
-              <option value="{{ slot.id }}">Period {{ slot.period }} — {{ slot.subject.code }} ({{ slot.section }}) [Room: {{ slot.room_number|default:"Room 101" }}]</option>
+              <option value="{{ slot.id }}">Period {{ slot.period }} — {{ slot.subject.short_name }} ({{ slot.section }}) [Room: {{ slot.room_number|default:"Room 101" }}]</option>
               {% endfor %}
             </select>
           </div>

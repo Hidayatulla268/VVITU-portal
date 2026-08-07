@@ -177,7 +177,7 @@
       <tbody>
         {% for entry in subject_report %}
         <tr>
-          <td><strong>{{ entry.subject.code }}</strong></td>
+          <td><span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size:0.85rem;">{{ entry.subject.short_name }}</span></td>
           <td>
             {{ entry.subject.name }}
             {% if entry.subject.is_lab %}

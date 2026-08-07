@@ -46,7 +46,7 @@
         {% for sub in page %}
         <tr>
           <td class="text-muted small">{{ forloop.counter }}</td>
-          <td><span class="badge bg-dark border border-secondary text-light px-2 py-1">{{ sub.code }}</span></td>
+          <td><span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size:0.85rem;">{{ sub.short_name }}</span></td>
           <td class="fw-bold">{{ sub.name }}</td>
           <td>{{ sub.year }}</td>
           <td>Sem {{ sub.semester }}</td>

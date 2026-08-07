@@ -43,7 +43,7 @@
       <select name="subject" class="vvit-select">
         <option value="">— All Subjects —</option>
         {% for subj in subjects %}
-        <option value="{{ subj.id }}" {% if subject_id == subj.id|stringformat:"s" %}selected{% endif %}>{{ subj.code }}</option>
+        <option value="{{ subj.id }}" {% if subject_id == subj.id|stringformat:"s" %}selected{% endif %}>{{ subj.short_name }} — {{ subj.name }}</option>
         {% endfor %}
       </select>
     </div>

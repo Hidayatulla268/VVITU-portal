@@ -81,7 +81,7 @@
           <td><strong>{{ rec.student.roll_number }}</strong></td>
           <td>{{ rec.student.user.get_full_name }}</td>
           <td>{{ rec.timetable_entry.section }}</td>
-          <td>{{ rec.timetable_entry.subject.code }}</td>
+          <td><span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size:0.8rem;">{{ rec.timetable_entry.subject.short_name }}</span></td>
           <td><span class="period-badge">P{{ rec.timetable_entry.period }}</span></td>
           <td>
             <span class="status-badge {% if rec.status == 'P' %}status-present{% else %}status-absent{% endif %}">
