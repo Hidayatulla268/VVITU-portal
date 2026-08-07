@@ -24,45 +24,74 @@
           <h3 class="card-title-custom"><i class="fas fa-sliders me-2 text-accent"></i>Select Class</h3>
         </div>
 
-        <!-- Section -->
+        <!-- Course Filter -->
         <div class="mb-3">
-          <label class="form-label text-muted">Section</label>
-          <select id="sectionSelect" name="section" class="vvit-select" required>
-            <option value="">— Choose Section —</option>
-            {% for sec in sections %}
-            <option value="{{ sec.id }}">{{ sec }}</option>
+          <label class="form-label text-muted">Course</label>
+          <select id="courseSelect" class="vvit-select">
+            <option value="">— All Courses (B.Tech, BBA, MBA, M.Tech) —</option>
+            {% for c in courses %}
+            <option value="{{ c.code }}">{{ c.code }} — {{ c.name }}</option>
             {% endfor %}
           </select>
         </div>
 
-        <!-- Date -->
+        <!-- Section Select -->
         <div class="mb-3">
-          <label class="form-label text-muted">Date</label>
+          <label class="form-label text-muted">Section & Branch</label>
+          <select id="sectionSelect" name="section" class="vvit-select" required>
+            <option value="">— Choose Class Section —</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}" data-course="{{ sec.branch.course.code|default:'B.Tech' }}" data-branch="{{ sec.branch.code }}">[{% if sec.branch.course %}{{ sec.branch.course.code }}{% else %}B.Tech{% endif %}] {{ sec }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Date Calendar Selector -->
+        <div class="mb-3">
+          <label class="form-label text-muted">Attendance Date</label>
           <div class="date-input-wrapper">
             <input type="date" name="date" id="dateInput" class="vvit-input"
                    value="{{ today }}" min="{{ min_date }}" max="{{ today }}" required/>
             <i class="fas fa-calendar-days cal-icon"></i>
           </div>
-          <small class="text-muted mt-1 d-block">
+          <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
             <i class="fas fa-info-circle me-1"></i>
-            You can edit attendance from {{ min_date }} to today only.
+            Select calendar date (Allowed window: {{ min_date }} to {{ today }}).
           </small>
         </div>
 
         <!-- Day (auto-filled) -->
         <input type="hidden" name="day" id="dayHidden"/>
 
-        <!-- Timetable Slot -->
+        <!-- Timetable Slot Selector -->
         <div class="mb-3">
-          <label class="form-label text-muted">Period / Subject</label>
+          <label class="form-label text-muted">Class Period & Subject</label>
           <select id="slotSelect" name="slot" class="vvit-select" required disabled>
-            <option value="">— Select section first —</option>
+            <option value="">— Select section & date first —</option>
           </select>
+        </div>
+
+        <!-- Timetable Slot Details Card (Live Timing & Room Preview) -->
+        <div id="slotDetailsCard" class="p-3 mb-3 border rounded-3 bg-dark bg-opacity-25 d-none">
+          <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-primary me-2" id="previewPeriodBadge">P1</span>
+            <strong class="text-accent" id="previewSubjectCode">CSE101</strong>
+          </div>
+          <div class="small text-light mb-1" id="previewSubjectName">Programming in Python</div>
+          <div class="small text-muted mb-1">
+            <i class="far fa-clock me-1 text-warning"></i><span id="previewTiming">09:00 AM - 09:50 AM</span>
+          </div>
+          <div class="small text-muted mb-1">
+            <i class="fas fa-door-open me-1 text-info"></i><span id="previewRoom">Room 101</span>
+          </div>
+          <div class="small text-success fw-bold mt-2" id="previewMappingStatus">
+            <i class="fas fa-magic me-1"></i>Auto-mapped to your scheduled timetable period!
+          </div>
         </div>
 
         <!-- Load students button -->
         <button type="button" id="loadStudentsBtn" class="btn-vvit-primary w-100 mb-3" disabled>
-          <i class="fas fa-users me-2"></i>Load Students
+          <i class="fas fa-users me-2"></i>Load Class Roll Sheet
         </button>
 
         <!-- Hidden save button triggered from the attendance panel -->
@@ -156,6 +185,7 @@ const AJAX_STUDENTS_URL  = "{% url 'faculty:ajax_students' %}";
 const AJAX_TIMETABLE_URL = "{% url 'faculty:ajax_timetable' %}";
 const CSRFTOKEN          = "{{ csrf_token }}";
 
+const courseSelect  = document.getElementById('courseSelect');
 const sectionSelect = document.getElementById('sectionSelect');
 const dateInput     = document.getElementById('dateInput');
 const slotSelect    = document.getElementById('slotSelect');
@@ -167,11 +197,34 @@ const attRows       = document.getElementById('attendanceRows');
 const tbody         = document.getElementById('studentTableBody');
 const markAllP      = document.getElementById('markAllPresent');
 const markAllA      = document.getElementById('markAllAbsent');
+const slotCard      = document.getElementById('slotDetailsCard');
 
-// Derive JS day name from a date string (YYYY-MM-DD or Date object)
+let currentSlotsData = [];
+
+// Filter Sections by Course selection
+if (courseSelect) {
+  courseSelect.addEventListener('change', () => {
+    const selectedCourse = courseSelect.value;
+    Array.from(sectionSelect.options).forEach(opt => {
+      if (!opt.value) return;
+      const secCourse = opt.getAttribute('data-course');
+      if (!selectedCourse || secCourse === selectedCourse) {
+        opt.style.display = '';
+      } else {
+        opt.style.display = 'none';
+      }
+    });
+    sectionSelect.value = '';
+    slotSelect.innerHTML = '<option value="">— Select section & date first —</option>';
+    slotSelect.disabled = true;
+    slotCard.classList.add('d-none');
+    loadBtn.disabled = true;
+  });
+}
+
+// Derive JS day name from a date string
 function getDayName(dateStr) {
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  // Parse date as local (not UTC) to avoid timezone off-by-one
   const parts = String(dateStr).split('-');
   const d = parts.length === 3
     ? new Date(+parts[0], +parts[1]-1, +parts[2])
@@ -179,11 +232,32 @@ function getDayName(dateStr) {
   return days[d.getDay()];
 }
 
-// Get current date value from input (works with flatpickr altInput)
 function getDateValue() {
   const raw = document.getElementById('dateInput');
-  // flatpickr stores YYYY-MM-DD in the real input, altInput shows human readable
   return raw._flatpickr ? raw._flatpickr.formatDate(raw._flatpickr.selectedDates[0] || new Date(), 'Y-m-d') : raw.value;
+}
+
+function updateSlotPreviewCard(selectedSlotId) {
+  const slotObj = currentSlotsData.find(s => String(s.id) === String(selectedSlotId));
+  if (!slotObj) {
+    slotCard.classList.add('d-none');
+    return;
+  }
+  document.getElementById('previewPeriodBadge').textContent = `P${slotObj.period}`;
+  document.getElementById('previewSubjectCode').textContent  = slotObj.subject_code;
+  document.getElementById('previewSubjectName').textContent  = slotObj.subject_name;
+  document.getElementById('previewTiming').textContent       = slotObj.timing;
+  document.getElementById('previewRoom').textContent         = slotObj.room_number || 'Room 101';
+  
+  const statusEl = document.getElementById('previewMappingStatus');
+  if (slotObj.is_my_slot) {
+    statusEl.className = 'small text-success fw-bold mt-2';
+    statusEl.innerHTML = '<i class="fas fa-magic me-1"></i>Auto-mapped to your scheduled timetable period!';
+  } else {
+    statusEl.className = 'small text-warning fw-bold mt-2';
+    statusEl.innerHTML = `<i class="fas fa-user-clock me-1"></i>Instructor: ${slotObj.faculty_name}`;
+  }
+  slotCard.classList.remove('d-none');
 }
 
 // Fetch timetable slots for current section + date day
@@ -192,25 +266,52 @@ async function loadSlots() {
   const day = getDayName(getDateValue());
   dayHidden.value = day;
 
-  if (!sectionId) return;
+  if (!sectionId) {
+    slotSelect.innerHTML = '<option value="">— Select section & date first —</option>';
+    slotSelect.disabled = true;
+    slotCard.classList.add('d-none');
+    loadBtn.disabled = true;
+    return;
+  }
 
-  slotSelect.innerHTML = '<option value="">Loading…</option>';
+  slotSelect.innerHTML = '<option value="">Loading timetable slots…</option>';
   slotSelect.disabled  = true;
   loadBtn.disabled     = true;
+  slotCard.classList.add('d-none');
 
   try {
     const res  = await fetch(`${AJAX_TIMETABLE_URL}?section_id=${sectionId}&day=${day}`);
     const data = await res.json();
+    currentSlotsData = data.slots || [];
 
-    slotSelect.innerHTML = '<option value="">— Select Period —</option>';
-    data.slots.forEach(s => {
+    slotSelect.innerHTML = '<option value="">— Select Period Slot —</option>';
+    let autoSelectedId = null;
+
+    currentSlotsData.forEach(s => {
       const opt = document.createElement('option');
       opt.value = s.id;
-      opt.textContent = `P${s.period} — ${s.subject_code}: ${s.subject_name}`;
+      const isMine = s.is_my_slot ? " (Your Class ⭐)" : ` (${s.faculty_name})`;
+      opt.textContent = `P${s.period} [${s.timing}] — ${s.subject_code}: ${s.subject_name}${isMine}`;
       slotSelect.appendChild(opt);
+
+      // Auto-preselect first slot belonging to this faculty
+      if (s.is_my_slot && !autoSelectedId) {
+        autoSelectedId = s.id;
+      }
     });
+
     slotSelect.disabled = false;
-    loadBtn.disabled    = !slotSelect.value;
+
+    // Auto-select mapped slot if available
+    if (autoSelectedId) {
+      slotSelect.value = autoSelectedId;
+      updateSlotPreviewCard(autoSelectedId);
+    } else if (currentSlotsData.length > 0) {
+      slotSelect.value = currentSlotsData[0].id;
+      updateSlotPreviewCard(currentSlotsData[0].id);
+    }
+
+    loadBtn.disabled = !slotSelect.value;
   } catch(e) {
     slotSelect.innerHTML = '<option value="">Error loading slots</option>';
   }
@@ -218,6 +319,7 @@ async function loadSlots() {
 
 slotSelect.addEventListener('change', () => {
   loadBtn.disabled = !slotSelect.value;
+  updateSlotPreviewCard(slotSelect.value);
 });
 
 sectionSelect.addEventListener('change', loadSlots);

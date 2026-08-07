@@ -102,8 +102,12 @@
 
       <div class="user-chip dropdown">
         <button class="user-chip-btn dropdown-toggle" data-bs-toggle="dropdown" type="button">
-          <div class="user-avatar">
-            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+          <div class="user-avatar overflow-hidden d-flex align-items-center justify-content-center">
+            {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+            {% else %}
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            {% endif %}
           </div>
           <div class="user-meta d-none d-md-flex flex-column">
             <span class="user-name">{{ user.get_full_name|default:user.username }}</span>

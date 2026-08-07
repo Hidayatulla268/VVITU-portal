@@ -183,9 +183,10 @@ def ajax_get_students(request):
 # ─────────────────────────────────────────────
 @faculty_required
 def ajax_get_timetable(request):
-    """Return JSON timetable slots for (section, day)."""
+    """Return JSON timetable slots for (section, day) with timings, locations, and auto-mapping."""
     section_id = request.GET.get('section_id')
     day        = request.GET.get('day')
+    faculty    = request.faculty
     if not section_id or not day:
         return JsonResponse({'error': 'section_id and day required'}, status=400)
 
@@ -195,15 +196,32 @@ def ajax_get_timetable(request):
         .select_related('subject', 'faculty__user')
         .order_by('period')
     )
-    data = [
-        {
+    period_timings = {
+        1: "09:00 AM - 09:50 AM",
+        2: "09:50 AM - 10:40 AM",
+        3: "10:50 AM - 11:40 AM",
+        4: "11:40 AM - 12:30 PM",
+        5: "01:20 PM - 02:10 PM",
+        6: "02:10 PM - 03:00 PM",
+        7: "03:10 PM - 04:00 PM",
+        8: "04:00 PM - 04:50 PM",
+    }
+    data = []
+    for s in slots:
+        start_t = s.start_time.strftime("%I:%M %p") if getattr(s, 'start_time', None) else None
+        end_t   = s.end_time.strftime("%I:%M %p") if getattr(s, 'end_time', None) else None
+        timing_str = f"{start_t} - {end_t}" if (start_t and end_t) else period_timings.get(s.period, "Scheduled Slot")
+        is_my_slot = (s.faculty == faculty)
+        data.append({
             'id':           s.id,
             'period':       s.period,
             'subject_code': s.subject.code,
             'subject_name': s.subject.name,
-        }
-        for s in slots
-    ]
+            'room_number':  getattr(s, 'room_number', 'Room 101') or 'Room 101',
+            'timing':       timing_str,
+            'faculty_name': s.faculty.full_name if s.faculty else "Faculty",
+            'is_my_slot':   is_my_slot,
+        })
     return JsonResponse({'slots': data})
 
 
@@ -214,13 +232,16 @@ def ajax_get_timetable(request):
 def mark_attendance(request):
     """
     Two-phase view:
-      GET  — render the filter form (section, date, timetable slot).
+      GET  — render the filter form (course, branch, section, date, timetable slot).
       POST — save attendance records & send SMS to parents if absent.
     """
     faculty    = request.faculty
     edit_window = getattr(settings, 'ATTENDANCE_EDIT_WINDOW_DAYS', 2)
     today       = timezone.localdate()
     min_date    = today - datetime.timedelta(days=edit_window - 1)
+
+    from core.models import Course, Branch
+    courses = Course.objects.all().order_by('code')
 
     # Sections where this faculty teaches or has proxy transfer today
     section_ids = list(
@@ -229,14 +250,13 @@ def mark_attendance(request):
         .values_list('section_id', flat=True)
         .distinct()
     )
-    # Include sections from proxy transfers received today
     proxy_sec_ids = list(
         ClassTransfer.objects
         .filter(substitute_faculty=faculty, date=today)
         .values_list('timetable_entry__section_id', flat=True)
     )
     all_sec_ids = list(set(section_ids + proxy_sec_ids))
-    sections = Section.objects.filter(id__in=all_sec_ids).select_related('branch', 'year')
+    sections = Section.objects.filter(id__in=all_sec_ids).select_related('branch', 'branch__course', 'year')
 
     if request.method == 'POST':
         section_id  = request.POST.get('section')
@@ -277,9 +297,10 @@ def mark_attendance(request):
             )
             saved_count += 1
 
-            # Trigger SMS to parent if student is marked absent
+            # Trigger absent notifications to parent & student if marked absent
             if status == 'A':
-                sent = send_absent_sms_to_parent(student, slot, att_date)
+                from core.sms_utils import send_absent_notifications
+                sent = send_absent_notifications(student, slot, att_date)
                 if sent:
                     sms_count += 1
 

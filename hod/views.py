@@ -797,7 +797,8 @@ def release_results(request):
                 student_results[r.student_id]['results'].append(r)
 
             for sid, data in student_results.items():
-                if send_result_sms_to_parent(data['student'], exam, data['results']):
+                from core.sms_utils import send_result_notifications
+                if send_result_notifications(data['student'], exam, data['results']):
                     sms_sent_count += 1
 
             if not release_obj.email_sent:

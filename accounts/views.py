@@ -134,12 +134,25 @@ def set_password(request):
 @login_required
 def profile_view(request):
     """
-    Render personal profile details for Students, Faculty, HOD, DEO, and Admin.
+    Render personal profile details and handle profile picture uploads for all roles.
     """
     user = request.user
     student = None
     faculty = None
     deo_profile = None
+
+    if request.method == 'POST':
+        if 'profile_picture' in request.FILES:
+            user.profile_picture = request.FILES['profile_picture']
+            user.save()
+            messages.success(request, "Profile picture updated successfully!")
+            return redirect('accounts:profile')
+        phone_val = request.POST.get('phone', '').strip()
+        if phone_val:
+            user.phone = phone_val
+            user.save()
+            messages.success(request, "Phone number updated successfully!")
+            return redirect('accounts:profile')
 
     if user.role == 'student':
         try:
@@ -155,7 +168,6 @@ def profile_view(request):
         try:
             from .models import DEOProfile
             deo_profile = user.deo_profile
-            # Also load the Faculty record if the DEO was created via add_faculty
             try:
                 faculty = user.faculty_profile
             except Faculty.DoesNotExist:

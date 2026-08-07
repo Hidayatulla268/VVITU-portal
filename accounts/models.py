@@ -84,12 +84,26 @@ class Student(models.Model):
     is_active    = models.BooleanField(default=True)
     is_first_login = models.BooleanField(default=True)
     parent_name  = models.CharField(max_length=100, blank=True, null=True)
+    parent_occupation = models.CharField(max_length=100, blank=True, null=True)
     parent_mobile = models.CharField(
         max_length=15,
         blank=True,
         null=True,
         validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')],
     )
+    personal_mobile = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')],
+    )
+    gender       = models.CharField(max_length=10, choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], blank=True, null=True)
+    caste        = models.CharField(max_length=50, blank=True, null=True)
+    religion     = models.CharField(max_length=50, blank=True, null=True)
+    permanent_address = models.TextField(blank=True, null=True)
+    present_address   = models.TextField(blank=True, null=True)
+    fees_pending = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Pending fees amount in INR")
+    fees_updated_at   = models.DateTimeField(blank=True, null=True)
 
 
     class Meta:

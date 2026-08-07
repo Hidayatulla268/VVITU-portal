@@ -16,17 +16,27 @@ def student_detail_view(request, pk):
     
     # Access control check
     user = request.user
-    if user.role not in ['admin', 'hod', 'deo']:
-        # Only allow the student to view their own profile
-        is_owner = False
-        if user.role == 'student':
-            try:
-                is_owner = (user.student_profile.pk == student.pk)
-            except Exception:
-                pass
-        if not is_owner:
-            messages.error(request, "You are not authorized to view this profile.")
-            return redirect(user.get_dashboard_url())
+    can_view = False
+
+    if user.role in ['admin', 'hod', 'deo']:
+        can_view = True
+    elif user.role in ['faculty', 'lab_technician']:
+        try:
+            fac = user.faculty_profile
+            if student.class_teacher == fac or student.counsellor == fac or fac.department == student.branch:
+                can_view = True
+        except Exception:
+            pass
+    elif user.role == 'student':
+        try:
+            if user.student_profile.pk == student.pk:
+                can_view = True
+        except Exception:
+            pass
+
+    if not can_view:
+        messages.error(request, "You are not authorized to view this student profile.")
+        return redirect(user.get_dashboard_url())
 
     # If user is a DEO, check if the student belongs to their assigned branch
     if user.role == 'deo':

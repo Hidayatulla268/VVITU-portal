@@ -207,11 +207,17 @@ All accounts share the default password: **`vvit@1234`**
 
 ### New Features & Enhancements — August 2026
 
+- **Extended Optional Student Profiles & Fee Tracking**: Added optional fields (`gender`, `caste`, `religion`, `parent_occupation`, `personal_mobile`, `permanent_address`, `present_address`, `fees_pending`, `fees_updated_at`). Accessible to Admin, HODs, Class Teachers, and Counsellors on student profile detail views (`/accounts/students/<id>/detail/`).
+- **New Course Hierarchy (B.Tech, BBA, MBA, M.Tech)**: Introduced `Course` model linked to `Branch` (`Course -> Branch -> Section`), enabling multi-course degree management across departments.
+- **Attendance Timetable Auto-Mapping & Date Selector**: Enhanced attendance marking with calendar date picker, live class timing previews (`09:00 AM - 09:50 AM`), classroom location badges, and auto-mapping to the logged-in faculty's scheduled timetable period slot for that section and day.
+- **Notification & SMS Target Routing**:
+  - **Parents**: Receive ONLY Absent alerts and Semester Final Results (Grades & CGPA only, raw marks omitted).
+  - **Students**: Receive SMS & Email for Mid Results (marks obtained), Semester Final Results, Absent alerts, Low Attendance alerts (<75%), and notices.
+- **Profile Picture Uploads**: Added user profile picture upload support, stored under `media/profile_pics/`, rendered across navbar avatars, profile pages, and detail views.
 - **Faculty Attendance System**: Introduced `FacultyAttendance` model tracking daily attendance status (`Present`, `Absent`, `On Leave`, `Official Duty`) with check-in timestamps, marked by, and remarks. HODs and Admins can log/manage attendance, while Faculty members can view monthly attendance summaries.
 - **Class Period Substitutions / Transfers**: Added `ClassTransfer` model to handle substitute teaching assignments when faculty are on leave or official duty. Faculty can request period transfers from their dashboard modal or attendance page, allowing substitutes to mark student attendance for assigned slots.
 - **Classroom Location Support**: Extended `Timetable` model with `room_number` field. HODs and Admins can assign room/lab locations (e.g., "Block A - Room 302 / Lab 4") in timetable management, which displays across faculty and student schedule views.
 - **Month-wise Report Filtering**: Enhanced Faculty Reports page with month-year (`<input type="month">`) picker for instant monthly attendance filtering alongside custom date ranges.
-- **Parent SMS Alert Utility**: Added `core/sms_utils.py` with reusable helper methods (`send_absent_sms_to_parent`, `send_result_sms_to_parent`) for instant SMS notifications to parents.
 
 ### Bug Fixes — July 2026
 

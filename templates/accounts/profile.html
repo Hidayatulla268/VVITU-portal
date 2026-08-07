@@ -18,16 +18,27 @@
   <div class="col-lg-4">
     <div class="glass-card text-center py-5 h-100">
       <!-- Avatar Bubble -->
-      <div class="mx-auto mb-4 d-flex align-items-center justify-content-center" 
-           style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #7f1d1d); border: 3px solid var(--accent-bright); box-shadow: var(--shadow-glow);">
-        {% if user.profile_picture %}
-          <img src="{{ user.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-        {% else %}
-          <span style="font-family: var(--font-display); font-weight: 700; font-size: 2.5rem; color: #fff; letter-spacing: 0.05em;">
-            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-          </span>
-        {% endif %}
+      <div class="mx-auto mb-3 position-relative" style="width: 120px; height: 120px;">
+        <div class="d-flex align-items-center justify-content-center overflow-hidden" 
+             style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #7f1d1d); border: 3px solid var(--accent-bright); box-shadow: var(--shadow-glow);">
+          {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
+          {% else %}
+            <span style="font-family: var(--font-display); font-weight: 700; font-size: 2.5rem; color: #fff; letter-spacing: 0.05em;">
+              {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            </span>
+          {% endif %}
+        </div>
       </div>
+
+      <!-- Profile Picture Upload Form -->
+      <form action="{% url 'accounts:profile' %}" method="POST" enctype="multipart/form-data" class="px-3 mb-4">
+        {% csrf_token %}
+        <label for="profilePicInput" class="btn-sm-accent border-0 cursor-pointer d-inline-block text-decoration-none py-1 px-3 small">
+          <i class="fas fa-camera me-1"></i>Change Picture
+        </label>
+        <input type="file" name="profile_picture" id="profilePicInput" accept="image/*" class="d-none" onchange="this.form.submit()">
+      </form>
 
       <h3 style="font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; color: var(--text-primary); margin-bottom: 6px;">
         {{ user.get_full_name|default:user.username }}
