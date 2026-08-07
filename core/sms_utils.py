@@ -118,7 +118,7 @@ def send_result_notifications(student, exam, results_list):
 
     if is_final:
         # Semester Final Result: Grades + CGPA
-        grades_summary = [f"{r.subject.code}:{r.grade or 'N/A'}" for r in results_list if r.subject]
+        grades_summary = [f"{r.subject.short_name}:{r.grade or 'N/A'}" for r in results_list if r.subject]
         grades_str = ", ".join(grades_summary)
 
         # Parent SMS (Grades + CGPA only)
@@ -145,9 +145,23 @@ def send_result_notifications(student, exam, results_list):
             body=student_msg
         )
 
+        # Create In-App Portal Notification for Student
+        try:
+            from core.models import Notification
+            Notification.objects.create(
+                title=f"Results Published: {exam.name}",
+                message=f"Your Semester Final results for {exam.name} are now available. CGPA: {cgpa}. Grades: [{grades_str}]",
+                notif_type=Notification.TYPE_RESULT,
+                target_all=False,
+                target_user=student.user,
+                link="/student/results/"
+            )
+        except Exception as e:
+            logger.error(f"Failed to create in-app result notification: {e}")
+
     else:
         # Mid-Term Results: Mid Marks obtained
-        marks_summary = [f"{r.subject.code}:{int(r.marks_obtained)}/{int(r.max_marks)}" for r in results_list if r.subject]
+        marks_summary = [f"{r.subject.short_name}:{int(r.marks_obtained)}/{int(r.max_marks)}" for r in results_list if r.subject]
         marks_str = ", ".join(marks_summary)
 
         # Mid results sent to Student SMS & Email ONLY (Parents do not receive mid results)
@@ -164,6 +178,20 @@ def send_result_notifications(student, exam, results_list):
             subject=f"[Exam Results Published] {exam.name} Mid Marks",
             body=student_msg
         )
+
+        # Create In-App Portal Notification for Student
+        try:
+            from core.models import Notification
+            Notification.objects.create(
+                title=f"Mid Results Published: {exam.name}",
+                message=f"Your Mid-Term marks for {exam.name} are now available. Marks: [{marks_str}]",
+                notif_type=Notification.TYPE_RESULT,
+                target_all=False,
+                target_user=student.user,
+                link="/student/results/"
+            )
+        except Exception as e:
+            logger.error(f"Failed to create in-app result notification: {e}")
 
     return True
 
