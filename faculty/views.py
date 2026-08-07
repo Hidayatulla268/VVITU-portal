@@ -253,7 +253,7 @@ def mark_attendance(request):
         .values_list('timetable_entry__section_id', flat=True)
     )
     all_sec_ids = list(set(section_ids + proxy_sec_ids))
-    sections = Section.objects.filter(id__in=all_sec_ids).select_related('branch', 'branch__course', 'year')
+    sections = Section.objects.filter(id__in=all_sec_ids).select_related('branch', 'year')
 
     if request.method == 'POST':
         section_id  = request.POST.get('section')

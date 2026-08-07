@@ -10,11 +10,10 @@ from django.test import Client
 from accounts.models import User
 
 client = Client()
-
-# Get test users for roles
-roles = ['admin', 'hod', 'faculty', 'student', 'deo']
 results = []
 
+# 1. Test role dashboards
+roles = ['admin', 'hod', 'faculty', 'student', 'deo']
 for role in roles:
     user = User.objects.filter(role=role, is_deleted=False).first()
     if not user:
@@ -31,10 +30,34 @@ for role in roles:
         print(f"[FAIL] {role.upper()} Dashboard ({dash_url}) -> {resp.status_code}")
         results.append((role, dash_url, resp.status_code))
 
+# 2. Test specific faculty pages
+fac_user = User.objects.filter(role='faculty', is_deleted=False).first()
+if fac_user:
+    client.force_login(fac_user)
+    fac_urls = [
+        '/faculty/mark-attendance/',
+        '/faculty/my-attendance/',
+        '/faculty/transfer-class/',
+        '/faculty/reports/',
+        '/faculty/counselled-students/',
+        '/faculty/student-results/',
+        '/faculty/upload-marks/',
+    ]
+    for url in fac_urls:
+        resp = client.get(url)
+        if resp.status_code == 200:
+            print(f"[PASS] FACULTY View ({url}) -> 200 OK")
+            results.append(('faculty', url, 200))
+        else:
+            print(f"[FAIL] FACULTY View ({url}) -> {resp.status_code}")
+            results.append(('faculty', url, resp.status_code))
+
 print("\n=========================================")
 failures = [r for r in results if r[2] != 200]
 if failures:
-    print(f"FAILED: {len(failures)} HTTP dashboard failures!")
+    print(f"FAILED: {len(failures)} HTTP view failures!")
+    for r in failures:
+        print(f"  - {r[0]}: {r[1]} -> {r[2]}")
 else:
-    print("SUCCESS: All role dashboards loaded with HTTP 200 OK!")
+    print("SUCCESS: All key views & dashboards loaded with HTTP 200 OK!")
 print("=========================================")
