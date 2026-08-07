@@ -215,8 +215,9 @@ def ajax_get_timetable(request):
         data.append({
             'id':           s.id,
             'period':       s.period,
-            'subject_code': s.subject.code,
-            'subject_name': s.subject.name,
+            'subject_code':  s.subject.code,
+            'subject_name':  s.subject.name,
+            'subject_short': s.subject.short_name,
             'room_number':  getattr(s, 'room_number', 'Room 101') or 'Room 101',
             'timing':       timing_str,
             'faculty_name': s.faculty.full_name if s.faculty else "Faculty",

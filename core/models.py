@@ -129,6 +129,21 @@ class Subject(models.Model):
     def __str__(self):
         return f"{self.code} — {self.name}"
 
+    @property
+    def short_name(self):
+        """
+        Returns shortcut / abbreviation name of subject (e.g. 'DBMS' for 'Database Management Systems',
+        'OS' for 'Operating Systems', 'CN' for 'Computer Networks').
+        """
+        ignore = {'and', 'or', 'of', 'in', 'for', 'to', 'the', 'a', 'an', '&', 'lab', 'laboratory', '-'}
+        words = [w for w in self.name.replace('-', ' ').split() if w.lower() not in ignore]
+        if len(words) > 1:
+            abbr = "".join([w[0].upper() for w in words if w[0].isalnum()])
+            if self.is_lab and not abbr.endswith('LAB'):
+                abbr += " LAB"
+            return abbr
+        return self.name
+
 
 # ─────────────────────────────────────────────
 # TIMETABLE ENTRY

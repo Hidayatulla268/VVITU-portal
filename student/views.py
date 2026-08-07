@@ -59,7 +59,7 @@ def _attendance_stats(student):
         subj = rec.timetable_entry.subject
         key  = subj.code
         if key not in stats:
-            stats[key] = {'name': subj.name, 'code': key, 'total': 0, 'present': 0}
+            stats[key] = {'name': subj.name, 'code': key, 'short_name': subj.short_name, 'total': 0, 'present': 0}
         stats[key]['total'] += 1
         if rec.status == 'P':
             stats[key]['present'] += 1

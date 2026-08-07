@@ -109,8 +109,9 @@
                 {% endif %}
               </td>
               <td>
-                <div class="fw-600">{{ e.subject.code }}</div>
-                <small class="text-muted">{{ e.subject.name }}</small>
+                <span class="badge bg-accent text-dark fw-bold px-2 py-1 me-1" style="font-size:0.8rem;">{{ e.subject.short_name }}</span>
+                <span class="text-muted small">({{ e.subject.code }})</span>
+                <div class="small text-light mt-1">{{ e.subject.name }}</div>
               </td>
               <td><span class="badge-section small"><i class="fas fa-door-open text-accent me-1"></i>{{ e.room_number|default:"Room 101" }}</span></td>
               <td>{{ e.faculty.user.get_full_name|default:"—" }}</td>

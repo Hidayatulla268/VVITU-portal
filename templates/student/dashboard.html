@@ -219,9 +219,10 @@
             {% for s in stats %}
             <tr>
               <td>
-                <div class="subject-cell">
-                  <span class="subject-code">{{ s.code }}</span>
-                  <span class="subject-name-small">{{ s.name }}</span>
+                <div class="subject-cell d-flex align-items-center gap-2">
+                  <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size:0.8rem;">{{ s.short_name|default:s.code }}</span>
+                  <span class="text-muted small">({{ s.code }})</span>
+                  <span class="subject-name-small text-light">{{ s.name }}</span>
                 </div>
               </td>
               <td>{{ s.present }}</td>

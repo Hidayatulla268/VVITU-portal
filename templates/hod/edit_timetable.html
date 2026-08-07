@@ -127,7 +127,8 @@
               <td class="align-middle py-3" style="min-width: 100px; height: 80px; background: rgba(255,255,255,0.01); border: 1px solid var(--clr-border);">
                 {% with slot=grid|dict_get:day|dict_get:p %}
                 {% if slot %}
-                <div class="fw-bold text-accent" style="font-size:0.82rem;">{{ slot.subject.code }}</div>
+                <div class="badge bg-accent text-dark fw-bold px-2 py-1 mb-1" style="font-size:0.8rem;">{{ slot.subject.short_name }}</div>
+                <div class="text-muted small mb-1" style="font-size:0.72rem;">({{ slot.subject.code }})</div>
                 <div class="text-muted small" style="font-size:0.75rem;">{{ slot.faculty.user.last_name|default:slot.faculty.user.first_name }}</div>
                 <div class="badge-section small my-1" style="font-size:0.7rem;"><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</div>
                 {% if slot.start_time or slot.end_time %}

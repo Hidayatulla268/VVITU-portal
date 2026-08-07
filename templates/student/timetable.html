@@ -54,8 +54,9 @@
             {% with entry=grid|dict_get:day|dict_get:p %}
             {% if entry %}
             <div class="tt-slot filled">
-              <div class="tt-subject-code">{{ entry.subject.code }}</div>
-              <div class="tt-subject-name">{{ entry.subject.name|truncatechars:20 }}</div>
+              <div class="badge bg-accent text-dark fw-bold px-2 py-1 mb-1" style="font-size: 0.8rem;">{{ entry.subject.short_name }}</div>
+              <div class="text-muted small mb-1" style="font-size: 0.72rem;">{{ entry.subject.code }}</div>
+              <div class="tt-subject-name text-light" style="font-size: 0.75rem;">{{ entry.subject.name|truncatechars:20 }}</div>
               {% if entry.faculty %}
               <div class="tt-faculty">
                 <i class="fas fa-user-tie"></i>

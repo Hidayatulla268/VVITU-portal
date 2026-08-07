@@ -62,11 +62,12 @@
 
         <!-- Timetable Slot Details Card (Live Timing & Room Preview) -->
         <div id="slotDetailsCard" class="p-3 mb-3 border rounded-3 bg-dark bg-opacity-25 d-none">
-          <div class="d-flex align-items-center mb-2">
-            <span class="badge bg-primary me-2" id="previewPeriodBadge">P1</span>
-            <strong class="text-accent" id="previewSubjectCode">CSE101</strong>
+          <div class="d-flex align-items-center mb-2 gap-2 flex-wrap">
+            <span class="badge bg-primary" id="previewPeriodBadge">P1</span>
+            <span class="badge bg-accent text-dark fw-bold px-2 py-1" id="previewSubjectShort" style="font-size:0.88rem; box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);">DBMS</span>
+            <span class="text-muted small" id="previewSubjectCode">(CSE101)</span>
           </div>
-          <div class="small text-light mb-1" id="previewSubjectName">Programming in Python</div>
+          <div class="small text-light mb-1" id="previewSubjectName">Database Management Systems</div>
           <div class="small text-muted mb-1">
             <i class="far fa-clock me-1 text-warning"></i><span id="previewTiming">09:00 AM - 09:50 AM</span>
           </div>
@@ -210,9 +211,10 @@ function updateSlotPreviewCard(selectedSlotId) {
     slotCard.classList.add('d-none');
     return;
   }
-  document.getElementById('previewPeriodBadge').textContent = `P${slotObj.period}`;
-  document.getElementById('previewSubjectCode').textContent  = slotObj.subject_code;
-  document.getElementById('previewSubjectName').textContent  = slotObj.subject_name;
+  document.getElementById('previewPeriodBadge').textContent  = `P${slotObj.period}`;
+  document.getElementById('previewSubjectShort').textContent  = slotObj.subject_short || slotObj.subject_code;
+  document.getElementById('previewSubjectCode').textContent   = `(${slotObj.subject_code})`;
+  document.getElementById('previewSubjectName').textContent   = slotObj.subject_name;
   document.getElementById('previewTiming').textContent       = slotObj.timing;
   document.getElementById('previewRoom').textContent         = slotObj.room_number || 'Room 101';
   
@@ -258,7 +260,8 @@ async function loadSlots() {
       const opt = document.createElement('option');
       opt.value = s.id;
       const isMine = s.is_my_slot ? " (Your Class ⭐)" : ` (${s.faculty_name})`;
-      opt.textContent = `P${s.period} [${s.timing}] — ${s.subject_code}: ${s.subject_name}${isMine}`;
+      const subjShort = s.subject_short || s.subject_code;
+      opt.textContent = `P${s.period} [${s.timing}] — ${subjShort} (${s.subject_code}): ${s.subject_name}${isMine}`;
       slotSelect.appendChild(opt);
 
       // Auto-preselect first slot belonging to this faculty
