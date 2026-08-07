@@ -104,7 +104,7 @@
               <tr>
                 <td><strong>{{ fac.employee_id }}</strong></td>
                 <td>{{ fac.user.get_full_name }}</td>
-                <td><span class="badge bg-light text-dark border">{{ fac.designation|default:"Faculty" }}</span></td>
+                <td><span class="badge-section small">{{ fac.designation|default:"Faculty" }}</span></td>
                 <td>
                   <div class="btn-group" role="group">
                     <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="p_{{ fac.id }}" value="P" {% if not rec or rec.status == 'P' %}checked{% endif %}>

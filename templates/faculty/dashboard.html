@@ -47,7 +47,7 @@
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="kpi-card kpi-info">
-      <div class="kpi-icon"><i class="fas fa-users-class"></i></div>
+      <div class="kpi-icon"><i class="fas fa-chalkboard-teacher"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ section_count }}</span>
         <span class="kpi-label">Sections Handled</span>
@@ -117,7 +117,7 @@
               </td>
               <td><span class="badge-section small">{{ slot.section }}</span></td>
               <td>
-                <span class="badge bg-light text-dark border">
+                <span class="badge-section small">
                   <i class="fas fa-door-open me-1 text-accent"></i>{{ slot.room_number|default:"Room 101" }}
                 </span>
               </td>
@@ -159,7 +159,7 @@
                 <small class="text-muted">{{ tr.timetable_entry.subject.name }}</small>
               </td>
               <td>
-                <span class="badge bg-light text-dark border"><i class="fas fa-door-open text-info me-1"></i>{{ tr.timetable_entry.room_number|default:"Room 101" }}</span>
+                <span class="badge-section small"><i class="fas fa-door-open text-info me-1"></i>{{ tr.timetable_entry.room_number|default:"Room 101" }}</span>
               </td>
               <td>{{ tr.original_faculty.user.get_full_name }}</td>
               <td>

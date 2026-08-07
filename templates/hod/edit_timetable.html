@@ -129,7 +129,7 @@
                 {% if slot %}
                 <div class="fw-bold text-accent" style="font-size:0.82rem;">{{ slot.subject.code }}</div>
                 <div class="text-muted small" style="font-size:0.75rem;">{{ slot.faculty.user.last_name|default:slot.faculty.user.first_name }}</div>
-                <div class="badge bg-light text-dark border my-1" style="font-size:0.7rem;"><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</div>
+                <div class="badge-section small my-1" style="font-size:0.7rem;"><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</div>
                 {% if slot.start_time or slot.end_time %}
                 <div class="text-muted mt-1" style="font-size:0.7rem; font-weight: 500;">
                   <i class="far fa-clock"></i> {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}

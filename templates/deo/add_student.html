@@ -89,12 +89,52 @@
             <input type="text" name="parent_name" class="vvit-input">
           </div>
           <div class="col-md-6">
+            <label class="form-label text-muted">Parent Occupation / Work</label>
+            <input type="text" name="parent_occupation" class="vvit-input" placeholder="e.g. Business / Service">
+          </div>
+          <div class="col-md-6">
             <label class="form-label text-muted">Parent Mobile</label>
             <input type="text" name="parent_mobile" class="vvit-input">
           </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Student Personal Mobile</label>
+            <input type="text" name="personal_mobile" class="vvit-input" placeholder="+91 XXXXXXXXXX">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label text-muted">Gender</label>
+            <select name="gender" class="vvit-select">
+              <option value="">— Select —</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">Caste Category</label>
+            <input type="text" name="caste" class="vvit-input" placeholder="e.g. OC / BC-A / SC / ST">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">Religion</label>
+            <input type="text" name="religion" class="vvit-input" placeholder="e.g. Hindu / Muslim / Christian">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label text-muted fw-bold text-accent"><i class="fas fa-wallet me-1"></i>Fees Pending Amount (₹)</label>
+            <input type="number" step="0.01" min="0" name="fees_pending" class="vvit-input" value="0.00" placeholder="0.00">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label text-muted">Permanent Address</label>
+            <textarea name="permanent_address" class="vvit-input" rows="2" placeholder="Full permanent address"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Present / Local Address</label>
+            <textarea name="present_address" class="vvit-input" rows="2" placeholder="Present hostel/local address"></textarea>
+          </div>
         </div>
         <div class="mt-4">
-          <button type="submit" class="btn-vvit-primary w-100 py-3">Create Student Account</button>
+          <button type="submit" class="btn-vvit-primary w-100 py-3"><i class="fas fa-save me-2"></i>Create Student Account</button>
         </div>
       </form>
     </div>

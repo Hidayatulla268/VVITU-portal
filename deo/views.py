@@ -107,6 +107,14 @@ def add_student(request):
             phone=p.get('phone', ''),
         )
         
+        fees_val = p.get('fees_pending')
+        fees_pending_amount = 0.00
+        if fees_val is not None and fees_val != '':
+            try:
+                fees_pending_amount = float(fees_val)
+            except ValueError:
+                pass
+
         Student.objects.create(
             user=user,
             roll_number=username,
@@ -117,7 +125,16 @@ def add_student(request):
             counsellor_id=p.get('counsellor') or None,
             admission_year=p.get('admission_year', 2024),
             parent_name=p.get('parent_name', '').strip() or None,
+            parent_occupation=p.get('parent_occupation', '').strip() or None,
             parent_mobile=p.get('parent_mobile', '').strip() or None,
+            personal_mobile=p.get('personal_mobile', '').strip() or None,
+            gender=p.get('gender', '').strip() or None,
+            caste=p.get('caste', '').strip() or None,
+            religion=p.get('religion', '').strip() or None,
+            permanent_address=p.get('permanent_address', '').strip() or None,
+            present_address=p.get('present_address', '').strip() or None,
+            fees_pending=fees_pending_amount,
+            fees_updated_at=timezone.now() if fees_pending_amount > 0 else None,
         )
         messages.success(request, f"Student {username} created successfully.")
         return redirect('deo:manage_students')
@@ -170,7 +187,23 @@ def edit_student(request, pk):
         student.class_teacher_id = p.get('class_teacher') or None
         student.counsellor_id = p.get('counsellor') or None
         student.parent_name = p.get('parent_name', '').strip() or None
+        student.parent_occupation = p.get('parent_occupation', '').strip() or None
         student.parent_mobile = p.get('parent_mobile', '').strip() or None
+        student.personal_mobile = p.get('personal_mobile', '').strip() or None
+        student.gender = p.get('gender', '').strip() or None
+        student.caste = p.get('caste', '').strip() or None
+        student.religion = p.get('religion', '').strip() or None
+        student.permanent_address = p.get('permanent_address', '').strip() or None
+        student.present_address = p.get('present_address', '').strip() or None
+
+        fees_val = p.get('fees_pending')
+        if fees_val is not None and fees_val != '':
+            try:
+                student.fees_pending = float(fees_val)
+                student.fees_updated_at = timezone.now()
+            except ValueError:
+                pass
+
         student.save()
         
         messages.success(request, f"Student {student.roll_number} updated.")
