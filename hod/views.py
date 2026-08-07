@@ -8,8 +8,13 @@ import datetime as dt
 from functools import wraps
 
 from accounts.models import User, Student, Faculty, Achievement
-from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification, ResultRelease, ensure_sections_for_all_branches
+from core.models import (
+    Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result,
+    Notification, ResultRelease, FacultyAttendance, ClassTransfer,
+    ensure_sections_for_all_branches
+)
 from admin_dashboard.views import _send_result_emails
+from core.sms_utils import send_result_sms_to_parent
 
 # ─────────────────────────────────────────────
 # DECORATOR
@@ -241,17 +246,19 @@ def edit_timetable(request, section_id):
             fac = get_object_or_404(Faculty, id=faculty_id, department=dept)
             start_time = request.POST.get('start_time') or None
             end_time = request.POST.get('end_time') or None
+            room_number = request.POST.get('room_number', '').strip() or 'Room 101'
             
             Timetable.objects.update_or_create(
                 section=section, day=day, period=period,
                 defaults={
                     'subject': subj,
                     'faculty': fac,
+                    'room_number': room_number,
                     'start_time': start_time,
                     'end_time': end_time,
                 }
             )
-            messages.success(request, f"Timetable slot updated: {day} Period {period} -> {subj.code}.")
+            messages.success(request, f"Timetable slot updated: {day} Period {period} -> {subj.code} ({room_number}).")
             
         return redirect('hod:edit_timetable', section_id=section_id)
         
@@ -263,6 +270,103 @@ def edit_timetable(request, section_id):
         'subjects': subjects,
         'faculties': faculties,
     })
+
+
+# ─────────────────────────────────────────────
+# FACULTY ATTENDANCE MANAGEMENT
+# ─────────────────────────────────────────────
+@hod_required
+def faculty_attendance(request):
+    """
+    Allows HOD to view and mark attendance for department faculty.
+    Supports Month-wise filtering (`month_year`) and Custom Date Range filtering (`date_from`, `date_to`).
+    """
+    dept = request.department
+    today = timezone.localdate()
+
+    month_year = request.GET.get('month_year', '')
+    date_from  = request.GET.get('date_from', '')
+    date_to    = request.GET.get('date_to', '')
+    selected_date_str = request.GET.get('date', today.isoformat())
+
+    try:
+        selected_date = dt.datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        selected_date = today
+
+    department_faculty = Faculty.objects.filter(department=dept, is_active=True, user__is_deleted=False).select_related('user').order_by('employee_id')
+
+    # Save attendance POST
+    if request.method == 'POST':
+        date_param = request.POST.get('date', today.isoformat())
+        try:
+            post_date = dt.datetime.strptime(date_param, '%Y-%m-%d').date()
+        except ValueError:
+            post_date = today
+
+        saved_count = 0
+        for fac in department_faculty:
+            status = request.POST.get(f'status_{fac.id}', 'P')
+            remarks = request.POST.get(f'remarks_{fac.id}', '').strip()
+            if status not in ('P', 'A', 'L'):
+                status = 'P'
+
+            FacultyAttendance.objects.update_or_create(
+                faculty=fac,
+                date=post_date,
+                defaults={
+                    'status': status,
+                    'remarks': remarks,
+                    'marked_by': request.user,
+                }
+            )
+            saved_count += 1
+
+        messages.success(request, f"Faculty attendance updated for {saved_count} staff members for {post_date.strftime('%d %b %Y')}.")
+        return redirect(f"{request.path}?date={post_date.isoformat()}&month_year={month_year}&date_from={date_from}&date_to={date_to}")
+
+    # Build attendance query for logs report
+    records_qs = FacultyAttendance.objects.filter(faculty__department=dept).select_related('faculty__user', 'marked_by')
+
+    if month_year:
+        try:
+            yr, mn = map(int, month_year.split('-'))
+            records_qs = records_qs.filter(date__year=yr, date__month=mn)
+        except ValueError:
+            pass
+    elif date_from or date_to:
+        if date_from:
+            records_qs = records_qs.filter(date__gte=date_from)
+        if date_to:
+            records_qs = records_qs.filter(date__lte=date_to)
+    else:
+        records_qs = records_qs.filter(date=selected_date)
+
+    records = records_qs.order_by('-date', 'faculty__employee_id')
+
+    # Current daily attendance status for each faculty for the selected mark date
+    today_records = {
+        att.faculty_id: att for att in FacultyAttendance.objects.filter(faculty__department=dept, date=selected_date)
+    }
+
+    total_present = records.filter(status='P').count()
+    total_absent  = records.filter(status='A').count()
+    total_leave   = records.filter(status='L').count()
+
+    context = {
+        'department':         dept,
+        'department_faculty': department_faculty,
+        'selected_date':      selected_date.isoformat(),
+        'today_records':      today_records,
+        'records':            records,
+        'month_year':         month_year,
+        'date_from':          date_from,
+        'date_to':            date_to,
+        'total_present':      total_present,
+        'total_absent':       total_absent,
+        'total_leave':        total_leave,
+    }
+    return render(request, 'hod/faculty_attendance.html', context)
 
 # ─────────────────────────────────────────────
 # ACHIEVEMENTS VERIFICATION
@@ -683,17 +787,29 @@ def release_results(request):
             release_obj.released_by = request.user
             release_obj.save()
 
-            # Send emails if not already sent
+            # Send emails & parent SMS if not already sent
+            sms_sent_count = 0
+            student_results = {}
+            results_qs = Result.objects.filter(exam=exam).select_related('student__user', 'subject')
+            for r in results_qs:
+                if r.student_id not in student_results:
+                    student_results[r.student_id] = {'student': r.student, 'results': []}
+                student_results[r.student_id]['results'].append(r)
+
+            for sid, data in student_results.items():
+                if send_result_sms_to_parent(data['student'], exam, data['results']):
+                    sms_sent_count += 1
+
             if not release_obj.email_sent:
                 sent, failed = _send_result_emails(exam, request)
                 release_obj.email_sent = True
                 release_obj.save()
                 messages.success(
                     request,
-                    f"Results released for '{exam.name}'. "
-                    f"Emails sent: {sent}, Failed: {failed}."
+                    f"Results released for '{exam.name}'. Emails sent: {sent}, Parent SMS sent: {sms_sent_count}."
                 )
             else:
+                messages.success(request, f"Results released for '{exam.name}'. Parent SMS sent: {sms_sent_count}.")
                 messages.success(request, f"Results released for '{exam.name}'.")
 
             Notification.objects.create(

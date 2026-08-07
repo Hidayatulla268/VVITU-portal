@@ -144,11 +144,12 @@ class Timetable(models.Model):
     ]
     PERIOD_CHOICES = [(i, f"Period {i}") for i in range(1, 9)]
 
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, db_index=True, related_name='timetable_entries')
-    day     = models.CharField(max_length=10, choices=DAY_CHOICES, db_index=True)
-    period  = models.IntegerField(choices=PERIOD_CHOICES)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, db_index=True)
-    faculty = models.ForeignKey('accounts.Faculty', on_delete=models.SET_NULL, null=True, db_index=True)
+    section    = models.ForeignKey(Section, on_delete=models.CASCADE, db_index=True, related_name='timetable_entries')
+    day        = models.CharField(max_length=10, choices=DAY_CHOICES, db_index=True)
+    period     = models.IntegerField(choices=PERIOD_CHOICES)
+    subject    = models.ForeignKey(Subject, on_delete=models.CASCADE, db_index=True)
+    faculty    = models.ForeignKey('accounts.Faculty', on_delete=models.SET_NULL, null=True, db_index=True)
+    room_number= models.CharField(max_length=50, blank=True, null=True, default='Room 101')
     start_time = models.TimeField(null=True, blank=True)
     end_time   = models.TimeField(null=True, blank=True)
 
@@ -158,7 +159,66 @@ class Timetable(models.Model):
         indexes = [models.Index(fields=['section', 'day'])]
 
     def __str__(self):
-        return f"{self.section} | {self.day} P{self.period} — {self.subject.code}"
+        return f"{self.section} | {self.day} P{self.period} — {self.subject.code} ({self.room_number or 'No Room'})"
+
+
+# ─────────────────────────────────────────────
+# FACULTY ATTENDANCE
+# ─────────────────────────────────────────────
+class FacultyAttendance(models.Model):
+    """
+    Daily attendance record for a faculty member.
+    Marked by HOD or Admin.
+    """
+    STATUS_CHOICES = [('P', 'Present'), ('A', 'Absent'), ('L', 'On Leave')]
+
+    faculty       = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, db_index=True, related_name='faculty_attendance_records')
+    date          = models.DateField(db_index=True)
+    status        = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    remarks       = models.CharField(max_length=255, blank=True, null=True)
+    marked_by     = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('faculty', 'date')
+        ordering = ['-date', 'faculty']
+        indexes = [
+            models.Index(fields=['faculty', 'date']),
+            models.Index(fields=['date']),
+        ]
+
+    def __str__(self):
+        return f"{self.faculty.employee_id} | {self.date} | {self.get_status_display()}"
+
+
+# ─────────────────────────────────────────────
+# CLASS TRANSFER / PROXY
+# ─────────────────────────────────────────────
+class ClassTransfer(models.Model):
+    """
+    Class period transfer from an absent faculty member to a substitute faculty member.
+    Allows substitute faculty to mark student attendance for the transferred slot.
+    """
+    STATUS_CHOICES = [('accepted', 'Accepted'), ('pending', 'Pending'), ('completed', 'Completed')]
+
+    original_faculty   = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, related_name='transfers_given', db_index=True)
+    substitute_faculty = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, related_name='transfers_received', db_index=True)
+    timetable_entry    = models.ForeignKey(Timetable, on_delete=models.CASCADE, db_index=True)
+    date               = models.DateField(db_index=True)
+    reason             = models.CharField(max_length=255, blank=True, null=True)
+    status             = models.CharField(max_length=15, choices=STATUS_CHOICES, default='accepted')
+    created_at         = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('timetable_entry', 'date')
+        ordering = ['-date', 'timetable_entry__period']
+        indexes = [
+            models.Index(fields=['substitute_faculty', 'date']),
+            models.Index(fields=['original_faculty', 'date']),
+        ]
+
+    def __str__(self):
+        return f"Transfer: {self.original_faculty.employee_id} -> {self.substitute_faculty.employee_id} ({self.date} P{self.timetable_entry.period})"
 
 
 # ─────────────────────────────────────────────

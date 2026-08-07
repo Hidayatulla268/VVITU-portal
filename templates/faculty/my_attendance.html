@@ -1,0 +1,138 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}My Attendance History{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-clock me-2 text-accent"></i>My Attendance History</h1>
+    <p class="ph-sub">View your daily attendance logs, days present/absent, and monthly records</p>
+  </div>
+  <div class="ph-right">
+    <span class="badge-section">{{ faculty.employee_id }} · {{ faculty.user.get_full_name }}</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Summary Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-check-double"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ present_count }}</span>
+        <span class="kpi-label">Days Present</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ absent_count }}</span>
+        <span class="kpi-label">Days Absent</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-plane-departure"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ leave_count }}</span>
+        <span class="kpi-label">Days On Leave</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-calculator"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ percentage }}%</span>
+        <span class="kpi-label">Attendance Rate</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters Card -->
+<div class="glass-card mb-4">
+  <form method="GET" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label fw-bold small"><i class="fas fa-calendar-alt me-1 text-accent"></i>Month-wise Filter</label>
+      <input type="month" name="month_year" class="form-control form-control-sm" value="{{ month_year }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold small"><i class="fas fa-calendar-day me-1 text-accent"></i>From Date</label>
+      <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold small"><i class="fas fa-calendar-day me-1 text-accent"></i>To Date</label>
+      <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
+        <i class="fas fa-filter me-1"></i>Apply Filter
+      </button>
+      <a href="{% url 'faculty:my_attendance' %}" class="btn btn-sm btn-outline-secondary py-2">
+        <i class="fas fa-redo"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Logs Table -->
+<div class="glass-card">
+  <div class="card-header-custom d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom mb-0"><i class="fas fa-list-alt me-2 text-accent"></i>Attendance Records Log</h3>
+    <span class="card-badge">Total Records: {{ total_days }}</span>
+  </div>
+
+  {% if records %}
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Remarks</th>
+          <th>Marked / Updated By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in records %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td><strong>{{ rec.date|date:"d M Y (D)" }}</strong></td>
+          <td>
+            {% if rec.status == 'P' %}
+            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Present</span>
+            {% elif rec.status == 'A' %}
+            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Absent</span>
+            {% else %}
+            <span class="badge bg-info"><i class="fas fa-plane-departure me-1"></i>On Leave</span>
+            {% endif %}
+          </td>
+          <td>{{ rec.remarks|default:"--" }}</td>
+          <td>
+            {% if rec.marked_by %}
+            {{ rec.marked_by.get_full_name }} ({{ rec.marked_by.role|upper }})
+            {% else %}
+            System Logged
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state py-4 text-center">
+    <i class="fas fa-folder-open fa-2x text-muted mb-2"></i>
+    <p class="text-muted mb-0">No attendance records found for the selected date filter.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

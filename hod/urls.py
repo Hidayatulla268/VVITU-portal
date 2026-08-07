@@ -21,6 +21,7 @@ urlpatterns = [
     path('faculty/',                 views.manage_faculty,            name='manage_faculty'),
     path('faculty/add/',             views.add_faculty,               name='add_faculty'),
     path('faculty/<int:pk>/edit/',   views.edit_faculty,              name='edit_faculty'),
+    path('faculty-attendance/',      views.faculty_attendance,        name='faculty_attendance'),
     
     # Scoped Attendance Override
     path('attendance/',              views.attendance_list,           name='attendance_list'),

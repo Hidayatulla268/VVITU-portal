@@ -38,7 +38,7 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
       <label class="form-label text-muted">Subject (optional)</label>
       <select name="subject" class="vvit-select">
         <option value="">— All Subjects —</option>
@@ -48,21 +48,25 @@
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label text-muted">From</label>
+      <label class="form-label text-muted">Month-wise</label>
+      <input type="month" name="month_year" class="vvit-input" value="{{ month_year }}"/>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-muted">From Date</label>
       <div class="date-input-wrapper">
         <input type="date" name="date_from" class="vvit-input" value="{{ date_from }}"/>
         <i class="fas fa-calendar-days cal-icon"></i>
       </div>
     </div>
     <div class="col-md-2">
-      <label class="form-label text-muted">To</label>
+      <label class="form-label text-muted">To Date</label>
       <div class="date-input-wrapper">
         <input type="date" name="date_to" class="vvit-input" value="{{ date_to }}"/>
         <i class="fas fa-calendar-days cal-icon"></i>
       </div>
     </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn-vvit-primary w-100"><i class="fas fa-search me-2"></i>Generate</button>
+    <div class="col-md-1">
+      <button type="submit" class="btn-vvit-primary w-100 py-2"><i class="fas fa-search"></i></button>
     </div>
   </form>
 </div>

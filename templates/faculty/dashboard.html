@@ -8,7 +8,7 @@
 <div class="page-header-strip">
   <div class="ph-left">
     <h1 class="ph-title"><i class="fas fa-tachometer-alt me-2 text-accent"></i>Faculty Dashboard</h1>
-    <p class="ph-sub">Welcome, <strong>{{ faculty.user.get_full_name }}</strong> · {{ faculty.employee_id }}</p>
+    <p class="ph-sub">Welcome, <strong>{{ faculty.user.get_full_name }}</strong> · Staff ID: {{ faculty.employee_id }}</p>
   </div>
   <div class="ph-right d-flex align-items-center gap-2">
     {% if user.role == 'hod' %}
@@ -16,14 +16,35 @@
       <i class="fas fa-shield-alt"></i>HOD Panel
     </a>
     {% endif %}
+    <a href="{% url 'faculty:my_attendance' %}" class="btn-sm-accent text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 6px 12px; font-size: 0.8rem; background: var(--surface-2); border: 1px solid var(--border-color); color: var(--text-primary);">
+      <i class="fas fa-user-clock text-accent me-1"></i>My Attendance History
+    </a>
     <span class="badge-section">{{ faculty.department.code|default:"" }} · {{ faculty.user.get_role_display }}</span>
   </div>
 </div>
 {% endblock %}
 
 {% block content %}
-<!-- KPI Row -->
+<!-- KPI Row: Faculty Attendance & Stats -->
 <div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-user-check"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ faculty_present_days }} Days</span>
+        <span class="kpi-label">My Days Present ({{ faculty_att_pct }}%)</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-user-times"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ faculty_absent_days }} Days</span>
+        <span class="kpi-label">My Days Absent</span>
+      </div>
+    </div>
+  </div>
   <div class="col-sm-6 col-xl-3">
     <div class="kpi-card kpi-info">
       <div class="kpi-icon"><i class="fas fa-users-class"></i></div>
@@ -42,39 +63,49 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card kpi-success">
-      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
-      <div class="kpi-body">
-        <span class="kpi-value">{{ present_today }}</span>
-        <span class="kpi-label">Present Today</span>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card kpi-danger">
-      <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
-      <div class="kpi-body">
-        <span class="kpi-value">{{ absent_today }}</span>
-        <span class="kpi-label">Absent Today</span>
-      </div>
-    </div>
-  </div>
 </div>
+
+<!-- Proxy / Transferred Classes Alert Banner if any -->
+{% if transferred_today %}
+<div class="alert alert-info d-flex align-items-center justify-content-between mb-4 shadow-sm" style="border-radius: 12px;">
+  <div>
+    <i class="fas fa-exchange-alt fa-lg text-info me-2"></i>
+    <strong>Proxy Class Assigned Today:</strong> You have <strong>{{ transferred_today.count }}</strong> transferred class period(s) assigned to you today.
+  </div>
+  <a href="{% url 'faculty:mark_attendance' %}" class="btn btn-sm btn-info text-white">
+    <i class="fas fa-check-circle me-1"></i>Mark Transferred Class Attendance
+  </a>
+</div>
+{% endif %}
 
 <!-- Today's Schedule + Quick Links -->
 <div class="row g-4">
   <div class="col-xl-7">
-    <div class="glass-card">
-      <div class="card-header-custom">
-        <h3 class="card-title-custom"><i class="fas fa-calendar-day me-2 text-accent"></i>Today's Schedule</h3>
-        <span class="card-badge">{{ today|date:"l, d M Y" }}</span>
+    <!-- Today's Schedule with Classrooms -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-calendar-day me-2 text-accent"></i>Today's Schedule & Classrooms</h3>
+        <div class="d-flex align-items-center gap-2">
+          <span class="card-badge">{{ today|date:"l, d M Y" }}</span>
+          {% if timetable_today %}
+          <button class="btn-sm-accent border-0" data-bs-toggle="modal" data-bs-target="#transferClassModal">
+            <i class="fas fa-share me-1"></i>Transfer Class Today
+          </button>
+          {% endif %}
+        </div>
       </div>
+
       {% if timetable_today %}
       <div class="table-responsive">
         <table class="vvit-table">
           <thead>
-            <tr><th>Period</th><th>Subject</th><th>Section</th><th>Action</th></tr>
+            <tr>
+              <th>Period</th>
+              <th>Subject</th>
+              <th>Section</th>
+              <th>Classroom Location</th>
+              <th>Action</th>
+            </tr>
           </thead>
           <tbody>
             {% for slot in timetable_today %}
@@ -86,6 +117,11 @@
               </td>
               <td><span class="badge-section small">{{ slot.section }}</span></td>
               <td>
+                <span class="badge bg-light text-dark border">
+                  <i class="fas fa-door-open me-1 text-accent"></i>{{ slot.room_number|default:"Room 101" }}
+                </span>
+              </td>
+              <td>
                 <a href="{% url 'faculty:mark_attendance' %}" class="btn-sm-accent">
                   <i class="fas fa-check me-1"></i>Mark
                 </a>
@@ -96,15 +132,87 @@
         </table>
       </div>
       {% else %}
-      <div class="empty-state py-4">
-        <i class="fas fa-coffee fa-2x empty-icon mb-2"></i>
-        <p>No classes scheduled today.</p>
+      <div class="empty-state py-4 text-center">
+        <i class="fas fa-coffee fa-2x empty-icon mb-2 text-muted"></i>
+        <p class="mb-0 text-muted">No classes scheduled today.</p>
       </div>
+      {% endif %}
+    </div>
+
+    <!-- Transferred / Proxy Classes Received Today -->
+    {% if transferred_today %}
+    <div class="glass-card mb-4" style="border-left: 4px solid var(--bs-info);">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-hand-holding-medical me-2 text-info"></i>Proxy Classes Assigned to You Today</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr><th>Period</th><th>Subject & Section</th><th>Classroom</th><th>Original Faculty</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for tr in transferred_today %}
+            <tr>
+              <td><span class="period-badge bg-info text-white">P{{ tr.timetable_entry.period }}</span></td>
+              <td>
+                <div class="fw-600">{{ tr.timetable_entry.subject.code }} — {{ tr.timetable_entry.section }}</div>
+                <small class="text-muted">{{ tr.timetable_entry.subject.name }}</small>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border"><i class="fas fa-door-open text-info me-1"></i>{{ tr.timetable_entry.room_number|default:"Room 101" }}</span>
+              </td>
+              <td>{{ tr.original_faculty.user.get_full_name }}</td>
+              <td>
+                <a href="{% url 'faculty:mark_attendance' %}" class="btn-sm-accent" style="background: var(--bs-info); color: white;">
+                  <i class="fas fa-user-check me-1"></i>Mark Attendance
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Weekly Timetable Overview -->
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-calendar-alt me-2 text-accent"></i>Weekly Timetable & Classrooms</h3>
+      </div>
+      {% if weekly_timetable %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Period</th>
+              <th>Subject</th>
+              <th>Section</th>
+              <th>Classroom</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for slot in weekly_timetable %}
+            <tr>
+              <td><strong>{{ slot.day }}</strong></td>
+              <td><span class="period-badge">P{{ slot.period }}</span></td>
+              <td>{{ slot.subject.code }} <small class="text-muted">({{ slot.subject.name }})</small></td>
+              <td><span class="badge-section small">{{ slot.section }}</span></td>
+              <td><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted px-3 py-2 mb-0">No weekly timetable slots assigned.</p>
       {% endif %}
     </div>
   </div>
 
   <div class="col-xl-5">
+    <!-- Quick Actions -->
     <div class="glass-card">
       <div class="card-header-custom">
         <h3 class="card-title-custom"><i class="fas fa-bolt me-2 text-accent"></i>Quick Actions</h3>
@@ -114,22 +222,43 @@
           <i class="fas fa-user-check"></i>
           <span>Mark Attendance</span>
         </a>
+        <a href="{% url 'faculty:my_attendance' %}" class="quick-action-btn">
+          <i class="fas fa-user-clock"></i>
+          <span>My Attendance Log</span>
+        </a>
         <a href="{% url 'faculty:reports' %}" class="quick-action-btn">
           <i class="fas fa-chart-line"></i>
-          <span>View Reports</span>
+          <span>Student Reports</span>
         </a>
         <a href="{% url 'faculty:counselled_students' %}" class="quick-action-btn">
           <i class="fas fa-user-graduate"></i>
           <span>My Students</span>
         </a>
-        <a href="{% url 'faculty:export_excel' %}" class="quick-action-btn">
-          <i class="fas fa-file-excel"></i>
-          <span>Export Excel</span>
-        </a>
       </div>
     </div>
 
-    <!-- Subjects taught -->
+    <!-- Classes Transferred Out Today -->
+    {% if transferred_given_today %}
+    <div class="glass-card mt-4" style="border-left: 4px solid var(--bs-warning);">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom"><i class="fas fa-paper-plane me-2 text-warning"></i>Classes Transferred Out Today</h3>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for tr in transferred_given_today %}
+        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+          <div>
+            <strong>P{{ tr.timetable_entry.period }}: {{ tr.timetable_entry.subject.code }}</strong> ({{ tr.timetable_entry.section }})
+            <br>
+            <small class="text-muted">Substitute: {{ tr.substitute_faculty.user.get_full_name }}</small>
+          </div>
+          <span class="badge bg-warning text-dark">Transferred</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Subjects Taught -->
     <div class="glass-card mt-4">
       <div class="card-header-custom">
         <h3 class="card-title-custom"><i class="fas fa-book me-2 text-accent"></i>My Subjects</h3>
@@ -145,9 +274,64 @@
         {% endfor %}
       </div>
       {% else %}
-      <p class="text-muted px-3">No subjects assigned yet.</p>
+      <p class="text-muted px-3 mb-0">No subjects assigned yet.</p>
       {% endif %}
     </div>
   </div>
 </div>
+
+<!-- Modal: Class Transfer Today -->
+{% if timetable_today %}
+<div class="modal fade" id="transferClassModal" tabindex="-1" aria-labelledby="transferClassModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content glass-card border-0">
+      <form action="{% url 'faculty:transfer_class' %}" method="POST">
+        {% csrf_token %}
+        <div class="modal-header border-bottom-0">
+          <h5 class="modal-title font-heading fw-bold" id="transferClassModalLabel">
+            <i class="fas fa-exchange-alt me-2 text-accent"></i>Transfer Class Period Today
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-3">If you are absent or on leave today, select your scheduled class period and transfer it to a substitute faculty member who will mark attendance for that class.</p>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Select Today's Class Period</label>
+            <select name="timetable_id" class="form-select" required>
+              <option value="">-- Choose Class Slot --</option>
+              {% for slot in timetable_today %}
+              <option value="{{ slot.id }}">Period {{ slot.period }} — {{ slot.subject.code }} ({{ slot.section }}) [Room: {{ slot.room_number|default:"Room 101" }}]</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Select Substitute Faculty Member</label>
+            <select name="substitute_id" class="form-select" required>
+              <option value="">-- Select Substitute Faculty --</option>
+              {% for fac in department_faculty %}
+              <option value="{{ fac.id }}">{{ fac.user.get_full_name }} ({{ fac.employee_id }} - {{ fac.department.code|default:"Faculty" }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Reason for Transfer (Optional)</label>
+            <input type="text" name="reason" class="form-control" placeholder="e.g. On Sick Leave / Official Duty">
+          </div>
+          
+          <input type="hidden" name="date" value="{{ today|date:'Y-m-d' }}">
+        </div>
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-sm-accent border-0">
+            <i class="fas fa-paper-plane me-1"></i>Transfer Class Now
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

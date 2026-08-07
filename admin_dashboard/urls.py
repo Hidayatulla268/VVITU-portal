@@ -21,6 +21,7 @@ urlpatterns = [
     path('faculty/add/',             views.add_faculty,          name='add_faculty'),
     path('faculty/<int:pk>/edit/',   views.edit_faculty,         name='edit_faculty'),
     path('faculty/<int:pk>/delete/', views.delete_faculty,       name='delete_faculty'),
+    path('faculty-attendance/',      views.faculty_attendance_report, name='faculty_attendance_report'),
 
     # Assignments
     path('assign-class-teacher/',    views.assign_class_teacher, name='assign_class_teacher'),

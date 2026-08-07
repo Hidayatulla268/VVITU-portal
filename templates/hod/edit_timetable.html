@@ -74,6 +74,11 @@
           </select>
         </div>
 
+        <div class="mb-3">
+          <label class="form-label text-muted">Classroom / Location</label>
+          <input type="text" name="room_number" class="vvit-input" placeholder="e.g. Block A - Room 302 / Lab 4" value="Room 101">
+        </div>
+
         <div class="row mb-4">
           <div class="col-6">
             <label class="form-label text-muted">Start Time</label>
@@ -124,6 +129,7 @@
                 {% if slot %}
                 <div class="fw-bold text-accent" style="font-size:0.82rem;">{{ slot.subject.code }}</div>
                 <div class="text-muted small" style="font-size:0.75rem;">{{ slot.faculty.user.last_name|default:slot.faculty.user.first_name }}</div>
+                <div class="badge bg-light text-dark border my-1" style="font-size:0.7rem;"><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</div>
                 {% if slot.start_time or slot.end_time %}
                 <div class="text-muted mt-1" style="font-size:0.7rem; font-weight: 500;">
                   <i class="far fa-clock"></i> {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}

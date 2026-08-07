@@ -1,0 +1,214 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Faculty Attendance — HOD Panel{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-clock me-2 text-accent"></i>Faculty Attendance Management</h1>
+    <p class="ph-sub">Department of {{ department.name }} ({{ department.code }}) · Mark & View Staff Attendance</p>
+  </div>
+  <div class="ph-right">
+    <span class="badge-section">{{ department.code }} HOD</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Stats Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-users-tie"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ department_faculty.count }}</span>
+        <span class="kpi-label">Department Faculty</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-user-check"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_present }}</span>
+        <span class="kpi-label">Records Present</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-user-times"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_absent }}</span>
+        <span class="kpi-label">Records Absent</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-icon"><i class="fas fa-plane-departure"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_leave }}</span>
+        <span class="kpi-label">Records On Leave</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs: Mark Attendance & View Attendance Logs -->
+<ul class="nav nav-tabs custom-tabs mb-4" id="attTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-bold" id="mark-tab" data-bs-toggle="tab" data-bs-target="#mark-pane" type="button" role="tab">
+      <i class="fas fa-edit me-2"></i>Mark Daily Attendance
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-bold" id="view-tab" data-bs-toggle="tab" data-bs-target="#view-pane" type="button" role="tab">
+      <i class="fas fa-list-alt me-2"></i>View Attendance History & Logs
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="attTabContent">
+  <!-- TAB 1: MARK DAILY FACULTY ATTENDANCE -->
+  <div class="tab-pane fade show active" id="mark-pane" role="tabpanel">
+    <div class="glass-card mb-4">
+      <form method="GET" class="row g-3 align-items-center mb-3">
+        <div class="col-auto">
+          <label class="form-label fw-bold mb-0 me-2"><i class="fas fa-calendar-day text-accent me-1"></i>Select Date to Mark:</label>
+        </div>
+        <div class="col-auto">
+          <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date }}" onchange="this.form.submit()">
+        </div>
+      </form>
+
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ selected_date }}">
+
+        <div class="table-responsive">
+          <table class="vvit-table">
+            <thead>
+              <tr>
+                <th>Emp ID</th>
+                <th>Faculty Name</th>
+                <th>Designation</th>
+                <th>Status (Present / Absent / Leave)</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fac in department_faculty %}
+              {% with rec=today_records|get_item:fac.id %}
+              <tr>
+                <td><strong>{{ fac.employee_id }}</strong></td>
+                <td>{{ fac.user.get_full_name }}</td>
+                <td><span class="badge bg-light text-dark border">{{ fac.designation|default:"Faculty" }}</span></td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="p_{{ fac.id }}" value="P" {% if not rec or rec.status == 'P' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-outline-success" for="p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
+
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="a_{{ fac.id }}" value="A" {% if rec and rec.status == 'A' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-outline-danger" for="a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
+
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="l_{{ fac.id }}" value="L" {% if rec and rec.status == 'L' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-outline-info" for="l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
+                  </div>
+                </td>
+                <td>
+                  <input type="text" name="remarks_{{ fac.id }}" class="form-control form-control-sm" value="{{ rec.remarks|default:'' }}" placeholder="Optional remarks...">
+                </td>
+              </tr>
+              {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-3 text-end">
+          <button type="submit" class="btn-sm-accent py-2 px-4 border-0">
+            <i class="fas fa-save me-2"></i>Save Faculty Attendance
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 2: VIEW ATTENDANCE HISTORY & LOGS -->
+  <div class="tab-pane fade" id="view-pane" role="tabpanel">
+    <div class="glass-card mb-4">
+      <form method="GET" class="row g-3 align-items-end">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-muted">Month-wise Filter</label>
+          <input type="month" name="month_year" class="form-control form-control-sm" value="{{ month_year }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-muted">From Date</label>
+          <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-muted">To Date</label>
+          <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
+            <i class="fas fa-search me-1"></i>Filter Logs
+          </button>
+          <a href="{% url 'hod:faculty_attendance' %}" class="btn btn-sm btn-outline-secondary py-2">
+            <i class="fas fa-redo"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-history me-2 text-accent"></i>Faculty Attendance Logs</h3>
+      </div>
+      {% if records %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Emp ID</th>
+              <th>Faculty Name</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th>Marked By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><strong>{{ r.date|date:"d M Y (D)" }}</strong></td>
+              <td>{{ r.faculty.employee_id }}</td>
+              <td>{{ r.faculty.user.get_full_name }}</td>
+              <td>
+                {% if r.status == 'P' %}
+                <span class="badge bg-success">Present</span>
+                {% elif r.status == 'A' %}
+                <span class="badge bg-danger">Absent</span>
+                {% else %}
+                <span class="badge bg-info">On Leave</span>
+                {% endif %}
+              </td>
+              <td>{{ r.remarks|default:"--" }}</td>
+              <td>{{ r.marked_by.get_full_name|default:"HOD/System" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted p-4 text-center mb-0">No records found for the specified filter.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

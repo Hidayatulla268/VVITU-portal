@@ -27,8 +27,10 @@ from django.views.decorators.http import require_POST
 
 from accounts.models import Faculty, Student, Achievement
 from core.models import (
-    Section, Timetable, Attendance, Subject, Result, Exam, Year
+    Section, Timetable, Attendance, Subject, Result, Exam, Year,
+    FacultyAttendance, ClassTransfer
 )
+from core.sms_utils import send_absent_sms_to_parent
 
 
 # ─────────────────────────────────────────────
@@ -60,24 +62,42 @@ def faculty_required(view_func):
 def dashboard(request):
     """
     Summary dashboard:
-      • Sections and subjects taught by this faculty
-      • Total students across all sections
-      • Today's attendance summary
+      • Faculty's own attendance statistics (Days Present & Absent)
+      • Timetable today with assigned classroom room numbers
+      • Active class transfers / proxy classes today
+      • Total sections and students handled
     """
     faculty  = request.faculty
     today    = timezone.localdate()
     day_name = today.strftime('%A')
 
-    # Subjects and timetable entries for this faculty
+    # Faculty Attendance statistics
+    fac_att_qs = FacultyAttendance.objects.filter(faculty=faculty)
+    faculty_present_days = fac_att_qs.filter(status='P').count()
+    faculty_absent_days  = fac_att_qs.filter(status='A').count()
+    faculty_leave_days   = fac_att_qs.filter(status='L').count()
+    total_working_days   = fac_att_qs.count()
+    faculty_att_pct      = round(faculty_present_days / total_working_days * 100, 1) if total_working_days > 0 else 100.0
+
+    # Subjects and timetable entries for this faculty today (with room_number)
     timetable_today = (
         Timetable.objects
         .filter(faculty=faculty, day=day_name)
-        .select_related('section', 'subject')
+        .select_related('section', 'subject', 'section__branch')
+        .order_by('period')
+    )
+
+    # Full weekly timetable with room numbers
+    weekly_timetable = (
+        Timetable.objects
+        .filter(faculty=faculty)
+        .select_related('section', 'subject', 'section__branch')
+        .order_by('day', 'period')
     )
 
     subjects = (
         Subject.objects
-        .filter(faculty=faculty)
+        .filter(faculty=faculty, is_deleted=False)
         .select_related('branch', 'year')
     )
 
@@ -91,22 +111,42 @@ def dashboard(request):
     section_count = sections.count()
     student_count = Student.objects.filter(section__in=sections, user__is_deleted=False).count()
 
-    # Today's attendance count
-    today_att = Attendance.objects.filter(
-        timetable_entry__faculty=faculty, date=today
+    # Transferred classes for today
+    # 1. Received (Proxy assigned to logged-in faculty)
+    transferred_today = (
+        ClassTransfer.objects
+        .filter(substitute_faculty=faculty, date=today)
+        .select_related('timetable_entry__section', 'timetable_entry__subject', 'original_faculty__user')
     )
-    present_today = today_att.filter(status='P').count()
-    absent_today  = today_att.filter(status='A').count()
+
+    # 2. Transferred Out (Given to someone else today)
+    transferred_given_today = (
+        ClassTransfer.objects
+        .filter(original_faculty=faculty, date=today)
+        .select_related('timetable_entry__section', 'timetable_entry__subject', 'substitute_faculty__user')
+    )
+
+    # Department faculty for class transfer dropdown
+    department_faculty = Faculty.objects.filter(is_active=True).exclude(id=faculty.id).select_related('user', 'department')
+    if faculty.department:
+        department_faculty = department_faculty.filter(department=faculty.department)
 
     context = {
-        'faculty':         faculty,
-        'timetable_today': timetable_today,
-        'subjects':        subjects,
-        'section_count':   section_count,
-        'student_count':   student_count,
-        'present_today':   present_today,
-        'absent_today':    absent_today,
-        'today':           today,
+        'faculty':              faculty,
+        'faculty_present_days': faculty_present_days,
+        'faculty_absent_days':  faculty_absent_days,
+        'faculty_leave_days':   faculty_leave_days,
+        'total_working_days':   total_working_days,
+        'faculty_att_pct':      faculty_att_pct,
+        'timetable_today':      timetable_today,
+        'weekly_timetable':     weekly_timetable,
+        'subjects':             subjects,
+        'section_count':        section_count,
+        'student_count':        student_count,
+        'transferred_today':    transferred_today,
+        'transferred_given_today': transferred_given_today,
+        'department_faculty':   department_faculty,
+        'today':                today,
     }
     return render(request, 'faculty/dashboard.html', context)
 
@@ -175,27 +215,28 @@ def mark_attendance(request):
     """
     Two-phase view:
       GET  — render the filter form (section, date, timetable slot).
-      POST — save attendance records.
-
-    Edit window: faculty may only submit attendance for today or the
-    previous ATTENDANCE_EDIT_WINDOW_DAYS days.  Older records raise an
-    error (admins can override via admin_dashboard).
+      POST — save attendance records & send SMS to parents if absent.
     """
     faculty    = request.faculty
     edit_window = getattr(settings, 'ATTENDANCE_EDIT_WINDOW_DAYS', 2)
     today       = timezone.localdate()
     min_date    = today - datetime.timedelta(days=edit_window - 1)
 
-    # Sections where this faculty teaches (deduplicated)
-    section_ids = (
+    # Sections where this faculty teaches or has proxy transfer today
+    section_ids = list(
         Timetable.objects
         .filter(faculty=faculty)
         .values_list('section_id', flat=True)
         .distinct()
     )
-    sections = Section.objects.filter(id__in=section_ids).select_related('branch', 'year')
-
-    error = None
+    # Include sections from proxy transfers received today
+    proxy_sec_ids = list(
+        ClassTransfer.objects
+        .filter(substitute_faculty=faculty, date=today)
+        .values_list('timetable_entry__section_id', flat=True)
+    )
+    all_sec_ids = list(set(section_ids + proxy_sec_ids))
+    sections = Section.objects.filter(id__in=all_sec_ids).select_related('branch', 'year')
 
     if request.method == 'POST':
         section_id  = request.POST.get('section')
@@ -221,12 +262,14 @@ def mark_attendance(request):
         students_in_section = Student.objects.filter(section_id=section_id, is_active=True, user__is_deleted=False)
 
         saved_count = 0
+        sms_count = 0
         for student in students_in_section:
             field_name = f"attendance_{student.id}"
             status     = request.POST.get(field_name, 'A')
             if status not in ('P', 'A'):
                 status = 'A'
-            Attendance.objects.update_or_create(
+            
+            att_rec, created = Attendance.objects.update_or_create(
                 student=student,
                 timetable_entry=slot,
                 date=att_date,
@@ -234,7 +277,16 @@ def mark_attendance(request):
             )
             saved_count += 1
 
-        messages.success(request, f"Attendance saved for {saved_count} students.")
+            # Trigger SMS to parent if student is marked absent
+            if status == 'A':
+                sent = send_absent_sms_to_parent(student, slot, att_date)
+                if sent:
+                    sms_count += 1
+
+        msg_text = f"Attendance saved for {saved_count} students."
+        if sms_count > 0:
+            msg_text += f" ({sms_count} absence SMS notification(s) sent to parents)."
+        messages.success(request, msg_text)
         return redirect('faculty:mark_attendance')
 
     context = {
@@ -247,12 +299,119 @@ def mark_attendance(request):
 
 
 # ─────────────────────────────────────────────
-# ATTENDANCE REPORTS
+# CLASS TRANSFER / PROXY ACTION
+# ─────────────────────────────────────────────
+@faculty_required
+def transfer_class(request):
+    """
+    Allows faculty to transfer a timetable class period for today (or selected date)
+    to another available faculty member as a proxy/substitute.
+    """
+    faculty = request.faculty
+    today   = timezone.localdate()
+
+    if request.method == 'POST':
+        timetable_id = request.POST.get('timetable_id')
+        substitute_id = request.POST.get('substitute_id')
+        reason = request.POST.get('reason', '').strip()
+        date_str = request.POST.get('date', today.isoformat())
+
+        try:
+            transfer_date = datetime.date.fromisoformat(date_str)
+        except (ValueError, TypeError):
+            transfer_date = today
+
+        slot = get_object_or_404(Timetable, id=timetable_id, faculty=faculty)
+        substitute = get_object_or_404(Faculty, id=substitute_id, is_active=True)
+
+        if substitute == faculty:
+            messages.error(request, "Cannot transfer class to yourself.")
+            return redirect('faculty:dashboard')
+
+        transfer, created = ClassTransfer.objects.update_or_create(
+            timetable_entry=slot,
+            date=transfer_date,
+            defaults={
+                'original_faculty': faculty,
+                'substitute_faculty': substitute,
+                'reason': reason or 'Faculty absent / on leave',
+                'status': 'accepted',
+            }
+        )
+
+        messages.success(
+            request,
+            f"Class P{slot.period} ({slot.subject.code}) transferred to {substitute.full_name} for {transfer_date.strftime('%d-%b-%Y')}."
+        )
+        return redirect('faculty:dashboard')
+
+    return redirect('faculty:dashboard')
+
+
+# ─────────────────────────────────────────────
+# FACULTY OWN ATTENDANCE REPORT
+# ─────────────────────────────────────────────
+@faculty_required
+def my_attendance(request):
+    """
+    Displays logged-in faculty member's attendance history.
+    Supports Month-wise filtering (e.g. 2026-08) and Custom Date Range filtering.
+    """
+    faculty = request.faculty
+    today   = timezone.localdate()
+
+    month_year = request.GET.get('month_year', '')
+    date_from  = request.GET.get('date_from', '')
+    date_to    = request.GET.get('date_to', '')
+
+    qs = FacultyAttendance.objects.filter(faculty=faculty).select_related('marked_by')
+
+    if month_year:
+        try:
+            yr, mn = map(int, month_year.split('-'))
+            qs = qs.filter(date__year=yr, date__month=mn)
+        except ValueError:
+            pass
+    elif date_from or date_to:
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+    else:
+        # Default to current month
+        qs = qs.filter(date__year=today.year, date__month=today.month)
+        month_year = today.strftime('%Y-%m')
+
+    records = qs.order_by('-date')
+
+    present_count = records.filter(status='P').count()
+    absent_count  = records.filter(status='A').count()
+    leave_count   = records.filter(status='L').count()
+    total_days    = records.count()
+    percentage    = round(present_count / total_days * 100, 1) if total_days > 0 else 0.0
+
+    context = {
+        'faculty':       faculty,
+        'records':       records,
+        'present_count': present_count,
+        'absent_count':  absent_count,
+        'leave_count':   leave_count,
+        'total_days':    total_days,
+        'percentage':    percentage,
+        'month_year':    month_year,
+        'date_from':     date_from,
+        'date_to':       date_to,
+    }
+    return render(request, 'faculty/my_attendance.html', context)
+
+
+# ─────────────────────────────────────────────
+# ATTENDANCE REPORTS (STUDENT ATTENDANCE)
 # ─────────────────────────────────────────────
 @faculty_required
 def reports(request):
     """
-    Display attendance report filtered by section, subject, and date range.
+    Display attendance report filtered by section, subject, month-wise or custom date range.
     Shows student-wise totals and percentages in a table.
     """
     faculty  = request.faculty
@@ -270,8 +429,24 @@ def reports(request):
     # Read filter params
     section_id = request.GET.get('section')
     subject_id = request.GET.get('subject')
-    date_from  = request.GET.get('date_from', (today - datetime.timedelta(days=30)).isoformat())
-    date_to    = request.GET.get('date_to',   today.isoformat())
+    month_year = request.GET.get('month_year', '')
+    date_from  = request.GET.get('date_from', '')
+    date_to    = request.GET.get('date_to', '')
+
+    if month_year:
+        try:
+            yr, mn = map(int, month_year.split('-'))
+            import calendar
+            last_day = calendar.monthrange(yr, mn)[1]
+            date_from = f"{yr:04d}-{mn:02d}-01"
+            date_to   = f"{yr:04d}-{mn:02d}-{last_day:02d}"
+        except ValueError:
+            pass
+
+    if not date_from:
+        date_from = (today - datetime.timedelta(days=30)).isoformat()
+    if not date_to:
+        date_to = today.isoformat()
 
     report_data = []
     if section_id:
@@ -327,6 +502,7 @@ def reports(request):
         'report_data': report_data,
         'section_id':  section_id,
         'subject_id':  subject_id,
+        'month_year':  month_year,
         'date_from':   date_from,
         'date_to':     date_to,
         'threshold':   getattr(settings, 'LOW_ATTENDANCE_THRESHOLD', 75),

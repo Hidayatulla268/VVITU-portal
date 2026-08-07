@@ -9,15 +9,20 @@ A production-grade college ERP web application built with Django, featuring a gl
 
 *   **Role-Based Access Control**: Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin — each with tailored sidebar navigation and scoped permissions.
 *   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) restricted to authorized roles (Admin, HOD, DEO). Students and Faculty are prevented from self-service password changes, requiring password resets to be handled by Admin, HOD, or DEO roles through user management views.
+*   **Faculty Attendance & Daily Tracking**: Allows HODs and Admins to monitor and log daily faculty attendance (`Present`, `Absent`, `On Leave`, `Official Duty`) with check-in timestamps and remarks. Faculty members can review their monthly attendance summary.
+*   **Class Period Substitutions / Transfers**: Faculty members on leave or duty can transfer scheduled class periods to substitute colleagues within their department for specific dates. Substitute faculty receive authority to mark student attendance for the transferred slots.
+*   **Classroom Location Management**: Added `room_number` field to timetable slots, allowing HODs and Admins to assign room/lab locations (e.g., "Block C - Room 305") to scheduled classes, displayed on faculty and student schedules.
 *   **HOD Dashboard**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and override branch attendance at any time.
 *   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits must go through the HOD).
 *   **HOD + Teaching Dual-Panel**: HOD users can seamlessly toggle between their HOD administrative panel and their personal Faculty teaching panel using header toggle buttons — both fully accessible from a single login.
 *   **Unified Mail/Notices Board System**: Multi-scoped notifications system allowing Admin, HODs, and DEOs to compose and manage notices targeted to everyone, specific roles, specific branches, specific classes, or single users. Quick "Send" shortcut available in the navbar notification dropdown for all authorized roles.
+*   **Parent SMS Alert Integration**: Utility module (`core/sms_utils.py`) for notifying parents of student absences and exam results via SMS.
 *   **Achievements System**: Allows students and faculty to submit academic (curricular) and co-curricular achievements for HOD verification and display on profiles.
 *   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login, locking it against client modification (only admins/HODs/DEOs can reset it).
 *   **Glassmorphism & Cinematic UI**: Fully responsive dark mode visual design built with custom CSS tokens, backdrop blur effects, animated gradients, high-contrast typography, and smooth micro-animations.
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
 *   **Faculty Student Results View**: Class Teachers and Counsellors can monitor and review the grades of their assigned students.
+*   **Month-wise Attendance Reports**: Enhanced faculty attendance reports with month picker (`YYYY-MM`) filtering alongside custom date ranges.
 *   **Comprehensive Profile Pages**: Each role (Student, Faculty/HOD, DEO, Admin) has a tailored profile page displaying relevant details — branch, department, employee ID, joining date, and access level.
 *   **Clickable Roll-Number/Employee-ID Links**: Admin can click any student roll number or faculty employee ID in management tables to open a full read-only detail view.
 *   **Name Validation**: Server-side validation enforces minimum character lengths for first name (3 chars) and last name (1 char) on add/edit forms.
@@ -175,9 +180,12 @@ All accounts share the default password: **`vvit@1234`**
 | `/student/results/`                     | Students             | Consolidated results (Mid1, Mid2, Sem Final)      |
 | `/student/add-achievement/`             | Students             | Submit academic or co-curricular achievements     |
 | `/faculty/`                             | Faculty / HOD / Lab  | Faculty dashboard & assignments                   |
+| `/faculty/my-attendance/`              | Faculty              | Personal attendance history & substitute requests |
+| `/faculty/transfer-class/`             | Faculty              | Transfer scheduled class slot to substitute        |
 | `/faculty/upload-marks/`                | Faculty              | Subject/Exam/Class marks upload page              |
 | `/faculty/add-achievement/`             | Faculty              | Submit faculty achievements                       |
 | `/hod/`                                 | HODs                 | HOD Dashboard with branch stats                   |
+| `/hod/faculty-attendance/`             | HODs                 | Department faculty attendance & class transfers   |
 | `/hod/timetable/`                       | HODs                 | Assign faculty & publish timetables               |
 | `/hod/verify-achievements/`             | HODs                 | Review and approve achievements                   |
 | `/deo/`                                 | DEOs                 | DEO Dashboard (restricted to assigned branch)     |
@@ -187,6 +195,7 @@ All accounts share the default password: **`vvit@1234`**
 | `/notifications/manage/`               | Admin / HOD / DEO    | Sent notices list — compose, edit, delete         |
 | `/notifications/create/`               | Admin / HOD / DEO    | Compose & send a new notice with live preview     |
 | `/admin-portal/`                        | Admin                | Statistics overview                               |
+| `/admin-portal/faculty-attendance/`    | Admin                | Institution-wide faculty attendance monitoring    |
 | `/admin-portal/students/`              | Admin                | CRUD student management                           |
 | `/admin-portal/students/bulk-upload/`  | Admin                | Bulk upload students via CSV                      |
 | `/admin-portal/results/bulk-upload/`   | Admin                | Bulk upload results via CSV                       |
@@ -195,6 +204,14 @@ All accounts share the default password: **`vvit@1234`**
 ---
 
 ## 🔧 Recent Fixes & Improvements
+
+### New Features & Enhancements — August 2026
+
+- **Faculty Attendance System**: Introduced `FacultyAttendance` model tracking daily attendance status (`Present`, `Absent`, `On Leave`, `Official Duty`) with check-in timestamps, marked by, and remarks. HODs and Admins can log/manage attendance, while Faculty members can view monthly attendance summaries.
+- **Class Period Substitutions / Transfers**: Added `ClassTransfer` model to handle substitute teaching assignments when faculty are on leave or official duty. Faculty can request period transfers from their dashboard modal or attendance page, allowing substitutes to mark student attendance for assigned slots.
+- **Classroom Location Support**: Extended `Timetable` model with `room_number` field. HODs and Admins can assign room/lab locations (e.g., "Block A - Room 302 / Lab 4") in timetable management, which displays across faculty and student schedule views.
+- **Month-wise Report Filtering**: Enhanced Faculty Reports page with month-year (`<input type="month">`) picker for instant monthly attendance filtering alongside custom date ranges.
+- **Parent SMS Alert Utility**: Added `core/sms_utils.py` with reusable helper methods (`send_absent_sms_to_parent`, `send_result_sms_to_parent`) for instant SMS notifications to parents.
 
 ### Bug Fixes — July 2026
 

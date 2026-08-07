@@ -103,7 +103,10 @@
           <i class="fas fa-calendar-alt"></i><span>Timetable</span>
         </a>
         <a href="{% url 'admin_dashboard:attendance_list' %}" class="quick-action-btn">
-          <i class="fas fa-clipboard-list"></i><span>Attendance</span>
+          <i class="fas fa-clipboard-list"></i><span>Student Att.</span>
+        </a>
+        <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="quick-action-btn">
+          <i class="fas fa-user-clock"></i><span>Faculty Att.</span>
         </a>
         <a href="{% url 'admin_dashboard:assign_class_teacher' %}" class="quick-action-btn">
           <i class="fas fa-user-tie"></i><span>Assign Teacher</span>

@@ -64,6 +64,10 @@
             {% for f in faculties %}<option value="{{ f.id }}">{{ f.employee_id }} — {{ f.user.get_full_name }}</option>{% endfor %}
           </select>
         </div>
+        <div class="col-12">
+          <label class="form-label text-muted">Classroom / Location</label>
+          <input type="text" name="room_number" class="vvit-input" placeholder="e.g. Block A - Room 302 / Lab 4" value="Room 101">
+        </div>
         <div class="col-6">
           <label class="form-label text-muted">Start Time</label>
           <input type="time" name="start_time" class="vvit-input">
@@ -89,7 +93,7 @@
       <div class="table-responsive">
         <table class="vvit-table">
           <thead>
-            <tr><th>Section</th><th>Day</th><th>Period</th><th>Subject</th><th>Faculty</th></tr>
+            <tr><th>Section</th><th>Day</th><th>Period</th><th>Subject</th><th>Classroom</th><th>Faculty</th></tr>
           </thead>
           <tbody>
             {% for e in entries %}
@@ -108,10 +112,11 @@
                 <div class="fw-600">{{ e.subject.code }}</div>
                 <small class="text-muted">{{ e.subject.name }}</small>
               </td>
+              <td><span class="badge bg-light text-dark border"><i class="fas fa-door-open text-accent me-1"></i>{{ e.room_number|default:"Room 101" }}</span></td>
               <td>{{ e.faculty.user.get_full_name|default:"—" }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-center text-muted py-4">No timetable entries yet.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">No timetable entries yet.</td></tr>
             {% endfor %}
           </tbody>
         </table>

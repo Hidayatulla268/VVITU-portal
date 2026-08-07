@@ -1,0 +1,232 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Faculty Attendance Management — Admin{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-clock me-2 text-accent"></i>Faculty Attendance — System Wide</h1>
+    <p class="ph-sub">Manage and view staff attendance logs across all academic departments</p>
+  </div>
+  <div class="ph-right">
+    <span class="badge-section">Administrator Control</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Stats Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-users-tie"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ faculties.count }}</span>
+        <span class="kpi-label">Active Faculty</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-user-check"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_present }}</span>
+        <span class="kpi-label">Records Present</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-user-times"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_absent }}</span>
+        <span class="kpi-label">Records Absent</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-icon"><i class="fas fa-plane-departure"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_leave }}</span>
+        <span class="kpi-label">Records On Leave</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs: Mark Attendance & View Attendance Logs -->
+<ul class="nav nav-tabs custom-tabs mb-4" id="adminAttTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-bold" id="admin-mark-tab" data-bs-toggle="tab" data-bs-target="#admin-mark-pane" type="button" role="tab">
+      <i class="fas fa-edit me-2"></i>Mark / Update Daily Attendance
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-bold" id="admin-view-tab" data-bs-toggle="tab" data-bs-target="#admin-view-pane" type="button" role="tab">
+      <i class="fas fa-list-alt me-2"></i>View System Attendance Logs & Reports
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="adminAttTabContent">
+  <!-- TAB 1: MARK DAILY FACULTY ATTENDANCE -->
+  <div class="tab-pane fade show active" id="admin-mark-pane" role="tabpanel">
+    <div class="glass-card mb-4">
+      <form method="GET" class="row g-3 align-items-center mb-3">
+        <div class="col-md-4">
+          <label class="form-label fw-bold small text-muted">Filter by Department</label>
+          <select name="branch" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">-- All Departments --</option>
+            {% for b in branches %}
+            <option value="{{ b.id }}" {% if selected_branch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold small text-muted">Select Date to Mark:</label>
+          <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date }}" onchange="this.form.submit()">
+        </div>
+      </form>
+
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ selected_date }}">
+
+        <div class="table-responsive">
+          <table class="vvit-table">
+            <thead>
+              <tr>
+                <th>Emp ID</th>
+                <th>Faculty Name</th>
+                <th>Department</th>
+                <th>Status (Present / Absent / Leave)</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fac in faculties %}
+              {% with rec=today_records|get_item:fac.id %}
+              <tr>
+                <td><strong>{{ fac.employee_id }}</strong></td>
+                <td>{{ fac.user.get_full_name }}</td>
+                <td><span class="badge bg-dark">{{ fac.department.code|default:"GEN" }}</span></td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" {% if not rec or rec.status == 'P' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-outline-success" for="adm_p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
+
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" {% if rec and rec.status == 'A' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-outline-danger" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
+
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" {% if rec and rec.status == 'L' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-outline-info" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
+                  </div>
+                </td>
+                <td>
+                  <input type="text" name="remarks_{{ fac.id }}" class="form-control form-control-sm" value="{{ rec.remarks|default:'' }}" placeholder="Remarks...">
+                </td>
+              </tr>
+              {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-3 text-end">
+          <button type="submit" class="btn-sm-accent py-2 px-4 border-0">
+            <i class="fas fa-save me-2"></i>Save Faculty Attendance
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 2: VIEW ATTENDANCE LOGS -->
+  <div class="tab-pane fade" id="admin-view-pane" role="tabpanel">
+    <div class="glass-card mb-4">
+      <form method="GET" class="row g-3 align-items-end">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-muted">Department</label>
+          <select name="branch" class="form-select form-select-sm">
+            <option value="">-- All Departments --</option>
+            {% for b in branches %}
+            <option value="{{ b.id }}" {% if selected_branch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.code }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small text-muted">Month-wise Filter</label>
+          <input type="month" name="month_year" class="form-control form-control-sm" value="{{ month_year }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold small text-muted">From Date</label>
+          <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold small text-muted">To Date</label>
+          <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
+            <i class="fas fa-filter me-1"></i>Filter
+          </button>
+          <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="btn btn-sm btn-outline-secondary py-2">
+            <i class="fas fa-redo"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <div class="glass-card">
+      <div class="card-header-custom">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-history me-2 text-accent"></i>Faculty Attendance History Log</h3>
+      </div>
+      {% if records %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Dept</th>
+              <th>Emp ID</th>
+              <th>Faculty Name</th>
+              <th>Status</th>
+              <th>Remarks</th>
+              <th>Marked By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><strong>{{ r.date|date:"d M Y (D)" }}</strong></td>
+              <td><span class="badge bg-secondary">{{ r.faculty.department.code|default:"GEN" }}</span></td>
+              <td>{{ r.faculty.employee_id }}</td>
+              <td>{{ r.faculty.user.get_full_name }}</td>
+              <td>
+                {% if r.status == 'P' %}
+                <span class="badge bg-success">Present</span>
+                {% elif r.status == 'A' %}
+                <span class="badge bg-danger">Absent</span>
+                {% else %}
+                <span class="badge bg-info">On Leave</span>
+                {% endif %}
+              </td>
+              <td>{{ r.remarks|default:"--" }}</td>
+              <td>{{ r.marked_by.get_full_name|default:"Admin/System" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted p-4 text-center mb-0">No records found matching the criteria.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
