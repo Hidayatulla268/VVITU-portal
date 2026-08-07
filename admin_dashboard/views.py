@@ -30,7 +30,7 @@ from core.models import (
     Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
     FacultyAttendance, ClassTransfer, ensure_sections_for_all_branches
 )
-from core.sms_utils import send_result_sms_to_parent
+from core.sms_utils import send_result_notifications, send_result_sms_to_parent
 
 
 # ─────────────────────────────────────────────

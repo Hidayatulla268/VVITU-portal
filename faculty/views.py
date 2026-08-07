@@ -30,7 +30,7 @@ from core.models import (
     Section, Timetable, Attendance, Subject, Result, Exam, Year,
     FacultyAttendance, ClassTransfer
 )
-from core.sms_utils import send_absent_sms_to_parent
+from core.sms_utils import send_absent_notifications, send_absent_sms_to_parent
 
 
 # ─────────────────────────────────────────────

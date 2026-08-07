@@ -190,3 +190,9 @@ def send_low_attendance_alert(student, attendance_pct):
         body=msg
     )
     return True
+
+
+# Backward-compatibility function aliases
+send_absent_sms_to_parent = send_absent_notifications
+send_result_sms_to_parent = send_result_notifications
+

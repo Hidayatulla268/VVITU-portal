@@ -14,7 +14,7 @@ from core.models import (
     ensure_sections_for_all_branches
 )
 from admin_dashboard.views import _send_result_emails
-from core.sms_utils import send_result_sms_to_parent
+from core.sms_utils import send_result_notifications, send_result_sms_to_parent
 
 # ─────────────────────────────────────────────
 # DECORATOR
