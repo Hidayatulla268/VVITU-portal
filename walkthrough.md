@@ -70,6 +70,16 @@ All requested user features have been implemented, verified with automated test 
 
 ---
 
+### 🆔 7. Clickable Student Roll Numbers for Faculty Profile Access
+- Updated permission checks in `accounts/profile_detail_views.py` to allow all teaching staff (`faculty` and `lab_technician`) to view read-only detailed student profile sheets.
+- Transformed student roll numbers and names into clickable links to `{% url 'accounts:student_detail' student.pk %}` across all faculty views:
+  - **My Students (Counselled, Class Teacher, Subject Students tabs)** (`templates/faculty/counselled_students.html`)
+  - **Mark Attendance List** (`templates/faculty/mark_attendance.html`)
+  - **Attendance Reports Table** (`templates/faculty/reports.html`)
+  - **Student Exam Results Sheets** (`templates/faculty/student_results.html`)
+
+---
+
 ## 2. Verification Results
 
 ### Automated Verification Script (`scratch/test_all_new_features.py`)
