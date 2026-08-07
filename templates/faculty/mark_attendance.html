@@ -343,8 +343,16 @@ loadBtn.addEventListener('click', async () => {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td class="text-muted small">${idx + 1}</td>
-        <td><strong>${st.roll_number}</strong></td>
-        <td>${st.name}</td>
+        <td>
+          <a href="/accounts/students/${st.id}/detail/" target="_blank" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+            <i class="fas fa-id-card me-1"></i>${st.roll_number}
+          </a>
+        </td>
+        <td>
+          <a href="/accounts/students/${st.id}/detail/" target="_blank" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
+            ${st.name}
+          </a>
+        </td>
         <td class="text-center">
           <input type="radio" name="attendance_${st.id}" value="P" form="attendanceForm"
                  id="p_${st.id}" class="att-radio att-radio-present" checked

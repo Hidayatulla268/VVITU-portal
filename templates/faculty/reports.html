@@ -130,8 +130,16 @@
         {% for s in report_data %}
         <tr class="{% if s.low %}row-warning{% endif %}" data-low="{{ s.low|yesno:'1,0' }}">
           <td class="text-muted small">{{ forloop.counter }}</td>
-          <td><strong>{{ s.roll }}</strong></td>
-          <td>{{ s.name }}</td>
+          <td>
+            <a href="{% url 'accounts:student_detail' s.student_id %}" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+              <i class="fas fa-id-card me-1"></i>{{ s.roll }}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'accounts:student_detail' s.student_id %}" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
+              {{ s.name }}
+            </a>
+          </td>
           <td>{{ s.total }}</td>
           <td class="text-success fw-600">{{ s.present }}</td>
           <td class="text-danger fw-600">{{ s.total|subtract:s.present }}</td>

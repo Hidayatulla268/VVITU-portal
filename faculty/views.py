@@ -487,6 +487,7 @@ def reports(request):
         section_students = Student.objects.filter(section_id=section_id, is_active=True, user__is_deleted=False).select_related('user')
         student_map = {
             st.id: {
+                'student_id': st.id,
                 'roll':    st.roll_number,
                 'name':    st.user.get_full_name(),
                 'total':   0,
@@ -498,6 +499,7 @@ def reports(request):
             sid = rec.student.id
             if sid not in student_map:
                 student_map[sid] = {
+                    'student_id': sid,
                     'roll':    rec.student.roll_number,
                     'name':    rec.student.user.get_full_name(),
                     'total':   0,

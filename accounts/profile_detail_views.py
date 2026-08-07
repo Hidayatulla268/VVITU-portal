@@ -18,15 +18,8 @@ def student_detail_view(request, pk):
     user = request.user
     can_view = False
 
-    if user.role in ['admin', 'hod', 'deo']:
+    if user.role in ['admin', 'hod', 'deo', 'faculty', 'lab_technician']:
         can_view = True
-    elif user.role in ['faculty', 'lab_technician']:
-        try:
-            fac = user.faculty_profile
-            if student.class_teacher == fac or student.counsellor == fac or fac.department == student.branch:
-                can_view = True
-        except Exception:
-            pass
     elif user.role == 'student':
         try:
             if user.student_profile.pk == student.pk:

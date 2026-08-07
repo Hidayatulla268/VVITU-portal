@@ -60,8 +60,16 @@
             {% for st in counselled_students %}
             <tr>
               <td class="text-muted small">{{ forloop.counter }}</td>
-              <td><strong>{{ st.roll_number }}</strong></td>
-              <td>{{ st.user.get_full_name }}</td>
+              <td>
+                <a href="{% url 'accounts:student_detail' st.pk %}" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+                  <i class="fas fa-id-card me-1"></i>{{ st.roll_number }}
+                </a>
+              </td>
+              <td>
+                <a href="{% url 'accounts:student_detail' st.pk %}" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
+                  {{ st.user.get_full_name }}
+                </a>
+              </td>
               <td><span class="badge-section small">{{ st.branch.code }}</span></td>
               <td>{{ st.year }}</td>
               <td>{{ st.section.name }}</td>
@@ -116,8 +124,16 @@
             {% for st in class_students %}
             <tr>
               <td class="text-muted small">{{ forloop.counter }}</td>
-              <td><strong>{{ st.roll_number }}</strong></td>
-              <td>{{ st.user.get_full_name }}</td>
+              <td>
+                <a href="{% url 'accounts:student_detail' st.pk %}" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+                  <i class="fas fa-id-card me-1"></i>{{ st.roll_number }}
+                </a>
+              </td>
+              <td>
+                <a href="{% url 'accounts:student_detail' st.pk %}" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
+                  {{ st.user.get_full_name }}
+                </a>
+              </td>
               <td><span class="badge-section small">{{ st.branch.code }}</span></td>
               <td>{{ st.year }}</td>
               <td>{{ st.section.name }}</td>
@@ -173,8 +189,16 @@
             {% for st in subject_students %}
             <tr>
               <td class="text-muted small">{{ forloop.counter }}</td>
-              <td><strong>{{ st.roll_number }}</strong></td>
-              <td>{{ st.user.get_full_name }}</td>
+              <td>
+                <a href="{% url 'accounts:student_detail' st.pk %}" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+                  <i class="fas fa-id-card me-1"></i>{{ st.roll_number }}
+                </a>
+              </td>
+              <td>
+                <a href="{% url 'accounts:student_detail' st.pk %}" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
+                  {{ st.user.get_full_name }}
+                </a>
+              </td>
               <td><span class="badge-section small">{{ st.branch.code }}</span></td>
               <td>{{ st.year }}</td>
               <td>{{ st.section.name }}</td>

@@ -180,11 +180,19 @@
     <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
       <tr>
         <td style="width: 40%; color: var(--text-secondary); font-weight: 600; padding: 6px 0;">HallTicket No</td>
-        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">{{ selected_student.roll_number }}</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0;">
+          <a href="{% url 'accounts:student_detail' selected_student.pk %}" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+            <i class="fas fa-id-card me-1"></i>{{ selected_student.roll_number }}
+          </a>
+        </td>
       </tr>
       <tr>
         <td style="color: var(--text-secondary); font-weight: 600; padding: 6px 0;">Name</td>
-        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">{{ selected_student.user.get_full_name }}</td>
+        <td style="font-weight: 700; color: var(--text-primary); padding: 6px 0; text-transform: uppercase;">
+          <a href="{% url 'accounts:student_detail' selected_student.pk %}" class="fw-bold text-light text-decoration-none" title="Click to view student profile sheet">
+            {{ selected_student.user.get_full_name }}
+          </a>
+        </td>
       </tr>
     </table>
   </div>
@@ -272,8 +280,16 @@
         {% for res in results %}
         <tr>
           <td class="text-muted small">{{ forloop.counter }}</td>
-          <td><strong>{{ res.student.roll_number }}</strong></td>
-          <td>{{ res.student.user.get_full_name }}</td>
+          <td>
+            <a href="{% url 'accounts:student_detail' res.student.pk %}" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
+              <i class="fas fa-id-card me-1"></i>{{ res.student.roll_number }}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'accounts:student_detail' res.student.pk %}" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
+              {{ res.student.user.get_full_name }}
+            </a>
+          </td>
           <td>
             <span class="badge-accent small">{{ res.exam.name }}</span>
           </td>
