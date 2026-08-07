@@ -16,28 +16,10 @@ from django.utils import timezone
 
 
 # ─────────────────────────────────────────────
-# COURSE
-# ─────────────────────────────────────────────
-class Course(models.Model):
-    """Academic degree course (B.Tech, BBA, MBA, M.Tech …)."""
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=20, unique=True)
-    duration_years = models.IntegerField(default=4)
-
-    class Meta:
-        verbose_name_plural = 'Courses'
-        ordering = ['code']
-
-    def __str__(self):
-        return f"{self.code} — {self.name}"
-
-
-# ─────────────────────────────────────────────
 # BRANCH
 # ─────────────────────────────────────────────
 class Branch(models.Model):
     """Academic department / branch (CSE, ECE, EEE, ME, CE …)."""
-    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='branches')
     name   = models.CharField(max_length=100, unique=True)
     code   = models.CharField(max_length=10,  unique=True)  # e.g., 'CSE'
 
@@ -46,8 +28,7 @@ class Branch(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        prefix = f"[{self.course.code}] " if self.course else ""
-        return f"{prefix}{self.code} — {self.name}"
+        return f"{self.code} — {self.name}"
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

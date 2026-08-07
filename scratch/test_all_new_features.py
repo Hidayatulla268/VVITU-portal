@@ -8,16 +8,15 @@ django.setup()
 
 from django.utils import timezone
 from accounts.models import User, Student, Faculty
-from core.models import Course, Branch, Year, Section, Subject, Timetable, Exam, Result
+from core.models import Branch, Year, Section, Subject, Timetable, Exam, Result
 from core.sms_utils import send_absent_notifications, send_result_notifications
 
 def test_all_features():
     print("=== STARTING COMPREHENSIVE NEW FEATURES TEST ===")
 
-    # 1. Test Course & Branch
-    course, _ = Course.objects.get_or_create(code="BBA", defaults={'name': 'Bachelor of Business Administration', 'duration_years': 3})
-    branch, _ = Branch.objects.get_or_create(code="BBA_FIN", defaults={'name': 'BBA Finance', 'course': course})
-    print(f"[PASSED] Course & Branch Created: {branch.code} under {branch.course.code}")
+    # 1. Test Branch
+    branch, _ = Branch.objects.get_or_create(code="CSE", defaults={'name': 'Computer Science Engineering'})
+    print(f"[PASSED] Branch Created: {branch.code}")
 
     # 2. Test Student Profile Extended Fields & Fees Pending
     user, _ = User.objects.get_or_create(

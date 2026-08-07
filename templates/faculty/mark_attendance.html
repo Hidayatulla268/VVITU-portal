@@ -24,24 +24,13 @@
           <h3 class="card-title-custom"><i class="fas fa-sliders me-2 text-accent"></i>Select Class</h3>
         </div>
 
-        <!-- Course Filter -->
-        <div class="mb-3">
-          <label class="form-label text-muted">Course</label>
-          <select id="courseSelect" class="vvit-select">
-            <option value="">— All Courses (B.Tech, BBA, MBA, M.Tech) —</option>
-            {% for c in courses %}
-            <option value="{{ c.code }}">{{ c.code }} — {{ c.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
         <!-- Section Select -->
         <div class="mb-3">
           <label class="form-label text-muted">Section & Branch</label>
           <select id="sectionSelect" name="section" class="vvit-select" required>
             <option value="">— Choose Class Section —</option>
             {% for sec in sections %}
-            <option value="{{ sec.id }}" data-course="{{ sec.branch.course.code|default:'B.Tech' }}" data-branch="{{ sec.branch.code }}">[{% if sec.branch.course %}{{ sec.branch.course.code }}{% else %}B.Tech{% endif %}] {{ sec }}</option>
+            <option value="{{ sec.id }}">{{ sec }}</option>
             {% endfor %}
           </select>
         </div>
@@ -185,7 +174,6 @@ const AJAX_STUDENTS_URL  = "{% url 'faculty:ajax_students' %}";
 const AJAX_TIMETABLE_URL = "{% url 'faculty:ajax_timetable' %}";
 const CSRFTOKEN          = "{{ csrf_token }}";
 
-const courseSelect  = document.getElementById('courseSelect');
 const sectionSelect = document.getElementById('sectionSelect');
 const dateInput     = document.getElementById('dateInput');
 const slotSelect    = document.getElementById('slotSelect');
@@ -200,27 +188,6 @@ const markAllA      = document.getElementById('markAllAbsent');
 const slotCard      = document.getElementById('slotDetailsCard');
 
 let currentSlotsData = [];
-
-// Filter Sections by Course selection
-if (courseSelect) {
-  courseSelect.addEventListener('change', () => {
-    const selectedCourse = courseSelect.value;
-    Array.from(sectionSelect.options).forEach(opt => {
-      if (!opt.value) return;
-      const secCourse = opt.getAttribute('data-course');
-      if (!selectedCourse || secCourse === selectedCourse) {
-        opt.style.display = '';
-      } else {
-        opt.style.display = 'none';
-      }
-    });
-    sectionSelect.value = '';
-    slotSelect.innerHTML = '<option value="">— Select section & date first —</option>';
-    slotSelect.disabled = true;
-    slotCard.classList.add('d-none');
-    loadBtn.disabled = true;
-  });
-}
 
 // Derive JS day name from a date string
 function getDayName(dateStr) {

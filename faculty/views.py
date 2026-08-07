@@ -240,9 +240,6 @@ def mark_attendance(request):
     today       = timezone.localdate()
     min_date    = today - datetime.timedelta(days=edit_window - 1)
 
-    from core.models import Course, Branch
-    courses = Course.objects.all().order_by('code')
-
     # Sections where this faculty teaches or has proxy transfer today
     section_ids = list(
         Timetable.objects
