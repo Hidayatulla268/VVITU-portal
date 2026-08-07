@@ -17,13 +17,16 @@ def dict_get(d, key):
     Retrieve a value from a dict using a variable key in a template.
 
     Usage: {{ my_dict|dict_get:variable_key }}
-
-    This is necessary because Django templates do not natively support
-    dict[var] syntax — only dict.key lookups.
     """
     if isinstance(d, dict):
         return d.get(key)
     return None
+
+
+@register.filter(name='get_item')
+def get_item(d, key):
+    """Alias for dict_get for template compatibility."""
+    return dict_get(d, key)
 
 
 @register.filter
