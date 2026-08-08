@@ -988,27 +988,90 @@ def delete_subject(request, pk):
 
 
 # ─────────────────────────────────────────────
-# HOD LEAVE MANAGEMENT
+# HOD LEAVE MANAGEMENT & APPLICATION
 # ─────────────────────────────────────────────
 @hod_required
 def manage_leave_requests(request):
     dept = request.department
     status_filter = request.GET.get('status', '')
     
-    leaves_qs = FacultyLeaveRequest.objects.filter(
+    if request.method == 'POST':
+        leave_type = request.POST.get('leave_type')
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+        reason = request.POST.get('reason', '').strip()
+        substitute_notes = request.POST.get('substitute_notes', '').strip()
+        
+        if not leave_type or not start_date_str or not end_date_str or not reason:
+            messages.error(request, "Please fill in all required leave application fields.")
+        else:
+            try:
+                start_date = dt.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = dt.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                
+                if end_date < start_date:
+                    messages.error(request, "End date cannot be earlier than start date.")
+                else:
+                    leave_req = FacultyLeaveRequest.objects.create(
+                        faculty=request.faculty,
+                        leave_type=leave_type,
+                        start_date=start_date,
+                        end_date=end_date,
+                        reason=reason,
+                        substitute_notes=substitute_notes,
+                        status='pending'
+                    )
+                    
+                    # Notify Admin about HOD leave request
+                    try:
+                        Notification.objects.create(
+                            title=f"HOD Leave Application — {request.faculty.full_name}",
+                            message=(
+                                f"HOD {request.faculty.full_name} ({dept.code}) applied for {leave_req.get_leave_type_display()} "
+                                f"from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}. "
+                                f"Admin approval is required."
+                            ),
+                            notif_type=Notification.TYPE_ALERT,
+                            priority=Notification.PRIORITY_HIGH,
+                            target_all=False,
+                            target_role='admin',
+                            created_by=request.user
+                        )
+                    except Exception:
+                        pass
+                        
+                    messages.success(request, "Your leave application has been submitted to College Administration for approval.")
+                    return redirect('hod:manage_leave_requests')
+            except ValueError:
+                messages.error(request, "Invalid date format submitted.")
+    
+    # HOD's own leave applications
+    my_leaves = FacultyLeaveRequest.objects.filter(
+        faculty=request.faculty
+    ).order_by('-created_at')
+    
+    # Department faculty leaves (excluding HOD's own leave request from actioning queue)
+    dept_faculty_leaves = FacultyLeaveRequest.objects.filter(
         faculty__department=dept
+    ).exclude(
+        faculty=request.faculty
     ).select_related('faculty__user', 'action_by').order_by('-created_at')
     
     if status_filter in ['pending', 'approved', 'rejected']:
-        leaves_qs = leaves_qs.filter(status=status_filter)
+        dept_faculty_leaves = dept_faculty_leaves.filter(status=status_filter)
         
-    pending_count = FacultyLeaveRequest.objects.filter(faculty__department=dept, status='pending').count()
+    pending_count = FacultyLeaveRequest.objects.filter(
+        faculty__department=dept, 
+        status='pending'
+    ).exclude(faculty=request.faculty).count()
     
     return render(request, 'hod/leave_requests.html', {
         'department': dept,
-        'leaves': leaves_qs,
+        'leaves': dept_faculty_leaves,
+        'my_leaves': my_leaves,
         'status_filter': status_filter,
         'pending_count': pending_count,
+        'leave_type_choices': FacultyLeaveRequest.LEAVE_TYPE_CHOICES,
     })
 
 
@@ -1016,6 +1079,11 @@ def manage_leave_requests(request):
 def action_leave_request(request, pk, action):
     dept = request.department
     leave_req = get_object_or_404(FacultyLeaveRequest, pk=pk, faculty__department=dept)
+    
+    # Guard: HOD cannot approve or reject their own leave or another HOD's leave!
+    if leave_req.faculty == request.faculty or leave_req.faculty.user.role == 'hod':
+        messages.error(request, "HOD leave applications can only be approved or rejected by College Administration.")
+        return redirect('hod:manage_leave_requests')
     
     if action not in ['approve', 'reject']:
         messages.error(request, "Invalid leave action.")
@@ -1066,5 +1134,13 @@ def action_leave_request(request, pk, action):
         pass
         
     messages.success(request, f"Leave request for {leave_req.faculty.full_name} {new_status} successfully.")
+    return redirect('hod:manage_leave_requests')
+
+
+@hod_required
+def cancel_leave_request(request, pk):
+    leave_req = get_object_or_404(FacultyLeaveRequest, pk=pk, faculty=request.faculty, status='pending')
+    leave_req.delete()
+    messages.success(request, "Your leave application has been cancelled.")
     return redirect('hod:manage_leave_requests')
 

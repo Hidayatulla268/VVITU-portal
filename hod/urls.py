@@ -36,4 +36,5 @@ urlpatterns = [
     # Leave Management
     path('leave-requests/',               views.manage_leave_requests, name='manage_leave_requests'),
     path('leave-requests/<int:pk>/<str:action>/', views.action_leave_request, name='action_leave_request'),
+    path('leave-requests/cancel/<int:pk>/', views.cancel_leave_request, name='cancel_leave_request'),
 ]

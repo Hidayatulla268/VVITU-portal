@@ -79,7 +79,12 @@
         <tr>
           <td>
             <strong class="text-white d-block">{{ leave.faculty.full_name }}</strong>
-            <small class="text-muted" style="font-size: 0.75rem;">
+            {% if leave.faculty.user.role == 'hod' %}
+              <span class="status-pill status-warning" style="font-size: 0.68rem; padding: 2px 8px;">
+                <i class="fas fa-user-shield me-1"></i>HOD
+              </span>
+            {% endif %}
+            <small class="text-muted d-block" style="font-size: 0.75rem;">
               Emp ID: {{ leave.faculty.employee_id }} | Ph: {{ leave.faculty.phone|default:"N/A" }}
             </small>
           </td>
