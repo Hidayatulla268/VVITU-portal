@@ -71,7 +71,7 @@
           <th>Duration</th>
           <th>Reason & Proxy</th>
           <th>Status</th>
-          <th class="text-end">Actions</th>
+          <th class="text-end">Quick Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -121,45 +121,28 @@
           </td>
           <td class="text-end">
             {% if leave.status == 'pending' %}
-              <div class="d-inline-flex gap-2">
-                <button class="vvit-btn vvit-btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adminActionModal{{ leave.id }}">
-                  <i class="fas fa-check me-1"></i>Review
+              <div class="d-inline-flex gap-1">
+                <!-- Direct One-Click Approve -->
+                <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}" 
+                   class="vvit-btn vvit-btn-success btn-sm"
+                   title="Quick Approve without remarks"
+                   onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
+                  <i class="fas fa-check me-1"></i>Approve
+                </a>
+                <!-- Direct One-Click Reject -->
+                <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}" 
+                   class="vvit-btn vvit-btn-danger btn-sm"
+                   title="Quick Reject without remarks"
+                   onclick="return confirm('Reject leave for {{ leave.faculty.full_name }}?');">
+                  <i class="fas fa-times me-1"></i>Reject
+                </a>
+                <!-- Open Remarks Modal -->
+                <button class="vvit-btn vvit-btn-secondary btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#adminActionModal{{ leave.id }}"
+                        title="Add remarks before approval or rejection">
+                  <i class="fas fa-comment me-1"></i>Remarks
                 </button>
-              </div>
-
-              <!-- Action Modal -->
-              <div class="modal fade text-start" id="adminActionModal{{ leave.id }}" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                  <div class="modal-content glass-card border-0">
-                    <div class="modal-header border-0 pb-0">
-                      <h5 class="modal-title card-title-custom">
-                        <i class="fas fa-user-check me-2 text-accent"></i>Review Leave — {{ leave.faculty.full_name }}
-                      </h5>
-                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form method="POST">
-                      {% csrf_token %}
-                      <div class="modal-body py-4">
-                        <p class="small text-muted mb-3">
-                          Leave application details for <strong>{{ leave.faculty.full_name }}</strong> ({{ leave.faculty.department.name|default:"General" }}, {{ leave.get_leave_type_display }}, {{ leave.start_date|date:"d-M-Y" }} to {{ leave.end_date|date:"d-M-Y" }}).
-                        </p>
-                        <div class="mb-3">
-                          <label class="form-label text-muted small">Admin Remarks / Notes (Optional)</label>
-                          <textarea name="remarks" class="vvit-input" rows="3" placeholder="Enter optional remarks for faculty..."></textarea>
-                        </div>
-                      </div>
-                      <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="vvit-btn vvit-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="vvit-btn vvit-btn-primary" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}">
-                          <i class="fas fa-check me-1"></i>Approve Leave
-                        </button>
-                        <button type="submit" class="vvit-btn vvit-btn-danger" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}">
-                          <i class="fas fa-times me-1"></i>Reject Leave
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
               </div>
             {% else %}
               <span class="text-muted small"><i class="fas fa-lock me-1"></i>Actioned</span>
@@ -178,4 +161,48 @@
     </table>
   </div>
 </div>
+
+<!-- Modals Rendered Outside Table Container to Prevent Layout Clipping -->
+{% for leave in leaves %}
+{% if leave.status == 'pending' %}
+<div class="modal fade text-start" id="adminActionModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom text-white">
+          <i class="fas fa-user-check me-2 text-accent"></i>Review Leave — {{ leave.faculty.full_name }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="modal-body py-4">
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+            <div class="text-white fw-bold mb-1">{{ leave.faculty.full_name }} ({{ leave.faculty.employee_id }})</div>
+            <div class="text-muted small mb-2">Department: <span class="text-white">{{ leave.faculty.department.name|default:"General" }}</span></div>
+            <div class="text-muted small mb-2">Leave Type: <span class="text-accent">{{ leave.get_leave_type_display }}</span></div>
+            <div class="text-muted small mb-2">Dates: <span class="text-white">{{ leave.start_date|date:"d-M-Y" }} to {{ leave.end_date|date:"d-M-Y" }} ({{ leave.total_days }} Days)</span></div>
+            <div class="text-muted small">Reason: <span class="text-white">{{ leave.reason }}</span></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-white small fw-bold">Admin Remarks / Notes (Optional)</label>
+            <textarea name="remarks" class="vvit-input" rows="3" placeholder="Enter optional remarks for faculty..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="vvit-btn vvit-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="vvit-btn vvit-btn-success" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}">
+            <i class="fas fa-check me-1"></i>Approve Leave
+          </button>
+          <button type="submit" class="vvit-btn vvit-btn-danger" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}">
+            <i class="fas fa-times me-1"></i>Reject Leave
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
 {% endblock %}

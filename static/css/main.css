@@ -754,6 +754,72 @@ a:hover { color: var(--text-primary); }
   transform: translateY(-2px) scale(1.02);
 }
 
+/* Button Aliases */
+.vvit-btn, .vvit-btn-primary, .vvit-btn-secondary, .vvit-btn-danger, .vvit-btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.83rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.vvit-btn-primary {
+  background: linear-gradient(135deg, var(--accent), #991b1b);
+  color: #ffffff !important;
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(220,38,38,0.35);
+}
+.vvit-btn-primary:hover {
+  background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+  color: #ffffff !important;
+  box-shadow: 0 6px 22px rgba(220,38,38,0.55);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.vvit-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary) !important;
+  border-color: var(--clr-border-2);
+}
+.vvit-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.02);
+}
+
+.vvit-btn-danger {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: #ffffff !important;
+  border-color: #dc2626;
+}
+.vvit-btn-danger:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.vvit-btn-success {
+  background: linear-gradient(135deg, #059669, #065f46);
+  color: #ffffff !important;
+  border-color: #059669;
+}
+.vvit-btn-success:hover {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transform: translateY(-2px) scale(1.02);
+}
+
 .btn-sm-accent {
   padding: 5px 12px;
   font-size: 0.75rem;
