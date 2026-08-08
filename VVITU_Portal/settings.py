@@ -218,14 +218,19 @@ else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # ─────────────────────────────────────────────
-# ATTENDANCE CONFIG
+# SMS GATEWAY CONFIGURATION
 # ─────────────────────────────────────────────
-ATTENDANCE_EDIT_WINDOW_DAYS = 2   # Faculty can edit attendance within last 2 days
-LOW_ATTENDANCE_THRESHOLD = 75     # Alert if below 75%
+SMS_API_KEY       = config('SMS_API_KEY', default=config('FAST2SMS_API_KEY', default=''))
+TWILIO_SID        = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUM  = config('TWILIO_PHONE_NUMBER', default='')
+SMS_GATEWAY_URL   = config('SMS_GATEWAY_URL', default='https://www.fast2sms.com/dev/bulkV2')
 
 # ─────────────────────────────────────────────
-# COLLEGE INFO
+# ATTENDANCE CONFIG & COLLEGE INFO
 # ─────────────────────────────────────────────
+ATTENDANCE_EDIT_WINDOW_DAYS = 2
+LOW_ATTENDANCE_THRESHOLD = 75
 COLLEGE_NAME = 'Vasireddy Venkatadri International Technological University'
 COLLEGE_SHORT = 'VVITU'
 COLLEGE_LOCATION = 'Nambur, Guntur District, Andhra Pradesh'

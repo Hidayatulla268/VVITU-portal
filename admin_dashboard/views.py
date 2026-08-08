@@ -847,6 +847,8 @@ def _send_result_emails(exam, request):
     sent = 0
     failed = 0
 
+    from core.sms_utils import build_result_email_body
+
     for sid, data in student_results.items():
         student = data['student']
         email   = student.user.email
@@ -855,49 +857,8 @@ def _send_result_emails(exam, request):
             failed += 1
             continue
 
-        # Build result table as plain text
-        lines = []
-        total_marks = 0
-        total_max   = 0
-        for r in data['results']:
-            lines.append(
-                f"  {r.subject.code:<8} {r.subject.name:<35} "
-                f"{r.marks_obtained:>6}/{r.max_marks:<6}  Grade: {r.grade}"
-            )
-            total_marks += float(r.marks_obtained)
-            total_max   += float(r.max_marks)
-
-        overall_pct = round(total_marks / total_max * 100, 1) if total_max else 0
-
-        subject_line = f"[VVIT] Results Released — {exam.name}"
-
-        body = f"""Dear {student.user.get_full_name()},
-
-Your results for {exam.name} have been released.
-
-Roll Number : {student.roll_number}
-Exam        : {exam.name}
-Branch      : {student.branch.code if student.branch else 'N/A'}
-Year        : {student.year} | Semester : {exam.semester}
-
---------------------------------------------------
-SUBJECT RESULTS
---------------------------------------------------
-{chr(10).join(lines)}
---------------------------------------------------
-Overall Percentage : {overall_pct}%
---------------------------------------------------
-
-You can also view your detailed results by logging into the VVIT Portal:
-{django_settings.COLLEGE_WEBSITE}/student/results/
-
-For any queries, contact your class teacher or the examination cell.
-
-Regards,
-Examination Cell
-{django_settings.COLLEGE_NAME}
-{django_settings.COLLEGE_LOCATION}
-"""
+        subject_line = f"[Exam Results Published] {exam.name} Semester Results"
+        body = build_result_email_body(student, exam, data['results'])
 
         try:
             send_mail(

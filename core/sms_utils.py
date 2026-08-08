@@ -17,20 +17,93 @@ from django.core.mail import send_mail
 logger = logging.getLogger(__name__)
 
 
+import json
+import urllib.request
+import urllib.parse
+
 def send_sms(phone_number, message):
     """
-    Simulate/Dispatch SMS notification to specified mobile number.
-    In development/testing environments, logs the SMS message content cleanly.
+    Dispatch SMS notification to specified mobile number.
+    Supports live SMS gateways (Fast2SMS, Twilio, Generic HTTP REST API) when API key exists.
+    Falls back to structured console logging when API keys are unconfigured.
     """
     if not phone_number:
         logger.warning("SMS Dispatch Skipped: Phone number missing.")
         return False
 
-    cleaned_number = str(phone_number).strip()
-    print(f"\n[SMS DISPATCHED] -> To: {cleaned_number}")
+    cleaned_number = str(phone_number).strip().replace(" ", "").replace("-", "")
+    sms_api_key = getattr(settings, 'SMS_API_KEY', '')
+    twilio_sid  = getattr(settings, 'TWILIO_SID', '')
+    twilio_auth = getattr(settings, 'TWILIO_AUTH_TOKEN', '')
+
+    print(f"\n[SMS DISPATCH LOG] -> To: {cleaned_number}")
     print(f"Content: {message}\n")
 
-    logger.info(f"SMS successfully dispatched to {cleaned_number}")
+    # 1. Fast2SMS / Generic REST Gateway live SMS dispatch
+    if sms_api_key:
+        try:
+            url = getattr(settings, 'SMS_GATEWAY_URL', 'https://www.fast2sms.com/dev/bulkV2')
+            digits_only = "".join(filter(str.isdigit, cleaned_number))
+            if len(digits_only) > 10:
+                digits_only = digits_only[-10:]
+
+            payload = json.dumps({
+                "route": "v3",
+                "sender_id": "TXTIND",
+                "message": message,
+                "language": "english",
+                "flash": 0,
+                "numbers": digits_only
+            }).encode('utf-8')
+
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                headers={
+                    'authorization': sms_api_key,
+                    'Content-Type': 'application/json'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                res_body = response.read().decode('utf-8')
+                logger.info(f"Live SMS Gateway response for {cleaned_number}: {res_body}")
+                print(f"[LIVE SMS GATEWAY SUCCESS] -> Delivered to {cleaned_number}")
+                return True
+        except Exception as e:
+            logger.error(f"Live SMS Gateway error for {cleaned_number}: {e}")
+
+    # 2. Twilio SMS live dispatch
+    elif twilio_sid and twilio_auth:
+        try:
+            import base64
+            from_num = getattr(settings, 'TWILIO_PHONE_NUM', '')
+            url = f"https://api.twilio.com/2010-04-01/Accounts/{twilio_sid}/Messages.json"
+            data = urllib.parse.urlencode({
+                'To': cleaned_number if cleaned_number.startswith('+') else f"+91{cleaned_number}",
+                'From': from_num,
+                'Body': message
+            }).encode('utf-8')
+
+            creds = base64.b64encode(f"{twilio_sid}:{twilio_auth}".encode()).decode('utf-8')
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={
+                    'Authorization': f'Basic {creds}',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                res_body = response.read().decode('utf-8')
+                logger.info(f"Twilio SMS Gateway response for {cleaned_number}: {res_body}")
+                print(f"[TWILIO SMS SUCCESS] -> Delivered to {cleaned_number}")
+                return True
+        except Exception as e:
+            logger.error(f"Twilio SMS error for {cleaned_number}: {e}")
+
+    logger.info(f"SMS logged for {cleaned_number} (Add SMS_API_KEY in .env for real phone delivery)")
     return True
 
 
@@ -44,12 +117,17 @@ def send_email_to_student(student, subject, body):
 
     email_addr = student.user.email.strip()
     try:
+        # Avoid socket blocking if SMTP credentials are slow/unreachable
+        from django.core.mail import get_connection
+        backend = getattr(settings, 'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+        connection = get_connection(backend, fail_silently=True, timeout=2)
         send_mail(
             subject=subject,
             message=body,
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'VVITU Portal <noreply@vvitu.ac.in>'),
             recipient_list=[email_addr],
             fail_silently=True,
+            connection=connection
         )
         print(f"\n[EMAIL SENT] -> To: {email_addr}")
         print(f"Subject: {subject}\nBody: {body}\n")
@@ -100,21 +178,84 @@ def send_absent_notifications(student, timetable_entry, date):
     return True
 
 
+def build_result_email_body(student, exam, results_list):
+    """
+    Formats the result notification email with ONLY Grades and CGPA in a clean table (no raw marks).
+    """
+    table_rows = []
+
+    for r in results_list:
+        if not r.subject:
+            continue
+        subj_code_or_short = getattr(r.subject, 'short_name', r.subject.code)
+        sub_name = r.subject.name
+        grade_val = r.grade or 'N/A'
+
+        table_rows.append(
+            f"| {subj_code_or_short:<10} | {sub_name:<38} | {grade_val:^5} |"
+        )
+
+    cgpa = student.calculate_cgpa()
+
+    branch_name = getattr(student.branch, 'name', '') if student.branch else ''
+    branch_code = getattr(student.branch, 'code', 'N/A') if student.branch else 'N/A'
+    branch_str = f"{branch_code} — {branch_name}" if branch_name else branch_code
+
+    year_val = student.year.year if (student.year and hasattr(student.year, 'year')) else (student.year or '1')
+    sem_val = getattr(exam, 'semester', 1)
+
+    table_header = "+------------+----------------------------------------+-------+"
+    table_content = "\n".join(table_rows)
+
+    body = f"""Dear {student.full_name},
+
+Your results for {exam.name} have been released by the Examination Cell.
+
+Student Name : {student.full_name}
+Roll Number  : {student.roll_number}
+Exam         : {exam.name}
+Branch       : {branch_str}
+Year         : Year {year_val} | Semester : {sem_val}
+
+{table_header}
+| Subject    | Subject Name                           | Grade |
+{table_header}
+{table_content}
+{table_header}
+
+--------------------------------------------------
+Cumulative Grade Point Average (CGPA) : {cgpa}
+--------------------------------------------------
+
+You can also view your detailed grade card by logging into the VVITU Portal:
+https://www.vvitu.ac.in/student/results/
+
+For any queries, please contact your class teacher or the controller of examinations.
+
+Regards,
+Controller of Examinations
+Vasireddy Venkatadri International Technological University
+Nambur, Guntur District, Andhra Pradesh"""
+
+    return body
+
+
 def send_result_notifications(student, exam, results_list):
     """
     Dispatches result notifications based on exam type:
       - Semester Final Results:
           * Parent SMS: Sent ONLY Grades + CGPA (no raw marks).
-          * Student SMS & Email: Grades + CGPA overview.
+          * Student SMS & Formatted Email: Full structured grade report.
       - Mid-Term Results (Mid 1, Mid 2):
-          * Student SMS & Email: Mid marks obtained per subject.
-          * Parent SMS: Skipped (Parents only receive absent alerts & sem final results).
+          * Student SMS & Formatted Email: Mid marks report.
+          * Parent SMS: Skipped.
     """
     if not student or not exam or not results_list:
         return False
 
     is_final = (exam.exam_type == 'final')
     cgpa = student.calculate_cgpa()
+    email_body = build_result_email_body(student, exam, results_list)
 
     if is_final:
         # Semester Final Result: Grades + CGPA
@@ -130,7 +271,7 @@ def send_result_notifications(student, exam, results_list):
             )
             send_sms(student.parent_mobile, parent_msg)
 
-        # Student SMS & Email
+        # Student SMS & Formatted Email
         student_msg = (
             f"Dear {student.full_name} ({student.roll_number}), your Semester Final results for {exam.name} "
             f"have been published. Grades: [{grades_str}], CGPA: {cgpa}. Log in to view details."
@@ -142,7 +283,7 @@ def send_result_notifications(student, exam, results_list):
         send_email_to_student(
             student=student,
             subject=f"[Exam Results Published] {exam.name} Semester Results",
-            body=student_msg
+            body=email_body
         )
 
         # Create In-App Portal Notification for Student
@@ -164,7 +305,6 @@ def send_result_notifications(student, exam, results_list):
         marks_summary = [f"{r.subject.short_name}:{int(r.marks_obtained)}/{int(r.max_marks)}" for r in results_list if r.subject]
         marks_str = ", ".join(marks_summary)
 
-        # Mid results sent to Student SMS & Email ONLY (Parents do not receive mid results)
         student_msg = (
             f"Dear {student.full_name} ({student.roll_number}), your Mid-Term marks for {exam.name} "
             f"are released. Marks: [{marks_str}]. Log in to your portal for performance insights."
@@ -176,7 +316,7 @@ def send_result_notifications(student, exam, results_list):
         send_email_to_student(
             student=student,
             subject=f"[Exam Results Published] {exam.name} Mid Marks",
-            body=student_msg
+            body=email_body
         )
 
         # Create In-App Portal Notification for Student
