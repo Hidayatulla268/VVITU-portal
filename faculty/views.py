@@ -1186,40 +1186,69 @@ def leave_requests(request):
                         status='pending'
                     )
 
-                    # Notify HOD & Admin
+                    # Notify HOD & Admin via In-App Notification, Email & SMS
                     try:
                         from core.models import Notification
                         from accounts.models import User
-                        dept_name = faculty.department.short_name if faculty.department else "General"
+                        from core.sms_utils import send_sms
+                        from django.core.mail import send_mail
+                        from django.conf import settings
+
+                        dept_name = faculty.department.code if faculty.department else "General"
+                        notif_title = f"Faculty Leave Request: {faculty.full_name}"
                         notif_msg = (
-                            f"Leave Request from {faculty.full_name} ({faculty.employee_id}, {dept_name}): "
-                            f"{leave_req.get_leave_type_display()} from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}."
+                            f"Leave Application from {faculty.full_name} ({faculty.employee_id}, {dept_name}): "
+                            f"{leave_req.get_leave_type_display()} from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}. "
+                            f"Reason: {reason}"
                         )
                         
                         # 1. Notify Department HOD
                         if faculty.department:
                             hod_users = User.objects.filter(role='hod', faculty_profile__department=faculty.department)
                             for hod in hod_users:
+                                # In-App Notification
                                 Notification.objects.create(
-                                    title=f"Leave Request: {faculty.full_name}",
+                                    title=notif_title,
                                     message=notif_msg,
                                     notif_type=Notification.TYPE_ALERT,
                                     priority=Notification.PRIORITY_HIGH,
                                     target_user=hod,
                                     created_by=request.user
                                 )
+                                # Email Notification
+                                if hod.email:
+                                    send_mail(
+                                        subject=f"[VVITU] {notif_title}",
+                                        message=notif_msg,
+                                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+                                        recipient_list=[hod.email],
+                                        fail_silently=True
+                                    )
+                                # SMS Notification
+                                if hasattr(hod, 'faculty_profile') and hod.faculty_profile.phone:
+                                    send_sms(hod.faculty_profile.phone, f"VVITU: New leave request from {faculty.full_name} ({start_date.strftime('%d-%b')} to {end_date.strftime('%d-%b')}). Review on portal.")
 
-                        # 2. Notify Admins
+                        # 2. Notify College Administration (Admins)
                         admin_users = User.objects.filter(role='admin')
                         for adm in admin_users:
+                            # In-App Notification
                             Notification.objects.create(
-                                title=f"Faculty Leave Request: {faculty.full_name}",
+                                title=notif_title,
                                 message=notif_msg,
                                 notif_type=Notification.TYPE_ALERT,
                                 priority=Notification.PRIORITY_HIGH,
                                 target_user=adm,
                                 created_by=request.user
                             )
+                            # Email Notification
+                            if adm.email:
+                                send_mail(
+                                    subject=f"[VVITU] {notif_title}",
+                                    message=notif_msg,
+                                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+                                    recipient_list=[adm.email],
+                                    fail_silently=True
+                                )
                     except Exception as e:
                         pass
 
