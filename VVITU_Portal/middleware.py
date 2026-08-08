@@ -1,8 +1,9 @@
+import re
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 
 PUBLIC_PREFIXES = [
     '/accounts/login',
@@ -30,6 +31,102 @@ ROLE_DASHBOARDS = {
     'deo':            'deo:dashboard',
 }
 
+# ─────────────────────────────────────────────
+# 1. SECURITY PAYLOAD SANITIZER (WAF FIREWALL)
+# ─────────────────────────────────────────────
+MALICIOUS_PATTERNS = [
+    # SQL Injection Patterns
+    re.compile(r"(\b(UNION\s+ALL\s+SELECT|UNION\s+SELECT|SELECT\s+.*\s+FROM\s+INFORMATION_SCHEMA|INSERT\s+INTO|DELETE\s+FROM|DROP\s+TABLE|ALTER\s+TABLE|TRUNCATE\s+TABLE|EXEC\s*\(|SLEEP\s*\(\d+\)|BENCHMARK\s*\()\b)", re.IGNORECASE),
+    re.compile(r"(\'\s*OR\s*\'1\'\s*=\s*\'1|\"\s*OR\s*\"1\"\s*=\s*\"1|;\s*DROP\s+TABLE|;\s*DELETE\s+FROM)", re.IGNORECASE),
+    # Cross-Site Scripting (XSS) Patterns
+    re.compile(r"(<script\b[^>]*>|javascript\s*:|onerror\s*=|onload\s*=|onclick\s*=|eval\s*\(|<iframe\b|<svg\b[^>]*onload)", re.IGNORECASE),
+    # Path Traversal & LFI Patterns
+    re.compile(r"(\.\./\.\./|\.\.\\\.\.\\|/etc/passwd|c:\\windows\\system32)", re.IGNORECASE),
+    # Command Injection Patterns
+    re.compile(r"(\;\s*ls\b|\;\s*cat\b|\|\s*cat\b|\$\(whoami\)|\`id\`)", re.IGNORECASE),
+]
+
+class SecuritySanitizerMiddleware:
+    """
+    Global Web Application Firewall (WAF) Middleware.
+    Inspects GET, POST, and PATH parameters for malicious payloads (SQLi, XSS, Path Traversal, Command Injection).
+    Rejects malicious requests with HTTP 403 Forbidden.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Inspect query params and POST data
+        inputs_to_check = []
+        for k, v in request.GET.items():
+            inputs_to_check.append(str(v))
+        for k, v in request.POST.items():
+            # Skip checking csrf middleware token or password values for non-script content
+            if k in ['csrfmiddlewaretoken', 'password', 'old_password', 'new_password', 'confirm_password']:
+                continue
+            inputs_to_check.append(str(v))
+
+        inputs_to_check.append(request.path_info)
+
+        for val in inputs_to_check:
+            for pattern in MALICIOUS_PATTERNS:
+                if pattern.search(val):
+                    return self._forbidden_response()
+
+        return self.get_response(request)
+
+    @staticmethod
+    def _forbidden_response():
+        html = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>403 Security Violation — VVITU Portal</title>
+            <style>
+                body { background: #050508; color: #f0f0f5; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+                .card { background: rgba(18, 18, 28, 0.9); border: 1px solid rgba(239, 68, 68, 0.4); padding: 40px; border-radius: 16px; text-align: center; max-width: 480px; box-shadow: 0 24px 64px rgba(220,38,38,0.3); }
+                h1 { color: #ef4444; font-size: 1.8rem; margin-top: 0; }
+                p { color: #9ca3af; font-size: 0.95rem; line-height: 1.6; }
+                .alert-badge { display: inline-block; margin-top: 15px; padding: 6px 16px; background: rgba(239,68,68,0.2); color: #ef4444; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>🛡️ Security Violation Blocked</h1>
+                <p>Your request contained a prohibited input pattern or malicious payload signature. Access has been denied by the VVITU Security Firewall.</p>
+                <span class="alert-badge">HTTP 403 Forbidden · Threat Neutralized</span>
+            </div>
+        </body>
+        </html>
+        """
+        return HttpResponseForbidden(html)
+
+
+# ─────────────────────────────────────────────
+# 2. GLOBAL SECURITY HEADERS MIDDLEWARE
+# ─────────────────────────────────────────────
+class GlobalSecurityHeadersMiddleware:
+    """
+    Injects mandatory enterprise HTTP security headers into every server response.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response['X-Frame-Options'] = 'DENY'
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=(), payment=(), usb=()'
+        response['Cross-Origin-Opener-Policy'] = 'same-origin'
+        return response
+
+
+# ─────────────────────────────────────────────
+# 3. ROLE BASED ACCESS CONTROL (RBAC) MIDDLEWARE
+# ─────────────────────────────────────────────
 class RoleBasedAccessMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -63,7 +160,6 @@ class RoleBasedAccessMiddleware:
 
         return self.get_response(request)
 
-
     @staticmethod
     def _dashboard_url(user):
         view_name = ROLE_DASHBOARDS.get(user.role, 'accounts:login')
@@ -73,6 +169,9 @@ class RoleBasedAccessMiddleware:
             return reverse('accounts:login')
 
 
+# ─────────────────────────────────────────────
+# 4. BRUTE FORCE LOGIN RATE LIMITER
+# ─────────────────────────────────────────────
 class LoginRateLimitMiddleware:
     """
     Prevents brute-force and credential stuffing attacks on the login page.
@@ -85,7 +184,6 @@ class LoginRateLimitMiddleware:
     def __call__(self, request):
         path = request.path_info
         
-        # Only rate limit login POST requests
         if request.method == "POST" and path == "/accounts/login/":
             ip = self._get_client_ip(request)
             username = request.POST.get('username', '').strip().lower()
@@ -96,15 +194,12 @@ class LoginRateLimitMiddleware:
             ip_attempts = cache.get(ip_key, 0)
             user_attempts = cache.get(user_key, 0) if user_key else 0
             
-            # Check IP lockout (5 attempts / minute)
             if ip_attempts >= 5:
                 return self._lockout_response("IP Address", "1 minute")
                 
-            # Check Username lockout (10 attempts / 2 minutes)
             if user_attempts >= 10:
                 return self._lockout_response(f"username '{username}'", "2 minutes")
                 
-            # Increment attempts
             cache.set(ip_key, ip_attempts + 1, timeout=60)
             if user_key:
                 cache.set(user_key, user_attempts + 1, timeout=120)
@@ -146,5 +241,3 @@ class LoginRateLimitMiddleware:
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
-
-

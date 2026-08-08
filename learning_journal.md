@@ -135,15 +135,45 @@ The codebase is split into 7 decoupled modular Django apps:
 
 ---
 
-### C. Request-Response Lifecycle & Middleware Pipeline
+### C. Request-Response Lifecycle & Security Middleware Pipeline
 
-Every HTTP request sent to the website flows through a structured security pipeline:
+Every HTTP request sent to the website flows through a 4-tier security defense pipeline before reaching view execution:
 
-1. **IP & Account Rate Limiting** (`LoginRateLimitMiddleware`): Checks client IP and target account against cache counters. If failed attempts exceed thresholds (5/min per IP or 10/2min per username), returns HTTP `429 Too Many Requests`.
-2. **Session & Authentication**: Validates session cookies and populates `request.user`.
-3. **Role Authorization Decorator**: Custom Python decorators (`@faculty_required`, `@hod_required`, etc.) verify whether `request.user.role` matches the route permissions. If unauthorized, redirects to the user's appropriate dashboard with an error notice.
-4. **View Execution**: Executes business logic and database transactions.
-5. **Template Rendering & Middleware Security**: Injects CSRF tokens, sets security headers (HSTS, X-Content-Type-Options, Referrer-Policy), and returns the rendered HTML page to the browser.
+```
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                           1. SECURITY SANITIZER WAF                           │
+│   (SecuritySanitizerMiddleware: Intercepts & Rejects SQLi, XSS, LFI, RCE)     │
+└───────────────────────────────────────┬───────────────────────────────────────┘
+                                        │ Clean Request
+                                        ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                      2. ENTERPRISE SECURITY HEADERS ENGINE                    │
+│   (GlobalSecurityHeadersMiddleware: Injects DENY, nosniff, COOP, XSS-Block)    │
+└───────────────────────────────────────┬───────────────────────────────────────┘
+                                        │
+                                        ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                     3. BRUTE FORCE LOGIN & RATE LIMITER                       │
+│   (LoginRateLimitMiddleware: 5 attempts/min per IP, 10/2min per Username)    │
+└───────────────────────────────────────┬───────────────────────────────────────┘
+                                        │
+                                        ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                    4. SCOPED ROLE ACCESS CONTROL (RBAC)                       │
+│   (RoleBasedAccessMiddleware & Decorators: Validates role route authority)    │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Global Security Payload Sanitizer WAF** (`SecuritySanitizerMiddleware`):
+   - Scans all GET parameters, POST fields, and path segments against regular expression signatures for SQL Injection (`UNION SELECT`, `' OR '1'='1`, `DROP TABLE`), Cross-Site Scripting (`<script>`, `javascript:`, `onerror=`, `<svg/onload`), Path Traversal (`../../etc/passwd`), and Remote Command Execution. Rejects attack payloads immediately with HTTP `403 Forbidden`.
+2. **Global Security Headers Engine** (`GlobalSecurityHeadersMiddleware`):
+   - Automatically injects security headers (`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 1; mode=block`, `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`) into every HTTP response to block Clickjacking, MIME-sniffing, and cross-site framing attacks.
+3. **IP & Account Rate Limiting** (`LoginRateLimitMiddleware`):
+   - Checks client IP and target account against cache counters. If failed attempts exceed thresholds (5/min per IP or 10/2min per username), locks out requests with HTTP `429 Too Many Requests`.
+4. **Session & Cookie Hardening**:
+   - Enforces `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SAMESITE='Lax'`, `CSRF_COOKIE_HTTPONLY=True`, `CSRF_COOKIE_SAMESITE='Lax'`, `SESSION_EXPIRE_AT_BROWSER_CLOSE=True`, and 4-hour automatic idle session timeouts.
+5. **Role Authorization Decorators**:
+   - Custom Python decorators (`@faculty_required`, `@hod_required`, `@admin_required`, `@deo_required`) verify whether `request.user.role` matches route permissions. If unauthorized, redirects to the user's appropriate dashboard with an error notice.
 
 ---
 

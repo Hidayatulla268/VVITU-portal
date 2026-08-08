@@ -34,6 +34,11 @@ A production-grade college ERP web application built with Django, featuring a gl
 *   **Glassmorphism & Cinematic UI**: Fully responsive dark/light mode visual design built with custom CSS tokens, backdrop blur effects, animated gradients, and smooth micro-animations.
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
 *   **Excel & PDF Export**: Download dynamically generated attendance reports on demand via openpyxl and ReportLab.
+*   **Enterprise Security Hardening & Web Application Firewall (WAF)**:
+    *   **Global Security Payload Sanitizer (`SecuritySanitizerMiddleware`)**: Intercepts all incoming GET and POST parameters to block SQL Injection (SQLi), Cross-Site Scripting (XSS), Path Traversal (LFI), and Command Injection attack vectors with HTTP 403 Forbidden responses.
+    *   **Security Headers Engine (`GlobalSecurityHeadersMiddleware`)**: Automatically injects mandatory security headers (`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 1; mode=block`, `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`).
+    *   **Brute-Force & Credential-Stuffing Defense (`LoginRateLimitMiddleware`)**: Locks out client IPs after 5 failed login attempts in 60 seconds and username targets after 10 failed attempts in 120 seconds.
+    *   **Strict Session Hardening**: Enforces `SESSION_COOKIE_HTTPONLY`, `SESSION_COOKIE_SAMESITE='Lax'`, `CSRF_COOKIE_HTTPONLY`, `SESSION_EXPIRE_AT_BROWSER_CLOSE=True`, and 4-hour automatic session timeouts.
 *   **AI Attendance Predictor**: Utilizes scikit-learn linear regression to analyze student records and predict semester attendance outcomes.
 *   **PostgreSQL Sequence Synchronizer**: Automated script (`scratch/fix_postgres_sequences.py`) to align PostgreSQL primary key sequences with table max IDs, preventing primary key collision errors in production.
 

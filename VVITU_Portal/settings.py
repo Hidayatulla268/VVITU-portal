@@ -37,9 +37,11 @@ X_FRAME_OPTIONS              = 'DENY'
 SESSION_COOKIE_SECURE        = not DEBUG
 CSRF_COOKIE_SECURE           = not DEBUG
 SESSION_COOKIE_HTTPONLY      = True
-CSRF_COOKIE_HTTPONLY         = False
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE           = 60 * 60 * 12  # 12 hours
+SESSION_COOKIE_SAMESITE      = 'Lax'
+CSRF_COOKIE_HTTPONLY         = True
+CSRF_COOKIE_SAMESITE         = 'Lax'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE           = 60 * 60 * 4  # 4 hours auto-session timeout
 
 # ─────────────────────────────────────────────
 # INSTALLED APPS
@@ -75,15 +77,17 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 # ─────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'VVITU_Portal.middleware.LoginRateLimitMiddleware',   # Rate limiting brute force protection
-    'whitenoise.middleware.WhiteNoiseMiddleware',         # serve static in prod
+    'VVITU_Portal.middleware.SecuritySanitizerMiddleware',      # Global WAF / Payload Sanitizer
+    'VVITU_Portal.middleware.GlobalSecurityHeadersMiddleware',   # Enterprise Security Headers (CSP, HSTS, COOP)
+    'VVITU_Portal.middleware.LoginRateLimitMiddleware',          # IP & Username Brute Force Lockout
+    'whitenoise.middleware.WhiteNoiseMiddleware',               # serve static in prod
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'VVITU_Portal.middleware.RoleBasedAccessMiddleware',  # custom middleware
+    'VVITU_Portal.middleware.RoleBasedAccessMiddleware',        # Scoped RBAC Middleware
 ]
 
 ROOT_URLCONF = 'VVITU_Portal.urls'
