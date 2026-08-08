@@ -617,9 +617,15 @@ input.flatpickr-input:focus {
   to   { opacity:1; transform:translateY(0)    scale(1); }
 }
 
-/* ── Calendar icon inside date wrapper ─────────────────────────────── */
+/* ── Calendar Icon & Date/Month Picker Styling ─────────────────────── */
 .date-input-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.date-input-wrapper input {
+  padding-right: 38px !important;
 }
 
 .date-input-wrapper .cal-icon {
@@ -627,10 +633,33 @@ input.flatpickr-input:focus {
   right:          12px;
   top:            50%;
   transform:      translateY(-50%);
-  color:          #dc2626;
-  font-size:      0.88rem;
-  pointer-events: none;
+  color:          var(--accent-bright) !important;
+  font-size:      1rem;
+  pointer-events: auto;
+  cursor:         pointer;
   z-index:        10;
+  transition:     transform 0.15s ease, color 0.15s ease;
+}
+
+.date-input-wrapper .cal-icon:hover {
+  color:          var(--accent) !important;
+  transform:      translateY(-50%) scale(1.15);
+}
+
+/* Ensure browser native calendar picker icons are crisp and high-contrast in both Dark and Light mode */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.9) sepia(1) saturate(5) hue-rotate(330deg);
+  opacity: 0.9;
+  font-size: 1.1rem;
+  padding: 4px;
+}
+
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="light"] input[type="month"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.2) sepia(1) saturate(5) hue-rotate(330deg);
+  opacity: 1;
 }
 
 /* ── Result Release page banner ─────────────────────────────────────── */

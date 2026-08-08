@@ -160,15 +160,24 @@
         </div>
         <div class="col-md-3">
           <label class="form-label fw-bold small text-muted">Month-wise Filter</label>
-          <input type="month" name="month_year" class="form-control form-control-sm" value="{{ month_year }}">
+          <div class="date-input-wrapper">
+            <input type="month" name="month_year" class="vvit-input" value="{{ month_year }}">
+            <i class="fas fa-calendar-alt cal-icon" title="Select Month"></i>
+          </div>
         </div>
         <div class="col-md-2">
           <label class="form-label fw-bold small text-muted">From Date</label>
-          <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+          <div class="date-input-wrapper">
+            <input type="date" name="date_from" class="vvit-input" value="{{ date_from }}">
+            <i class="fas fa-calendar-days cal-icon" title="Select Date"></i>
+          </div>
         </div>
         <div class="col-md-2">
           <label class="form-label fw-bold small text-muted">To Date</label>
-          <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+          <div class="date-input-wrapper">
+            <input type="date" name="date_to" class="vvit-input" value="{{ date_to }}">
+            <i class="fas fa-calendar-days cal-icon" title="Select Date"></i>
+          </div>
         </div>
         <div class="col-md-2 d-flex gap-2">
           <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
