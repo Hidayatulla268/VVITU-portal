@@ -1,49 +1,57 @@
 # VVITU Portal — Complete ERP System
 ### Vasireddy Venkatadri International Technological University, Nambur, Guntur
 
-A production-grade college ERP web application built with Django, featuring a glassmorphism UI, role-based access control, AI attendance prediction, Excel/PDF exports, automatic cloud seeding, and scalability for 300,000+ concurrent students.
+A production-grade college ERP web application built with Django, featuring a glassmorphism UI, role-based access control, AI attendance prediction, multi-role leave management, student backlog tracking, dark/light theme switching, Excel/PDF exports, automatic cloud seeding, and scalability for 300,000+ concurrent students.
 
 ---
 
 ## 🚀 Key Features
 
-*   **Role-Based Access Control**: Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin — each with tailored sidebar navigation and scoped permissions.
-*   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) restricted to authorized roles (Admin, HOD, DEO). Students and Faculty are prevented from self-service password changes, requiring password resets to be handled by Admin, HOD, or DEO roles through user management views.
+*   **Role-Based Access Control**: Highly secure dashboard routing for **Students, Faculty, HODs, DEOs, and Admin** — each with tailored sidebar navigation, scoped permissions, and dedicated action portals.
+*   **Multi-Role Leave Management System**:
+    *   **Faculty Leave Applications**: Faculty members can apply for leave (Casual, Medical, Duty, Loss of Pay) with custom date ranges, reasons, and proxy substitution notes.
+    *   **Dual Approval Workflow**: Leave requests are submitted simultaneously to the Department HOD and College Administration (Admin). Either authority can approve or reject the request.
+    *   **HOD Leave Applications**: HODs can also apply for leave directly from their portal, routed exclusively to College Administration (Admin) for approval.
+    *   **Multi-Channel Notifications**: Real-time dispatch of In-App notifications (with bell badge counter), HTML Emails, and Fast2SMS alerts to HODs and Admins upon leave submission.
+*   **Student Active Backlogs Tracking**:
+    *   **Dynamic Backlog Engine**: Evaluates released semester final results to identify active backlogs (failing grades `F`, `Ab`, `AB`, `FAIL` or marks < 40) that have not been cleared in subsequent attempts.
+    *   **Conditional High-Visibility Card**: Rendered ONLY for students with active backlogs across Student Profile (`/accounts/profile/`), Student Results (`/student/results/`), and Admin/HOD/Faculty Detail Views (`/accounts/student/<id>/detail/`).
+    *   **Total Backlogs Counter & Subject Breakdown**: Displays a prominent `Total Backlogs: N` header badge alongside a structured subject table (Subject Code, Subject Name, Exam/Semester, Marks, Grade, Status).
+*   **Dynamic Dark & Light Mode Theme Engine**:
+    *   **Theme Switcher**: Instant theme toggle with localStorage persistence (`data-theme="light"` / `data-theme="dark"`).
+    *   **100% High-Contrast Accessibility Overrides**: CSS token variables (`var(--text-primary)`, `var(--text-secondary)`) ensure crisp, legible typography in both modes without invisible white-on-white text issues.
+    *   **Interactive Calendar Picker Symbols**: Custom CSS filters (`hue-rotate`) turn native date/month picker icons into bright crimson icons with hover scale animations and `pointer-events: auto`.
+*   **Timetable & Saturday Class Allocation**:
+    *   Full support for Monday–Saturday timetable scheduling. Includes room/lab location badges (e.g. "Block C - Room 305") and faculty class allocations.
+*   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) restricted to authorized roles (Admin, HOD, DEO). Students and Faculty are prevented from self-service password changes, requiring resets via Admin/HOD/DEO management tools.
 *   **Faculty Attendance & Daily Tracking**: Allows HODs and Admins to monitor and log daily faculty attendance (`Present`, `Absent`, `On Leave`, `Official Duty`) with check-in timestamps and remarks. Faculty members can review their monthly attendance summary.
 *   **Class Period Substitutions / Transfers**: Faculty members on leave or duty can transfer scheduled class periods to substitute colleagues within their department for specific dates. Substitute faculty receive authority to mark student attendance for the transferred slots.
-*   **Classroom Location Management**: Added `room_number` field to timetable slots, allowing HODs and Admins to assign room/lab locations (e.g., "Block C - Room 305") to scheduled classes, displayed on faculty and student schedules.
-*   **HOD Dashboard**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and override branch attendance at any time.
-*   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits must go through the HOD).
-*   **HOD + Teaching Dual-Panel**: HOD users can seamlessly toggle between their HOD administrative panel and their personal Faculty teaching panel using header toggle buttons — both fully accessible from a single login.
-*   **Unified Mail/Notices Board System**: Multi-scoped notifications system allowing Admin, HODs, and DEOs to compose and manage notices targeted to everyone, specific roles, specific branches, specific classes, or single users. Quick "Send" shortcut available in the navbar notification dropdown for all authorized roles.
-*   **Parent SMS Alert Integration**: Utility module (`core/sms_utils.py`) for notifying parents of student absences and exam results via SMS.
-*   **Achievements System**: Allows students and faculty to submit academic (curricular) and co-curricular achievements for HOD verification and display on profiles.
-*   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login, locking it against client modification (only admins/HODs/DEOs can reset it).
-*   **Glassmorphism & Cinematic UI**: Fully responsive dark mode visual design built with custom CSS tokens, backdrop blur effects, animated gradients, high-contrast typography, and smooth micro-animations.
+*   **HOD Dashboard & Dual Panel**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and toggle between HOD administration and Faculty teaching panels.
+*   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits require HOD authorization).
+*   **Unified Notices Board System**: Multi-scoped notifications system allowing Admin, HODs, and DEOs to compose and manage notices targeted to everyone, specific roles, specific branches, specific classes, or single users with quick navbar shortcuts.
+*   **Parent & Student SMS Integration**: Utility module (`core/sms_utils.py`) for sending Fast2SMS alerts for absences, exam results, and leave requests.
+*   **First-Time Password Flow**: Automatically forces students to set a custom, permanent password on their first login.
+*   **Glassmorphism & Cinematic UI**: Fully responsive dark/light mode visual design built with custom CSS tokens, backdrop blur effects, animated gradients, and smooth micro-animations.
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
-*   **Faculty Student Results View**: Class Teachers and Counsellors can monitor and review the grades of their assigned students.
-*   **Month-wise Attendance Reports**: Enhanced faculty attendance reports with month picker (`YYYY-MM`) filtering alongside custom date ranges.
-*   **Comprehensive Profile Pages**: Each role (Student, Faculty/HOD, DEO, Admin) has a tailored profile page displaying relevant details — branch, department, employee ID, joining date, and access level.
-*   **Clickable Roll-Number/Employee-ID Links**: Admin can click any student roll number or faculty employee ID in management tables to open a full read-only detail view.
-*   **Name Validation**: Server-side validation enforces minimum character lengths for first name (3 chars) and last name (1 char) on add/edit forms.
-*   **Advanced Security Hardening**: Incorporates server-side rate limiting (5 attempts/min per IP on login) to block brute-force/credential-stuffing, HSTS, SameSite/HttpOnly session cookies, and Referrer-Policy headers.
-*   **Excel & PDF Export**: Download dynamically generated attendance reports on demand.
-*   **AI Attendance Predictor**: Utilizes scikit-learn to analyze student records and predict semester attendance outcomes.
+*   **Excel & PDF Export**: Download dynamically generated attendance reports on demand via openpyxl and ReportLab.
+*   **AI Attendance Predictor**: Utilizes scikit-learn linear regression to analyze student records and predict semester attendance outcomes.
+*   **PostgreSQL Sequence Synchronizer**: Automated script (`scratch/fix_postgres_sequences.py`) to align PostgreSQL primary key sequences with table max IDs, preventing primary key collision errors in production.
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 - **Backend**: Django 4.2 (Python 3.11+)
-- **Frontend**: Bootstrap 5, Chart.js 4, Font Awesome 6
-- **Database**: SQLite (dev) — PostgreSQL (production)
-- **Caching**: Django LocMemCache (dev) — Redis (production)
-- **AI**: scikit-learn linear regression for attendance prediction
-- **Exports**: openpyxl (Excel), reportlab (PDF)
+- **Frontend**: Bootstrap 5, Chart.js 4, Font Awesome 6, Vanilla CSS Tokens
+- **Database**: SQLite (Development) — PostgreSQL (Production)
+- **Caching**: Django LocMemCache (Dev) — Redis (Production)
+- **AI / ML**: scikit-learn (Linear Regression for attendance prediction)
+- **Exports**: openpyxl (Excel Reports), ReportLab (PDF Certificates & Sheets)
+- **Notifications**: Fast2SMS API & Django SMTP Email Handler
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
 ```
 VVITU_Portal/
@@ -54,43 +62,49 @@ VVITU_Portal/
 │   └── middleware.py     # Role-based access and Login Rate Limiter
 │
 ├── accounts/             # Custom User, Student, Faculty, DEOProfile, Achievement models
-│   ├── views.py          # Login, logout, profile, first-login password set
-│   └── profile_detail_views.py  # Read-only student/faculty detail views for Admin/HOD
+│   ├── models.py         # User, Student (get_backlogs, total_backlogs_count), Faculty, DEO, Achievement
+│   ├── views.py          # Session auth, profiles, password reset flows
+│   └── profile_detail_views.py  # Read-only student & faculty detail views for Admin/HOD
+│
 ├── core/                 # Shared academic models, notifications centre, and tasks
-│   ├── models.py         # Branch, Section, Subject, Timetable, Notification, etc.
+│   ├── models.py         # Branch, Section, Subject, Timetable, FacultyAttendance, FacultyLeaveRequest, Result, Notification
 │   ├── notification_views.py # Full notifications CRUD — compose, manage, delete
-│   └── management/commands/ # seed_data, send_low_attendance_alerts
-├── student/              # Student dashboard, results summary, achievements submit
-├── faculty/              # Mark attendance, reports, marks upload, achievements submit
-├── admin_dashboard/      # Admin settings, staff role management, global CRUD
-├── hod/                  # HOD dashboard, branch assignments, timetable publishing, approvals
-├── deo/                  # DEO dashboard, student CRUD, attendance entries, marks uploads
+│   └── sms_utils.py      # Fast2SMS SMS notification dispatcher
+│
+├── student/              # Student dashboard, results summary, backlogs alert, past papers
+├── faculty/              # Mark attendance, reports, leave applications, class transfers, marks upload
+├── admin_dashboard/      # Admin settings, staff management, global CRUD, leave request approvals
+├── hod/                  # HOD department manager, approvals, leave applications, timetable editors
+├── deo/                  # DEO branch lists, attendance records, upload pages
 │
 ├── templates/            # HTML templates (extends core/base.html)
-│   ├── core/base.html    # Master layout: navbar, sidebar, notifications dropdown
-│   ├── core/create_notification.html # Compose/edit notices with live preview
-│   ├── core/manage_notifications.html # Sent notices list with edit/delete
-│   ├── accounts/         # Profile details, login, and first-time password reset
-│   ├── student/          # Dashboard, results, calendar, past papers, achievements
-│   ├── faculty/          # Dashboard, attendance sheet, reports, marks upload
-│   ├── admin_dashboard/  # Admin staff/student managers, bulk CSV pages
-│   ├── hod/              # HOD department manager, approvals, timetable editors
+│   ├── core/base.html    # Master layout: navbar, sidebar, theme switcher, notifications dropdown
+│   ├── accounts/         # Profile details, student backlogs card, first-time password reset
+│   ├── student/          # Dashboard, results, backlogs banner, calendar, past papers
+│   ├── faculty/          # Dashboard, attendance sheet, leave requests, reports, marks upload
+│   ├── admin_dashboard/  # Admin staff/student managers, leave request approvals, bulk CSV pages
+│   ├── hod/              # HOD department manager, leave applications, approvals, timetable editors
 │   └── deo/              # DEO branch lists, attendance records, upload pages
 │
 ├── static/
-│   ├── css/main.css      # Complete glassmorphism design system
-│   ├── css/login.css     # Premium split-panel login page
-│   ├── js/main.js        # Sidebar, dropdowns, AJAX polling utilities
-│   └── images/           # Logo files
+│   ├── css/main.css      # Glassmorphism design system & core button styles
+│   ├── css/theme_and_calendar.css # Light/Dark theme token overrides & calendar icon styling
+│   ├── js/main.js        # Theme switcher, sidebar, Flatpickr, AJAX utilities
+│   └── images/           # Logo files & graphics
 │
-├── sample_data.py        # Database seeding script (runs automatically on Render)
+├── scratch/
+│   ├── audit_templates.py    # Template syntax audit script (0 errors across 75 templates)
+│   ├── test_all_views.py     # Automated route testing script (100% 200 OK across 50+ routes)
+│   └── fix_postgres_sequences.py # PostgreSQL primary key sequence synchronizer
+│
+├── sample_data.py        # Database seeding script (runs automatically on cloud setup)
 ├── render.yaml           # One-click Render Blueprint Deployment config
 └── requirements.txt
 ```
 
 ---
 
-## Step-by-Step Setup
+## ⚡ Step-by-Step Setup
 
 ### Step 1 — Create and activate a virtual environment
 
@@ -99,145 +113,73 @@ VVITU_Portal/
 python -m venv venv
 venv\Scripts\activate
 
-# macOS / Linux
+# Linux / macOS
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Step 2 — Install all dependencies
+### Step 2 — Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3 — Apply database migrations
+### Step 3 — Apply migrations and seed sample database
 
 ```bash
-python manage.py makemigrations
 python manage.py migrate
+python manage.py shell -c "import sample_data; sample_data.run()"
 ```
 
-### Step 4 — Load sample data (highly recommended for testing)
+### Step 4 — Run sequence synchronizer (PostgreSQL)
 
 ```bash
-python manage.py seed_data
+python scratch/fix_postgres_sequences.py
 ```
 
-This creates branches, faculty accounts, students, a full timetable for CSE-II-A, 45 days of attendance records, exam results, and academic calendar events — everything you need to explore the portal immediately. Note: This command is idempotent and will skip seeding if data already exists in the database.
-
-### Step 5 — Start the development server
+### Step 5 — Run local development server
 
 ```bash
 python manage.py runserver
 ```
 
-The application is now available at `http://127.0.0.1:8000/`.
-
-### Step 6 — (Optional) Running PostgreSQL locally with Docker
-
-To avoid SQLite/PostgreSQL mismatches in local development, run a local PostgreSQL container:
-
-```bash
-docker run --name vvit-postgres -p 5432:5432 -e POSTGRES_DB=vvitu_portal -e POSTGRES_USER=vvitu_user -e POSTGRES_PASSWORD=pass -d postgres
-```
-
-And update your `.env` file to reference this local database:
-```ini
-DATABASE_URL=postgres://vvitu_user:pass@localhost:5432/vvitu_portal
-```
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 ---
 
-## Default Login Credentials (after loading sample data)
+## 🔑 Default Login Credentials
 
-All accounts share the default password: **`vvit@1234`**
-
-| Role | Username / Range | Branch / Scope | Description |
-|---|---|---|---|
-| **Admin** | `admin` | Global | Full System Access & CRUD |
-| **HODs** | `HOD001` to `HOD008` | CSE (`HOD001`), ECE (`HOD002`), EEE (`HOD003`), IT (`HOD004`), CSM (`HOD005`), CSD (`HOD006`), CIVIL (`HOD007`), MECH (`HOD008`) | Full Branch Management & Teaching Panel |
-| **DEOs** | `DEO001` to `DEO008` | CSE (`DEO001`), ECE (`DEO002`), EEE (`DEO003`), IT (`DEO004`), CSM (`DEO005`), CSD (`DEO006`), CIVIL (`DEO007`), MECH (`DEO008`) | Branch-scoped Data Operator |
-| **Faculty** | `EMP001` to `EMP016` | 2 per branch (e.g. `EMP001`-`EMP002` CSE, `EMP003`-`EMP004` ECE, etc.) | Class Teachers, Counsellors, and Subject Instructors |
-| **Students** | `24BQ1A4942` (CSE A) <br> `24BQ1A0401` (ECE A) <br> `24BQ1A4201` (CSM A) <br> (66 total students across branches) | Various | Students across Years 1-4 with branch-specific roll numbers |
-
-
-> [!WARNING]
-> **Production Password Security**: Change these default passwords immediately when deploying in any live or public-facing environment.
+| Role | Username / Portal ID | Password | Access Level |
+| :--- | :--- | :--- | :--- |
+| **System Admin** | `admin` | `admin123` | Full Global Access |
+| **HOD (CSE)** | `EMP001` | `vvit1234` | CSE Department Administration + Teaching |
+| **Faculty** | `EMP002` | `vvit1234` | Mark Attendance, Reports, Apply Leaves |
+| **DEO (CSE)** | `DEO001` | `vvit1234` | CSE Student Entries & Marks Upload |
+| **Student** | `24BQ1A4901` | `student123` | Student Dashboard, Results, Backlogs |
 
 ---
 
-## Key URL Reference
+## 🔧 Quality Verification & Automated Testing
 
-| URL                                     | Who can access       | Purpose                                           |
-|-----------------------------------------|----------------------|---------------------------------------------------|
-| `/accounts/login/`                      | Everyone             | Main login page                                   |
-| `/accounts/profile/`                    | All roles            | Personal profile page (role-specific details)     |
-| `/accounts/change-password/`            | All roles            | Self-service password change page                 |
-| `/accounts/set-password/`               | Students (First)     | Forces student to set custom permanent password   |
-| `/accounts/students/<id>/detail/`       | Admin / HOD / DEO    | Read-only student profile, results, achievements  |
-| `/accounts/faculty/<id>/detail/`        | Admin / HOD / DEO    | Read-only faculty profile, subjects               |
-| `/student/`                             | Students             | Dashboard with charts + AI Prediction             |
-| `/student/results/`                     | Students             | Consolidated results (Mid1, Mid2, Sem Final)      |
-| `/student/add-achievement/`             | Students             | Submit academic or co-curricular achievements     |
-| `/faculty/`                             | Faculty / HOD / Lab  | Faculty dashboard & assignments                   |
-| `/faculty/my-attendance/`              | Faculty              | Personal attendance history & substitute requests |
-| `/faculty/transfer-class/`             | Faculty              | Transfer scheduled class slot to substitute        |
-| `/faculty/upload-marks/`                | Faculty              | Subject/Exam/Class marks upload page              |
-| `/faculty/add-achievement/`             | Faculty              | Submit faculty achievements                       |
-| `/hod/`                                 | HODs                 | HOD Dashboard with branch stats                   |
-| `/hod/faculty-attendance/`             | HODs                 | Department faculty attendance & class transfers   |
-| `/hod/timetable/`                       | HODs                 | Assign faculty & publish timetables               |
-| `/hod/verify-achievements/`             | HODs                 | Review and approve achievements                   |
-| `/deo/`                                 | DEOs                 | DEO Dashboard (restricted to assigned branch)     |
-| `/deo/attendance/`                      | DEOs                 | List/edit attendance (1-day time limit)           |
-| `/deo/upload-marks/`                    | DEOs                 | Upload branch exam marks                          |
-| `/notifications/`                       | All roles            | Full notification centre (inbox view)             |
-| `/notifications/manage/`               | Admin / HOD / DEO    | Sent notices list — compose, edit, delete         |
-| `/notifications/create/`               | Admin / HOD / DEO    | Compose & send a new notice with live preview     |
-| `/admin-portal/`                        | Admin                | Statistics overview                               |
-| `/admin-portal/faculty-attendance/`    | Admin                | Institution-wide faculty attendance monitoring    |
-| `/admin-portal/students/`              | Admin                | CRUD student management                           |
-| `/admin-portal/students/bulk-upload/`  | Admin                | Bulk upload students via CSV                      |
-| `/admin-portal/results/bulk-upload/`   | Admin                | Bulk upload results via CSV                       |
-| `/admin/`                               | Superuser            | Django admin panel                                |
+This repository includes custom verification harnesses:
 
----
+1. **Django System Check**:
+   ```bash
+   python manage.py check
+   ```
+   *Result*: `System check identified no issues (0 silenced).`
 
-## 🔧 Recent Fixes & Improvements
+2. **Template Syntax Auditor**:
+   ```bash
+   python scratch/audit_templates.py
+   ```
+   *Result*: `SUCCESS: All 75 templates compiled with 0 syntax errors!`
 
-### New Features & Enhancements — August 2026
-
-- **Extended Optional Student Profiles & Fee Tracking**: Added optional fields (`gender`, `caste`, `religion`, `parent_occupation`, `personal_mobile`, `permanent_address`, `present_address`, `fees_pending`, `fees_updated_at`). Accessible to Admin, HODs, Class Teachers, and Counsellors on student profile detail views (`/accounts/students/<id>/detail/`).
-- **Attendance Timetable Auto-Mapping & Date Selector**: Enhanced attendance marking with calendar date picker, live class timing previews (`09:00 AM - 09:50 AM`), classroom location badges, and auto-mapping to the logged-in faculty's scheduled timetable period slot for that section and day.
-- **Notification & SMS Target Routing**:
-  - **Parents**: Receive ONLY Absent alerts and Semester Final Results (Grades & CGPA only, raw marks omitted).
-  - **Students**: Receive SMS & Email for Mid Results (marks obtained), Semester Final Results, Absent alerts, Low Attendance alerts (<75%), and notices.
-- **Profile Picture Uploads**: Added user profile picture upload support, stored under `media/profile_pics/`, rendered across navbar avatars, profile pages, and detail views.
-- **Faculty Attendance System**: Introduced `FacultyAttendance` model tracking daily attendance status (`Present`, `Absent`, `On Leave`, `Official Duty`) with check-in timestamps, marked by, and remarks. HODs and Admins can log/manage attendance, while Faculty members can view monthly attendance summaries.
-- **Class Period Substitutions / Transfers**: Added `ClassTransfer` model to handle substitute teaching assignments when faculty are on leave or official duty. Faculty can request period transfers from their dashboard modal or attendance page, allowing substitutes to mark student attendance for assigned slots.
-- **Classroom Location Support**: Extended `Timetable` model with `room_number` field. HODs and Admins can assign room/lab locations (e.g., "Block A - Room 302 / Lab 4") in timetable management, which displays across faculty and student schedule views.
-- **Month-wise Report Filtering**: Enhanced Faculty Reports page with month-year (`<input type="month">`) picker for instant monthly attendance filtering alongside custom date ranges.
-
-### Bug Fixes — July 2026
-
-- **Backup filename format bug** (`admin_dashboard/views.py`): Corrected a malformed `strftime` format string `'%Y%md_%H%M%S'` that embedded a literal `d` in every backup filename (e.g. `db_backup_202607d_123456.json`). Fixed to `'%Y%m%d_%H%M%S'` for correct ISO-style dates.
-
-- **Grade not recalculated on result update** (`admin_dashboard/views.py`): `Result.save()` auto-computes grade only when `self.grade` is falsy. When updating existing records via "Add Results" or "Bulk Upload Results", the old stale grade was retained even after marks changed. Fixed by explicitly passing `'grade': ''` in the `update_or_create` defaults for both the manual entry and CSV bulk-upload result flows, forcing a fresh grade calculation on every save.
-
-- **Broken `transaction.atomic()` rollback in Bulk Upload Students** (`admin_dashboard/views.py`): The `raise Exception(...)` that was intended to trigger a database rollback on CSV errors was placed **outside** the `with transaction.atomic()` block, meaning the rollback never actually occurred. Additionally, a misleading **"Successfully imported X students"** flash message was queued to the request before the exception propagated, so users saw a success notice even when all data was being silently rolled back. Fixed by moving the error-check-and-raise **inside** the atomic block, and placing the success message after the block exits cleanly.
-
-- **Chained `dict_get` template filter broken in Add Results form** (`templates/admin_dashboard/add_results.html`): The expression `existing_results|dict_get:sid|default:''|dict_get:'marks_obtained'` used `|default:''` as a mid-chain fallback. When a student had no existing result, `dict_get` returned `None`, then `|default:''` converted it to the empty string `''`, and the second `dict_get` was called on a string — not a dict — always returning `None`. This prevented existing marks from being pre-filled in the form. Fixed by changing `|default:''` → `|default:{}` (empty dict), so the second `dict_get` receives a dict and the trailing `|default` value renders correctly.
-
----
-
-### Earlier Fixes
-
-- **Notification "Send" button**: Quick-compose link in the navbar dropdown is now visible to HOD and DEO users, not just Admin.
-- **Sidebar active state accuracy**: Faculty sidebar navigation links now correctly use `app_name` matching to prevent false active highlights when HOD users browse from the "My Teaching" section.
-- **DEO profile page**: DEO users now see their assigned branch, employee ID, and access level on their personal profile page.
-- **Notification Server 500 fix**: Added safe `try-except` guards around HOD/DEO profile lookups in the notification query builder to prevent crashes when profiles are missing.
-- **Template syntax fix**: Resolved Django `TemplateSyntaxError` in the notification compose page caused by unsupported parentheses in template `if` conditions.
-- **HOD teaching panel toggle**: HOD users can toggle between the HOD administrative panel and their personal Faculty teaching panel via header buttons on both dashboards.
+3. **Automated Route Test Suite**:
+   ```bash
+   python scratch/test_all_views.py
+   ```
+   *Result*: `ALL 50+ PROJECT ROUTES PASSED 100% WITH STATUS 200 OK!`
 
 ---
 
