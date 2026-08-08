@@ -10,7 +10,7 @@
     <p class="ph-sub">Apply for leave, manage applications, and track approval status from HOD and Admin</p>
   </div>
   <div class="ph-right">
-    <button type="button" class="btn btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+    <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
       <i class="fas fa-plus-circle me-1"></i>Apply for Leave
     </button>
   </div>
@@ -126,7 +126,7 @@
           <td class="text-end">
             {% if leave.status == 'pending' %}
               <a href="{% url 'faculty:cancel_leave_request' leave.id %}" 
-                 class="btn btn-leave-reject"
+                 class="btn-vvit-danger"
                  onclick="return confirm('Are you sure you want to cancel this leave application?');">
                 <i class="fas fa-ban me-1"></i>Cancel
               </a>
@@ -140,7 +140,7 @@
           <td colspan="8" class="text-center py-5 text-muted">
             <i class="fas fa-calendar-times fa-3x mb-3 opacity-50 d-block"></i>
             <p class="mb-2">No leave applications found.</p>
-            <button type="button" class="btn btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+            <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
               <i class="fas fa-plus me-1"></i>Apply for Leave Now
             </button>
           </td>
@@ -201,8 +201,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-leave-remarks" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-leave-apply">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
             <i class="fas fa-paper-plane me-1"></i>Submit Application
           </button>
         </div>

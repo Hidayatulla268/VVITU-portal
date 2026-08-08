@@ -10,7 +10,7 @@
     <p class="ph-sub">Apply for your leave (Admin Approval) and review department faculty leave requests</p>
   </div>
   <div class="ph-right">
-    <button type="button" class="btn btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+    <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
       <i class="fas fa-plus-circle me-1"></i>Apply for Leave
     </button>
   </div>
@@ -128,21 +128,21 @@
                   <div class="d-inline-flex gap-2">
                     <!-- Direct One-Click Approve -->
                     <a href="{% url 'hod:action_leave_request' leave.id 'approve' %}" 
-                       class="btn btn-leave-approve"
+                       class="btn-vvit-success"
                        title="Quick Approve leave request"
                        onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
                       <i class="fas fa-check me-1"></i>Approve
                     </a>
                     <!-- Direct One-Click Reject -->
                     <a href="{% url 'hod:action_leave_request' leave.id 'reject' %}" 
-                       class="btn btn-leave-reject"
+                       class="btn-vvit-danger"
                        title="Quick Reject leave request"
                        onclick="return confirm('Reject leave for {{ leave.faculty.full_name }}?');">
                       <i class="fas fa-times me-1"></i>Reject
                     </a>
                     <!-- Open Remarks Modal -->
                     <button type="button" 
-                            class="btn btn-leave-remarks" 
+                            class="btn-vvit-secondary" 
                             data-bs-toggle="modal" 
                             data-bs-target="#actionModal{{ leave.id }}"
                             title="Add remarks before approval or rejection">
@@ -173,7 +173,7 @@
     <div class="glass-card">
       <div class="card-header-custom d-flex justify-content-between align-items-center">
         <h3 class="card-title-custom"><i class="fas fa-user-clock me-2 text-accent"></i>My Leave Applications (HOD)</h3>
-        <button class="btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+        <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
           <i class="fas fa-plus me-1"></i>Apply for Leave
         </button>
       </div>
@@ -239,7 +239,7 @@
               <td class="text-end">
                 {% if leave.status == 'pending' %}
                   <a href="{% url 'hod:cancel_leave_request' leave.id %}" 
-                     class="btn-leave-reject"
+                     class="btn-vvit-danger"
                      onclick="return confirm('Are you sure you want to cancel this leave application?');">
                     <i class="fas fa-ban me-1"></i>Cancel
                   </a>
@@ -253,7 +253,7 @@
               <td colspan="8" class="text-center py-5 text-muted">
                 <i class="fas fa-calendar-times fa-3x mb-3 opacity-50 d-block"></i>
                 <p class="mb-2">You have not submitted any leave applications.</p>
-                <button class="btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+                <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
                   <i class="fas fa-plus me-1"></i>Apply for Leave Now
                 </button>
               </td>
@@ -293,11 +293,11 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
-          <button type="button" class="btn-leave-remarks" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn-leave-approve" formaction="{% url 'hod:action_leave_request' leave.id 'approve' %}">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-success" formaction="{% url 'hod:action_leave_request' leave.id 'approve' %}">
             <i class="fas fa-check me-1"></i>Approve Leave
           </button>
-          <button type="submit" class="btn-leave-reject" formaction="{% url 'hod:action_leave_request' leave.id 'reject' %}">
+          <button type="submit" class="btn-vvit-danger" formaction="{% url 'hod:action_leave_request' leave.id 'reject' %}">
             <i class="fas fa-times me-1"></i>Reject Leave
           </button>
         </div>
@@ -358,8 +358,8 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-leave-remarks" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-leave-apply">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
             <i class="fas fa-paper-plane me-1"></i>Submit Application to Admin
           </button>
         </div>
