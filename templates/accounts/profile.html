@@ -178,15 +178,15 @@
       {% if student.total_backlogs_count > 0 %}
       <!-- Academic Backlogs Card (Shown ONLY for students with active backlogs) -->
       <div class="mt-4 pt-4" style="border-top: 1px solid rgba(220,38,38,0.3);">
-        <div class="p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.35);">
+        <div class="p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between alert-danger" style="border: 1px solid rgba(220,38,38,0.35);">
           <div class="d-flex align-items-center gap-2">
             <i class="fas fa-exclamation-triangle text-danger fs-4"></i>
             <div>
-              <div class="fw-bold text-white mb-0" style="font-size: 1rem;">Active Academic Backlogs</div>
+              <div class="fw-bold mb-0" style="font-size: 1rem; color: var(--text-primary);">Active Academic Backlogs</div>
               <div class="text-muted small">You have <strong>{{ student.total_backlogs_count }}</strong> pending backlog subject(s) requiring re-examination.</div>
             </div>
           </div>
-          <span class="badge bg-danger fs-6 px-3 py-2">Total Backlogs: {{ student.total_backlogs_count }}</span>
+          <span class="badge bg-danger fs-6 px-3 py-2 text-white">Total Backlogs: {{ student.total_backlogs_count }}</span>
         </div>
 
         <div class="table-responsive">
@@ -210,25 +210,25 @@
                   </span>
                 </td>
                 <td>
-                  <div class="fw-bold text-white fs-6" style="color: #ffffff !important; font-size: 0.95rem; line-height: 1.3;">
+                  <div class="fw-bold fs-6" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.3;">
                     {{ backlog.subject.name }}
                   </div>
                   {% if backlog.subject.is_lab %}
-                    <span class="badge bg-purple mt-1" style="font-size: 0.65rem;">Practical Lab</span>
+                    <span class="badge bg-purple text-white mt-1" style="font-size: 0.65rem;">Practical Lab</span>
                   {% endif %}
                 </td>
-                <td class="text-white small">
-                  <div class="fw-semibold text-white">{{ backlog.exam.name|default:"Semester Exam" }}</div>
+                <td class="small">
+                  <div class="fw-semibold" style="color: var(--text-primary);">{{ backlog.exam.name|default:"Semester Exam" }}</div>
                   <div class="text-muted" style="font-size: 0.75rem;">Semester {{ backlog.subject.semester }}</div>
                 </td>
-                <td class="text-white fw-bold">
+                <td class="fw-bold" style="color: var(--text-primary);">
                   {{ backlog.marks_obtained|floatformat:0 }} / {{ backlog.max_marks|floatformat:0 }}
                 </td>
                 <td>
-                  <span class="badge bg-danger fs-6 px-3 py-1 fw-bold">{{ backlog.grade }}</span>
+                  <span class="badge bg-danger text-white fs-6 px-3 py-1 fw-bold">{{ backlog.grade }}</span>
                 </td>
                 <td class="text-end">
-                  <span class="badge bg-danger text-uppercase px-3 py-2 fw-bold" style="letter-spacing: 0.05em;">
+                  <span class="badge bg-danger text-white text-uppercase px-3 py-2 fw-bold" style="letter-spacing: 0.05em;">
                     <i class="fas fa-times-circle me-1"></i>Active Backlog
                   </span>
                 </td>

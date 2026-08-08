@@ -689,3 +689,117 @@ input.flatpickr-input:focus {
 [data-theme="light"] .email-preview-body pre {
   color: #374151;
 }
+
+/* ── LIGHT MODE TEXT & ACCESSIBILITY OVERRIDES ─────────────────────── */
+[data-theme="light"] {
+  --text-primary:    #0f172a !important;
+  --text-secondary:  #334155 !important;
+  --text-muted:      #64748b !important;
+}
+
+[data-theme="light"] body,
+[data-theme="light"] p,
+[data-theme="light"] span,
+[data-theme="light"] td,
+[data-theme="light"] th,
+[data-theme="light"] label,
+[data-theme="light"] div {
+  color: inherit;
+}
+
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-light {
+  color: #0f172a !important;
+}
+
+/* Retain crisp white text ONLY for solid badges & buttons with dark backgrounds */
+[data-theme="light"] .badge.bg-danger,
+[data-theme="light"] .badge.bg-primary,
+[data-theme="light"] .badge.bg-success,
+[data-theme="light"] .badge.bg-dark,
+[data-theme="light"] .badge.bg-purple,
+[data-theme="light"] .badge.bg-accent,
+[data-theme="light"] .btn-vvit-primary,
+[data-theme="light"] .btn-vvit-danger,
+[data-theme="light"] .btn-vvit-success {
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .glass-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .card-title-custom,
+[data-theme="light"] h1, 
+[data-theme="light"] h2, 
+[data-theme="light"] h3, 
+[data-theme="light"] h4, 
+[data-theme="light"] h5, 
+[data-theme="light"] h6 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .detail-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .detail-item div,
+[data-theme="light"] .detail-item .fw-bold {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .detail-item .text-muted {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .alert-danger {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #991b1b !important;
+}
+
+[data-theme="light"] .alert-danger div,
+[data-theme="light"] .alert-danger strong,
+[data-theme="light"] .alert-danger span {
+  color: #991b1b !important;
+}
+
+[data-theme="light"] .alert-info {
+  background: #f0f9ff !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+}
+
+[data-theme="light"] .alert-info div,
+[data-theme="light"] .alert-info strong,
+[data-theme="light"] .alert-info span {
+  color: #0369a1 !important;
+}
+
+[data-theme="light"] .vvit-table thead tr {
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .vvit-table thead th {
+  color: #334155 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .vvit-table tbody tr {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .vvit-table td {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .vvit-table td .fw-bold,
+[data-theme="light"] .vvit-table td .fw-semibold {
+  color: #0f172a !important;
+}
