@@ -129,20 +129,21 @@
               <div class="d-inline-flex gap-2">
                 <!-- Direct One-Click Approve -->
                 <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}" 
-                   class="btn-leave-approve"
+                   class="btn btn-leave-approve"
                    title="Quick Approve leave request"
                    onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
                   <i class="fas fa-check me-1"></i>Approve
                 </a>
                 <!-- Direct One-Click Reject -->
                 <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}" 
-                   class="btn-leave-reject"
+                   class="btn btn-leave-reject"
                    title="Quick Reject leave request"
                    onclick="return confirm('Reject leave for {{ leave.faculty.full_name }}?');">
                   <i class="fas fa-times me-1"></i>Reject
                 </a>
                 <!-- Open Remarks Modal -->
-                <button class="btn-leave-remarks" 
+                <button type="button" 
+                        class="btn btn-leave-remarks" 
                         data-bs-toggle="modal" 
                         data-bs-target="#adminActionModal{{ leave.id }}"
                         title="Add remarks before approval or rejection">
@@ -195,11 +196,11 @@
           </div>
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
-          <button type="button" class="btn-leave-remarks" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn-leave-approve" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}">
+          <button type="button" class="btn btn-leave-remarks" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-leave-approve" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}">
             <i class="fas fa-check me-1"></i>Approve Leave
           </button>
-          <button type="submit" class="btn-leave-reject" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}">
+          <button type="submit" class="btn btn-leave-reject" formaction="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}">
             <i class="fas fa-times me-1"></i>Reject Leave
           </button>
         </div>

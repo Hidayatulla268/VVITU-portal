@@ -10,7 +10,7 @@
     <p class="ph-sub">Apply for leave, manage applications, and track approval status from HOD and Admin</p>
   </div>
   <div class="ph-right">
-    <button class="btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+    <button type="button" class="btn btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
       <i class="fas fa-plus-circle me-1"></i>Apply for Leave
     </button>
   </div>
@@ -126,7 +126,7 @@
           <td class="text-end">
             {% if leave.status == 'pending' %}
               <a href="{% url 'faculty:cancel_leave_request' leave.id %}" 
-                 class="vvit-btn vvit-btn-danger btn-sm"
+                 class="btn btn-leave-reject"
                  onclick="return confirm('Are you sure you want to cancel this leave application?');">
                 <i class="fas fa-ban me-1"></i>Cancel
               </a>
@@ -140,7 +140,7 @@
           <td colspan="8" class="text-center py-5 text-muted">
             <i class="fas fa-calendar-times fa-3x mb-3 opacity-50 d-block"></i>
             <p class="mb-2">No leave applications found.</p>
-            <button class="vvit-btn vvit-btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+            <button type="button" class="btn btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
               <i class="fas fa-plus me-1"></i>Apply for Leave Now
             </button>
           </td>
@@ -171,7 +171,7 @@
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label text-muted small">Leave Type <span class="text-danger">*</span></label>
+              <label class="form-label text-white small">Leave Type <span class="text-danger">*</span></label>
               <select name="leave_type" class="vvit-select" required>
                 {% for code, label in leave_type_choices %}
                   <option value="{{ code }}">{{ label }}</option>
@@ -180,29 +180,29 @@
             </div>
 
             <div class="col-md-3">
-              <label class="form-label text-muted small">Start Date <span class="text-danger">*</span></label>
+              <label class="form-label text-white small">Start Date <span class="text-danger">*</span></label>
               <input type="date" name="start_date" class="vvit-input" required>
             </div>
 
             <div class="col-md-3">
-              <label class="form-label text-muted small">End Date <span class="text-danger">*</span></label>
+              <label class="form-label text-white small">End Date <span class="text-danger">*</span></label>
               <input type="date" name="end_date" class="vvit-input" required>
             </div>
 
             <div class="col-12">
-              <label class="form-label text-muted small">Reason for Leave <span class="text-danger">*</span></label>
+              <label class="form-label text-white small">Reason for Leave <span class="text-danger">*</span></label>
               <textarea name="reason" class="vvit-input" rows="3" placeholder="Provide reason for leave..." required></textarea>
             </div>
 
             <div class="col-12">
-              <label class="form-label text-muted small">Class Substitution / Proxy Notes (Optional)</label>
+              <label class="form-label text-white small">Class Substitution / Proxy Notes (Optional)</label>
               <textarea name="substitute_notes" class="vvit-input" rows="2" placeholder="Mention substitute faculty arrangements if any..."></textarea>
             </div>
           </div>
         </div>
-        <div class="modal-footer border-0 pt-0">
-          <button type="button" class="vvit-btn vvit-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="vvit-btn vvit-btn-primary">
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-leave-remarks" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-leave-apply">
             <i class="fas fa-paper-plane me-1"></i>Submit Application
           </button>
         </div>

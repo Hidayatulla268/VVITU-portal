@@ -860,94 +860,94 @@ a:hover { color: var(--text-primary); }
 }
 
 /* Leave Approval Dedicated Action Buttons */
-.btn-leave-approve {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #10b981, #059669);
+.btn-leave-approve, .btn.btn-leave-approve {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 7px 16px !important;
+  border-radius: 20px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
   color: #ffffff !important;
-  border: 1px solid #10b981;
-  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
-  transition: all 0.2s ease;
-  text-decoration: none;
-  cursor: pointer;
+  border: 1px solid #10b981 !important;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35) !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
 }
-.btn-leave-approve:hover {
-  background: linear-gradient(135deg, #34d399, #10b981);
-  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.55);
-  transform: translateY(-2px);
-  color: #ffffff !important;
-}
-
-.btn-leave-reject {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #ffffff !important;
-  border: 1px solid #ef4444;
-  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
-  transition: all 0.2s ease;
-  text-decoration: none;
-  cursor: pointer;
-}
-.btn-leave-reject:hover {
-  background: linear-gradient(135deg, #f87171, #ef4444);
-  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.55);
-  transform: translateY(-2px);
+.btn-leave-approve:hover, .btn.btn-leave-approve:hover {
+  background: linear-gradient(135deg, #34d399, #10b981) !important;
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.55) !important;
+  transform: translateY(-2px) !important;
   color: #ffffff !important;
 }
 
-.btn-leave-remarks {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
+.btn-leave-reject, .btn.btn-leave-reject {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 7px 16px !important;
+  border-radius: 20px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #ffffff !important;
+  border: 1px solid #ef4444 !important;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35) !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+.btn-leave-reject:hover, .btn.btn-leave-reject:hover {
+  background: linear-gradient(135deg, #f87171, #ef4444) !important;
+  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.55) !important;
+  transform: translateY(-2px) !important;
+  color: #ffffff !important;
+}
+
+.btn-leave-remarks, .btn.btn-leave-remarks {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 7px 16px !important;
+  border-radius: 20px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: var(--text-primary) !important;
-  border: 1px solid var(--clr-border-2);
-  transition: all 0.2s ease;
-  text-decoration: none;
-  cursor: pointer;
+  border: 1px solid var(--clr-border-2) !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
 }
-.btn-leave-remarks:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.4);
+.btn-leave-remarks:hover, .btn.btn-leave-remarks:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
   color: #ffffff !important;
-  transform: translateY(-2px);
+  transform: translateY(-2px) !important;
 }
 
-.btn-leave-apply {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 22px;
-  border-radius: 25px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), #991b1b);
+.btn-leave-apply, .btn.btn-leave-apply {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 9px 22px !important;
+  border-radius: 25px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, var(--accent), #991b1b) !important;
   color: #ffffff !important;
-  border: 1px solid var(--accent);
-  box-shadow: 0 4px 16px rgba(220,38,38,0.4);
-  transition: all 0.25s ease;
-  text-decoration: none;
-  cursor: pointer;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 4px 16px rgba(220,38,38,0.4) !important;
+  transition: all 0.25s ease !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
 }
-.btn-leave-apply:hover {
-  background: linear-gradient(135deg, var(--accent-bright), var(--accent));
-  box-shadow: 0 6px 22px rgba(220,38,38,0.6);
-  transform: translateY(-2px) scale(1.02);
+.btn-leave-apply:hover, .btn.btn-leave-apply:hover {
+  background: linear-gradient(135deg, var(--accent-bright), var(--accent)) !important;
+  box-shadow: 0 6px 22px rgba(220,38,38,0.6) !important;
+  transform: translateY(-2px) scale(1.02) !important;
   color: #ffffff !important;
 }
 .btn-sm-danger:hover {
