@@ -248,3 +248,56 @@ class Achievement(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.title} ({self.category})"
+
+
+# ─────────────────────────────────────────────
+# FACULTY LEAVE REQUEST
+# ─────────────────────────────────────────────
+class FacultyLeaveRequest(models.Model):
+    """
+    Faculty Leave Request submitted to HOD and Admin.
+    Either HOD or Admin can approve or reject the request.
+    """
+    LEAVE_TYPE_CHOICES = [
+        ('casual',    'Casual Leave (CL)'),
+        ('sick',      'Sick Leave (SL)'),
+        ('duty',      'On Duty (OD)'),
+        ('earned',    'Earned Leave (EL)'),
+        ('maternity', 'Maternity / Paternity Leave'),
+        ('other',     'Other Leave'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pending',  'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    faculty          = models.ForeignKey(Faculty, on_delete=models.CASCADE, related_name='leave_requests', db_index=True)
+    leave_type       = models.CharField(max_length=20, choices=LEAVE_TYPE_CHOICES, default='casual', db_index=True)
+    start_date       = models.DateField(db_index=True)
+    end_date         = models.DateField(db_index=True)
+    reason           = models.TextField()
+    substitute_notes = models.TextField(blank=True, null=True, help_text="Class substitution or arrangement notes")
+    
+    status           = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending', db_index=True)
+    action_by        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='actioned_leaves')
+    action_at        = models.DateTimeField(null=True, blank=True)
+    admin_remarks    = models.TextField(blank=True, null=True, help_text="Remarks by HOD or Admin")
+    
+    created_at       = models.DateTimeField(auto_now_add=True)
+    updated_at       = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Faculty Leave Request'
+        verbose_name_plural = 'Faculty Leave Requests'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.faculty.full_name} — {self.get_leave_type_display()} ({self.start_date} to {self.end_date}) [{self.status.upper()}]"
+
+    @property
+    def total_days(self):
+        if self.start_date and self.end_date:
+            return (self.end_date - self.start_date).days + 1
+        return 1

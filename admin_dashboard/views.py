@@ -24,7 +24,7 @@ from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings as django_settings
 
-from accounts.models import User, Student, Faculty, DEOProfile
+from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequest
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
     Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
@@ -1936,6 +1936,89 @@ def export_student_results_pdf(request):
     response = HttpResponse(buf.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="VVITU_Portal_All_Student_Results.pdf"'
     return response
+
+
+# ─────────────────────────────────────────────
+# ADMIN LEAVE MANAGEMENT (ALL DEPARTMENTS)
+# ─────────────────────────────────────────────
+@admin_required
+def manage_leave_requests(request):
+    status_filter = request.GET.get('status', '')
+    dept_filter   = request.GET.get('department', '')
+    
+    leaves_qs = FacultyLeaveRequest.objects.select_related('faculty__user', 'faculty__department', 'action_by').order_by('-created_at')
+    
+    if status_filter in ['pending', 'approved', 'rejected']:
+        leaves_qs = leaves_qs.filter(status=status_filter)
+        
+    if dept_filter.isdigit():
+        leaves_qs = leaves_qs.filter(faculty__department_id=int(dept_filter))
+        
+    branches = Branch.objects.all()
+    pending_count = FacultyLeaveRequest.objects.filter(status='pending').count()
+    
+    return render(request, 'admin_dashboard/leave_requests.html', {
+        'leaves': leaves_qs,
+        'status_filter': status_filter,
+        'dept_filter': dept_filter,
+        'branches': branches,
+        'pending_count': pending_count,
+    })
+
+
+@admin_required
+def action_leave_request(request, pk, action):
+    leave_req = get_object_or_404(FacultyLeaveRequest, pk=pk)
+    
+    if action not in ['approve', 'reject']:
+        messages.error(request, "Invalid leave action.")
+        return redirect('admin_dashboard:manage_leave_requests')
+        
+    remarks = request.POST.get('remarks', '').strip() if request.method == 'POST' else ''
+    
+    new_status = 'approved' if action == 'approve' else 'rejected'
+    leave_req.status = new_status
+    leave_req.action_by = request.user
+    leave_req.action_at = timezone.now()
+    if remarks:
+        leave_req.admin_remarks = remarks
+    leave_req.save()
+    
+    try:
+        status_text = "Approved" if new_status == 'approved' else "Rejected"
+        notif_msg = (
+            f"Your leave request for {leave_req.get_leave_type_display()} "
+            f"({leave_req.start_date.strftime('%d-%b-%Y')} to {leave_req.end_date.strftime('%d-%b-%Y')}) "
+            f"has been {status_text} by Admin ({request.user.get_full_name() or request.user.username})."
+        )
+        if remarks:
+            notif_msg += f" Remarks: {remarks}"
+            
+        Notification.objects.create(
+            title=f"Leave Request {status_text}",
+            message=notif_msg,
+            notif_type=Notification.TYPE_ALERT,
+            priority=Notification.PRIORITY_HIGH,
+            target_user=leave_req.faculty.user,
+            created_by=request.user
+        )
+        
+        from core.sms_utils import send_sms
+        if leave_req.faculty.user.email:
+            send_mail(
+                subject=f"[Leave Request {status_text}] VVITU Leave Application",
+                message=notif_msg,
+                from_email=getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+                recipient_list=[leave_req.faculty.user.email],
+                fail_silently=True
+            )
+        if leave_req.faculty.phone:
+            send_sms(leave_req.faculty.phone, f"VVITU: Leave Request {status_text} by Admin. Log in for details.")
+    except Exception:
+        pass
+        
+    messages.success(request, f"Leave request for {leave_req.faculty.full_name} {new_status} successfully.")
+    return redirect('admin_dashboard:manage_leave_requests')
 
 
 

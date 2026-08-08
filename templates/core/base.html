@@ -208,6 +208,9 @@
       <a href="{% url 'faculty:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
       </a>
+      <a href="{% url 'faculty:leave_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'leave_requests' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-calendar-minus nav-icon"></i><span>Apply / My Leaves</span>
+      </a>
 
     {% elif user.role == 'hod' %}
       <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
@@ -215,6 +218,9 @@
       </a>
       <a href="{% url 'hod:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-shield-alt nav-icon"></i><span>HOD Dashboard</span>
+      </a>
+      <a href="{% url 'hod:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-calendar-minus nav-icon"></i><span>Leave Approvals</span>
       </a>
       <a href="{% url 'hod:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-user-graduate nav-icon"></i><span>Students</span>
@@ -309,6 +315,9 @@
       </a>
       <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'faculty_attendance_report' %}active{% endif %}">
         <i class="fas fa-user-clock nav-icon"></i><span>Faculty Attendance</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-calendar-minus nav-icon"></i><span>Faculty Leave Approvals</span>
       </a>
       <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-cubes nav-icon"></i><span>Manage Sections</span>

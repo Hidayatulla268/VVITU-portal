@@ -32,4 +32,8 @@ urlpatterns = [
     path('subjects/',                views.manage_subjects,           name='manage_subjects'),
     path('subjects/add/',            views.add_subject,               name='add_subject'),
     path('subjects/<int:pk>/delete/',views.delete_subject,            name='delete_subject'),
+
+    # Leave Management
+    path('leave-requests/',               views.manage_leave_requests, name='manage_leave_requests'),
+    path('leave-requests/<int:pk>/<str:action>/', views.action_leave_request, name='action_leave_request'),
 ]

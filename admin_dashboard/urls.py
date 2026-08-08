@@ -58,5 +58,9 @@ urlpatterns = [
     path('backups/delete/<int:pk>/',  views.delete_backup,        name='delete_backup'),
     path('export/database-pdf/',     views.export_database_pdf,  name='export_database_pdf'),
     path('export/results-pdf/',      views.export_student_results_pdf, name='export_student_results_pdf'),
+
+    # Leave Management
+    path('leave-requests/',               views.manage_leave_requests, name='manage_leave_requests'),
+    path('leave-requests/<int:pk>/<str:action>/', views.action_leave_request, name='action_leave_request'),
 ]
 

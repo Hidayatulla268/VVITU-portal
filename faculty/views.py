@@ -25,7 +25,7 @@ from django.db.models import Count, Q
 from django.conf import settings
 from django.views.decorators.http import require_POST
 
-from accounts.models import Faculty, Student, Achievement
+from accounts.models import Faculty, Student, Achievement, FacultyLeaveRequest
 from core.models import (
     Section, Timetable, Attendance, Subject, Result, Exam, Year,
     FacultyAttendance, ClassTransfer
@@ -1147,5 +1147,117 @@ def add_achievement(request):
         'faculty': faculty,
         'achievements': achievements,
     })
+
+
+# ─────────────────────────────────────────────
+# FACULTY LEAVE REQUESTS
+# ─────────────────────────────────────────────
+@faculty_required
+def leave_requests(request):
+    """
+    Faculty view to apply for a leave request and view leave history.
+    Sends notifications to HOD & Admin upon submission.
+    """
+    faculty = request.faculty
+    if request.method == 'POST':
+        leave_type = request.POST.get('leave_type', 'casual').strip()
+        start_date_str = request.POST.get('start_date', '').strip()
+        end_date_str = request.POST.get('end_date', '').strip()
+        reason = request.POST.get('reason', '').strip()
+        substitute_notes = request.POST.get('substitute_notes', '').strip()
+
+        if not (start_date_str and end_date_str and reason):
+            messages.error(request, "Please provide Start Date, End Date, and Reason for leave.")
+        else:
+            try:
+                start_date = datetime.date.fromisoformat(start_date_str)
+                end_date = datetime.date.fromisoformat(end_date_str)
+
+                if end_date < start_date:
+                    messages.error(request, "End date cannot be prior to start date.")
+                else:
+                    leave_req = FacultyLeaveRequest.objects.create(
+                        faculty=faculty,
+                        leave_type=leave_type,
+                        start_date=start_date,
+                        end_date=end_date,
+                        reason=reason,
+                        substitute_notes=substitute_notes,
+                        status='pending'
+                    )
+
+                    # Notify HOD & Admin
+                    try:
+                        from core.models import Notification
+                        from accounts.models import User
+                        dept_name = faculty.department.short_name if faculty.department else "General"
+                        notif_msg = (
+                            f"Leave Request from {faculty.full_name} ({faculty.employee_id}, {dept_name}): "
+                            f"{leave_req.get_leave_type_display()} from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}."
+                        )
+                        
+                        # 1. Notify Department HOD
+                        if faculty.department:
+                            hod_users = User.objects.filter(role='hod', faculty_profile__department=faculty.department)
+                            for hod in hod_users:
+                                Notification.objects.create(
+                                    title=f"Leave Request: {faculty.full_name}",
+                                    message=notif_msg,
+                                    notif_type=Notification.TYPE_ALERT,
+                                    priority=Notification.PRIORITY_HIGH,
+                                    target_user=hod,
+                                    created_by=request.user
+                                )
+
+                        # 2. Notify Admins
+                        admin_users = User.objects.filter(role='admin')
+                        for adm in admin_users:
+                            Notification.objects.create(
+                                title=f"Faculty Leave Request: {faculty.full_name}",
+                                message=notif_msg,
+                                notif_type=Notification.TYPE_ALERT,
+                                priority=Notification.PRIORITY_HIGH,
+                                target_user=adm,
+                                created_by=request.user
+                            )
+                    except Exception as e:
+                        pass
+
+                    messages.success(request, "Leave request submitted successfully! Pending approval from HOD or Admin.")
+                    return redirect('faculty:leave_requests')
+            except ValueError:
+                messages.error(request, "Invalid date format.")
+            except Exception as e:
+                messages.error(request, f"Error submitting leave request: {e}")
+
+    my_leaves = FacultyLeaveRequest.objects.filter(faculty=faculty).select_related('action_by').order_by('-created_at')
+    
+    total_leaves = my_leaves.count()
+    approved_leaves = my_leaves.filter(status='approved').count()
+    pending_leaves = my_leaves.filter(status='pending').count()
+    rejected_leaves = my_leaves.filter(status='rejected').count()
+
+    context = {
+        'faculty': faculty,
+        'my_leaves': my_leaves,
+        'total_leaves': total_leaves,
+        'approved_leaves': approved_leaves,
+        'pending_leaves': pending_leaves,
+        'rejected_leaves': rejected_leaves,
+        'leave_type_choices': FacultyLeaveRequest.LEAVE_TYPE_CHOICES,
+    }
+    return render(request, 'faculty/leave_requests.html', context)
+
+
+@faculty_required
+def cancel_leave_request(request, pk):
+    faculty = request.faculty
+    leave_req = get_object_or_404(FacultyLeaveRequest, pk=pk, faculty=faculty)
+    if leave_req.status == 'pending':
+        leave_req.delete()
+        messages.success(request, "Leave request cancelled successfully.")
+    else:
+        messages.error(request, "Cannot cancel a leave request that has already been actioned.")
+    return redirect('faculty:leave_requests')
 
 
