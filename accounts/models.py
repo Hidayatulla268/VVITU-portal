@@ -163,6 +163,37 @@ class Student(models.Model):
                 
         return round(cgpa_points / cgpa_credits, 2) if cgpa_credits > 0 else 0.0
 
+    def get_backlogs(self):
+        """
+        Retrieve active backlog results for this student.
+        Returns the list of Result objects for subjects where the latest released final exam result
+        is failing or absent (grade F, Ab, AB, FAIL or marks < 40).
+        """
+        from core.models import Result
+        released_results = Result.objects.filter(
+            student=self,
+            exam__exam_type__in=['final', 'sem', 'SEM'],
+            exam__release__released=True,
+        ).select_related('subject', 'exam').order_by('subject_id', '-exam__date', '-id')
+
+        active_backlogs = []
+        seen_subjects = set()
+
+        for res in released_results:
+            if res.subject_id in seen_subjects:
+                continue
+            seen_subjects.add(res.subject_id)
+
+            if (res.grade in ['F', 'Ab', 'AB', 'FAIL']) or (res.marks_obtained and float(res.marks_obtained) < 40):
+                active_backlogs.append(res)
+
+        return active_backlogs
+
+    @property
+    def total_backlogs_count(self):
+        """Return total active backlog count for the student."""
+        return len(self.get_backlogs())
+
 
 # ─────────────────────────────────────────────
 # FACULTY PROFILE

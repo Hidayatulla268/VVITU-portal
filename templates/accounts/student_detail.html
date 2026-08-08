@@ -76,6 +76,48 @@
 
   <!-- Right Side: Details Tabs -->
   <div class="col-lg-8">
+    {% if student.total_backlogs_count > 0 %}
+    <!-- Academic Backlogs Card (Shown ONLY if student has active backlogs) -->
+    <div class="glass-card mb-4" style="border: 1px solid rgba(220,38,38,0.4) !important;">
+      <div class="card-header-custom mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom text-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>Active Academic Backlogs
+        </h3>
+        <span class="badge bg-danger fs-6 px-3 py-2">Total Backlogs: {{ student.total_backlogs_count }}</span>
+      </div>
+      <div class="alert alert-danger border-0 rounded-3 mb-3 small" style="background: rgba(220,38,38,0.15); color: #f87171;">
+        <i class="fas fa-exclamation-circle me-1"></i>
+        This student currently has <strong>{{ student.total_backlogs_count }}</strong> pending backlog subject(s) requiring re-examination.
+      </div>
+      <div class="table-responsive">
+        <table class="vvit-table align-middle text-start">
+          <thead>
+            <tr>
+              <th>Subject Code</th>
+              <th>Subject Name</th>
+              <th>Exam / Sem</th>
+              <th>Marks</th>
+              <th>Grade</th>
+              <th class="text-end">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for backlog in student.get_backlogs %}
+            <tr>
+              <td class="fw-bold text-accent">{{ backlog.subject.code }}</td>
+              <td class="text-white">{{ backlog.subject.name }}</td>
+              <td class="text-muted small">{{ backlog.exam.name|default:"Sem Exam" }} (Sem {{ backlog.subject.semester }})</td>
+              <td class="text-white">{{ backlog.marks_obtained }} / {{ backlog.max_marks }}</td>
+              <td><span class="badge bg-danger">{{ backlog.grade }}</span></td>
+              <td class="text-end"><span class="badge bg-danger text-uppercase"><i class="fas fa-times-circle me-1"></i>Backlog</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Registration Details -->
     <div class="glass-card mb-4">
       <div class="card-header-custom mb-3">

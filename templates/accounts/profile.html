@@ -175,6 +175,49 @@
         </div>
       </div>
 
+      {% if student.total_backlogs_count > 0 %}
+      <!-- Academic Backlogs Card (Shown ONLY for students with active backlogs) -->
+      <div class="mt-4 pt-4" style="border-top: 1px solid rgba(220,38,38,0.3);">
+        <div class="p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.35);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-exclamation-triangle text-danger fs-4"></i>
+            <div>
+              <div class="fw-bold text-white mb-0" style="font-size: 1rem;">Active Academic Backlogs</div>
+              <div class="text-muted small">You have <strong>{{ student.total_backlogs_count }}</strong> pending backlog subject(s) requiring re-examination.</div>
+            </div>
+          </div>
+          <span class="badge bg-danger fs-6 px-3 py-2">Total Backlogs: {{ student.total_backlogs_count }}</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="vvit-table align-middle text-start">
+            <thead>
+              <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Exam / Sem</th>
+                <th>Marks</th>
+                <th>Grade</th>
+                <th class="text-end">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for backlog in student.get_backlogs %}
+              <tr>
+                <td class="fw-bold text-accent">{{ backlog.subject.code }}</td>
+                <td class="text-white">{{ backlog.subject.name }}</td>
+                <td class="text-muted small">{{ backlog.exam.name|default:"Sem Exam" }} (Sem {{ backlog.subject.semester }})</td>
+                <td class="text-white">{{ backlog.marks_obtained }} / {{ backlog.max_marks }}</td>
+                <td><span class="badge bg-danger">{{ backlog.grade }}</span></td>
+                <td class="text-end"><span class="badge bg-danger text-uppercase"><i class="fas fa-times-circle me-1"></i>Backlog</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
       {% elif user.role in 'faculty hod lab_technician' and faculty %}
       <!-- Faculty Profile Fields -->
       <div class="row g-4">
