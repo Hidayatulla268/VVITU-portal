@@ -1,217 +1,178 @@
-{% extends 'core/base.html' %}
+{% extends "core/base.html" %}
 {% load static %}
 
 {% block title %}Apply & Manage Leaves — VVITU Portal{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-  <!-- Page Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div>
-      <h2 class="fw-bold mb-1" style="letter-spacing: -0.5px;">
-        <i class="fas fa-calendar-minus me-2 text-primary"></i>Faculty Leave Management
-      </h2>
-      <p class="text-muted mb-0 small">
-        Submit leave applications to HOD & Admin and track approval status in real-time.
-      </p>
-    </div>
-    <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
-      <i class="fas fa-plus-circle me-2"></i>Apply for Leave
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-minus me-2 text-accent"></i>Faculty Leave Management</h1>
+    <p class="ph-sub">Apply for leave, manage applications, and track approval status from HOD and Admin</p>
+  </div>
+  <div class="ph-right">
+    <button class="vvit-btn vvit-btn-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+      <i class="fas fa-plus-circle me-1"></i>Apply for Leave
     </button>
   </div>
+</div>
+{% endblock %}
 
-  <!-- Summary Stats Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-gradient" style="background: linear-gradient(135deg, rgba(13,110,253,0.1), rgba(13,110,253,0.05));">
-        <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-            <i class="fas fa-file-alt fa-lg"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-semibold">Total Applied</div>
-            <div class="fs-4 fw-bold text-dark">{{ total_leaves }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-gradient" style="background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,193,7,0.05));">
-        <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-            <i class="fas fa-clock fa-lg"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-semibold">Pending Approval</div>
-            <div class="fs-4 fw-bold text-warning">{{ pending_leaves }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-gradient" style="background: linear-gradient(135deg, rgba(25,135,84,0.15), rgba(25,135,84,0.05));">
-        <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-            <i class="fas fa-check-circle fa-lg"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-semibold">Approved</div>
-            <div class="fs-4 fw-bold text-success">{{ approved_leaves }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-gradient" style="background: linear-gradient(135deg, rgba(220,53,69,0.15), rgba(220,53,69,0.05));">
-        <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-            <i class="fas fa-times-circle fa-lg"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-semibold">Rejected</div>
-            <div class="fs-4 fw-bold text-danger">{{ rejected_leaves }}</div>
-          </div>
-        </div>
+{% block content %}
+<!-- KPI Summary Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-file-alt"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_leaves }}</span>
+        <span class="kpi-label">Total Leaves Applied</span>
       </div>
     </div>
   </div>
-
-  <!-- Leave History Table Card -->
-  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-    <div class="card-header bg-white border-0 py-3 px-4 d-flex align-items-center justify-content-between">
-      <h5 class="fw-bold mb-0 text-dark">
-        <i class="fas fa-history me-2 text-primary"></i>My Leave Applications
-      </h5>
-      <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
-        Showing {{ my_leaves|length }} Record(s)
-      </span>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="bg-light text-secondary small text-uppercase fw-bold">
-            <tr>
-              <th class="ps-4">Leave Type</th>
-              <th>Duration</th>
-              <th>Total Days</th>
-              <th>Reason & Substitutions</th>
-              <th>Status</th>
-              <th>Actioned By</th>
-              <th class="pe-4 text-end">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for leave in my_leaves %}
-            <tr>
-              <td class="ps-4">
-                <span class="fw-bold text-dark d-block">{{ leave.get_leave_type_display }}</span>
-                <span class="text-muted small">Applied on {{ leave.created_at|date:"d-M-Y H:i" }}</span>
-              </td>
-              <td>
-                <span class="fw-semibold text-dark">{{ leave.start_date|date:"d-M-Y" }}</span>
-                <span class="text-muted mx-1">to</span>
-                <span class="fw-semibold text-dark">{{ leave.end_date|date:"d-M-Y" }}</span>
-              </td>
-              <td>
-                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-20 px-2 py-1">
-                  {{ leave.total_days }} Day(s)
-                </span>
-              </td>
-              <td style="max-width: 250px;">
-                <div class="text-dark small text-truncate" title="{{ leave.reason }}">
-                  <strong>Reason:</strong> {{ leave.reason }}
-                </div>
-                {% if leave.substitute_notes %}
-                <div class="text-muted small text-truncate" title="{{ leave.substitute_notes }}">
-                  <i class="fas fa-user-friends me-1 text-primary"></i>Proxy: {{ leave.substitute_notes }}
-                </div>
-                {% endif %}
-              </td>
-              <td>
-                {% if leave.status == 'pending' %}
-                  <span class="badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2 rounded-pill">
-                    <i class="fas fa-clock me-1"></i>Pending (HOD / Admin)
-                  </span>
-                {% elif leave.status == 'approved' %}
-                  <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill">
-                    <i class="fas fa-check-circle me-1"></i>Approved
-                  </span>
-                {% else %}
-                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 rounded-pill">
-                    <i class="fas fa-times-circle me-1"></i>Rejected
-                  </span>
-                {% endif %}
-              </td>
-              <td>
-                {% if leave.action_by %}
-                  <div class="fw-semibold text-dark small">{{ leave.action_by.get_full_name|default:leave.action_by.username }}</div>
-                  <div class="text-muted small" style="font-size: 0.75rem;">
-                    ({{ leave.action_by.get_role_display }}) • {{ leave.action_at|date:"d-M-Y H:i" }}
-                  </div>
-                  {% if leave.admin_remarks %}
-                    <div class="text-danger small mt-1"><em>"{{ leave.admin_remarks }}"</em></div>
-                  {% endif %}
-                {% else %}
-                  <span class="text-muted small">Awaiting Review</span>
-                {% endif %}
-              </td>
-              <td class="pe-4 text-end">
-                {% if leave.status == 'pending' %}
-                  <a href="{% url 'faculty:cancel_leave_request' leave.id %}" 
-                     class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                     onclick="return confirm('Are you sure you want to cancel this leave application?');">
-                    <i class="fas fa-ban me-1"></i>Cancel
-                  </a>
-                {% else %}
-                  <button class="btn btn-sm btn-light border rounded-pill px-3 text-muted" disabled>
-                    <i class="fas fa-lock me-1"></i>Completed
-                  </button>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="7" class="text-center py-5 text-muted">
-                <i class="fas fa-calendar-times fa-3x mb-3 d-block opacity-50"></i>
-                <h5>No Leave Applications Found</h5>
-                <p class="small mb-3">You haven't submitted any leave requests yet.</p>
-                <button class="btn btn-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
-                  <i class="fas fa-plus me-1"></i>Apply for Leave Now
-                </button>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ pending_leaves }}</span>
+        <span class="kpi-label">Pending Approvals</span>
       </div>
     </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ approved_leaves }}</span>
+        <span class="kpi-label">Leaves Approved</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ rejected_leaves }}</span>
+        <span class="kpi-label">Leaves Rejected</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Leave History Glass Card Table -->
+<div class="glass-card">
+  <div class="card-header-custom d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom"><i class="fas fa-history me-2 text-accent"></i>My Leave Applications</h3>
+    <span class="badge-section">{{ my_leaves|length }} Application(s)</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Leave Type</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Total Days</th>
+          <th>Reason & Substitutions</th>
+          <th>Approval Status</th>
+          <th>Actioned By</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for leave in my_leaves %}
+        <tr>
+          <td>
+            <strong class="text-white d-block">{{ leave.get_leave_type_display }}</strong>
+            <small class="text-muted" style="font-size: 0.75rem;">Applied: {{ leave.created_at|date:"d-M-Y H:i" }}</small>
+          </td>
+          <td>{{ leave.start_date|date:"d-M-Y" }}</td>
+          <td>{{ leave.end_date|date:"d-M-Y" }}</td>
+          <td>
+            <span class="status-pill status-present">{{ leave.total_days }} Day(s)</span>
+          </td>
+          <td style="max-width: 250px;">
+            <div class="text-truncate" title="{{ leave.reason }}">
+              <small><strong>Reason:</strong> {{ leave.reason }}</small>
+            </div>
+            {% if leave.substitute_notes %}
+            <div class="text-truncate text-muted" title="{{ leave.substitute_notes }}" style="font-size: 0.75rem;">
+              <i class="fas fa-user-friends me-1 text-accent"></i>Proxy: {{ leave.substitute_notes }}
+            </div>
+            {% endif %}
+          </td>
+          <td>
+            {% if leave.status == 'pending' %}
+              <span class="status-pill status-leave"><i class="fas fa-clock me-1"></i>Pending (HOD / Admin)</span>
+            {% elif leave.status == 'approved' %}
+              <span class="status-pill status-present"><i class="fas fa-check-circle me-1"></i>Approved</span>
+            {% else %}
+              <span class="status-pill status-absent"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if leave.action_by %}
+              <div class="fw-semibold text-white small">{{ leave.action_by.get_full_name|default:leave.action_by.username }}</div>
+              <small class="text-muted d-block" style="font-size: 0.7rem;">
+                ({{ leave.action_by.get_role_display }}) • {{ leave.action_at|date:"d-M-Y H:i" }}
+              </small>
+              {% if leave.admin_remarks %}
+                <small class="text-danger d-block mt-1"><em>"{{ leave.admin_remarks }}"</em></small>
+              {% endif %}
+            {% else %}
+              <span class="text-muted small">Awaiting HOD/Admin</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            {% if leave.status == 'pending' %}
+              <a href="{% url 'faculty:cancel_leave_request' leave.id %}" 
+                 class="vvit-btn vvit-btn-danger btn-sm"
+                 onclick="return confirm('Are you sure you want to cancel this leave application?');">
+                <i class="fas fa-ban me-1"></i>Cancel
+              </a>
+            {% else %}
+              <span class="text-muted small"><i class="fas fa-lock me-1"></i>Finalized</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">
+            <i class="fas fa-calendar-times fa-3x mb-3 opacity-50 d-block"></i>
+            <p class="mb-2">No leave applications found.</p>
+            <button class="vvit-btn vvit-btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+              <i class="fas fa-plus me-1"></i>Apply for Leave Now
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
 <!-- Apply Leave Modal -->
 <div class="modal fade" id="applyLeaveModal" tabindex="-1" aria-labelledby="applyLeaveModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content border-0 shadow-lg rounded-4">
-      <div class="modal-header bg-primary text-white border-0 py-3 px-4 rounded-top-4">
-        <h5 class="modal-title fw-bold" id="applyLeaveModalLabel">
-          <i class="fas fa-paper-plane me-2"></i>Submit Leave Application
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom" id="applyLeaveModalLabel">
+          <i class="fas fa-paper-plane me-2 text-accent"></i>Submit Leave Application
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form method="POST" action="{% url 'faculty:leave_requests' %}">
         {% csrf_token %}
-        <div class="modal-body p-4">
-          <div class="alert alert-info rounded-3 mb-4 small border-0 bg-info bg-opacity-10 text-info d-flex align-items-center gap-2">
-            <i class="fas fa-info-circle fa-lg"></i>
-            <div>
-              This leave request will be instantly dispatched to your <strong>Department HOD</strong> and <strong>College Administration</strong>. Either of them can approve your leave.
-            </div>
+        <div class="modal-body py-4">
+          <div class="alert alert-info border-0 rounded-3 mb-4 small" style="background: rgba(13,202,240,0.15); color: #0dcaf0;">
+            <i class="fas fa-info-circle me-1"></i>
+            Leave request will be submitted to your <strong>Department HOD</strong> and <strong>College Administration</strong>. Either authority can approve your request.
           </div>
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-bold text-dark small">Leave Type <span class="text-danger">*</span></label>
-              <select name="leave_type" class="form-select rounded-3" required>
+              <label class="form-label text-muted small">Leave Type <span class="text-danger">*</span></label>
+              <select name="leave_type" class="vvit-select" required>
                 {% for code, label in leave_type_choices %}
                   <option value="{{ code }}">{{ label }}</option>
                 {% endfor %}
@@ -219,30 +180,30 @@
             </div>
 
             <div class="col-md-3">
-              <label class="form-label fw-bold text-dark small">Start Date <span class="text-danger">*</span></label>
-              <input type="date" name="start_date" class="form-control rounded-3" required>
+              <label class="form-label text-muted small">Start Date <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" class="vvit-input" required>
             </div>
 
             <div class="col-md-3">
-              <label class="form-label fw-bold text-dark small">End Date <span class="text-danger">*</span></label>
-              <input type="date" name="end_date" class="form-control rounded-3" required>
+              <label class="form-label text-muted small">End Date <span class="text-danger">*</span></label>
+              <input type="date" name="end_date" class="vvit-input" required>
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-bold text-dark small">Reason for Leave <span class="text-danger">*</span></label>
-              <textarea name="reason" class="form-control rounded-3" rows="3" placeholder="Specify clear reason for leave application..." required></textarea>
+              <label class="form-label text-muted small">Reason for Leave <span class="text-danger">*</span></label>
+              <textarea name="reason" class="vvit-input" rows="3" placeholder="Provide reason for leave..." required></textarea>
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-bold text-dark small">Class Substitution / Proxy Arrangement Notes (Optional)</label>
-              <textarea name="substitute_notes" class="form-control rounded-3" rows="2" placeholder="Mention substitute faculty names and period adjustments if any..."></textarea>
+              <label class="form-label text-muted small">Class Substitution / Proxy Notes (Optional)</label>
+              <textarea name="substitute_notes" class="vvit-input" rows="2" placeholder="Mention substitute faculty arrangements if any..."></textarea>
             </div>
           </div>
         </div>
-        <div class="modal-footer bg-light border-0 py-3 px-4 rounded-bottom-4">
-          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary rounded-pill px-4">
-            <i class="fas fa-paper-plane me-2"></i>Submit Application
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="vvit-btn vvit-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="vvit-btn vvit-btn-primary">
+            <i class="fas fa-paper-plane me-1"></i>Submit Application
           </button>
         </div>
       </form>
