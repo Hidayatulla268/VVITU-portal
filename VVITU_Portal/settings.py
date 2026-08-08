@@ -109,22 +109,40 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'VVITU_Portal.wsgi.application'
 
+import dj_database_url
+
 # ─────────────────────────────────────────────
-# DATABASE — SQLite for dev, PostgreSQL for prod
+# DATABASE — PostgreSQL & SQLite Dynamic Config
 # ─────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        # Production: switch to PostgreSQL:
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': os.environ.get('DB_NAME', 'VVITU_Portal'),
-        # 'USER': os.environ.get('DB_USER', 'postgres'),
-        # 'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        # 'HOST': os.environ.get('DB_HOST', 'localhost'),
-        # 'PORT': os.environ.get('DB_PORT', '5432'),
+DATABASE_URL = config('DATABASE_URL', default='')
+DB_NAME      = config('DB_NAME', default='')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+elif DB_NAME or config('DB_ENGINE', default='') == 'postgresql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME or 'vvitu_portal_db',
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ─────────────────────────────────────────────
 # AUTHENTICATION
