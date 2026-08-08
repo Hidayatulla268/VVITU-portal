@@ -47,21 +47,20 @@ def send_sms(phone_number, message):
             if len(digits_only) > 10:
                 digits_only = digits_only[-10:]
 
-            payload = json.dumps({
-                "route": "v3",
-                "sender_id": "TXTIND",
-                "message": message,
-                "language": "english",
-                "flash": 0,
-                "numbers": digits_only
+            data = urllib.parse.urlencode({
+                'route': 'q',
+                'message': message,
+                'language': 'english',
+                'flash': '0',
+                'numbers': digits_only
             }).encode('utf-8')
 
             req = urllib.request.Request(
                 url,
-                data=payload,
+                data=data,
                 headers={
                     'authorization': sms_api_key,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
                 method='POST'
             )
@@ -71,7 +70,15 @@ def send_sms(phone_number, message):
                 print(f"[LIVE SMS GATEWAY SUCCESS] -> Delivered to {cleaned_number}")
                 return True
         except Exception as e:
-            logger.error(f"Live SMS Gateway error for {cleaned_number}: {e}")
+            err_msg = str(e)
+            if hasattr(e, 'read'):
+                try:
+                    err_body = e.read().decode('utf-8')
+                    err_msg += f" | Details: {err_body}"
+                except Exception:
+                    pass
+            logger.error(f"Live SMS Gateway error for {cleaned_number}: {err_msg}")
+            print(f"[FAST2SMS GATEWAY RESPONSE] -> {err_msg}")
 
     # 2. Twilio SMS live dispatch
     elif twilio_sid and twilio_auth:
