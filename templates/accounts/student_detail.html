@@ -104,12 +104,34 @@
           <tbody>
             {% for backlog in student.get_backlogs %}
             <tr>
-              <td class="fw-bold text-accent">{{ backlog.subject.code }}</td>
-              <td class="text-white">{{ backlog.subject.name }}</td>
-              <td class="text-muted small">{{ backlog.exam.name|default:"Sem Exam" }} (Sem {{ backlog.subject.semester }})</td>
-              <td class="text-white">{{ backlog.marks_obtained }} / {{ backlog.max_marks }}</td>
-              <td><span class="badge bg-danger">{{ backlog.grade }}</span></td>
-              <td class="text-end"><span class="badge bg-danger text-uppercase"><i class="fas fa-times-circle me-1"></i>Backlog</span></td>
+              <td>
+                <span class="badge bg-danger text-white fw-bold px-2 py-1" style="font-size: 0.85rem; letter-spacing: 0.03em;">
+                  <i class="fas fa-book me-1"></i>{{ backlog.subject.code }}
+                </span>
+              </td>
+              <td>
+                <div class="fw-bold text-white fs-6" style="color: #ffffff !important; font-size: 0.95rem; line-height: 1.3;">
+                  {{ backlog.subject.name }}
+                </div>
+                {% if backlog.subject.is_lab %}
+                  <span class="badge bg-purple mt-1" style="font-size: 0.65rem;">Practical Lab</span>
+                {% endif %}
+              </td>
+              <td class="text-white small">
+                <div class="fw-semibold text-white">{{ backlog.exam.name|default:"Semester Exam" }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">Semester {{ backlog.subject.semester }}</div>
+              </td>
+              <td class="text-white fw-bold">
+                {{ backlog.marks_obtained|floatformat:0 }} / {{ backlog.max_marks|floatformat:0 }}
+              </td>
+              <td>
+                <span class="badge bg-danger fs-6 px-3 py-1 fw-bold">{{ backlog.grade }}</span>
+              </td>
+              <td class="text-end">
+                <span class="badge bg-danger text-uppercase px-3 py-2 fw-bold" style="letter-spacing: 0.05em;">
+                  <i class="fas fa-times-circle me-1"></i>Active Backlog
+                </span>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
