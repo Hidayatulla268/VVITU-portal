@@ -1467,9 +1467,9 @@ def create_backup(request):
     filepath = os.path.join(backups_dir, filename)
 
     try:
-        # Dump data excluding contenttypes and permissions
+        # Dump data with 2-space indentation, excluding temporary session tokens & admin logs
         out = io.StringIO()
-        call_command('dumpdata', exclude=['contenttypes', 'auth.Permission'], stdout=out)
+        call_command('dumpdata', exclude=['contenttypes', 'auth.Permission', 'sessions', 'admin.logentry'], indent=2, stdout=out)
         
         # Write to backups directory
         with open(filepath, 'w', encoding='utf-8') as f:
