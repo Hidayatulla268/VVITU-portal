@@ -143,8 +143,9 @@ class RoleBasedAccessMiddleware:
             try:
                 if getattr(request.user, 'student_profile', None) and request.user.student_profile.is_first_login:
                     return redirect('accounts:set_password')
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Student profile redirect check failed: {e}")
 
         if path == '/':
             if request.user.is_authenticated:
