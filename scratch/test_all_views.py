@@ -15,10 +15,10 @@ def test_all_routes():
     print("  COMPREHENSIVE AUTOMATED VIEW & ROUTE TESTING")
     print("============================================================")
 
-    c = Client()
+    c = Client(enforce_csrf_checks=False, HTTP_HOST='testserver', **{'HTTP_X_FORWARDED_PROTO': 'https'})
     
     # 1. Accounts Login Route (Public)
-    res = c.get('/accounts/login/')
+    res = c.get('/accounts/login/', follow=True)
     print(f"GET /accounts/login/                     -> Status: {res.status_code}")
     assert res.status_code == 200, "Login page failed!"
 
@@ -37,7 +37,7 @@ def test_all_routes():
         ]
         print("\n--- Testing Student Routes ---")
         for url in student_routes:
-            res = c.get(url)
+            res = c.get(url, follow=True)
             print(f"GET {url:<35} -> Status: {res.status_code}")
             assert res.status_code in [200, 302], f"Failed on {url} with status {res.status_code}"
 
@@ -58,7 +58,7 @@ def test_all_routes():
         ]
         print("\n--- Testing Faculty Routes ---")
         for url in faculty_routes:
-            res = c.get(url)
+            res = c.get(url, follow=True)
             print(f"GET {url:<35} -> Status: {res.status_code}")
             assert res.status_code in [200, 302], f"Failed on {url} with status {res.status_code}"
 
@@ -82,7 +82,7 @@ def test_all_routes():
         ]
         print("\n--- Testing HOD Routes ---")
         for url in hod_routes:
-            res = c.get(url)
+            res = c.get(url, follow=True)
             print(f"GET {url:<35} -> Status: {res.status_code}")
             assert res.status_code in [200, 302], f"Failed on {url} with status {res.status_code}"
 
@@ -110,7 +110,7 @@ def test_all_routes():
         ]
         print("\n--- Testing Admin Routes ---")
         for url in admin_routes:
-            res = c.get(url)
+            res = c.get(url, follow=True)
             print(f"GET {url:<35} -> Status: {res.status_code}")
             assert res.status_code in [200, 302], f"Failed on {url} with status {res.status_code}"
 
@@ -126,7 +126,7 @@ def test_all_routes():
         ]
         print("\n--- Testing DEO Routes ---")
         for url in deo_routes:
-            res = c.get(url)
+            res = c.get(url, follow=True)
             print(f"GET {url:<35} -> Status: {res.status_code}")
             assert res.status_code in [200, 302], f"Failed on {url} with status {res.status_code}"
 

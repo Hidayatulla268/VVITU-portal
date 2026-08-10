@@ -23,6 +23,8 @@ SECRET_KEY = config(
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='*', cast=Csv())
+if '*' not in ALLOWED_HOSTS and 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('testserver')
 
 # ── Production HTTPS / Cookie security ──────
 # These are SAFE to leave as-is in dev (DEBUG=True bypasses most of them).

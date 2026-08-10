@@ -141,7 +141,7 @@ class RoleBasedAccessMiddleware:
         # Force student password setup on first login
         if request.user.is_authenticated and request.user.role == 'student':
             try:
-                if request.user.student_profile.is_first_login:
+                if getattr(request.user, 'student_profile', None) and request.user.student_profile.is_first_login:
                     return redirect('accounts:set_password')
             except Exception:
                 pass

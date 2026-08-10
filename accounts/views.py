@@ -155,25 +155,12 @@ def profile_view(request):
             return redirect('accounts:profile')
 
     if user.role == 'student':
-        try:
-            student = user.student_profile
-        except Student.DoesNotExist:
-            pass
+        student = getattr(user, 'student_profile', None)
     elif user.role in ['faculty', 'hod', 'lab_technician']:
-        try:
-            faculty = user.faculty_profile
-        except Faculty.DoesNotExist:
-            pass
+        faculty = getattr(user, 'faculty_profile', None)
     elif user.role == 'deo':
-        try:
-            from .models import DEOProfile
-            deo_profile = user.deo_profile
-            try:
-                faculty = user.faculty_profile
-            except Faculty.DoesNotExist:
-                pass
-        except Exception:
-            pass
+        deo_profile = getattr(user, 'deo_profile', None)
+        faculty = getattr(user, 'faculty_profile', None)
 
     context = {
         'user': user,
