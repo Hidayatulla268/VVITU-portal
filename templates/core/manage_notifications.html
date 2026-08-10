@@ -9,7 +9,10 @@
     <h1 class="ph-title"><i class="fas fa-envelope-open-text me-2 text-accent"></i>Sent Notices</h1>
     <p class="ph-sub">Manage, edit, or circulate announcements and notices to your target groups</p>
   </div>
-  <div class="ph-right">
+  <div class="ph-right d-flex gap-2">
+    <a href="{% url 'notifications:centre' %}" class="btn-vvit-outline">
+      <i class="fas fa-bell me-2"></i>Notification Centre
+    </a>
     <a href="{% url 'notifications:create' %}" class="btn-vvit-primary">
       <i class="fas fa-plus me-2"></i>Compose Notice
     </a>
