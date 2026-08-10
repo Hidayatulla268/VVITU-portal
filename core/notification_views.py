@@ -205,16 +205,15 @@ def mark_all_read(request):
 # ─────────────────────────────────────────────
 @login_required
 def manage_notices(request):
-    if request.user.role not in ['admin', 'hod', 'deo']:
-        messages.error(request, 'Access denied.')
-        return redirect('accounts:redirect')
-
     user = request.user
+    if user.role not in ['admin', 'hod', 'deo', 'faculty', 'lab_technician']:
+        return redirect('notifications:centre')
+
     if user.role == 'admin':
         notices = Notification.objects.filter(is_deleted=False).select_related('created_by', 'target_branch', 'target_section').order_by('-created_at')
     else:
         branch = None
-        if user.role == 'hod':
+        if user.role in ['hod', 'faculty', 'lab_technician']:
             try:
                 branch = user.faculty_profile.department
             except Exception:
@@ -240,9 +239,9 @@ def manage_notices(request):
 # ─────────────────────────────────────────────
 @login_required
 def create_notification(request):
-    if request.user.role not in ['admin', 'hod', 'deo']:
+    if request.user.role not in ['admin', 'hod', 'deo', 'faculty', 'lab_technician']:
         messages.error(request, 'Access denied.')
-        return redirect('accounts:redirect')
+        return redirect('notifications:centre')
 
     user = request.user
     branches = Branch.objects.all()
@@ -347,9 +346,9 @@ def create_notification(request):
 # ─────────────────────────────────────────────
 @login_required
 def edit_notification(request, pk):
-    if request.user.role not in ['admin', 'hod', 'deo']:
+    if request.user.role not in ['admin', 'hod', 'deo', 'faculty', 'lab_technician']:
         messages.error(request, 'Access denied.')
-        return redirect('accounts:redirect')
+        return redirect('notifications:centre')
 
     user = request.user
     n = get_object_or_404(Notification, pk=pk)
