@@ -49,7 +49,7 @@
         </div>
       </div>
       <div class="text-end">
-        <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25 px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.04em;">
+        <span class="badge dossier-pill-fail px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.04em;">
           CONFIDENTIAL DOSSIER
         </span>
         <div class="text-muted small mt-1" style="font-size: 0.78rem;">Generated: {{ dossier.generated_at }}</div>
@@ -67,7 +67,7 @@
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
       <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-user-circle me-2 text-accent"></i>1. Student Profile & Family Information</h4>
-      <span class="badge bg-primary bg-opacity-75 text-light px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.roll_number }}</span>
+      <span class="badge bg-dark text-white px-3 py-1" style="font-size: 0.82rem; font-weight: 600; background-color: #0f172a !important;">{{ dossier.roll_number }}</span>
     </div>
 
     <div class="row g-4 align-items-start">
@@ -81,7 +81,7 @@
               <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent, #991b1b); font-family: var(--font-display, sans-serif);">
                 {{ dossier.initials }}
               </div>
-              <span class="badge bg-secondary bg-opacity-25 text-muted px-2 py-0.5 mt-2" style="font-size: 0.65rem; letter-spacing: 0.05em; font-weight: 700;">STUDENT PHOTO</span>
+              <span class="badge dossier-pill-pending px-2 py-0.5 mt-2" style="font-size: 0.65rem; letter-spacing: 0.05em; font-weight: 700;">STUDENT PHOTO</span>
             </div>
           {% endif %}
         </div>
@@ -156,9 +156,15 @@
               <tr>
                 <th style="color: var(--text-muted);">Tuition Dues:</th>
                 <td>
-                  <span class="badge {% if dossier.fees_pending > 0 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% endif %} px-2 py-0.5" style="font-size: 0.8rem;">
-                    INR {{ dossier.fees_pending|floatformat:2 }}
-                  </span>
+                  {% if dossier.fees_pending > 0 %}
+                    <span class="badge dossier-pill-warning px-2 py-0.5" style="font-size: 0.8rem;">
+                      INR {{ dossier.fees_pending|floatformat:2 }}
+                    </span>
+                  {% else %}
+                    <span class="badge dossier-pill-pass px-2 py-0.5" style="font-size: 0.8rem;">
+                      INR 0.00 (Cleared)
+                    </span>
+                  {% endif %}
                   <small class="text-muted ms-1" style="font-size: 0.78rem;">({{ dossier.fees_updated_at }})</small>
                 </td>
               </tr>
@@ -221,7 +227,7 @@
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
       <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-graduation-cap me-2 text-accent"></i>2. Semester-Wise Examination Results & Grades</h4>
-      <span class="badge bg-secondary bg-opacity-50 px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.semester_reports|length }} Semester(s) Tracked</span>
+      <span class="badge dossier-pill-pending px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.semester_reports|length }} Semester(s) Tracked</span>
     </div>
 
     {% for sem in dossier.semester_reports %}
@@ -236,15 +242,25 @@
           </span>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-30 px-2.5 py-1" style="font-size: 0.82rem;">
+          <span class="badge dossier-pill-sgpa px-2.5 py-1" style="font-size: 0.82rem;">
             SGPA: <strong class="ms-0.5">{{ sem.sgpa }}</strong>
           </span>
-          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-30 px-2.5 py-1" style="font-size: 0.82rem;">
+          <span class="badge dossier-pill-credits px-2.5 py-1" style="font-size: 0.82rem;">
             Credits: <strong class="ms-0.5">{{ sem.credits_earned }}/{{ sem.total_credits }}</strong>
           </span>
-          <span class="badge {% if sem.status == 'Pass' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif 'Fail' in sem.status %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} px-2.5 py-1" style="font-size: 0.82rem;">
-            {{ sem.status }}
-          </span>
+          {% if sem.status == 'Pass' %}
+            <span class="badge dossier-pill-pass px-2.5 py-1" style="font-size: 0.82rem;">
+              <i class="fas fa-check me-1"></i>Pass
+            </span>
+          {% elif 'Fail' in sem.status %}
+            <span class="badge dossier-pill-fail px-2.5 py-1" style="font-size: 0.82rem;">
+              <i class="fas fa-xmark me-1"></i>{{ sem.status }}
+            </span>
+          {% else %}
+            <span class="badge dossier-pill-pending px-2.5 py-1" style="font-size: 0.82rem;">
+              {{ sem.status }}
+            </span>
+          {% endif %}
         </div>
       </div>
 
@@ -267,7 +283,7 @@
           <tbody>
             {% for s in sem.subjects %}
             <tr>
-              <td><span class="badge bg-primary bg-opacity-75 text-light" style="font-size: 0.8rem;">{{ s.code }}</span></td>
+              <td><span class="badge dossier-pill-subject" style="font-size: 0.8rem; padding: 3px 8px;">{{ s.code }}</span></td>
               <td class="fw-semibold" style="color: var(--text-primary); font-size: 0.88rem;">{{ s.name }}</td>
               <td style="font-size: 0.88rem;">{{ s.credits }}</td>
               <td class="text-center text-muted" style="font-size: 0.85rem;">{{ s.mid1_marks }}</td>
@@ -275,18 +291,26 @@
               <td class="text-center text-muted" style="font-size: 0.85rem;">{{ s.final_marks }}</td>
               <td class="text-center fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">{{ s.total_score }}</td>
               <td class="text-center">
-                <span class="badge {% if s.grade == 'S' or s.grade == 'A' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif s.grade == 'B' or s.grade == 'C' or s.grade == 'D' %}bg-info bg-opacity-20 text-info border border-info border-opacity-30{% elif s.grade == 'E' %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% elif s.grade == 'F' or s.grade == 'Ab' %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} fw-bold px-2 py-0.5" style="font-size: 0.82rem; min-width: 28px;">
-                  {{ s.grade }}
-                </span>
+                {% if s.grade == 'S' or s.grade == 'A' %}
+                  <span class="badge dossier-pill-grade-s px-2 py-0.5" style="font-size: 0.82rem; min-width: 28px;">{{ s.grade }}</span>
+                {% elif s.grade == 'B' or s.grade == 'C' or s.grade == 'D' %}
+                  <span class="badge dossier-pill-grade-b px-2 py-0.5" style="font-size: 0.82rem; min-width: 28px;">{{ s.grade }}</span>
+                {% elif s.grade == 'E' %}
+                  <span class="badge dossier-pill-grade-e px-2 py-0.5" style="font-size: 0.82rem; min-width: 28px;">{{ s.grade }}</span>
+                {% elif s.grade == 'F' or s.grade == 'Ab' %}
+                  <span class="badge dossier-pill-grade-f px-2 py-0.5" style="font-size: 0.82rem; min-width: 28px;">{{ s.grade }}</span>
+                {% else %}
+                  <span class="badge dossier-pill-pending px-2 py-0.5" style="font-size: 0.82rem;">{{ s.grade|default:"—" }}</span>
+                {% endif %}
               </td>
               <td class="text-center" style="font-size: 0.88rem;">{{ s.grade_points }}</td>
               <td class="text-end">
                 {% if s.status == 'Pass' %}
-                  <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size: 0.8rem;"><i class="fas fa-check me-1"></i>Pass</span>
+                  <span class="badge dossier-pill-pass px-2 py-0.5" style="font-size: 0.8rem;"><i class="fas fa-check me-1"></i>Pass</span>
                 {% elif s.status == 'Fail' %}
-                  <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2 py-0.5" style="font-size: 0.8rem;"><i class="fas fa-xmark me-1"></i>Backlog</span>
+                  <span class="badge dossier-pill-fail px-2 py-0.5" style="font-size: 0.8rem;"><i class="fas fa-xmark me-1"></i>Backlog</span>
                 {% else %}
-                  <span class="badge bg-secondary bg-opacity-20 text-muted px-2 py-0.5" style="font-size: 0.8rem;">Pending</span>
+                  <span class="badge dossier-pill-pending px-2 py-0.5" style="font-size: 0.8rem;">Pending</span>
                 {% endif %}
               </td>
             </tr>
@@ -306,8 +330,8 @@
           <span class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: #0f172a !important; letter-spacing: 0.04em; font-size: 0.85rem;">
             <i class="fas fa-calendar-check text-info me-1"></i>Semester {{ sem.semester }} Subject Attendance Details
           </span>
-          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-2 py-0.5" style="font-size: 0.78rem;">
-            Semester Attendance: {{ sem.attendance_pct }}% ({{ sem.present_classes }}/{{ sem.total_classes }} classes)
+          <span class="badge dossier-pill-attendance px-2.5 py-1" style="font-size: 0.8rem;">
+            Semester Attendance: <strong class="ms-0.5">{{ sem.attendance_pct }}%</strong> ({{ sem.present_classes }}/{{ sem.total_classes }} classes)
           </span>
         </div>
         <div class="table-responsive">
@@ -329,9 +353,13 @@
                 <td class="text-center text-success fw-semibold" style="font-size: 0.85rem;">{{ a.present }}</td>
                 <td class="text-center text-danger" style="font-size: 0.85rem;">{{ a.absent }}</td>
                 <td class="text-end">
-                  <span class="badge {% if a.percentage >= 75 %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif a.percentage >= 65 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% endif %} px-2 py-0.5" style="font-size: 0.8rem;">
-                    {{ a.percentage }}%
-                  </span>
+                  {% if a.percentage >= 75 %}
+                    <span class="badge dossier-pill-pass px-2 py-0.5" style="font-size: 0.8rem;">{{ a.percentage }}%</span>
+                  {% elif a.percentage >= 65 %}
+                    <span class="badge dossier-pill-warning px-2 py-0.5" style="font-size: 0.8rem;">{{ a.percentage }}%</span>
+                  {% else %}
+                    <span class="badge dossier-pill-fail px-2 py-0.5" style="font-size: 0.8rem;">{{ a.percentage }}%</span>
+                  {% endif %}
                 </td>
               </tr>
               {% endfor %}
@@ -348,7 +376,7 @@
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
       <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-trophy me-2 text-accent"></i>3. Co-Curricular, Extra-Curricular & Certifications</h4>
-      <span class="badge bg-secondary bg-opacity-50 px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.achievements|length }} Record(s)</span>
+      <span class="badge dossier-pill-pending px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.achievements|length }} Record(s)</span>
     </div>
 
     {% if dossier.achievements %}
@@ -367,11 +395,11 @@
           {% for ach in dossier.achievements %}
           <tr>
             <td class="fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">{{ ach.title }}</td>
-            <td><span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25" style="font-size: 0.8rem;">{{ ach.category }}</span></td>
+            <td><span class="badge dossier-pill-credits" style="font-size: 0.8rem;">{{ ach.category }}</span></td>
             <td style="font-size: 0.85rem;">{{ ach.date_achieved|date:"d M Y"|default:"—" }}</td>
             <td style="color: var(--text-secondary); max-width: 320px; font-size: 0.85rem;">{{ ach.description|default:"—" }}</td>
             <td class="text-end">
-              <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size: 0.8rem;">
+              <span class="badge dossier-pill-pass px-2 py-0.5" style="font-size: 0.8rem;">
                 <i class="fas fa-check-circle me-1"></i>Verified
               </span>
             </td>
@@ -447,6 +475,107 @@
 .counselling-dossier-wrapper .vvit-table td {
   font-size: 0.88rem;
   padding: 8px 10px;
+}
+
+/* High-Contrast Dossier Badge Styles */
+.dossier-pill-sgpa {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px solid #fca5a5 !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-credits {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #7dd3fc !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-attendance {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #7dd3fc !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-pass {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+  font-weight: 700 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-fail {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5 !important;
+  font-weight: 700 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-warning {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fcd34d !important;
+  font-weight: 700 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-pending {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-subject {
+  background-color: #ede9fe !important;
+  color: #6d28d9 !important;
+  border: 1px solid #c4b5fd !important;
+  font-weight: 700 !important;
+  border-radius: 6px;
+}
+
+.dossier-pill-grade-s,
+.dossier-pill-grade-a {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+  border: 1px solid #86efac !important;
+  font-weight: 700 !important;
+  border-radius: 4px;
+}
+
+.dossier-pill-grade-b,
+.dossier-pill-grade-c,
+.dossier-pill-grade-d {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #7dd3fc !important;
+  font-weight: 700 !important;
+  border-radius: 4px;
+}
+
+.dossier-pill-grade-e {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fcd34d !important;
+  font-weight: 700 !important;
+  border-radius: 4px;
+}
+
+.dossier-pill-grade-f,
+.dossier-pill-grade-ab {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5 !important;
+  font-weight: 700 !important;
+  border-radius: 4px;
 }
 
 @media print {
