@@ -1,0 +1,495 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Counselling Report — {{ dossier.roll_number }}{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip no-print-section">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-id-card-clip me-2 text-accent"></i>Student Counselling Dossier</h1>
+    <p class="ph-sub">Comprehensive academic history, semester marks, attendance records, and personal profile for {{ dossier.full_name }}</p>
+  </div>
+  <div class="ph-actions d-flex gap-2">
+    <a href="{{ pdf_download_url }}" class="btn-vvit-primary" download>
+      <i class="fas fa-file-pdf me-1"></i>Download Official PDF
+    </a>
+    <button type="button" class="btn-vvit-secondary" onclick="window.print()">
+      <i class="fas fa-print me-1"></i>Print Report
+    </button>
+    {% if back_url %}
+    <a href="{{ back_url }}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="counselling-dossier-wrapper">
+
+  <!-- Official University Header Banner (Visible in Web & Print) -->
+  <div class="glass-card mb-4 print-header-card text-center p-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom border-secondary border-opacity-25">
+      <div class="d-flex align-items-center gap-3 text-start">
+        <div class="univ-emblem-box d-flex align-items-center justify-content-center rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25" style="width: 60px; height: 60px;">
+          <i class="fas fa-graduation-cap fa-2x text-accent"></i>
+        </div>
+        <div>
+          <h2 class="univ-heading fw-bold mb-0" style="color: var(--accent); font-size: 1.35rem; letter-spacing: -0.01em;">
+            VASIREDDY VENKATADRI INTERNATIONAL TECHNOLOGICAL UNIVERSITY
+          </h2>
+          <div class="univ-subtext small text-muted">
+            Approved by AICTE, New Delhi • Accredited by NAAC with 'A+' Grade • ISO 9001:2015 Certified
+          </div>
+          <div class="univ-subtext small text-muted">
+            Nambur (V), Pedakakani (M), Guntur District, Andhra Pradesh — 522508
+          </div>
+        </div>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25 px-3 py-2 fw-bold" style="font-size: 0.85rem;">
+          CONFIDENTIAL DOSSIER
+        </span>
+        <div class="text-muted small mt-1">Generated: {{ dossier.generated_at }}</div>
+      </div>
+    </div>
+
+    <div class="dossier-title-strip py-2 mt-2">
+      <h3 class="fw-bold text-uppercase mb-0" style="color: var(--text-primary); font-size: 1.15rem; letter-spacing: 0.05em;">
+        STUDENT COUNSELLING & COMPREHENSIVE ACADEMIC RECORD
+      </h3>
+    </div>
+  </div>
+
+  <!-- Student Demographic & Family Details Card -->
+  <div class="glass-card mb-4">
+    <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+      <h4 class="card-title-custom mb-0"><i class="fas fa-user-circle me-2 text-accent"></i>1. Student Profile & Family Information</h4>
+      <span class="badge bg-primary bg-opacity-75 text-light px-3 py-1">{{ dossier.roll_number }}</span>
+    </div>
+
+    <div class="row g-3">
+      <!-- Demographic Column 1 -->
+      <div class="col-md-6">
+        <div class="table-responsive">
+          <table class="table table-sm table-borderless dossier-info-table mb-0">
+            <tbody>
+              <tr>
+                <th style="width: 38%; color: var(--text-muted);">Roll Number:</th>
+                <td class="fw-bold" style="color: var(--text-primary);">{{ dossier.roll_number }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Full Name:</th>
+                <td class="fw-bold" style="color: var(--text-primary);">{{ dossier.full_name }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Department / Branch:</th>
+                <td style="color: var(--text-secondary);">{{ dossier.branch_code }} — {{ dossier.branch_name }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Year & Section:</th>
+                <td style="color: var(--text-secondary);">Year {{ dossier.year_num }} (Section {{ dossier.section_name }})</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Admission Year:</th>
+                <td style="color: var(--text-secondary);">{{ dossier.admission_year }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Gender / Caste:</th>
+                <td style="color: var(--text-secondary);">{{ dossier.gender }} ({{ dossier.caste }})</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Student Contact:</th>
+                <td style="color: var(--text-secondary);"><i class="fas fa-phone me-1 text-muted small"></i>{{ dossier.personal_mobile }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Student Email:</th>
+                <td style="color: var(--text-secondary);"><i class="fas fa-envelope me-1 text-muted small"></i>{{ dossier.email }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Family & Mentor Column 2 -->
+      <div class="col-md-6">
+        <div class="table-responsive">
+          <table class="table table-sm table-borderless dossier-info-table mb-0">
+            <tbody>
+              <tr>
+                <th style="width: 38%; color: var(--text-muted);">Parent / Guardian:</th>
+                <td class="fw-bold" style="color: var(--text-primary);">{{ dossier.parent_name }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Parent Occupation:</th>
+                <td style="color: var(--text-secondary);">{{ dossier.parent_occupation }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Parent Mobile:</th>
+                <td style="color: var(--text-secondary);"><i class="fas fa-phone me-1 text-success small"></i>{{ dossier.parent_mobile }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Class Teacher:</th>
+                <td style="color: var(--text-secondary);">Prof. {{ dossier.class_teacher_name }} {% if dossier.class_teacher_emp %}({{ dossier.class_teacher_emp }}){% endif %}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Faculty Counsellor:</th>
+                <td class="fw-bold" style="color: var(--accent);">Prof. {{ dossier.counsellor_name }} {% if dossier.counsellor_emp %}({{ dossier.counsellor_emp }}){% endif %}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Tuition Dues / Fees:</th>
+                <td>
+                  <span class="badge {% if dossier.fees_pending > 0 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% endif %} px-2 py-1">
+                    INR {{ dossier.fees_pending|floatformat:2 }}
+                  </span>
+                  <small class="text-muted ms-1">(Updated: {{ dossier.fees_updated_at }})</small>
+                </td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Permanent Address:</th>
+                <td class="small" style="color: var(--text-secondary);">{{ dossier.permanent_address }}</td>
+              </tr>
+              <tr>
+                <th style="color: var(--text-muted);">Present Address:</th>
+                <td class="small" style="color: var(--text-secondary);">{{ dossier.present_address }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cumulative Academic KPIs -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="kpi-card kpi-danger">
+        <div class="kpi-icon"><i class="fas fa-award"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ dossier.cgpa }}</span>
+          <span class="kpi-label">Cumulative CGPA</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="kpi-card kpi-success">
+        <div class="kpi-icon"><i class="fas fa-certificate"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ dossier.total_credits_earned }} / {{ dossier.total_cumulative_credits }}</span>
+          <span class="kpi-label">Credits Earned</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="kpi-card {% if dossier.active_backlogs_count > 0 %}kpi-warning{% else %}kpi-info{% endif %}">
+        <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ dossier.active_backlogs_count }}</span>
+          <span class="kpi-label">Active Backlogs</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="kpi-card kpi-neutral">
+        <div class="kpi-icon"><i class="fas fa-user-clock"></i></div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ dossier.overall_attendance_pct }}%</span>
+          <span class="kpi-label">Overall Attendance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Semester-by-Semester Performance & Marks Breakdown -->
+  <div class="glass-card mb-4">
+    <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+      <h4 class="card-title-custom mb-0"><i class="fas fa-graduation-cap me-2 text-accent"></i>2. Semester-Wise Examination Results & Grades</h4>
+      <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ dossier.semester_reports|length }} Semester(s) Tracked</span>
+    </div>
+
+    {% for sem in dossier.semester_reports %}
+    <div class="semester-report-block mb-4 p-3 rounded-3" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px solid var(--clr-border, rgba(255,255,255,0.1));">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size: 0.85rem;">
+            Semester {{ sem.semester }}
+          </span>
+          <span class="fw-bold" style="color: var(--text-primary);">Academic Grade & Marks Sheet</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-30 px-3 py-1">
+            SGPA: <strong>{{ sem.sgpa }}</strong>
+          </span>
+          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-30 px-3 py-1">
+            Credits: <strong>{{ sem.credits_earned }}/{{ sem.total_credits }}</strong>
+          </span>
+          <span class="badge {% if sem.status == 'Pass' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif 'Fail' in sem.status %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} px-3 py-1">
+            {{ sem.status }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-responsive mb-3">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>Subject Code</th>
+              <th>Subject Title</th>
+              <th>Credits</th>
+              <th class="text-center">Mid 1</th>
+              <th class="text-center">Mid 2</th>
+              <th class="text-center">Sem Exam</th>
+              <th class="text-center">Total Score</th>
+              <th class="text-center">Grade</th>
+              <th class="text-center">Points</th>
+              <th class="text-end">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in sem.subjects %}
+            <tr>
+              <td><span class="badge bg-primary bg-opacity-75 text-light">{{ s.code }}</span></td>
+              <td class="fw-semibold" style="color: var(--text-primary);">{{ s.name }}</td>
+              <td>{{ s.credits }}</td>
+              <td class="text-center text-muted small">{{ s.mid1_marks }}</td>
+              <td class="text-center text-muted small">{{ s.mid2_marks }}</td>
+              <td class="text-center text-muted small">{{ s.final_marks }}</td>
+              <td class="text-center fw-bold" style="color: var(--text-primary);">{{ s.total_score }}</td>
+              <td class="text-center">
+                <span class="badge {% if s.grade == 'S' or s.grade == 'A' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif s.grade == 'B' or s.grade == 'C' or s.grade == 'D' %}bg-info bg-opacity-20 text-info border border-info border-opacity-30{% elif s.grade == 'E' %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% elif s.grade == 'F' or s.grade == 'Ab' %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} fw-bold px-2 py-1">
+                  {{ s.grade }}
+                </span>
+              </td>
+              <td class="text-center">{{ s.grade_points }}</td>
+              <td class="text-end">
+                {% if s.status == 'Pass' %}
+                  <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-1"><i class="fas fa-check me-1"></i>Pass</span>
+                {% elif s.status == 'Fail' %}
+                  <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2 py-1"><i class="fas fa-xmark me-1"></i>Backlog</span>
+                {% else %}
+                  <span class="badge bg-secondary bg-opacity-20 text-muted px-2 py-1">Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10" class="text-center text-muted py-3">No exam records uploaded for Semester {{ sem.semester }}.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Semester Attendance Breakdown -->
+      {% if sem.attendance_rows %}
+      <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <small class="fw-bold text-muted text-uppercase" style="letter-spacing: 0.05em;">
+            <i class="fas fa-calendar-check text-info me-1"></i>Semester {{ sem.semester }} Subject Attendance Details
+          </small>
+          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-2 py-1" style="font-size: 0.75rem;">
+            Semester Attendance: {{ sem.attendance_pct }}% ({{ sem.present_classes }}/{{ sem.total_classes }} classes)
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-borderless vvit-table mb-0" style="font-size: 0.8rem;">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th class="text-center">Conducted</th>
+                <th class="text-center">Attended</th>
+                <th class="text-center">Absent</th>
+                <th class="text-end">Attendance %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in sem.attendance_rows %}
+              <tr>
+                <td>{{ a.code }} - {{ a.name }}</td>
+                <td class="text-center">{{ a.total }}</td>
+                <td class="text-center text-success fw-semibold">{{ a.present }}</td>
+                <td class="text-center text-danger">{{ a.absent }}</td>
+                <td class="text-end">
+                  <span class="badge {% if a.percentage >= 75 %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif a.percentage >= 65 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% endif %} px-2 py-1">
+                    {{ a.percentage }}%
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Verified Achievements & Co-Curricular Records -->
+  <div class="glass-card mb-4">
+    <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+      <h4 class="card-title-custom mb-0"><i class="fas fa-trophy me-2 text-accent"></i>3. Co-Curricular, Extra-Curricular & Certifications</h4>
+      <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ dossier.achievements|length }} Record(s)</span>
+    </div>
+
+    {% if dossier.achievements %}
+    <div class="table-responsive">
+      <table class="vvit-table">
+        <thead>
+          <tr>
+            <th>Event / Certification Title</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Description / Highlights</th>
+            <th class="text-end">Verification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ach in dossier.achievements %}
+          <tr>
+            <td class="fw-bold" style="color: var(--text-primary);">{{ ach.title }}</td>
+            <td><span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25">{{ ach.category }}</span></td>
+            <td>{{ ach.date_achieved|date:"d M Y"|default:"—" }}</td>
+            <td class="small" style="color: var(--text-secondary); max-width: 320px;">{{ ach.description|default:"—" }}</td>
+            <td class="text-end">
+              <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-1">
+                <i class="fas fa-check-circle me-1"></i>Verified
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <i class="fas fa-award fa-2x mb-2 opacity-50"></i>
+      <p class="mb-0 small">No extracurricular or certification records recorded yet.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Official Endorsements, Observations & Signatures -->
+  <div class="glass-card mb-4 print-signature-card">
+    <div class="card-header-custom mb-3">
+      <h4 class="card-title-custom mb-0"><i class="fas fa-signature me-2 text-accent"></i>4. Official Counselling Observations & Sign-off</h4>
+    </div>
+
+    <div class="p-3 rounded-3 mb-4" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px dashed var(--clr-border, rgba(255,255,255,0.2)); min-height: 90px;">
+      <div class="small text-muted fw-bold mb-2 text-uppercase" style="letter-spacing: 0.05em;">Faculty Counsellor Periodic Remarks & Action Plan:</div>
+      <div class="small text-muted italic">Regular academic monitoring and attendance tracking completed. Student is advised to maintain consistent performance and attend all laboratory / practical sessions.</div>
+    </div>
+
+    <div class="row g-4 pt-3 text-center print-sig-row">
+      <div class="col-3">
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
+        <div class="fw-bold small" style="color: var(--text-primary);">Student Signature</div>
+        <small class="text-muted">Date: {{ dossier.today_date }}</small>
+      </div>
+      <div class="col-3">
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
+        <div class="fw-bold small" style="color: var(--text-primary);">Faculty Counsellor</div>
+        <small class="text-muted">Prof. {{ dossier.counsellor_name }}</small>
+      </div>
+      <div class="col-3">
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
+        <div class="fw-bold small" style="color: var(--text-primary);">Head of Department (HOD)</div>
+        <small class="text-muted">Dept. of {{ dossier.branch_code }}</small>
+      </div>
+      <div class="col-3">
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
+        <div class="fw-bold small" style="color: var(--text-primary);">Principal / Dean</div>
+        <small class="text-muted">VVITU, Nambur</small>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Styles for Screen and Print -->
+<style>
+.dossier-info-table th {
+  padding: 5px 8px;
+  font-size: 0.84rem;
+}
+.dossier-info-table td {
+  padding: 5px 8px;
+  font-size: 0.85rem;
+}
+
+@media print {
+  /* Hide standard portal layout UI elements */
+  .vvit-navbar,
+  .vvit-sidebar,
+  .sidebar-overlay,
+  .no-print-section,
+  .theme-toggle-btn,
+  .vbot-icon-btn,
+  .vbot-chat-window,
+  #vvit-navbar,
+  #vvit-sidebar {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+  }
+
+  .vvit-main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .content-body {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .glass-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    color: #000000 !important;
+    margin-bottom: 15px !important;
+    padding: 12px !important;
+    page-break-inside: avoid;
+  }
+
+  .semester-report-block {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    page-break-inside: avoid;
+  }
+
+  .vvit-table {
+    border: 1px solid #cbd5e1 !important;
+    font-size: 8.5pt !important;
+  }
+
+  .vvit-table thead tr {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  .vvit-table th, .vvit-table td {
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding: 4px 6px !important;
+    color: #000000 !important;
+  }
+
+  .badge {
+    border: 1px solid #94a3b8 !important;
+    color: #000000 !important;
+    background: transparent !important;
+  }
+
+  .print-sig-row {
+    margin-top: 30px !important;
+  }
+}
+</style>
+{% endblock %}

@@ -10,7 +10,10 @@
     <h1 class="ph-title"><i class="fas fa-tachometer-alt me-2 text-accent"></i>Student Dashboard</h1>
     <p class="ph-sub">Welcome back, <strong>{{ student.user.first_name }}</strong> · {{ student.roll_number }}</p>
   </div>
-  <div class="ph-right">
+  <div class="ph-right d-flex align-items-center gap-2">
+    <a href="{% url 'student:counselling_report' %}" class="btn-vvit-primary" title="View complete academic and counselling record">
+      <i class="fas fa-id-card-clip me-1"></i>Counselling Report
+    </a>
     <span class="badge-section">
       {{ student.branch.code }} · {{ student.year }} · Sec {{ student.section.name }}
     </span>

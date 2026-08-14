@@ -621,6 +621,10 @@ def get_free_faculty_for_period(date, period, department=None, exclude_faculty=N
 *   **What it is:** A comprehensive academic progress monitoring framework that allows faculty to record daily lecture notes, key discussion takeaways, homework, and the specific syllabus unit covered (`Unit 1` to `Unit 5`, plus `Other/Revision/Lab`). Students can view what was taught on their portal. HODs have access to a department-scoped coverage tracker showing which faculty taught which topics and real-time unit completion progress pills (U1..U5) for every subject in their branch. System Administrators have college-wide visibility across all 11 departments with branch-filtering and institutional syllabus completion KPIs.
 *   **Why it is useful:** Solves the core educational oversight challenge. Department heads and deans no longer need manual paper logs or guesswork to know how much of the curriculum has been taught before mid-terms and finals. Real-time unit completion badges immediately highlight lagging subjects, enabling timely intervention and ensuring students receive full curriculum coverage.
 
+### BB. Student Comprehensive Counselling Dossier & Official PDF Export
+*   **What it is:** A unified student academic, personal, and counselling dossier system. It compiles all student demographic data, family/parent details, residence, fee status/dues, semester-by-semester exam marks (Mid 1, Mid 2, Final Exam, total score, letter grade, grade points, credits, and SGPA per semester), cumulative CGPA, total credits earned, active backlogs, semester-by-semester subject attendance records, verified co-curricular achievements, and counsellor observation remarks with official sign-off spaces for Student, Counsellor, HOD, and Principal.
+*   **Why it is useful:** Provides a 360-degree holistic academic record accessible to students (their own dossier), faculty counsellors/class teachers (their assigned wards), HODs (all students in their branch), and Administrators (college-wide). Enables single-click generation of professional multi-page ReportLab PDF documents with official university crest, confidential watermarks, and print-ready layout for physical accreditation audits (NAAC, NBA).
+
 ---
 
 ## 3. Key Code Constructs and Algorithms
@@ -652,6 +656,25 @@ if branch_id:
     admin_diary_qs = admin_diary_qs.filter(
         Q(section__branch_id=branch_id) | Q(subject__branch_id=branch_id) | Q(faculty__department_id=branch_id)
     )
+```
+
+### R. Comprehensive Student Counselling Dossier & ReportLab PDF Generator (`core/counselling_utils.py`)
+Compiles semester-by-semester academic history, attendance, and generates signed university PDFs:
+```python
+def get_student_counselling_dossier(student):
+    """Aggregates demographic, family, semester marks & SGPA, attendance %, and backlogs."""
+    # Semester marks and SGPA computation using R23 grade points
+    grade_points_map = {'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5, 'F': 0, 'Ab': 0}
+    # Builds structured semester_reports list, cumulative CGPA, credits earned, and attendance breakdown...
+    return dossier
+
+def generate_counselling_report_pdf(student):
+    """Generates official multi-page A4 PDF using ReportLab with NumberedCanvas page numbering."""
+    dossier = get_student_counselling_dossier(student)
+    # Renders official university header, demographics table, KPI summary,
+    # semester marks & attendance breakdown tables, achievements, and 4-tier signature blocks.
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    return buffer.getvalue()
 ```
 
 

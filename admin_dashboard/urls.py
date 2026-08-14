@@ -15,6 +15,8 @@ urlpatterns = [
     path('students/sample-csv/',     views.download_sample_students_csv, name='sample_students_csv'),
     path('students/<int:pk>/edit/',  views.edit_student,         name='edit_student'),
     path('students/<int:pk>/delete/',views.delete_student,       name='delete_student'),
+    path('students/<int:student_id>/counselling-report/',     views.student_counselling_report,            name='student_counselling_report'),
+    path('students/<int:student_id>/counselling-report/pdf/', views.download_student_counselling_report_pdf, name='download_student_counselling_report_pdf'),
 
     # Faculty
     path('faculty/',                 views.manage_faculty,       name='manage_faculty'),

@@ -179,6 +179,9 @@
       <a href="{% url 'student:question_papers' %}" class="nav-link {% if request.resolver_match.url_name == 'question_papers' %}active{% endif %}">
         <i class="fas fa-file-pdf nav-icon"></i><span>Question Papers</span>
       </a>
+      <a href="{% url 'student:counselling_report' %}" class="nav-link {% if request.resolver_match.url_name == 'counselling_report' %}active{% endif %}">
+        <i class="fas fa-id-card-clip nav-icon"></i><span>Counselling Report</span>
+      </a>
       <a href="{% url 'student:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' %}active{% endif %}">
         <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
       </a>

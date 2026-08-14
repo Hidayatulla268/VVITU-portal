@@ -476,3 +476,39 @@ def add_achievement(request):
         'achievements': achievements,
     })
 
+
+@student_required
+def counselling_report(request):
+    """
+    Comprehensive student counselling dossier web report.
+    """
+    from core.counselling_utils import get_student_counselling_dossier
+    from django.urls import reverse
+
+    student = request.student
+    dossier = get_student_counselling_dossier(student)
+
+    context = {
+        'dossier': dossier,
+        'pdf_download_url': reverse('student:download_counselling_report_pdf'),
+        'back_url': reverse('student:dashboard'),
+    }
+    return render(request, 'reports/counselling_report.html', context)
+
+
+@student_required
+def download_counselling_report_pdf(request):
+    """
+    Download official student counselling dossier as a ReportLab PDF.
+    """
+    from core.counselling_utils import generate_counselling_report_pdf
+    from django.http import HttpResponse
+
+    student = request.student
+    pdf_bytes = generate_counselling_report_pdf(student)
+
+    filename = f"{student.roll_number}_Counselling_Dossier.pdf"
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+

@@ -52,8 +52,8 @@
               <th>Year</th>
               <th>Section</th>
               <th>Student Phone</th>
-              <th>Parent Name</th>
-              <th>Parent Mobile</th>
+              <th>Parent Contact</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -80,13 +80,16 @@
                 <span class="text-muted">—</span>
                 {% endif %}
               </td>
-              <td>{{ st.parent_name|default:"—" }}</td>
               <td>
+                <div>{{ st.parent_name|default:"—" }}</div>
                 {% if st.parent_mobile %}
-                <a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a>
-                {% else %}
-                <span class="text-muted">—</span>
+                <small><a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a></small>
                 {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'faculty:student_counselling_report' st.id %}" class="btn btn-sm btn-outline-danger py-1 px-2" title="View & Download Counselling Report">
+                  <i class="fas fa-id-card-clip me-1"></i>Dossier
+                </a>
               </td>
             </tr>
             {% endfor %}
@@ -116,8 +119,8 @@
               <th>Year</th>
               <th>Section</th>
               <th>Student Phone</th>
-              <th>Parent Name</th>
-              <th>Parent Mobile</th>
+              <th>Parent Contact</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -144,13 +147,16 @@
                 <span class="text-muted">—</span>
                 {% endif %}
               </td>
-              <td>{{ st.parent_name|default:"—" }}</td>
               <td>
+                <div>{{ st.parent_name|default:"—" }}</div>
                 {% if st.parent_mobile %}
-                <a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a>
-                {% else %}
-                <span class="text-muted">—</span>
+                <small><a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a></small>
                 {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'faculty:student_counselling_report' st.id %}" class="btn btn-sm btn-outline-danger py-1 px-2" title="View & Download Counselling Report">
+                  <i class="fas fa-id-card-clip me-1"></i>Dossier
+                </a>
               </td>
             </tr>
             {% endfor %}
@@ -181,8 +187,7 @@
               <th>Section</th>
               <th>Subject Taught</th>
               <th>Student Phone</th>
-              <th>Parent Name</th>
-              <th>Parent Mobile</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -210,13 +215,10 @@
                 <span class="text-muted">—</span>
                 {% endif %}
               </td>
-              <td>{{ st.parent_name|default:"—" }}</td>
-              <td>
-                {% if st.parent_mobile %}
-                <a href="tel:{{ st.parent_mobile }}" class="link-accent"><i class="fas fa-phone me-1"></i>{{ st.parent_mobile }}</a>
-                {% else %}
-                <span class="text-muted">—</span>
-                {% endif %}
+              <td class="text-end">
+                <a href="{% url 'faculty:student_counselling_report' st.id %}" class="btn btn-sm btn-outline-danger py-1 px-2" title="View & Download Counselling Report">
+                  <i class="fas fa-id-card-clip me-1"></i>Dossier
+                </a>
               </td>
             </tr>
             {% endfor %}

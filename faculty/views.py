@@ -1564,3 +1564,68 @@ def cancel_leave_request(request, pk):
     return redirect('faculty:leave_requests')
 
 
+# ─────────────────────────────────────────────
+# STUDENT COUNSELLING DOSSIER (FACULTY / COUNSELLOR)
+# ─────────────────────────────────────────────
+@faculty_required
+def student_counselling_report(request, student_id):
+    """
+    View complete counselling dossier for a student assigned to or taught by this faculty member.
+    """
+    from core.counselling_utils import get_student_counselling_dossier
+    from django.urls import reverse
+
+    faculty = request.faculty
+    student = get_object_or_404(Student, id=student_id, is_active=True, user__is_deleted=False)
+
+    # Permission check: Is counsellor, class teacher, section instructor, or HOD/Admin?
+    is_counsellor = (student.counsellor_id == faculty.id)
+    is_class_teacher = (student.class_teacher_id == faculty.id)
+    is_dept_hod = (request.user.role == 'hod' and faculty.department == student.branch)
+    is_admin = (request.user.role == 'admin')
+    
+    # Check section instructor
+    teaches_section = Timetable.objects.filter(faculty=faculty, section=student.section).exists() if student.section else False
+
+    if not (is_counsellor or is_class_teacher or is_dept_hod or is_admin or teaches_section):
+        messages.error(request, "You are not authorized to view this student's counselling report.")
+        return redirect('faculty:counselled_students')
+
+    dossier = get_student_counselling_dossier(student)
+    context = {
+        'dossier': dossier,
+        'pdf_download_url': reverse('faculty:download_student_counselling_report_pdf', args=[student.id]),
+        'back_url': reverse('faculty:counselled_students'),
+    }
+    return render(request, 'reports/counselling_report.html', context)
+
+
+@faculty_required
+def download_student_counselling_report_pdf(request, student_id):
+    """
+    Download official student counselling dossier PDF as faculty counsellor.
+    """
+    from core.counselling_utils import generate_counselling_report_pdf
+    from django.http import HttpResponse
+
+    faculty = request.faculty
+    student = get_object_or_404(Student, id=student_id, is_active=True, user__is_deleted=False)
+
+    # Permission check
+    is_counsellor = (student.counsellor_id == faculty.id)
+    is_class_teacher = (student.class_teacher_id == faculty.id)
+    is_dept_hod = (request.user.role == 'hod' and faculty.department == student.branch)
+    is_admin = (request.user.role == 'admin')
+    teaches_section = Timetable.objects.filter(faculty=faculty, section=student.section).exists() if student.section else False
+
+    if not (is_counsellor or is_class_teacher or is_dept_hod or is_admin or teaches_section):
+        messages.error(request, "You are not authorized to download this student's counselling report.")
+        return redirect('faculty:counselled_students')
+
+    pdf_bytes = generate_counselling_report_pdf(student)
+    filename = f"{student.roll_number}_Counselling_Dossier.pdf"
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+

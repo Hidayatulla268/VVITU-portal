@@ -2730,6 +2730,45 @@ def class_diary_coverage(request):
     return render(request, 'admin_dashboard/class_diary_coverage.html', context)
 
 
+# ─────────────────────────────────────────────
+# STUDENT COUNSELLING DOSSIER (ADMIN)
+# ─────────────────────────────────────────────
+@admin_required
+def student_counselling_report(request, student_id):
+    """
+    View complete counselling dossier for any student university-wide.
+    """
+    from core.counselling_utils import get_student_counselling_dossier
+    from django.urls import reverse
+
+    student = get_object_or_404(Student, id=student_id, is_active=True, user__is_deleted=False)
+    dossier = get_student_counselling_dossier(student)
+
+    context = {
+        'dossier': dossier,
+        'pdf_download_url': reverse('admin_dashboard:download_student_counselling_report_pdf', args=[student.id]),
+        'back_url': reverse('admin_dashboard:manage_students'),
+    }
+    return render(request, 'reports/counselling_report.html', context)
+
+
+@admin_required
+def download_student_counselling_report_pdf(request, student_id):
+    """
+    Download official student counselling dossier PDF university-wide for Administrator.
+    """
+    from core.counselling_utils import generate_counselling_report_pdf
+    from django.http import HttpResponse
+
+    student = get_object_or_404(Student, id=student_id, is_active=True, user__is_deleted=False)
+    pdf_bytes = generate_counselling_report_pdf(student)
+
+    filename = f"{student.roll_number}_Counselling_Dossier.pdf"
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
 
 
 

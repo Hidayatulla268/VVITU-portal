@@ -9,7 +9,24 @@
     <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Student Details</h1>
     <p class="ph-sub">Academic profile and performance sheet for {{ student.user.get_full_name }}</p>
   </div>
-  <div class="ph-right">
+  <div class="ph-right d-flex gap-2">
+    {% if user.role == 'student' %}
+      <a href="{% url 'student:counselling_report' %}" class="btn-vvit-primary">
+        <i class="fas fa-id-card-clip me-1"></i>Counselling Report
+      </a>
+    {% elif user.role == 'faculty' or user.role == 'lab_technician' %}
+      <a href="{% url 'faculty:student_counselling_report' student.id %}" class="btn-vvit-primary">
+        <i class="fas fa-id-card-clip me-1"></i>Counselling Report
+      </a>
+    {% elif user.role == 'hod' %}
+      <a href="{% url 'hod:student_counselling_report' student.id %}" class="btn-vvit-primary">
+        <i class="fas fa-id-card-clip me-1"></i>Counselling Report
+      </a>
+    {% elif user.role == 'admin' %}
+      <a href="{% url 'admin_dashboard:student_counselling_report' student.id %}" class="btn-vvit-primary">
+        <i class="fas fa-id-card-clip me-1"></i>Counselling Report
+      </a>
+    {% endif %}
     <button type="button" onclick="window.history.back();" class="btn-vvit-outline">
       <i class="fas fa-arrow-left me-2"></i>Back
     </button>
