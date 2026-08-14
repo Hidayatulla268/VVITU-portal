@@ -44,10 +44,10 @@
     </div>
 
     <div class="col-md-4 d-flex gap-2">
-      <a href="{% url 'admin_dashboard:manage_leave_requests' %}" class="vvit-btn vvit-btn-secondary">
+      <a href="{% url 'admin_dashboard:manage_leave_requests' %}" class="btn-vvit-secondary">
         <i class="fas fa-undo me-1"></i>Reset
       </a>
-      <button type="submit" class="vvit-btn vvit-btn-primary w-100">
+      <button type="submit" class="btn-vvit-primary w-100">
         <i class="fas fa-filter me-1"></i>Apply Filters
       </button>
     </div>
@@ -108,14 +108,14 @@
           </td>
           <td>
             {% if leave.status == 'pending' %}
-              <span class="status-pill status-leave"><i class="fas fa-clock me-1"></i>Pending Approval</span>
+              <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending Approval</span>
             {% elif leave.status == 'approved' %}
-              <span class="status-pill status-present"><i class="fas fa-check-circle me-1"></i>Approved</span>
+              <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Approved</span>
               <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
                 By {{ leave.action_by.get_full_name|default:leave.action_by.username }} ({{ leave.action_by.get_role_display }})
               </small>
             {% else %}
-              <span class="status-pill status-absent"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+              <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Rejected</span>
               <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
                 By {{ leave.action_by.get_full_name|default:leave.action_by.username }} ({{ leave.action_by.get_role_display }})
               </small>
@@ -126,28 +126,28 @@
           </td>
           <td class="text-end">
             {% if leave.status == 'pending' %}
-              <div class="d-inline-flex gap-2">
+              <div class="d-inline-flex gap-2 justify-content-end align-items-center flex-wrap">
                 <!-- Direct One-Click Approve -->
                 <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}" 
-                   class="btn-vvit-success"
+                   class="btn-leave-approve"
                    title="Quick Approve leave request"
                    onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
                   <i class="fas fa-check me-1"></i>Approve
                 </a>
                 <!-- Direct One-Click Reject -->
                 <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'reject' %}" 
-                   class="btn-vvit-danger"
+                   class="btn-leave-reject"
                    title="Quick Reject leave request"
                    onclick="return confirm('Reject leave for {{ leave.faculty.full_name }}?');">
                   <i class="fas fa-times me-1"></i>Reject
                 </a>
                 <!-- Open Remarks Modal -->
                 <button type="button" 
-                        class="btn-vvit-secondary" 
+                        class="btn-leave-remarks" 
                         data-bs-toggle="modal" 
                         data-bs-target="#adminActionModal{{ leave.id }}"
                         title="Add remarks before approval or rejection">
-                  <i class="fas fa-comment me-1"></i>Remarks
+                  <i class="fas fa-edit me-1"></i>Review / Remarks
                 </button>
               </div>
             {% else %}

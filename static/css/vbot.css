@@ -26,6 +26,10 @@
   transform: scale(1.1);
   box-shadow: 0 12px 40px rgba(220,38,38,0.65);
 }
+#vbotTrigger:active {
+  transform: scale(0.95);
+  box-shadow: 0 4px 18px rgba(220,38,38,0.4);
+}
 .vbot-pulse {
   position: absolute; inset: -4px;
   border-radius: 50%;
@@ -144,6 +148,10 @@
   background:rgba(220,38,38,0.12);
   border-color:rgba(220,38,38,0.3);
   color:#ef4444;
+  transform: translateY(-1px);
+}
+.vbot-chip:active {
+  transform: translateY(0) scale(0.96);
 }
 
 /* Bubbles */

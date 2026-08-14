@@ -20,12 +20,27 @@
 {% block content %}
 <!-- Search -->
 <div class="glass-card mb-4">
-  <form method="get" class="d-flex gap-3">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search students in branch..." class="vvit-input flex-grow-1"/>
-    <button type="submit" class="btn-vvit-primary"><i class="fas fa-search me-2"></i>Search</button>
-    {% if search %}<a href="{% url 'hod:manage_students' %}" class="btn-vvit-outline">Clear</a>{% endif %}
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-lg-9 col-md-8 col-12">
+      <label class="form-label">Search Students Directory</label>
+      <div class="search-input-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+        <i class="fas fa-search search-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 10; font-size: 0.88rem;"></i>
+        <input type="text" name="q" value="{{ search }}" style="padding-left: 40px !important;" placeholder="Search students by roll number, name, phone..." class="vvit-input"/>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-4 col-12 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-grow-1" style="min-height: 42px;">
+        <i class="fas fa-search me-2"></i>Search
+      </button>
+      {% if search %}
+        <a href="{% url 'hod:manage_students' %}" class="btn-vvit-secondary" style="min-height: 42px;" title="Clear search">
+          <i class="fas fa-undo me-1"></i>Reset
+        </a>
+      {% endif %}
+    </div>
   </form>
 </div>
+
 
 <div class="glass-card">
   <div class="table-responsive">

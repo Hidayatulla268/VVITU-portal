@@ -24,8 +24,8 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
   <!-- VVIT Custom CSS -->
-  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
-  <link rel="stylesheet" href="{% static 'css/theme_and_calendar.css' %}"/>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v={% now 'U' %}"/>
+  <link rel="stylesheet" href="{% static 'css/theme_and_calendar.css' %}?v={% now 'U' %}"/>
 
   {% block extra_head %}{% endblock %}
 </head>
@@ -58,12 +58,12 @@
     <!-- Right controls -->
     <div class="navbar-right ms-auto d-flex align-items-center gap-3">
       <!-- Theme Toggle Dark/Light -->
-      <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark / Light Mode" onclick="toggleTheme()">
+      <button type="button" class="theme-toggle-btn" id="themeToggle" title="Toggle Dark / Light Mode" onclick="toggleTheme()">
         <i class="fas fa-sun" id="themeIcon"></i>
       </button>
       <!-- ── Notification Bell ─────────────────────── -->
       <div class="notif-bell-wrap dropdown" id="notifDropdownWrap">
-        <button class="icon-btn notif-bell-btn dropdown-toggle"
+        <button type="button" class="icon-btn notif-bell-btn dropdown-toggle"
                 id="notifDropdownToggle"
                 data-bs-toggle="dropdown"
                 data-bs-auto-close="outside"
@@ -78,7 +78,7 @@
         <div class="dropdown-menu notif-dropdown-panel glass-dropdown" aria-labelledby="notifDropdownToggle">
           <div class="notif-panel-header">
             <span class="notif-panel-title"><i class="fas fa-bell me-2 text-accent"></i>Notifications</span>
-            <button class="notif-mark-all-btn" id="dropMarkAllBtn" onclick="dropMarkAllRead()">
+            <button type="button" class="notif-mark-all-btn" id="dropMarkAllBtn" onclick="dropMarkAllRead()">
               Mark all read
             </button>
           </div>
@@ -167,6 +167,9 @@
       <a href="{% url 'student:timetable' %}" class="nav-link {% if request.resolver_match.url_name == 'timetable' %}active{% endif %}">
         <i class="fas fa-calendar-alt nav-icon"></i><span>Timetable</span>
       </a>
+      <a href="{% url 'student:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' %}active{% endif %}">
+        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
+      </a>
       <a href="{% url 'student:results' %}" class="nav-link {% if request.resolver_match.url_name == 'results' %}active{% endif %}">
         <i class="fas fa-chart-bar nav-icon"></i><span>Results</span>
       </a>
@@ -192,6 +195,9 @@
       </a>
       <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
+      </a>
+      <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
       </a>
       <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-file-chart-line nav-icon"></i><span>Reports</span>
@@ -231,6 +237,9 @@
       <a href="{% url 'hod:faculty_attendance' %}" class="nav-link {% if 'faculty_attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-user-clock nav-icon"></i><span>Faculty Attendance</span>
       </a>
+      <a href="{% url 'hod:manage_class_transfers' %}" class="nav-link {% if 'class_transfers' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Audit</span>
+      </a>
       <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
         <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
@@ -243,6 +252,9 @@
       <a href="{% url 'hod:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-book-open nav-icon"></i><span>Manage Subjects</span>
       </a>
+      <a href="{% url 'hod:upload_mid_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_mid_marks' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-file-upload nav-icon"></i><span>Mid Marks Entry & Edit</span>
+      </a>
       <a href="{% url 'hod:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-calendar-alt nav-icon"></i><span>Timetables</span>
       </a>
@@ -254,6 +266,9 @@
       </a>
       <a href="{% url 'hod:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}">
         <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
+      </a>
+      <a href="{% url 'hod:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
       </a>
 
       <div class="sidebar-divider"></div>
@@ -296,6 +311,9 @@
       <a href="{% url 'deo:upload_marks' %}" class="nav-link {% if 'upload_marks' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
       </a>
+      <a href="{% url 'deo:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'deo' %}active{% endif %}">
+        <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
+      </a>
       <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
         <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
@@ -319,6 +337,9 @@
       <a href="{% url 'admin_dashboard:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
         <i class="fas fa-calendar-minus nav-icon"></i><span>Faculty Leave Approvals</span>
       </a>
+      <a href="{% url 'admin_dashboard:faculty_class_history' %}" class="nav-link {% if 'faculty_class_history' in request.resolver_match.url_name or 'class_transfers' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Audit</span>
+      </a>
       <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-cubes nav-icon"></i><span>Manage Sections</span>
       </a>
@@ -334,6 +355,9 @@
       <a href="{% url 'admin_dashboard:assign_counsellor' %}" class="nav-link">
         <i class="fas fa-user-friends nav-icon"></i><span>Assign Counsellor</span>
       </a>
+      <a href="{% url 'admin_dashboard:manage_achievements' %}" class="nav-link {% if 'achievements' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-trophy nav-icon"></i><span>College Achievements</span>
+      </a>
       <a href="{% url 'admin_dashboard:add_results' %}" class="nav-link {% if request.resolver_match.url_name == 'add_results' %}active{% endif %}">
         <i class="fas fa-plus-circle nav-icon"></i><span>Add Results</span>
       </a>
@@ -342,6 +366,9 @@
       </a>
       <a href="{% url 'admin_dashboard:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}">
         <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
       </a>
       <a href="{% url 'admin_dashboard:attendance_list' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
         <i class="fas fa-clipboard-list nav-icon"></i><span>Attendance Editor</span>
@@ -413,7 +440,7 @@
 <!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- VVIT Main JS -->
-<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/main.js' %}?v={% now 'U' %}"></script>
 
 {% block extra_js %}{% endblock %}
 
@@ -540,6 +567,41 @@ function getCsrf() {
 // Poll for new notifications every 60 seconds
 refreshBadge();
 setInterval(() => { refreshBadge(); notifsLoaded = false; }, 60000);
+
+// Preserve sidebar scroll position seamlessly across page transitions
+(function() {
+  function getSidebar() {
+    return document.querySelector('.vvit-sidebar') || document.querySelector('#sidebar');
+  }
+
+  // Restore saved scroll position immediately and after DOM load
+  const savedPos = sessionStorage.getItem('vvit_sidebar_scroll_val');
+  if (savedPos !== null) {
+    const applyScroll = function() {
+      const sb = getSidebar();
+      if (sb) sb.scrollTop = parseInt(savedPos, 10);
+    };
+    applyScroll();
+    document.addEventListener("DOMContentLoaded", applyScroll);
+    window.addEventListener("load", applyScroll);
+  }
+
+  // Continuously record scroll position in real time
+  document.addEventListener("DOMContentLoaded", function() {
+    const sb = getSidebar();
+    if (!sb) return;
+
+    sb.addEventListener('scroll', function() {
+      sessionStorage.setItem('vvit_sidebar_scroll_val', sb.scrollTop);
+    }, { passive: true });
+
+    sb.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        sessionStorage.setItem('vvit_sidebar_scroll_val', sb.scrollTop);
+      });
+    });
+  });
+})();
 </script>
 {% endif %}
 </body>

@@ -252,6 +252,70 @@
   </div>
 
 </div><!-- /row -->
+
+<!-- ── ROW 4: Recent Class Discussions & Daily Topics ─────────── -->
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="glass-card">
+      <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-book-reader me-2 text-accent"></i>Recent Class Discussions & Daily Lesson Notes
+        </h3>
+        <a href="{% url 'student:class_diary' %}" class="btn-sm-accent text-decoration-none">
+          <span>View Full Class Diary</span><i class="fas fa-arrow-right ms-1"></i>
+        </a>
+      </div>
+
+      {% if recent_class_logs %}
+      <div class="row g-3">
+        {% for log in recent_class_logs %}
+        <div class="col-md-6 col-xl-4">
+          <div class="card bg-dark bg-opacity-40 border border-secondary border-opacity-25 rounded-3 p-3 h-100 shadow-sm d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                <div class="d-flex align-items-center gap-1 flex-wrap">
+                  <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size: 0.78rem;">P{{ log.period }}</span>
+                  <span class="badge bg-primary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.78rem;">{{ log.subject.code }}</span>
+                </div>
+                <span class="text-muted small"><i class="far fa-calendar-alt me-1 text-warning"></i>{{ log.date|date:"D, d M" }}</span>
+              </div>
+
+              <div class="text-white fw-bold small mb-1">{{ log.subject.name }}</div>
+              <div class="text-muted small mb-2"><i class="fas fa-chalkboard-user text-accent me-1"></i>Prof. {{ log.faculty.full_name }}</div>
+
+              <div class="p-2 mb-2 rounded-2 bg-dark bg-opacity-50 border-start border-3 border-accent">
+                <div class="small text-muted fw-bold" style="font-size: 0.72rem;">TOPIC:</div>
+                <div class="text-light fw-semibold small">{{ log.topic_covered }}</div>
+              </div>
+
+              {% if log.discussion_summary %}
+              <div class="text-muted small mb-2" style="font-size: 0.82rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ log.discussion_summary }}
+              </div>
+              {% endif %}
+            </div>
+
+            {% if log.homework_assignment %}
+            <div class="p-2 rounded-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 mt-2">
+              <div class="text-warning fw-bold small" style="font-size: 0.75rem;"><i class="fas fa-pencil-alt me-1"></i>Homework:</div>
+              <div class="text-light small" style="font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ log.homework_assignment }}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-4">
+        <i class="fas fa-book-open-reader fa-2x text-muted mb-2 opacity-50"></i>
+        <p class="text-muted small mb-0">No class discussion notes posted yet for your section. When faculty log topics covered, they will appear here.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

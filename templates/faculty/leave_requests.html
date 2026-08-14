@@ -89,11 +89,11 @@
           <td>{{ leave.start_date|date:"d-M-Y" }}</td>
           <td>{{ leave.end_date|date:"d-M-Y" }}</td>
           <td>
-            <span class="status-pill status-present">{{ leave.total_days }} Day(s)</span>
+            <span class="status-pill status-neutral"><i class="fas fa-calendar-day me-1"></i>{{ leave.total_days }} Day(s)</span>
           </td>
           <td style="max-width: 250px;">
-            <div class="text-truncate" title="{{ leave.reason }}">
-              <small><strong>Reason:</strong> {{ leave.reason }}</small>
+            <div class="text-truncate text-white-50" title="{{ leave.reason }}">
+              <small><strong class="text-white">Reason:</strong> {{ leave.reason }}</small>
             </div>
             {% if leave.substitute_notes %}
             <div class="text-truncate text-muted" title="{{ leave.substitute_notes }}" style="font-size: 0.75rem;">
@@ -103,11 +103,11 @@
           </td>
           <td>
             {% if leave.status == 'pending' %}
-              <span class="status-pill status-leave"><i class="fas fa-clock me-1"></i>Pending (HOD / Admin)</span>
+              <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending (HOD / Admin)</span>
             {% elif leave.status == 'approved' %}
-              <span class="status-pill status-present"><i class="fas fa-check-circle me-1"></i>Approved</span>
+              <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Approved</span>
             {% else %}
-              <span class="status-pill status-absent"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+              <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Rejected</span>
             {% endif %}
           </td>
           <td>
@@ -126,7 +126,7 @@
           <td class="text-end">
             {% if leave.status == 'pending' %}
               <a href="{% url 'faculty:cancel_leave_request' leave.id %}" 
-                 class="btn-vvit-danger"
+                 class="btn-leave-reject"
                  onclick="return confirm('Are you sure you want to cancel this leave application?');">
                 <i class="fas fa-ban me-1"></i>Cancel
               </a>
@@ -197,6 +197,29 @@
             <div class="col-12">
               <label class="form-label text-white small">Class Substitution / Proxy Notes (Optional)</label>
               <textarea name="substitute_notes" class="vvit-input" rows="2" placeholder="Mention substitute faculty arrangements if any..."></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">
+                <i class="fas fa-exchange-alt me-1 text-accent"></i>Transfer Scheduled Classes During Leave?
+              </label>
+              <div class="d-flex gap-4 p-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="transfer_classes_choice" id="transferYes" value="yes">
+                  <label class="form-check-label text-white small" for="transferYes">
+                    <strong>Yes</strong>, request class transfer to free substitute faculty
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="transfer_classes_choice" id="transferNo" value="no" checked>
+                  <label class="form-check-label text-white small" for="transferNo">
+                    <strong>No</strong> / Self Arrangement
+                  </label>
+                </div>
+              </div>
+              <small class="text-muted d-block mt-2">
+                <i class="fas fa-shield-alt text-success me-1"></i>HOD will automatically audit your scheduled classes and assign available free faculty members during your leave periods. Assigned substitute faculty will receive 15-minute advance SMS and Email reminders before class starts.
+              </small>
             </div>
           </div>
         </div>

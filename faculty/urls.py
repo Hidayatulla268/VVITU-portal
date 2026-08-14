@@ -8,6 +8,7 @@ app_name = 'faculty'
 urlpatterns = [
     path('',                     views.dashboard,          name='dashboard'),
     path('mark-attendance/',     views.mark_attendance,    name='mark_attendance'),
+    path('class-diary/',         views.class_diary,        name='class_diary'),
     path('my-attendance/',       views.my_attendance,      name='my_attendance'),
     path('transfer-class/',      views.transfer_class,     name='transfer_class'),
     path('reports/',             views.reports,            name='reports'),
@@ -23,6 +24,7 @@ urlpatterns = [
     path('leave-requests/cancel/<int:pk>/', views.cancel_leave_request, name='cancel_leave_request'),
 
     # AJAX endpoints
-    path('ajax/students/',       views.ajax_get_students,  name='ajax_students'),
-    path('ajax/timetable/',      views.ajax_get_timetable, name='ajax_timetable'),
+    path('ajax/students/',       views.ajax_get_students,     name='ajax_students'),
+    path('ajax/timetable/',      views.ajax_get_timetable,    name='ajax_timetable'),
+    path('ajax/free-faculty/',   views.ajax_get_free_faculty, name='ajax_free_faculty'),
 ]

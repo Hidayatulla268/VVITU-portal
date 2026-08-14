@@ -36,7 +36,7 @@
         {% for ach in achievements %}
         <tr>
           <td>
-            <span class="badge {% if ach.category == 'curricular' %}bg-blue{% else %}bg-green{% endif %} text-uppercase" style="font-size:0.7rem;">
+            <span class="badge {% if ach.category == 'curricular' %}bg-accent text-dark{% else %}bg-green{% endif %} text-uppercase" style="font-size:0.7rem;">
               {{ ach.get_category_display }}
             </span>
           </td>

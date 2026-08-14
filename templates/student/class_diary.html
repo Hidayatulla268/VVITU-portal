@@ -1,0 +1,144 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Class Diary & Discussion Notes{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-book-reader me-2 text-accent"></i>Class Diary & Daily Lesson Notes</h1>
+    <p class="ph-sub">Review topics discussed, lecture takeaways, and homework assigned in your class sessions</p>
+  </div>
+  <div class="ph-actions">
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-2 fs-6">
+      <i class="fas fa-school text-accent me-1"></i>{{ section }}
+    </span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Filter Card -->
+<div class="glass-card mb-4">
+  <form method="get" action="{% url 'student:class_diary' %}" class="row g-3 align-items-end">
+    <div class="col-lg-4 col-md-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-search me-1 text-accent"></i>Search Topics / Notes</label>
+      <div class="search-input-wrapper">
+        <input type="text" name="search" class="vvit-input" placeholder="Search topic, discussion, homework, faculty..." value="{{ search_query }}">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-book me-1 text-accent"></i>Filter by Subject</label>
+      <select name="subject_id" class="vvit-select">
+        <option value="">All Subjects</option>
+        {% for subj in section_subjects %}
+          <option value="{{ subj.id }}" {% if subject_id == subj.id %}selected{% endif %}>{{ subj.code }} - {{ subj.short_name|default:subj.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-2 col-md-3 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-calendar-day me-1 text-accent"></i>From Date</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date_from" class="vvit-input" value="{{ date_from }}">
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-lg-2 col-md-3 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-calendar-day me-1 text-accent"></i>To Date</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date_to" class="vvit-input" value="{{ date_to }}">
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-lg-1 col-md-12 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-fill" style="min-height: 42px;" title="Apply filter">
+        <i class="fas fa-filter"></i>
+      </button>
+      <a href="{% url 'student:class_diary' %}" class="btn-vvit-secondary flex-fill" style="min-height: 42px;" title="Reset filters">
+        <i class="fas fa-rotate-left"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Class Discussion Logs Feed -->
+<div class="glass-card">
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+    <h3 class="card-title-custom mb-0"><i class="fas fa-chalkboard-user me-2 text-accent"></i>Class Discussion Timeline</h3>
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ entries.count }} Note(s)</span>
+  </div>
+
+  {% if entries %}
+  <div class="d-flex flex-column gap-3">
+    {% for entry in entries %}
+    <div class="card bg-dark bg-opacity-40 border border-secondary border-opacity-25 rounded-3 p-3 shadow-sm hover-elevate">
+      <!-- Header with Period, Subject & Faculty -->
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
+            Period {{ entry.period }}
+          </span>
+          <span class="badge bg-primary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.82rem;">
+            {{ entry.subject.code }}
+          </span>
+          <span class="text-white fw-bold">{{ entry.subject.name }}</span>
+          <span class="badge bg-secondary bg-opacity-50 text-light px-2 py-1">
+            <i class="fas fa-user-tie text-accent me-1"></i>Prof. {{ entry.faculty.full_name }}
+          </span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-dark border border-secondary border-opacity-50 text-warning px-2 py-1">
+            <i class="far fa-calendar-alt me-1"></i>{{ entry.date|date:"D, d M Y" }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Topic Covered -->
+      <div class="p-2 mb-2 rounded-2 bg-dark bg-opacity-50 border-start border-3 border-accent">
+        <div class="small text-muted fw-bold mb-1"><i class="fas fa-lightbulb text-warning me-1"></i>TOPIC COVERED IN CLASS:</div>
+        <div class="text-light fw-semibold" style="font-size: 0.95rem;">{{ entry.topic_covered }}</div>
+      </div>
+
+      <!-- Discussion Summary / Key Points -->
+      {% if entry.discussion_summary %}
+      <div class="mb-2">
+        <div class="small text-muted fw-bold mb-1"><i class="fas fa-align-left text-info me-1"></i>KEY CONCEPTS & DISCUSSION SUMMARY:</div>
+        <div class="text-light small opacity-90 ps-2" style="white-space: pre-line;">{{ entry.discussion_summary }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Homework / Next Class Assignment -->
+      {% if entry.homework_assignment %}
+      <div class="p-2 mt-1 rounded-2 bg-warning bg-opacity-10 border border-warning border-opacity-25">
+        <div class="small text-warning fw-bold mb-1"><i class="fas fa-pencil-alt me-1"></i>HOMEWORK / ASSIGNMENT / NEXT CLASS PREP:</div>
+        <div class="text-light small ps-1" style="white-space: pre-line;">{{ entry.homework_assignment }}</div>
+      </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary border-opacity-25">
+        <small class="text-muted" style="font-size: 0.75rem;">
+          <i class="fas fa-clock me-1"></i>Recorded at {{ entry.created_at|date:"d M Y, h:i A" }}
+          {% if entry.updated_at != entry.created_at %} (Updated {{ entry.updated_at|date:"d M, h:i A" }}){% endif %}
+        </small>
+        <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25 px-2 py-1" style="font-size: 0.72rem;">
+          <i class="fas fa-check-double me-1"></i>Verified Lesson
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="fas fa-book-open-reader fa-3x text-muted mb-3 opacity-50"></i>
+    <h5 class="text-muted">No class discussion notes found</h5>
+    <p class="text-muted small">Your faculty will post discussion notes, covered topics, and assignments here after each class session.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

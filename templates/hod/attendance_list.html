@@ -21,8 +21,8 @@
 <!-- Search Filters -->
 <div class="glass-card mb-4">
   <form method="get" class="row g-3 align-items-end">
-    <div class="col-md-5">
-      <label class="form-label text-muted">Select Section (Class)</label>
+    <div class="col-md-5 col-12">
+      <label class="form-label"><i class="fas fa-school me-1 text-accent"></i>Select Section (Class)</label>
       <select name="section" class="vvit-select" required>
         <option value="">— Select Section —</option>
         {% for sec in sections %}
@@ -31,13 +31,16 @@
       </select>
     </div>
 
-    <div class="col-md-5">
-      <label class="form-label text-muted">Select Date</label>
-      <input type="date" name="date" value="{{ selected_date }}" class="vvit-input" required>
+    <div class="col-md-5 col-12">
+      <label class="form-label"><i class="fas fa-calendar-day me-1 text-accent"></i>Select Date</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date" value="{{ selected_date }}" class="vvit-input" required>
+        <i class="fas fa-calendar-days cal-icon" title="Select Date"></i>
+      </div>
     </div>
 
-    <div class="col-md-2">
-      <button type="submit" class="btn-vvit-primary w-100">
+    <div class="col-md-2 col-12">
+      <button type="submit" class="btn-vvit-primary w-100" style="min-height: 42px;">
         <i class="fas fa-search me-2"></i>Search
       </button>
     </div>
@@ -63,7 +66,7 @@
         <tr>
           <td><strong>{{ record.student.roll_number }}</strong></td>
           <td>{{ record.student.user.get_full_name }}</td>
-          <td><span class="badge bg-accent text-dark fw-bold px-2 py-1 me-1" style="font-size:0.8rem;">{{ record.timetable_entry.subject.short_name }}</span> {{ record.timetable_entry.subject.name }}</td>
+          <td><span class="badge-subject-code me-1">{{ record.timetable_entry.subject.code }}</span> {{ record.timetable_entry.subject.name }}</td>
           <td>{{ record.timetable_entry.faculty.user.get_full_name }}</td>
           <td class="text-center">
             {% if record.status == 'P' %}

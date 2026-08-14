@@ -75,8 +75,8 @@ def send_sms(phone_number, message):
                 try:
                     err_body = e.read().decode('utf-8')
                     err_msg += f" | Details: {err_body}"
-                except Exception:
-                    pass
+                except Exception as read_err:
+                    logger.debug(f"Could not decode error response body: {read_err}")
             logger.error(f"Live SMS Gateway error for {cleaned_number}: {err_msg}")
             print(f"[FAST2SMS GATEWAY RESPONSE] -> {err_msg}")
 
@@ -370,4 +370,113 @@ def send_low_attendance_alert(student, attendance_pct):
 # Backward-compatibility function aliases
 send_absent_sms_to_parent = send_absent_notifications
 send_result_sms_to_parent = send_result_notifications
+
+
+def send_class_transfer_notification(transfer):
+    """
+    Sends SMS, Email, and In-App Notification to substitute faculty when assigned a proxy class.
+    """
+    if not transfer or not transfer.substitute_faculty or not transfer.substitute_faculty.user:
+        return False
+
+    sub = transfer.substitute_faculty
+    orig = transfer.original_faculty
+    tt = transfer.timetable_entry
+    sub_user = sub.user
+    
+    date_str = transfer.date.strftime('%d-%b-%Y')
+    subj_str = f"{tt.subject.code} — {tt.subject.name}" if tt.subject else "Class Period"
+    period_str = f"Period {tt.period}" + (f" ({tt.start_time.strftime('%I:%M %p')})" if tt.start_time else "")
+    branch_str = f"{tt.section.branch.code} Year {tt.section.year.year} Sec {tt.section.name}" if (tt.section and tt.section.branch and tt.section.year) else ""
+
+    msg = (
+        f"Hello Prof. {sub.full_name}, you have been assigned as proxy substitute for Prof. {orig.full_name}'s "
+        f"{subj_str} class on {date_str} at {period_str} [{branch_str}]. Please take attendance for this class."
+    )
+
+    # 1. SMS Notification
+    if sub.phone:
+        send_sms(sub.phone, f"VVITU Proxy Assigned: {subj_str} on {date_str} at {period_str}. Check portal.")
+
+    # 2. Email Notification
+    if sub_user.email:
+        send_mail(
+            subject=f"[VVITU Proxy Class Assignment] {subj_str} on {date_str}",
+            message=msg,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+            recipient_list=[sub_user.email],
+            fail_silently=True
+        )
+
+    # 3. In-App Notification
+    try:
+        from core.models import Notification
+        Notification.objects.create(
+            title=f"Proxy Class Assigned: {tt.subject.code if tt.subject else 'Class'}",
+            message=msg,
+            notif_type=Notification.TYPE_ANNOUNCEMENT,
+            priority=Notification.PRIORITY_HIGH,
+            target_user=sub_user,
+            target_all=False,
+            target_role='faculty'
+        )
+    except Exception as e:
+        logger.error(f"Failed to create in-app proxy notification: {e}")
+
+    return True
+
+
+def send_class_transfer_reminder_15min(transfer):
+    """
+    Sends 15-minute advance SMS, Email, and In-App Reminder to substitute faculty before proxy class starts.
+    """
+    if not transfer or not transfer.substitute_faculty or not transfer.substitute_faculty.user:
+        return False
+
+    sub = transfer.substitute_faculty
+    orig = transfer.original_faculty
+    tt = transfer.timetable_entry
+    sub_user = sub.user
+    
+    subj_str = f"{tt.subject.code} — {tt.subject.name}" if tt.subject else "Class Period"
+    period_str = f"Period {tt.period}" + (f" ({tt.start_time.strftime('%I:%M %p')})" if tt.start_time else "")
+    branch_str = f"{tt.section.branch.code} Year {tt.section.year.year} Sec {tt.section.name}" if (tt.section and tt.section.branch and tt.section.year) else ""
+
+    msg = (
+        f"REMINDER (Starts in 15 mins): Prof. {sub.full_name}, your transferred proxy class "
+        f"for {subj_str} ({orig.full_name}'s class) starts at {period_str} [{branch_str}]. Please be ready to conduct class and mark attendance."
+    )
+
+    # 1. SMS Reminder
+    if sub.phone:
+        send_sms(sub.phone, f"VVITU REMINDER: Proxy class {subj_str} starts in 15 mins at {period_str}!")
+
+    # 2. Email Reminder
+    if sub_user.email:
+        send_mail(
+            subject=f"[15-MIN REMINDER] Proxy Class {subj_str} Starts Soon",
+            message=msg,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+            recipient_list=[sub_user.email],
+            fail_silently=True
+        )
+
+    # 3. In-App Reminder
+    try:
+        from core.models import Notification
+        Notification.objects.create(
+            title=f"⏰ 15-Min Reminder: Proxy Class {tt.subject.code if tt.subject else 'Class'}",
+            message=msg,
+            notif_type=Notification.TYPE_ANNOUNCEMENT,
+            priority=Notification.PRIORITY_URGENT,
+            target_user=sub_user,
+            target_all=False,
+            target_role='faculty'
+        )
+    except Exception as e:
+        logger.error(f"Failed to create 15-min reminder notification: {e}")
+
+    transfer.reminder_sent = True
+    transfer.save(update_fields=['reminder_sent'])
+    return True
 

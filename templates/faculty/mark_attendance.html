@@ -155,10 +155,41 @@
           </span>
         </div>
 
+        <!-- Optional Class Discussion & Lesson Log Section -->
+        <div class="px-3 pt-3">
+          <div class="card bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded-3 p-3 shadow-sm mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-book-reader text-accent fs-5"></i>
+                <span class="fw-bold text-white">Today's Class Topic & Discussion Details</span>
+                <span class="badge bg-secondary bg-opacity-50 text-light px-2 py-1" style="font-size: 0.75rem;">Optional</span>
+              </div>
+              <small class="text-muted"><i class="fas fa-eye text-info me-1"></i>Visible to class students</small>
+            </div>
+            <p class="text-muted small mb-3">
+              Optionally enter what was taught and discussed in today's class. Students of this section will be able to review these notes on their portal.
+            </p>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label text-light small fw-semibold">Topics Covered / Lesson Name</label>
+                <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Unit 3: Binary Search Trees, In-order Traversal Algorithm" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-light small fw-semibold">Discussion Key Concepts / Summary</label>
+                <textarea name="discussion_summary" class="vvit-input" rows="2" placeholder="Key formulas, examples discussed, code patterns, or lecture takeaways..."></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-light small fw-semibold">Homework / Next Class Task</label>
+                <textarea name="homework_assignment" class="vvit-input" rows="2" placeholder="Assigned problem set, textbook readings, or preparation for next class..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Final submit inside the form -->
-        <div class="p-3">
+        <div class="p-3 pt-0">
           <button type="submit" form="attendanceForm" class="btn-vvit-success w-100">
-            <i class="fas fa-save me-2"></i>Save Attendance
+            <i class="fas fa-save me-2"></i>Save Attendance & Class Discussion Notes
           </button>
         </div>
       </div>

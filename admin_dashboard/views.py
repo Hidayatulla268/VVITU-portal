@@ -12,23 +12,27 @@ Full administrative control:
 
 import datetime
 import json
+import logging
 from functools import wraps
 
+logger = logging.getLogger(__name__)
+
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
+from django.conf import settings
 from django.conf import settings as django_settings
 
 from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequest
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
     Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
-    FacultyAttendance, ClassTransfer, ensure_sections_for_all_branches
+    FacultyAttendance, ClassTransfer, Notification, ensure_sections_for_all_branches
 )
 from core.sms_utils import send_result_notifications, send_result_sms_to_parent
 
@@ -86,27 +90,50 @@ def dashboard(request):
 # ═══════════════════════════════════════════════
 @admin_required
 def manage_students(request):
+    from core.models import Branch, Year
+    branches = Branch.objects.all()
+    years    = Year.objects.all()
+
+    branch_id = request.GET.get('branch', '')
+    year_id   = request.GET.get('year', '')
+    search    = request.GET.get('q', '').strip()
+
     qs = (
         Student.objects
         .filter(user__is_deleted=False)
         .select_related('user', 'branch', 'year', 'section')
         .order_by('roll_number')
     )
-    search = request.GET.get('q', '')
+
+    if branch_id:
+        qs = qs.filter(branch_id=branch_id)
+    if year_id:
+        qs = qs.filter(year_id=year_id)
+
     if search:
         from django.db.models import Q
         qs = qs.filter(
             Q(roll_number__icontains=search) | 
             Q(user__first_name__icontains=search) | 
             Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
             Q(branch__code__icontains=search) |
             Q(branch__name__icontains=search) |
             Q(section__name__icontains=search) |
             Q(year__year__icontains=search)
         )
+
     paginator = Paginator(qs, 25)
     page      = paginator.get_page(request.GET.get('page', 1))
-    return render(request, 'admin_dashboard/manage_students.html', {'page': page, 'search': search})
+
+    return render(request, 'admin_dashboard/manage_students.html', {
+        'page': page,
+        'search': search,
+        'branches': branches,
+        'years': years,
+        'branch_id': branch_id,
+        'year_id': year_id,
+    })
 
 
 @admin_required
@@ -671,6 +698,17 @@ def release_results(request):
             release_obj.released_at = timezone.now()
             release_obj.released_by = request.user
             release_obj.save()
+
+            # Create in-app Notification for students
+            Notification.objects.create(
+                title=f"Result Released: {exam.name}",
+                message=f"Results for '{exam.name}' have been officially published by Admin. Log in to your student portal to view your grades and CGPA.",
+                notif_type=Notification.TYPE_RESULT,
+                priority=Notification.PRIORITY_URGENT,
+                target_role='student',
+                target_branch=exam.branch if hasattr(exam, 'branch') else None,
+                created_by=request.user
+            )
 
             # Send parent SMS notifications
             sms_sent_count = 0
@@ -1552,8 +1590,8 @@ def delete_backup(request, pk):
         if os.path.exists(filepath):
             try:
                 os.remove(filepath)
-            except Exception:
-                pass
+            except OSError as err:
+                logger.warning(f"Could not remove backup file {filepath}: {err}")
 
         # Delete DB log
         backup.delete()
@@ -1997,28 +2035,544 @@ def action_leave_request(request, pk, action):
         Notification.objects.create(
             title=f"Leave Request {status_text}",
             message=notif_msg,
-            notif_type=Notification.TYPE_ALERT,
+            notif_type=Notification.TYPE_ANNOUNCEMENT,
             priority=Notification.PRIORITY_HIGH,
             target_user=leave_req.faculty.user,
+            target_role='faculty',
+            target_all=False,
             created_by=request.user
         )
         
-        from core.sms_utils import send_sms
+        # 1. Email Notification
         if leave_req.faculty.user.email:
+            email_subject = f"[Leave Request {status_text}] VVITU Faculty Leave Status Update"
+            email_body = f"""Dear {leave_req.faculty.full_name},
+
+Your leave application request has been reviewed by College Administration.
+
+Details:
+- Leave Type: {leave_req.get_leave_type_display()}
+- Duration: {leave_req.start_date.strftime('%d-%b-%Y')} to {leave_req.end_date.strftime('%d-%b-%Y')} ({leave_req.total_days} days)
+- Status: {status_text.upper()}
+- Action By: Admin ({request.user.get_full_name() or request.user.username})
+- Remarks: {remarks if remarks else 'N/A'}
+
+Please log in to the VVITU Portal to view your leave history.
+
+Regards,
+VVIT University Administration
+"""
             send_mail(
-                subject=f"[Leave Request {status_text}] VVITU Leave Application",
-                message=notif_msg,
-                from_email=getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+                subject=email_subject,
+                message=email_body,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
                 recipient_list=[leave_req.faculty.user.email],
                 fail_silently=True
             )
-        if leave_req.faculty.phone:
-            send_sms(leave_req.faculty.phone, f"VVITU: Leave Request {status_text} by Admin. Log in for details.")
-    except Exception:
-        pass
+            
+        # 2. SMS Notification
+        from core.sms_utils import send_sms
+        phone_num = leave_req.faculty.phone or getattr(leave_req.faculty.user, 'phone', '')
+        if phone_num:
+            sms_text = f"VVITU ALERT: Your {leave_req.get_leave_type_display()} leave request ({leave_req.start_date.strftime('%d/%m')} to {leave_req.end_date.strftime('%d/%m')}) has been {status_text} by Admin. Log in for details."
+            send_sms(phone_num, sms_text)
+
+    except Exception as dispatch_err:
+        logger.warning(f"Failed to send leave action notification/SMS/email: {dispatch_err}")
         
     messages.success(request, f"Leave request for {leave_req.faculty.full_name} {new_status} successfully.")
     return redirect('admin_dashboard:manage_leave_requests')
+
+
+# ═══════════════════════════════════════════════
+# ACHIEVEMENTS MANAGEMENT & COLLEGE ACHIEVEMENTS
+# ═══════════════════════════════════════════════
+@admin_required
+def manage_achievements(request):
+    """
+    Allows Admin to view all achievements (Student, Faculty, College),
+    verify student/faculty pending achievements, and add official College Achievements.
+    """
+    from accounts.models import Achievement
+    from django.db.models import Q
+    
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        category = request.POST.get('category', 'college')
+        date_achieved = request.POST.get('date_achieved')
+        
+        if not title or not description or not date_achieved:
+            messages.error(request, "Please fill in all required achievement fields.")
+            return redirect('admin_dashboard:manage_achievements')
+            
+        Achievement.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            category=category,
+            date_achieved=date_achieved,
+            is_verified=True,
+            verified_by=request.user
+        )
+        
+        messages.success(request, f"Official Achievement '{title}' created successfully.")
+        return redirect('admin_dashboard:manage_achievements')
+        
+    category_filter = request.GET.get('category', '')
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('q', '').strip()
+    
+    achievements = Achievement.objects.select_related('user', 'verified_by').order_by('-date_achieved', '-created_at')
+    
+    if category_filter:
+        achievements = achievements.filter(category=category_filter)
+    if status_filter == 'pending':
+        achievements = achievements.filter(is_verified=False)
+    elif status_filter == 'verified':
+        achievements = achievements.filter(is_verified=True)
+    if search:
+        achievements = achievements.filter(
+            Q(title__icontains=search) | Q(description__icontains=search) | Q(user__username__icontains=search) | Q(user__first_name__icontains=search) | Q(user__last_name__icontains=search)
+        )
+        
+    pending_count = Achievement.objects.filter(is_verified=False).count()
+    college_count = Achievement.objects.filter(category='college').count()
+    
+    return render(request, 'admin_dashboard/manage_achievements.html', {
+        'achievements': achievements,
+        'category_filter': category_filter,
+        'status_filter': status_filter,
+        'search': search,
+        'pending_count': pending_count,
+        'college_count': college_count,
+        'category_choices': Achievement.CATEGORY_CHOICES,
+    })
+
+
+@admin_required
+def action_achievement(request, pk, action):
+    """Approve or unverify an achievement."""
+    from accounts.models import Achievement
+    achievement = get_object_or_404(Achievement, pk=pk)
+    
+    if action == 'approve':
+        achievement.is_verified = True
+        achievement.verified_by = request.user
+        achievement.save()
+        messages.success(request, f"Achievement '{achievement.title}' verified successfully.")
+    elif action == 'reject':
+        achievement.is_verified = False
+        achievement.verified_by = None
+        achievement.save()
+        messages.info(request, f"Achievement '{achievement.title}' set to unverified.")
+        
+    return redirect('admin_dashboard:manage_achievements')
+
+
+@admin_required
+def delete_achievement(request, pk):
+    """Delete an achievement record."""
+    from accounts.models import Achievement
+    achievement = get_object_or_404(Achievement, pk=pk)
+    if request.method == 'POST':
+        title = achievement.title
+        achievement.delete()
+        messages.success(request, f"Achievement '{title}' deleted.")
+    return redirect('admin_dashboard:manage_achievements')
+
+
+# ═══════════════════════════════════════════════
+# STUDENT FEE MANAGEMENT SYSTEM
+# ═══════════════════════════════════════════════
+@admin_required
+def manage_fees(request):
+    """
+    Allows Admin to view, update, and manage student fee structures and payments.
+    Supports College, Hostel, Bus, NBA, Exam, Book Bank, and Misc fee components.
+    """
+    from accounts.models import Student, StudentFee
+    from core.models import Year, Branch
+    from django.db.models import Sum, Q
+
+    years = Year.objects.all()
+    branches = Branch.objects.all()
+    
+    year_id = request.GET.get('year', '')
+    branch_id = request.GET.get('branch', '')
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('q', '').strip()
+
+    students = Student.objects.filter(is_active=True, user__is_deleted=False).select_related('user', 'branch', 'section', 'year').order_by('roll_number')
+
+    if branch_id:
+        students = students.filter(branch_id=branch_id)
+    if year_id:
+        students = students.filter(year_id=year_id)
+    if search:
+        students = students.filter(
+            Q(roll_number__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(branch__code__icontains=search) |
+            Q(branch__name__icontains=search)
+        )
+
+    sel_year = Year.objects.filter(id=year_id).first() if year_id else Year.objects.first()
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_single':
+            stu_id = request.POST.get('student_id')
+            stu = get_object_or_404(Student, id=stu_id)
+
+            def parse_val(v, max_limit=10000000.0):
+                if not v: return 0.0
+                try:
+                    val = float(str(v).strip())
+                    if val < 0: return 0.0
+                    if val > max_limit: return max_limit
+                    return round(val, 2)
+                except (ValueError, TypeError, OverflowError): return 0.0
+
+            col = parse_val(request.POST.get('college_fee'))
+            hos = parse_val(request.POST.get('hostel_fee'))
+            bus = parse_val(request.POST.get('bus_fee'))
+            nba = parse_val(request.POST.get('nba_fee'))
+            exm = parse_val(request.POST.get('exam_fee'))
+            bbk = parse_val(request.POST.get('book_bank_fee'))
+            oth = parse_val(request.POST.get('other_fee'))
+            paid = parse_val(request.POST.get('amount_paid'))
+            remarks = request.POST.get('remarks', '').strip()
+            due_date_str = request.POST.get('due_date', '').strip()
+            due_date = due_date_str if due_date_str else None
+
+            fee_year = stu.year or sel_year or Year.objects.first()
+            fee_rec, created = StudentFee.objects.get_or_create(
+                student=stu,
+                academic_year=fee_year
+            )
+            try:
+                fee_rec.college_fee = col
+                fee_rec.hostel_fee = hos
+                fee_rec.bus_fee = bus
+                fee_rec.nba_fee = nba
+                fee_rec.exam_fee = exm
+                fee_rec.book_bank_fee = bbk
+                fee_rec.other_fee = oth
+                fee_rec.amount_paid = paid
+                fee_rec.remarks = remarks
+                fee_rec.due_date = due_date
+                fee_rec.updated_by = request.user
+                fee_rec.save()
+                messages.success(request, f"Fee record updated successfully for {stu.roll_number}.")
+            except Exception as err:
+                logger.error(f"Error saving fee record for student {stu.roll_number}: {err}")
+                messages.error(request, f"Could not update fees for {stu.roll_number}: Invalid or excessive fee amount entered.")
+
+            return redirect(f"{request.path}?year={year_id}&branch={branch_id}&q={search}&status={status_filter}")
+
+        elif action == 'bulk_assign':
+            def parse_val(v):
+                if not v: return 0.0
+                try: return float(str(v).strip())
+                except (ValueError, TypeError): return 0.0
+
+            col = parse_val(request.POST.get('college_fee'))
+            nba = parse_val(request.POST.get('nba_fee'))
+            exm = parse_val(request.POST.get('exam_fee'))
+            bbk = parse_val(request.POST.get('book_bank_fee'))
+            oth = parse_val(request.POST.get('other_fee'))
+
+            count = 0
+            for stu in students:
+                fee_year = stu.year or sel_year or Year.objects.first()
+                fee_rec, created = StudentFee.objects.get_or_create(
+                    student=stu,
+                    academic_year=fee_year
+                )
+                fee_rec.college_fee = col
+                fee_rec.nba_fee = nba
+                fee_rec.exam_fee = exm
+                fee_rec.book_bank_fee = bbk
+                fee_rec.other_fee = oth
+                fee_rec.updated_by = request.user
+                fee_rec.save()
+                count += 1
+
+            messages.success(request, f"Standard fee structure applied to {count} students.")
+            return redirect(f"{request.path}?year={year_id}&branch={branch_id}")
+
+    # Ensure every active student has a StudentFee record for their academic year
+    for stu in students:
+        fee_year = stu.year or sel_year or Year.objects.first()
+        if fee_year:
+            StudentFee.objects.get_or_create(student=stu, academic_year=fee_year)
+
+    fee_records = StudentFee.objects.filter(student__in=students)
+    if year_id:
+        fee_records = fee_records.filter(academic_year_id=year_id)
+    if status_filter:
+        fee_records = fee_records.filter(status=status_filter)
+
+    fee_dict = {f.student_id: f for f in fee_records}
+    
+    total_expected = sum(float(f.total_fee_amount) for f in fee_records)
+    total_collected = sum(float(f.amount_paid) for f in fee_records)
+    total_outstanding = sum(float(f.due_amount) for f in fee_records)
+
+    return render(request, 'admin_dashboard/manage_fees.html', {
+        'students': students,
+        'fee_dict': fee_dict,
+        'years': years,
+        'branches': branches,
+        'sel_year': sel_year,
+        'year_id': year_id,
+        'branch_id': branch_id,
+        'search': search,
+        'status_filter': status_filter,
+        'total_expected': total_expected,
+        'total_collected': total_collected,
+        'total_outstanding': total_outstanding,
+        'role': 'admin',
+    })
+
+
+@login_required
+def faculty_class_history(request):
+    """
+    Admin View — College-wide audit log of all classes conducted by faculty across ALL branches,
+    with authority to assign substitute proxy classes to free faculty in any branch.
+    Admin can filter by Branch, search by Faculty Name, Subject Code, Employee ID, and Date Range.
+    """
+    if request.user.role != 'admin':
+        messages.error(request, "Access restricted to College Administration.")
+        return redirect('accounts:dashboard')
+
+    import datetime
+    from core.transfer_utils import get_conducted_class_history, get_free_faculty_for_period, parse_flexible_date
+    from core.sms_utils import send_class_transfer_notification
+    from core.models import Timetable, ClassTransfer
+
+    today = timezone.localdate()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'assign_proxy':
+            timetable_id = request.POST.get('timetable_id')
+            substitute_id = request.POST.get('substitute_id')
+            reason = request.POST.get('reason', 'Admin Proxy Assignment').strip()
+            date_val_str = request.POST.get('date', '').strip()
+
+            t_date = parse_flexible_date(date_val_str) or today
+
+            slot = get_object_or_404(Timetable, id=timetable_id)
+            substitute = get_object_or_404(Faculty, id=substitute_id, is_active=True)
+
+            # Verify substitute is FREE (Admin can choose substitute college-wide or branch-scoped)
+            free_fac = get_free_faculty_for_period(
+                date=t_date,
+                period=slot.period,
+                department=None,
+                exclude_faculty=slot.faculty
+            )
+
+            if substitute not in free_fac:
+                messages.error(
+                    request,
+                    f"Prof. {substitute.full_name} ({substitute.department.code if substitute.department else 'General'}) is NOT free during Period {slot.period} on {t_date.strftime('%d-%b-%Y')}."
+                )
+            else:
+                transfer_obj, _ = ClassTransfer.objects.update_or_create(
+                    timetable_entry=slot,
+                    date=t_date,
+                    defaults={
+                        'original_faculty': slot.faculty,
+                        'substitute_faculty': substitute,
+                        'reason': reason or 'Admin Proxy Assignment',
+                        'status': 'accepted',
+                    }
+                )
+                send_class_transfer_notification(transfer_obj)
+                branch_label = f"{slot.section.branch.code} " if (slot.section and slot.section.branch) else ""
+                messages.success(
+                    request,
+                    f"Assigned Period {slot.period} ({slot.subject.code} — {branch_label}{slot.section.name if slot.section else ''}) to Prof. {substitute.full_name} ({substitute.department.code if substitute.department else 'Faculty'}). SMS & Email notification dispatched."
+                )
+            return redirect('admin_dashboard:faculty_class_history')
+
+    # Search & Filter Parameters
+    search_query = request.GET.get('search', '').strip()
+    branch_id = request.GET.get('branch_id', '').strip()
+    selected_fac_id = request.GET.get('faculty_id', '').strip()
+    date_from_str = request.GET.get('date_from', '').strip()
+    date_to_str = request.GET.get('date_to', '').strip()
+
+    selected_branch = None
+    if branch_id and branch_id.isdigit():
+        selected_branch = Branch.objects.filter(id=int(branch_id)).first()
+
+    date_from = parse_flexible_date(date_from_str)
+    date_to = parse_flexible_date(date_to_str)
+
+    # Conducted Class History (College-Wide / All Branches)
+    conducted_history = get_conducted_class_history(
+        branch=selected_branch,
+        faculty=selected_fac_id if selected_fac_id else None,
+        search_query=search_query,
+        date_from=date_from,
+        date_to=date_to
+    )
+
+    branches = Branch.objects.all().order_by('code')
+    
+    # Filter faculty list based on selected branch or all faculty
+    faculty_qs = Faculty.objects.filter(is_active=True).select_related('user', 'department')
+    if selected_branch:
+        faculty_qs = faculty_qs.filter(department=selected_branch)
+    all_faculty = faculty_qs.order_by('department__code', 'user__first_name')
+
+    day_name = today.strftime('%A')
+    day_slots = Timetable.objects.filter(day__iexact=day_name).select_related(
+        'faculty__user', 'subject', 'section__branch', 'section__year'
+    ).order_by('section__branch__code', 'period', 'section__name')
+
+    context = {
+        'conducted_history': conducted_history,
+        'branches': branches,
+        'all_faculty': all_faculty,
+        'day_slots': day_slots,
+        'selected_branch': selected_branch,
+        'branch_id': int(branch_id) if (branch_id and branch_id.isdigit()) else '',
+        'search_query': search_query,
+        'selected_fac_id': selected_fac_id,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'today': today,
+    }
+    return render(request, 'admin_dashboard/faculty_class_history.html', context)
+
+
+@login_required
+def ajax_get_all_timetable_slots(request):
+    """
+    Return JSON list of scheduled class slots college-wide or filtered by branch on a specific date/day.
+    Each slot contains: id, period, timing, subject_code, subject_name, faculty_name, section_name, branch_code.
+    """
+    if request.user.role != 'admin':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    from core.transfer_utils import parse_flexible_date
+    date_str = request.GET.get('date')
+    branch_id_str = request.GET.get('branch_id')
+
+    req_date = parse_flexible_date(date_str) if date_str else timezone.localdate()
+    if not req_date:
+        req_date = timezone.localdate()
+
+    day_name = req_date.strftime('%A')
+
+    slots_qs = Timetable.objects.filter(
+        day__iexact=day_name
+    ).select_related('subject', 'faculty__user', 'section', 'section__year', 'section__branch')
+
+
+    if branch_id_str and branch_id_str.isdigit():
+        slots_qs = slots_qs.filter(section__branch_id=int(branch_id_str))
+
+    slots = slots_qs.order_by('section__branch__code', 'period', 'section__name')
+
+    period_timings = {
+        1: "09:00 AM - 09:50 AM",
+        2: "09:50 AM - 10:40 AM",
+        3: "10:50 AM - 11:40 AM",
+        4: "11:40 AM - 12:30 PM",
+        5: "01:20 PM - 02:10 PM",
+        6: "02:10 PM - 03:00 PM",
+        7: "03:10 PM - 04:00 PM",
+        8: "04:00 PM - 04:50 PM",
+    }
+
+    data = []
+    for s in slots:
+        start_t = s.start_time.strftime("%I:%M %p") if getattr(s, 'start_time', None) else None
+        end_t   = s.end_time.strftime("%I:%M %p") if getattr(s, 'end_time', None) else None
+        timing_str = f"{start_t} - {end_t}" if (start_t and end_t) else period_timings.get(s.period, f"Period {s.period}")
+
+        branch_code = s.section.branch.code if (s.section and s.section.branch) else 'GEN'
+        sec_name = f"Y{s.section.year.year} Sec {s.section.name}" if (s.section and s.section.year) else (s.section.name if s.section else '')
+
+        data.append({
+            'id': s.id,
+            'period': s.period,
+            'timing': timing_str,
+            'branch_id': s.section.branch_id if (s.section and s.section.branch_id) else None,
+            'branch_code': branch_code,
+            'subject_code': s.subject.code if s.subject else 'N/A',
+            'subject_name': s.subject.name if s.subject else 'N/A',
+            'original_faculty_id': s.faculty.id if s.faculty else None,
+            'original_faculty_name': f"Prof. {s.faculty.full_name}" if s.faculty else "Unassigned",
+            'section_name': f"{branch_code} {sec_name}",
+        })
+
+    return JsonResponse({'slots': data, 'day_name': day_name, 'date_str': req_date.strftime('%d-%b-%Y')})
+
+
+@login_required
+def ajax_get_free_faculty(request):
+    """
+    Return JSON list of free faculty for a specific (date, period) across all departments or filtered by branch.
+    """
+    if request.user.role != 'admin':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    from core.transfer_utils import get_free_faculty_for_period, parse_flexible_date
+    date_str = request.GET.get('date')
+    period_str = request.GET.get('period')
+    branch_id_str = request.GET.get('branch_id') or request.GET.get('department')
+    exclude_fac_id = request.GET.get('exclude_faculty_id')
+
+    if not date_str or not period_str:
+        return JsonResponse({'error': 'date and period parameters required'}, status=400)
+
+    req_date = parse_flexible_date(date_str)
+    if not req_date:
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
+
+    try:
+        period = int(period_str)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid period format'}, status=400)
+
+    dept = None
+    if branch_id_str and branch_id_str.isdigit():
+        dept = Branch.objects.filter(id=int(branch_id_str)).first()
+
+    exclude_fac = None
+    if exclude_fac_id and exclude_fac_id.isdigit():
+        exclude_fac = Faculty.objects.filter(id=int(exclude_fac_id)).first()
+
+    free_fac_qs = get_free_faculty_for_period(
+        date=req_date,
+        period=period,
+        department=dept,
+        exclude_faculty=exclude_fac
+    )
+
+    data = [
+        {
+            'id': f.id,
+            'name': f.full_name,
+            'employee_id': f.employee_id,
+            'department': f.department.code if f.department else 'Gen',
+        }
+        for f in free_fac_qs
+    ]
+    return JsonResponse({'free_faculty': data})
+
+
 
 
 

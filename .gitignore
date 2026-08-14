@@ -44,3 +44,9 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Temporary / Scratch scripts & Local backups
+scratch/
+backups/
+secenv/
+

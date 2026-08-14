@@ -44,6 +44,10 @@ urlpatterns = [
     path('attendance/',              views.attendance_list,      name='attendance_list'),
     path('attendance/<int:pk>/edit/',views.edit_attendance,      name='edit_attendance'),
     path('attendance/report/',       views.admin_attendance_report, name='admin_attendance_report'),
+    path('faculty-class-history/',   views.faculty_class_history, name='faculty_class_history'),
+    path('class-transfers/',         views.faculty_class_history, name='manage_class_transfers'),
+    path('ajax/branch-timetable/',   views.ajax_get_all_timetable_slots, name='ajax_branch_timetable'),
+    path('ajax/free-faculty/',       views.ajax_get_free_faculty, name='ajax_free_faculty'),
 
     # Subjects
     path('subjects/',                views.manage_subjects,      name='manage_subjects'),
@@ -62,5 +66,13 @@ urlpatterns = [
     # Leave Management
     path('leave-requests/',               views.manage_leave_requests, name='manage_leave_requests'),
     path('leave-requests/<int:pk>/<str:action>/', views.action_leave_request, name='action_leave_request'),
+
+    # College & System Achievements
+    path('achievements/',                 views.manage_achievements,   name='manage_achievements'),
+    path('achievements/verify/<int:pk>/<str:action>/', views.action_achievement, name='action_achievement'),
+    path('achievements/delete/<int:pk>/', views.delete_achievement,   name='delete_achievement'),
+
+    # Student Fee Management
+    path('fees/',                         views.manage_fees,           name='manage_fees'),
 ]
 

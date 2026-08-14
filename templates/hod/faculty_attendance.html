@@ -6,12 +6,17 @@
 
 {% block page_header %}
 <div class="page-header-strip">
-  <div class="ph-left">
-    <h1 class="ph-title"><i class="fas fa-user-clock me-2 text-accent"></i>Faculty Attendance Management</h1>
-    <p class="ph-sub">Department of {{ department.name }} ({{ department.code }}) · Mark & View Staff Attendance</p>
+  <div class="ph-left d-flex align-items-center gap-3">
+    <div class="dept-logo-badge" style="width: 52px; height: 52px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #7f1d1d); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(220, 38, 38, 0.45); border: 1.5px solid var(--accent-bright); flex-shrink: 0;">
+      <i class="fas fa-building-columns text-white fa-lg"></i>
+    </div>
+    <div>
+      <h1 class="ph-title mb-0"><i class="fas fa-user-clock me-2 text-accent"></i>Faculty Attendance Management</h1>
+      <p class="ph-sub mb-0">Department of {{ department.name }} ({{ department.code }}) · Mark & View Staff Attendance</p>
+    </div>
   </div>
   <div class="ph-right">
-    <span class="badge-section">{{ department.code }} HOD</span>
+    <span class="badge-section"><i class="fas fa-shield-alt me-1 text-accent"></i>{{ department.code }} HOD</span>
   </div>
 </div>
 {% endblock %}
@@ -20,8 +25,8 @@
 <!-- KPI Stats Cards -->
 <div class="row g-4 mb-4">
   <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card kpi-info">
-      <div class="kpi-icon"><i class="fas fa-users-tie"></i></div>
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-chalkboard-teacher text-accent"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ department_faculty.count }}</span>
         <span class="kpi-label">Department Faculty</span>
@@ -58,14 +63,14 @@
 </div>
 
 <!-- Tabs: Mark Attendance & View Attendance Logs -->
-<ul class="nav nav-tabs custom-tabs mb-4" id="attTab" role="tablist">
+<ul class="nav nav-pills mb-4 border-0" id="attTab" role="tablist" style="gap: 10px;">
   <li class="nav-item" role="presentation">
-    <button class="nav-link active fw-bold" id="mark-tab" data-bs-toggle="tab" data-bs-target="#mark-pane" type="button" role="tab">
+    <button class="nav-link btn-vvit-tab active" id="mark-tab" data-bs-toggle="tab" data-bs-target="#mark-pane" type="button" role="tab">
       <i class="fas fa-edit me-2"></i>Mark Daily Attendance
     </button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link fw-bold" id="view-tab" data-bs-toggle="tab" data-bs-target="#view-pane" type="button" role="tab">
+    <button class="nav-link btn-vvit-tab" id="view-tab" data-bs-toggle="tab" data-bs-target="#view-pane" type="button" role="tab">
       <i class="fas fa-list-alt me-2"></i>View Attendance History & Logs
     </button>
   </li>
@@ -77,10 +82,10 @@
     <div class="glass-card mb-4">
       <form method="GET" class="row g-3 align-items-center mb-3">
         <div class="col-auto">
-          <label class="form-label fw-bold mb-0 me-2"><i class="fas fa-calendar-day text-accent me-1"></i>Select Date to Mark:</label>
+          <label class="form-label fw-bold text-white mb-0 me-2"><i class="fas fa-calendar-day text-accent me-1"></i>Select Date to Mark:</label>
         </div>
         <div class="col-auto">
-          <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date }}" onchange="this.form.submit()">
+          <input type="date" name="date" class="vvit-input" value="{{ selected_date }}" onchange="this.form.submit()">
         </div>
       </form>
 
@@ -93,7 +98,7 @@
             <thead>
               <tr>
                 <th>Emp ID</th>
-                <th>Faculty Name</th>
+                <th>Faculty Member</th>
                 <th>Designation</th>
                 <th>Status (Present / Absent / Leave)</th>
                 <th>Remarks</th>
@@ -103,23 +108,43 @@
               {% for fac in department_faculty %}
               {% with rec=today_records|get_item:fac.id %}
               <tr>
-                <td><strong>{{ fac.employee_id }}</strong></td>
-                <td>{{ fac.user.get_full_name }}</td>
+                <td>
+                  <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-accent text-decoration-none fw-bold hover-bright" title="View Faculty Profile">
+                    <i class="fas fa-id-badge me-1" style="font-size:0.75rem;"></i>{{ fac.employee_id }}
+                  </a>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="faculty-avatar-circle" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #991b1b); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid rgba(220, 38, 38, 0.4); flex-shrink: 0;">
+                      {% if fac.user.profile_picture %}
+                        <img src="{{ fac.user.profile_picture.url }}" alt="{{ fac.user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                      {% else %}
+                        <i class="fas fa-user-tie text-white" style="font-size: 0.9rem;"></i>
+                      {% endif %}
+                    </div>
+                    <div>
+                      <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-white text-decoration-none fw-bold hover-accent d-block" title="View Profile">
+                        {{ fac.user.get_full_name }}
+                      </a>
+                      <small class="text-muted d-block" style="font-size:0.72rem;">{{ fac.user.email }}</small>
+                    </div>
+                  </div>
+                </td>
                 <td><span class="badge-section small">{{ fac.designation|default:"Faculty" }}</span></td>
                 <td>
-                  <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="p_{{ fac.id }}" value="P" {% if not rec or rec.status == 'P' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-outline-success" for="p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
+                  <div class="btn-group att-status-group" role="group">
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="p_{{ fac.id }}" value="P" autocomplete="off" {% if not rec or rec.status == 'P' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-att-pill btn-att-present" for="p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="a_{{ fac.id }}" value="A" {% if rec and rec.status == 'A' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-outline-danger" for="a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="a_{{ fac.id }}" value="A" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-att-pill btn-att-absent" for="a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="l_{{ fac.id }}" value="L" {% if rec and rec.status == 'L' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-outline-info" for="l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="l_{{ fac.id }}" value="L" autocomplete="off" {% if rec and rec.status == 'L' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-att-pill btn-att-leave" for="l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
                   </div>
                 </td>
                 <td>
-                  <input type="text" name="remarks_{{ fac.id }}" class="form-control form-control-sm" value="{{ rec.remarks|default:'' }}" placeholder="Optional remarks...">
+                  <input type="text" name="remarks_{{ fac.id }}" class="vvit-input py-1 fs-6" value="{{ rec.remarks|default:'' }}" placeholder="Optional remarks...">
                 </td>
               </tr>
               {% endwith %}
@@ -128,8 +153,8 @@
           </table>
         </div>
 
-        <div class="mt-3 text-end">
-          <button type="submit" class="btn-sm-accent py-2 px-4 border-0">
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn-vvit-primary px-4 py-2">
             <i class="fas fa-save me-2"></i>Save Faculty Attendance
           </button>
         </div>
@@ -146,7 +171,6 @@
           <label class="form-label fw-bold small text-muted">Month-wise Filter</label>
           <div class="date-input-wrapper">
             <input type="month" name="month_year" class="vvit-input" value="{{ month_year }}">
-            <i class="fas fa-calendar-alt cal-icon" title="Select Month"></i>
           </div>
         </div>
         <div class="col-md-3">
@@ -164,10 +188,10 @@
           </div>
         </div>
         <div class="col-md-3 d-flex gap-2">
-          <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
+          <button type="submit" class="btn-vvit-primary w-100 py-2">
             <i class="fas fa-search me-1"></i>Filter Logs
           </button>
-          <a href="{% url 'hod:faculty_attendance' %}" class="btn btn-sm btn-outline-secondary py-2">
+          <a href="{% url 'hod:faculty_attendance' %}" class="btn-vvit-secondary py-2 px-3">
             <i class="fas fa-redo"></i>
           </a>
         </div>
@@ -186,7 +210,7 @@
               <th>#</th>
               <th>Date</th>
               <th>Emp ID</th>
-              <th>Faculty Name</th>
+              <th>Faculty Member</th>
               <th>Status</th>
               <th>Remarks</th>
               <th>Marked By</th>
@@ -196,19 +220,36 @@
             {% for r in records %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td><strong>{{ r.date|date:"d M Y (D)" }}</strong></td>
-              <td>{{ r.faculty.employee_id }}</td>
-              <td>{{ r.faculty.user.get_full_name }}</td>
+              <td><strong class="text-white">{{ r.date|date:"d M Y (D)" }}</strong></td>
+              <td>
+                <a href="{% url 'accounts:faculty_detail' r.faculty.id %}" class="text-accent fw-bold text-decoration-none hover-bright" title="View Profile">
+                  <i class="fas fa-id-badge me-1" style="font-size:0.75rem;"></i>{{ r.faculty.employee_id }}
+                </a>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="faculty-avatar-circle" style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #991b1b); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1.5px solid rgba(220, 38, 38, 0.4); flex-shrink: 0;">
+                    {% if r.faculty.user.profile_picture %}
+                      <img src="{{ r.faculty.user.profile_picture.url }}" alt="{{ r.faculty.user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                      <i class="fas fa-user-tie text-white" style="font-size: 0.8rem;"></i>
+                    {% endif %}
+                  </div>
+                  <a href="{% url 'accounts:faculty_detail' r.faculty.id %}" class="text-white text-decoration-none fw-bold hover-accent" title="View Profile">
+                    {{ r.faculty.user.get_full_name }}
+                  </a>
+                </div>
+              </td>
               <td>
                 {% if r.status == 'P' %}
-                <span class="badge bg-success">Present</span>
+                <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Present</span>
                 {% elif r.status == 'A' %}
-                <span class="badge bg-danger">Absent</span>
+                <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Absent</span>
                 {% else %}
-                <span class="badge bg-info">On Leave</span>
+                <span class="status-pill status-pending"><i class="fas fa-plane-departure me-1"></i>On Leave</span>
                 {% endif %}
               </td>
-              <td>{{ r.remarks|default:"--" }}</td>
+              <td class="text-white-50">{{ r.remarks|default:"--" }}</td>
               <td>{{ r.marked_by.get_full_name|default:"HOD/System" }}</td>
             </tr>
             {% endfor %}

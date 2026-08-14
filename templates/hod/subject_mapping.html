@@ -18,9 +18,42 @@
 {% endblock %}
 
 {% block content %}
+<!-- Search & Filters -->
+<div class="glass-card mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-xl-6 col-lg-6 col-md-6 col-12">
+      <label class="form-label">Search Subjects & Faculty</label>
+      <div class="search-input-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+        <i class="fas fa-search search-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 10; font-size: 0.88rem;"></i>
+        <input type="text" id="subjectSearchInput" class="vvit-input" style="padding-left: 40px !important;" placeholder="Type to filter by code, name, or faculty instructor..."/>
+      </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-3 col-sm-6 col-12">
+      <label class="form-label"><i class="fas fa-filter me-1 text-accent"></i>Assignment Status</label>
+      <select id="statusFilter" class="vvit-select">
+        <option value="all">-- All Subjects --</option>
+        <option value="assigned">Assigned Only</option>
+        <option value="unassigned">Unassigned Only</option>
+      </select>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-3 col-sm-6 col-12 d-flex gap-2">
+      <button type="button" id="resetFiltersBtn" class="btn-vvit-secondary w-100" style="min-height: 42px;">
+        <i class="fas fa-undo me-1"></i>Reset Filter
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="glass-card">
+  <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-list-check me-2 text-accent"></i>Department Subjects Directory
+    </h3>
+    <span class="badge-section" id="subjectCountBadge">{{ subjects|length }} Subject(s)</span>
+  </div>
+
   <div class="table-responsive">
-    <table class="vvit-table">
+    <table class="vvit-table" id="subjectsTable">
       <thead>
         <tr>
           <th>Subject Code</th>
@@ -32,9 +65,9 @@
       </thead>
       <tbody>
         {% for subj in subjects %}
-        <tr>
-          <td><span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size:0.85rem;">{{ subj.short_name }}</span></td>
-          <td>{{ subj.name }}</td>
+        <tr class="subject-row" data-code="{{ subj.code|lower }}" data-name="{{ subj.name|lower }}" data-short="{{ subj.short_name|lower }}" data-assigned="{% if subj.faculty %}true{% else %}false{% endif %}" data-faculty="{% if subj.faculty %}{{ subj.faculty.user.get_full_name|lower }}{% endif %}">
+          <td><span class="badge-subject-code">{{ subj.code }}</span> <span class="badge bg-dark border border-secondary text-muted ms-1" style="font-size:0.75rem;">{{ subj.short_name }}</span></td>
+          <td class="fw-bold">{{ subj.name }}</td>
           <td>Year {{ subj.year.year }} | Sem {{ subj.semester }}</td>
           <td>
             {% if subj.faculty %}
@@ -59,10 +92,75 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-muted">No subjects found in department.</td></tr>
+        <tr id="serverEmptyRow"><td colspan="5" class="text-center text-muted py-4">No subjects found in department.</td></tr>
         {% endfor %}
+        <tr id="noMatchRow" style="display: none;">
+          <td colspan="5" class="text-center text-muted py-4">
+            <i class="fas fa-search fa-2x mb-2 opacity-50 d-block"></i>
+            No subjects match your search filter.
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('subjectSearchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const resetBtn = document.getElementById('resetFiltersBtn');
+  const rows = document.querySelectorAll('.subject-row');
+  const noMatchRow = document.getElementById('noMatchRow');
+  const countBadge = document.getElementById('subjectCountBadge');
+
+  function filterTable() {
+    const query = (searchInput.value || '').trim().toLowerCase();
+    const status = statusFilter.value;
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const code = row.getAttribute('data-code') || '';
+      const name = row.getAttribute('data-name') || '';
+      const shortName = row.getAttribute('data-short') || '';
+      const faculty = row.getAttribute('data-faculty') || '';
+      const isAssigned = row.getAttribute('data-assigned') === 'true';
+
+      let matchesSearch = !query || code.includes(query) || name.includes(query) || shortName.includes(query) || faculty.includes(query);
+      let matchesStatus = true;
+
+      if (status === 'assigned') {
+        matchesStatus = isAssigned;
+      } else if (status === 'unassigned') {
+        matchesStatus = !isAssigned;
+      }
+
+      if (matchesSearch && matchesStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (noMatchRow) {
+      noMatchRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+
+    if (countBadge) {
+      countBadge.textContent = `${visibleCount} of ${rows.length} Subject(s)`;
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('input', filterTable);
+  if (statusFilter) statusFilter.addEventListener('change', filterTable);
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+      if (searchInput) searchInput.value = '';
+      if (statusFilter) statusFilter.value = 'all';
+      filterTable();
+    });
+  }
+});
+</script>
 {% endblock %}

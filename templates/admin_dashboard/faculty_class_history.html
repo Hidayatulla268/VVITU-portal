@@ -1,0 +1,370 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Class Transfers & Proxy Audit — VVIT Administration{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-exchange-alt me-2 text-accent"></i>Faculty Class History & Proxy Audit</h1>
+    <p class="ph-sub">College-wide audit log of all classes conducted by faculty, proxy substitutions, and real-time proxy assignment across all branches</p>
+  </div>
+  <div class="ph-right">
+    <button class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#assignProxyModal">
+      <i class="fas fa-user-plus me-2"></i>Assign Proxy Class
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Search & Filter Card (All Branches) -->
+  <div class="glass-card mb-4">
+    <form method="get" action="{% url 'admin_dashboard:faculty_class_history' %}" class="row g-3 align-items-end">
+      <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+        <label class="form-label"><i class="fas fa-building me-1 text-accent"></i>Filter by Branch</label>
+        <select name="branch_id" class="vvit-select">
+          <option value="">-- All Branches (College-Wide) --</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}" {% if branch_id == b.id %}selected{% endif %}>
+              {{ b.code }} — {{ b.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+        <label class="form-label">Search Faculty / Subject</label>
+        <div class="search-input-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+          <i class="fas fa-search search-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 10; font-size: 0.88rem;"></i>
+          <input type="text" name="search" class="vvit-input" style="padding-left: 40px !important;" placeholder="Faculty name, Emp ID, subject..." value="{{ search_query }}">
+        </div>
+      </div>
+      <div class="col-xl-2 col-lg-2 col-md-6 col-12">
+        <label class="form-label"><i class="fas fa-user-tie me-1 text-accent"></i>Filter Faculty</label>
+        <select name="faculty_id" class="vvit-select">
+          <option value="">-- All Faculty --</option>
+          {% for f in all_faculty %}
+            <option value="{{ f.id }}" {% if selected_fac_id == f.id|stringformat:"s" %}selected{% endif %}>
+              Prof. {{ f.full_name }} ({{ f.department.code }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 col-12">
+        <label class="form-label"><i class="fas fa-calendar-day me-1 text-accent"></i>From Date</label>
+        <div class="date-input-wrapper">
+          <input type="date" name="date_from" class="vvit-input" value="{{ date_from }}">
+          <i class="fas fa-calendar-days cal-icon" title="Select Date"></i>
+        </div>
+      </div>
+      <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 col-12">
+        <label class="form-label"><i class="fas fa-calendar-check me-1 text-accent"></i>To Date</label>
+        <div class="date-input-wrapper">
+          <input type="date" name="date_to" class="vvit-input" value="{{ date_to }}">
+          <i class="fas fa-calendar-days cal-icon" title="Select Date"></i>
+        </div>
+      </div>
+      <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+        <button type="submit" class="btn-vvit-primary" style="min-height: 42px; min-width: 140px;">
+          <i class="fas fa-filter me-1"></i>Search & Filter
+        </button>
+        <a href="{% url 'admin_dashboard:faculty_class_history' %}" class="btn-vvit-secondary" style="min-height: 42px;" title="Reset filters">
+          <i class="fas fa-undo me-1"></i>Reset
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Conducted Class Audit Table Glass Card -->
+  <div class="glass-card mb-4">
+    <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-clipboard-list me-2 text-accent"></i>College-Wide Faculty Class Audit Log
+      </h3>
+      <span class="badge-section">{{ conducted_history|length }} Class Record(s)</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="vvit-table">
+        <thead>
+          <tr>
+            <th class="ps-4">Date & Period</th>
+            <th>Branch</th>
+            <th>Faculty Who Took Class</th>
+            <th>Original / Mapped Faculty</th>
+            <th>Subject & Class Section</th>
+            <th>Class Type</th>
+            <th class="pe-4">Attendance Log Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if conducted_history %}
+            {% for item in conducted_history %}
+              <tr>
+                <td class="ps-4">
+                  <strong class="text-white d-block">{{ item.date|date:"d-M-Y (D)" }}</strong>
+                  <span class="status-pill status-neutral mt-1">Period {{ item.period }} ({{ item.timing }})</span>
+                </td>
+                <td>
+                  {% if item.branch %}
+                    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50">
+                      {{ item.branch.code }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.conducted_by %}
+                    <div class="fw-bold text-success">
+                      <i class="fas fa-user-check me-1"></i>Prof. {{ item.conducted_by.full_name }}
+                    </div>
+                    <small class="text-muted" style="font-size: 0.75rem;">{{ item.conducted_by.employee_id }} ({{ item.conducted_by.department.code }})</small>
+                  {% else %}
+                    <span class="text-muted">Unassigned</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.original_faculty %}
+                    <div class="fw-semibold text-white">Prof. {{ item.original_faculty.full_name }}</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">{{ item.original_faculty.employee_id }}</small>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="text-white fw-semibold">{{ item.subject.code }} — {{ item.subject.name }}</div>
+                  <small class="text-muted" style="font-size: 0.75rem;">
+                    {{ item.section.branch.code }} Y{{ item.section.year.year }} Sec {{ item.section.name }}
+                  </small>
+                </td>
+                <td>
+                  {% if item.is_proxy %}
+                    <span class="status-pill status-pending" title="Proxy Class Conducted by Substitute">
+                      <i class="fas fa-exchange-alt me-1"></i>Proxy Substitute
+                    </span>
+                  {% else %}
+                    <span class="status-pill status-approved" title="Regular Scheduled Class">
+                      <i class="fas fa-chalkboard-teacher me-1"></i>Regular Class
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="pe-4">
+                  {% if item.total_students > 0 %}
+                    <span class="status-pill status-approved">
+                      <i class="fas fa-check-double me-1"></i>Marked ({{ item.present_count }} Present / {{ item.absent_count }} Absent)
+                    </span>
+                  {% else %}
+                    <span class="status-pill status-rejected">
+                      <i class="fas fa-exclamation-circle me-1"></i>Attendance Pending
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="fas fa-history fa-3x mb-3 opacity-50 d-block"></i>
+                <p class="mb-0">No conducted class records found matching search filters.</p>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Proxy Modal (College-Wide / All Branches) -->
+<div class="modal fade" id="assignProxyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: var(--clr-card-bg, #18181b);">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom text-white">
+          <i class="fas fa-user-plus me-2 text-accent"></i>Assign Proxy Class to Free Faculty (All Branches)
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="assign_proxy">
+        <div class="modal-body py-4 row g-3">
+          <div class="col-md-6">
+            <label class="form-label text-white small">Date of Class <span class="text-danger">*</span></label>
+            <input type="date" name="date" id="proxyDate" class="vvit-input" value="{{ today|date:'Y-m-d' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-white small">Filter Slots by Branch <small class="text-muted">(optional)</small></label>
+            <select id="modalBranchFilter" class="vvit-select">
+              <option value="">-- All Branches (College-Wide) --</option>
+              {% for b in branches %}
+                <option value="{{ b.id }}">{{ b.code }} — {{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label text-white small">Select Scheduled Class Slot <span class="text-danger">*</span></label>
+            <select name="timetable_id" id="proxySlot" class="vvit-select" required>
+              <option value="">-- Choose Class Slot --</option>
+              {% for slot in day_slots %}
+                <option value="{{ slot.id }}" data-period="{{ slot.period }}" data-fac="{{ slot.faculty.id }}" data-branch="{{ slot.section.branch.id }}">
+                  [{{ slot.section.branch.code }}] Period {{ slot.period }}: {{ slot.subject.code }} (Prof. {{ slot.faculty.full_name }}) — {{ slot.section.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label text-white small fw-bold">Select Available Free Substitute Faculty (Branch Faculty) <span class="text-danger">*</span></label>
+            <select name="substitute_id" id="freeFacultySelect" class="vvit-select" required>
+              <option value="">-- Select Class Slot First --</option>
+            </select>
+            <small class="text-muted d-block mt-1">
+              <i class="fas fa-info-circle text-accent me-1"></i>System automatically calculates and displays faculty members in the selected class's branch who are 100% free with no class or leave during this period.
+            </small>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label text-white small">Reason for Reassignment</label>
+            <input type="text" name="reason" class="vvit-input" placeholder="e.g. Faculty absent / Official duty / Admin proxy assignment">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
+            <i class="fas fa-paper-plane me-1"></i>Assign Proxy & Send SMS/Email
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dateInput = document.getElementById('proxyDate');
+  const branchSelect = document.getElementById('modalBranchFilter');
+  const slotSelect = document.getElementById('proxySlot');
+  const freeSelect = document.getElementById('freeFacultySelect');
+  const assignModal = document.getElementById('assignProxyModal');
+
+  function loadScheduledSlots(callback) {
+    const dt = dateInput.value;
+    const branchId = branchSelect ? branchSelect.value : '';
+    if (!dt) return;
+
+    slotSelect.innerHTML = '<option value="">-- Loading Scheduled Classes... --</option>';
+    freeSelect.innerHTML = '<option value="">-- Select Class Slot First --</option>';
+
+    let url = "{% url 'admin_dashboard:ajax_branch_timetable' %}?date=" + encodeURIComponent(dt);
+    if (branchId) url += "&branch_id=" + encodeURIComponent(branchId);
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        slotSelect.innerHTML = '<option value="">-- Choose Class Slot --</option>';
+        if (data.slots && data.slots.length > 0) {
+          data.slots.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.id;
+            o.setAttribute('data-period', s.period);
+            o.setAttribute('data-fac-id', s.original_faculty_id || '');
+            o.setAttribute('data-branch-id', s.branch_id || '');
+            o.setAttribute('data-branch-code', s.branch_code || '');
+            o.textContent = `[${s.branch_code}] Period ${s.period} (${s.timing}): ${s.subject_code} — ${s.subject_name} | ${s.original_faculty_name} (${s.section_name})`;
+            slotSelect.appendChild(o);
+          });
+        } else {
+          slotSelect.innerHTML = `<option value="">No classes scheduled on ${data.day_name || 'this day'}</option>`;
+        }
+        if (callback) callback();
+      })
+      .catch(err => {
+        console.error('Error fetching timetable slots:', err);
+        slotSelect.innerHTML = '<option value="">Error loading scheduled classes</option>';
+      });
+  }
+
+  function updateFreeFaculty() {
+    const dt = dateInput.value;
+    const opt = slotSelect.options[slotSelect.selectedIndex];
+    const period = opt ? opt.getAttribute('data-period') : null;
+    const origFacId = opt ? opt.getAttribute('data-fac-id') : null;
+    const branchId = opt ? (opt.getAttribute('data-branch-id') || (branchSelect ? branchSelect.value : '')) : (branchSelect ? branchSelect.value : '');
+    const branchCode = opt ? (opt.getAttribute('data-branch-code') || '') : '';
+
+    if (!dt || !period || !opt || !opt.value) {
+      freeSelect.innerHTML = '<option value="">-- Select Class Slot First --</option>';
+      return;
+    }
+
+    const branchLabel = branchCode ? `(${branchCode} Branch)` : '';
+    freeSelect.innerHTML = `<option value="">-- Checking Free Faculty in ${branchCode || 'Branch'}... --</option>`;
+
+    let url = "{% url 'admin_dashboard:ajax_free_faculty' %}?date=" + encodeURIComponent(dt) + "&period=" + encodeURIComponent(period);
+    if (branchId) {
+      url += "&branch_id=" + encodeURIComponent(branchId);
+    }
+    if (origFacId) {
+      url += "&exclude_faculty_id=" + encodeURIComponent(origFacId);
+    }
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        freeSelect.innerHTML = `<option value="">-- Select Available ${branchCode || ''} Free Faculty --</option>`;
+        if (data.free_faculty && data.free_faculty.length > 0) {
+          data.free_faculty.forEach(f => {
+            const o = document.createElement('option');
+            o.value = f.id;
+            o.textContent = `Prof. ${f.name} (${f.department} - ${f.employee_id}) — FREE for Period ${period}`;
+            freeSelect.appendChild(o);
+          });
+        } else {
+          freeSelect.innerHTML = `<option value="">No free faculty available in ${branchCode || 'this branch'} during Period ${period}</option>`;
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching free faculty:', err);
+        freeSelect.innerHTML = '<option value="">Error loading free faculty</option>';
+      });
+  }
+
+
+  if (dateInput && slotSelect && freeSelect) {
+    dateInput.addEventListener('change', function() {
+      loadScheduledSlots();
+    });
+    if (branchSelect) {
+      branchSelect.addEventListener('change', function() {
+        loadScheduledSlots();
+      });
+    }
+    slotSelect.addEventListener('change', updateFreeFaculty);
+
+    if (assignModal) {
+      assignModal.addEventListener('shown.bs.modal', function() {
+        if (slotSelect.options.length <= 1) {
+          loadScheduledSlots();
+        }
+      });
+    }
+    
+    if (dateInput.value) {
+      loadScheduledSlots();
+    }
+  }
+});
+</script>
+{% endblock %}
+

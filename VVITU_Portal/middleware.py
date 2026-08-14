@@ -12,6 +12,7 @@ PUBLIC_PREFIXES = [
     '/admin/',
     '/static/',
     '/media/',
+    '/notifications/',  # accessible to all authenticated roles
 ]
 
 ROLE_URL_MAP = {

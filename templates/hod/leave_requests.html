@@ -9,7 +9,10 @@
     <h1 class="ph-title"><i class="fas fa-calendar-minus me-2 text-accent"></i>HOD Leave Management</h1>
     <p class="ph-sub">Apply for your leave (Admin Approval) and review department faculty leave requests</p>
   </div>
-  <div class="ph-right">
+  <div class="ph-right d-flex gap-2 align-items-center">
+    <a href="{% url 'hod:manage_class_transfers' %}" class="btn btn-outline-info btn-sm">
+      <i class="fas fa-exchange-alt me-1"></i>Class Transfers Audit
+    </a>
     <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
       <i class="fas fa-plus-circle me-1"></i>Apply for Leave
     </button>
@@ -21,7 +24,7 @@
 <!-- Section Tabs Nav -->
 <ul class="nav nav-pills mb-4 border-0" id="leaveTabs" role="tablist" style="gap: 10px;">
   <li class="nav-item" role="presentation">
-    <button class="vvit-btn vvit-btn-primary active" id="dept-tab" data-bs-toggle="tab" data-bs-target="#dept-leaves" type="button" role="tab">
+    <button class="nav-link btn-vvit-tab active" id="dept-tab" data-bs-toggle="tab" data-bs-target="#dept-leaves" type="button" role="tab">
       <i class="fas fa-users-gear me-2"></i>Department Faculty Approvals
       {% if pending_count > 0 %}
         <span class="badge bg-danger ms-1">{{ pending_count }}</span>
@@ -29,7 +32,7 @@
     </button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="vvit-btn vvit-btn-secondary" id="my-tab" data-bs-toggle="tab" data-bs-target="#my-leaves" type="button" role="tab">
+    <button class="nav-link btn-vvit-tab" id="my-tab" data-bs-toggle="tab" data-bs-target="#my-leaves" type="button" role="tab">
       <i class="fas fa-user-clock me-2"></i>My Leave Applications ({{ my_leaves|length }})
     </button>
   </li>
@@ -41,19 +44,19 @@
     <!-- Status Filter Pills -->
     <div class="d-flex gap-2 mb-4 overflow-auto py-1">
       <a href="{% url 'hod:manage_leave_requests' %}" 
-         class="vvit-btn {% if not status_filter %}vvit-btn-primary{% else %}vvit-btn-secondary{% endif %}">
+         class="btn-vvit-{% if not status_filter %}primary{% else %}secondary{% endif %}">
         All Requests
       </a>
       <a href="{% url 'hod:manage_leave_requests' %}?status=pending" 
-         class="vvit-btn {% if status_filter == 'pending' %}vvit-btn-primary{% else %}vvit-btn-secondary{% endif %}">
+         class="btn-vvit-{% if status_filter == 'pending' %}primary{% else %}secondary{% endif %}">
         <i class="fas fa-clock me-1"></i>Pending ({{ pending_count }})
       </a>
       <a href="{% url 'hod:manage_leave_requests' %}?status=approved" 
-         class="vvit-btn {% if status_filter == 'approved' %}vvit-btn-primary{% else %}vvit-btn-secondary{% endif %}">
+         class="btn-vvit-{% if status_filter == 'approved' %}primary{% else %}secondary{% endif %}">
         <i class="fas fa-check-circle me-1"></i>Approved
       </a>
       <a href="{% url 'hod:manage_leave_requests' %}?status=rejected" 
-         class="vvit-btn {% if status_filter == 'rejected' %}vvit-btn-primary{% else %}vvit-btn-secondary{% endif %}">
+         class="btn-vvit-{% if status_filter == 'rejected' %}primary{% else %}secondary{% endif %}">
         <i class="fas fa-times-circle me-1"></i>Rejected
       </a>
     </div>
@@ -83,21 +86,28 @@
             <tr>
               <td>
                 <strong class="text-white d-block">{{ leave.faculty.full_name }}</strong>
-                <small class="text-muted" style="font-size: 0.75rem;">
-                  Emp ID: {{ leave.faculty.employee_id }} | Ph: {{ leave.faculty.phone|default:"N/A" }}
+                <small class="text-muted d-block" style="font-size: 0.75rem;">
+                  Emp ID: <span class="text-accent fw-semibold">{{ leave.faculty.employee_id }}</span> | Ph: {{ leave.faculty.phone|default:"N/A" }}
                 </small>
               </td>
               <td>
                 <span class="fw-bold text-white d-block">{{ leave.get_leave_type_display }}</span>
                 <small class="text-muted" style="font-size: 0.75rem;">Submitted: {{ leave.created_at|date:"d-M-Y H:i" }}</small>
               </td>
-              <td>{{ leave.start_date|date:"d-M-Y" }} to {{ leave.end_date|date:"d-M-Y" }}</td>
               <td>
-                <span class="status-pill status-present">{{ leave.total_days }} Day(s)</span>
+                <div class="d-flex align-items-center gap-1 text-white-50 small">
+                  <i class="fas fa-calendar-alt text-accent me-1"></i>
+                  <span>{{ leave.start_date|date:"d-M-Y" }}</span>
+                  <i class="fas fa-arrow-right mx-1 opacity-50" style="font-size:0.7rem;"></i>
+                  <span>{{ leave.end_date|date:"d-M-Y" }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="status-pill status-neutral"><i class="fas fa-calendar-day me-1"></i>{{ leave.total_days }} Day(s)</span>
               </td>
               <td style="max-width: 250px;">
-                <div class="text-truncate" title="{{ leave.reason }}">
-                  <small><strong>Reason:</strong> {{ leave.reason }}</small>
+                <div class="text-truncate text-white-50" title="{{ leave.reason }}">
+                  <small><strong class="text-white">Reason:</strong> {{ leave.reason }}</small>
                 </div>
                 {% if leave.substitute_notes %}
                 <div class="text-truncate text-muted mt-1" title="{{ leave.substitute_notes }}" style="font-size: 0.75rem;">
@@ -107,16 +117,16 @@
               </td>
               <td>
                 {% if leave.status == 'pending' %}
-                  <span class="status-pill status-leave"><i class="fas fa-clock me-1"></i>Pending Approval</span>
+                  <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending Approval</span>
                 {% elif leave.status == 'approved' %}
-                  <span class="status-pill status-present"><i class="fas fa-check-circle me-1"></i>Approved</span>
+                  <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Approved</span>
                   <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
-                    By {{ leave.action_by.get_full_name|default:leave.action_by.username }} ({{ leave.action_by.get_role_display }})
+                    By {% if leave.action_by %}{{ leave.action_by.get_full_name|default:leave.action_by.username }} ({{ leave.action_by.get_role_display }}){% else %}Administrator{% endif %}
                   </small>
                 {% else %}
-                  <span class="status-pill status-absent"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                  <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Rejected</span>
                   <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
-                    By {{ leave.action_by.get_full_name|default:leave.action_by.username }} ({{ leave.action_by.get_role_display }})
+                    By {% if leave.action_by %}{{ leave.action_by.get_full_name|default:leave.action_by.username }} ({{ leave.action_by.get_role_display }}){% else %}Administrator{% endif %}
                   </small>
                   {% if leave.admin_remarks %}
                     <small class="text-danger d-block mt-1"><em>"{{ leave.admin_remarks }}"</em></small>
@@ -125,28 +135,28 @@
               </td>
               <td class="text-end">
                 {% if leave.status == 'pending' %}
-                  <div class="d-inline-flex gap-2">
+                  <div class="d-inline-flex gap-2 justify-content-end align-items-center flex-wrap">
                     <!-- Direct One-Click Approve -->
                     <a href="{% url 'hod:action_leave_request' leave.id 'approve' %}" 
-                       class="btn-vvit-success"
+                       class="btn-leave-approve"
                        title="Quick Approve leave request"
                        onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
                       <i class="fas fa-check me-1"></i>Approve
                     </a>
                     <!-- Direct One-Click Reject -->
                     <a href="{% url 'hod:action_leave_request' leave.id 'reject' %}" 
-                       class="btn-vvit-danger"
+                       class="btn-leave-reject"
                        title="Quick Reject leave request"
                        onclick="return confirm('Reject leave for {{ leave.faculty.full_name }}?');">
                       <i class="fas fa-times me-1"></i>Reject
                     </a>
                     <!-- Open Remarks Modal -->
                     <button type="button" 
-                            class="btn-vvit-secondary" 
+                            class="btn-leave-remarks" 
                             data-bs-toggle="modal" 
                             data-bs-target="#actionModal{{ leave.id }}"
                             title="Add remarks before approval or rejection">
-                      <i class="fas fa-comment me-1"></i>Remarks
+                      <i class="fas fa-edit me-1"></i>Review / Remarks
                     </button>
                   </div>
                 {% else %}
@@ -202,11 +212,11 @@
               <td>{{ leave.start_date|date:"d-M-Y" }}</td>
               <td>{{ leave.end_date|date:"d-M-Y" }}</td>
               <td>
-                <span class="status-pill status-present">{{ leave.total_days }} Day(s)</span>
+                <span class="status-pill status-neutral"><i class="fas fa-calendar-day me-1"></i>{{ leave.total_days }} Day(s)</span>
               </td>
               <td style="max-width: 250px;">
-                <div class="text-truncate" title="{{ leave.reason }}">
-                  <small><strong>Reason:</strong> {{ leave.reason }}</small>
+                <div class="text-truncate text-white-50" title="{{ leave.reason }}">
+                  <small><strong class="text-white">Reason:</strong> {{ leave.reason }}</small>
                 </div>
                 {% if leave.substitute_notes %}
                 <div class="text-truncate text-muted" title="{{ leave.substitute_notes }}" style="font-size: 0.75rem;">
@@ -216,11 +226,11 @@
               </td>
               <td>
                 {% if leave.status == 'pending' %}
-                  <span class="status-pill status-warning"><i class="fas fa-clock me-1"></i>Pending (Admin Approval Only)</span>
+                  <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending (Admin Review)</span>
                 {% elif leave.status == 'approved' %}
-                  <span class="status-pill status-present"><i class="fas fa-check-circle me-1"></i>Approved by Admin</span>
+                  <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Approved by Admin</span>
                 {% else %}
-                  <span class="status-pill status-absent"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                  <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Rejected</span>
                 {% endif %}
               </td>
               <td>
@@ -239,7 +249,7 @@
               <td class="text-end">
                 {% if leave.status == 'pending' %}
                   <a href="{% url 'hod:cancel_leave_request' leave.id %}" 
-                     class="btn-vvit-danger"
+                     class="btn-leave-reject"
                      onclick="return confirm('Are you sure you want to cancel this leave application?');">
                     <i class="fas fa-ban me-1"></i>Cancel
                   </a>
@@ -253,7 +263,7 @@
               <td colspan="8" class="text-center py-5 text-muted">
                 <i class="fas fa-calendar-times fa-3x mb-3 opacity-50 d-block"></i>
                 <p class="mb-2">You have not submitted any leave applications.</p>
-                <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+                <button type="button" class="btn-leave-apply" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
                   <i class="fas fa-plus me-1"></i>Apply for Leave Now
                 </button>
               </td>
@@ -281,10 +291,10 @@
       <form method="POST">
         {% csrf_token %}
         <div class="modal-body py-4">
-          <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-            <div class="text-white fw-bold mb-1">{{ leave.faculty.full_name }} ({{ leave.faculty.employee_id }})</div>
-            <div class="text-muted small mb-2">Leave Type: <span class="text-accent">{{ leave.get_leave_type_display }}</span></div>
-            <div class="text-muted small mb-2">Dates: <span class="text-white">{{ leave.start_date|date:"d-M-Y" }} to {{ leave.end_date|date:"d-M-Y" }} ({{ leave.total_days }} Days)</span></div>
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.2);">
+            <div class="text-white fw-bold mb-1 fs-6">{{ leave.faculty.full_name }} <span class="badge bg-accent ms-1" style="font-size:0.7rem;">ID: {{ leave.faculty.employee_id }}</span></div>
+            <div class="text-muted small mb-1">Leave Type: <span class="text-accent fw-semibold">{{ leave.get_leave_type_display }}</span></div>
+            <div class="text-muted small mb-1">Dates: <span class="text-white">{{ leave.start_date|date:"d-M-Y" }} to {{ leave.end_date|date:"d-M-Y" }} ({{ leave.total_days }} Days)</span></div>
             <div class="text-muted small">Reason: <span class="text-white">{{ leave.reason }}</span></div>
           </div>
           <div class="mb-3">
@@ -294,10 +304,10 @@
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
           <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn-vvit-success" formaction="{% url 'hod:action_leave_request' leave.id 'approve' %}">
+          <button type="submit" class="btn-leave-approve" formaction="{% url 'hod:action_leave_request' leave.id 'approve' %}">
             <i class="fas fa-check me-1"></i>Approve Leave
           </button>
-          <button type="submit" class="btn-vvit-danger" formaction="{% url 'hod:action_leave_request' leave.id 'reject' %}">
+          <button type="submit" class="btn-leave-reject" formaction="{% url 'hod:action_leave_request' leave.id 'reject' %}">
             <i class="fas fa-times me-1"></i>Reject Leave
           </button>
         </div>
@@ -321,9 +331,9 @@
       <form method="POST" action="{% url 'hod:manage_leave_requests' %}">
         {% csrf_token %}
         <div class="modal-body py-4">
-          <div class="alert alert-info border-0 rounded-3 mb-4 small" style="background: rgba(13,202,240,0.15); color: #0dcaf0;">
+          <div class="alert border-0 rounded-3 mb-4 small" style="background: rgba(220,38,38,0.12); color: #f87171; border: 1px solid rgba(220,38,38,0.3) !important;">
             <i class="fas fa-shield-alt me-1"></i>
-            As Head of Department (HOD), your leave request will be submitted directly to <strong>College Administration (Admin)</strong> for review and approval.
+            As Head of Department (HOD), your leave request will be submitted directly to <strong class="text-white">College Administration (Admin)</strong> for review and approval.
           </div>
 
           <div class="row g-3">
@@ -359,7 +369,7 @@
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
           <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn-vvit-primary">
+          <button type="submit" class="btn-leave-apply">
             <i class="fas fa-paper-plane me-1"></i>Submit Application to Admin
           </button>
         </div>

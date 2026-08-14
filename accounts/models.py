@@ -260,8 +260,10 @@ class Achievement(models.Model):
     Verified by HOD or Admin.
     """
     CATEGORY_CHOICES = [
-        ('curricular', 'Curricular'),
+        ('curricular', 'Academic / Curricular'),
         ('cocurricular', 'Co-curricular'),
+        ('extracurricular', 'Extra-curricular & Sports'),
+        ('college', 'College & Institutional Achievement'),
     ]
     user          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements', db_index=True)
     title         = models.CharField(max_length=200)
@@ -331,4 +333,92 @@ class FacultyLeaveRequest(models.Model):
     def total_days(self):
         if self.start_date and self.end_date:
             return (self.end_date - self.start_date).days + 1
-        return 1
+        return 0
+
+
+# ─────────────────────────────────────────────
+# STUDENT FEE STRUCTURE & PAYMENTS
+# ─────────────────────────────────────────────
+class StudentFee(models.Model):
+    """
+    Detailed Fee Structure and Payment Status for a student.
+    Includes College Tuition, Hostel, Bus, NBA, Exam, Book Bank, and Misc fees.
+    """
+    FEE_STATUS_CHOICES = [
+        ('paid',    'Fully Paid'),
+        ('partial', 'Partially Paid'),
+        ('pending', 'Pending / Unpaid'),
+        ('overdue', 'Overdue'),
+    ]
+
+    student          = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fee_records', db_index=True)
+    academic_year    = models.ForeignKey('core.Year', on_delete=models.CASCADE, db_index=True)
+    
+    # Detailed Breakdown Categories (Amounts in INR)
+    college_fee      = models.DecimalField(max_digits=12, decimal_places=2, default=70000.00, verbose_name="College / Tuition Fee")
+    hostel_fee       = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Hostel Fee (Optional)")
+    bus_fee          = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Bus / Transport Fee (Optional)")
+    nba_fee          = models.DecimalField(max_digits=12, decimal_places=2, default=3000.00, verbose_name="NBA Accreditation Fee")
+    exam_fee         = models.DecimalField(max_digits=12, decimal_places=2, default=2500.00, verbose_name="Exam Fee")
+    book_bank_fee    = models.DecimalField(max_digits=12, decimal_places=2, default=1500.00, verbose_name="Book Bank / Library Fee")
+    other_fee        = models.DecimalField(max_digits=12, decimal_places=2, default=1000.00, verbose_name="Other / Misc Fee")
+    
+    # Calculations & Payment Tracking
+    total_fee_amount = models.DecimalField(max_digits=12, decimal_places=2, default=78000.00, help_text="Auto-calculated total sum of all fee components")
+    amount_paid      = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, help_text="Total amount paid by student so far")
+    due_amount       = models.DecimalField(max_digits=12, decimal_places=2, default=78000.00, help_text="Remaining balance due")
+    status           = models.CharField(max_length=15, choices=FEE_STATUS_CHOICES, default='pending', db_index=True)
+    due_date         = models.DateField(null=True, blank=True)
+    
+    remarks          = models.TextField(blank=True, null=True, help_text="Admin/HOD/DEO notes, scholarship details or payment reference")
+    updated_by       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_fees')
+    created_at       = models.DateTimeField(auto_now_add=True)
+    updated_at       = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'academic_year')
+        ordering = ['-academic_year__year', 'student__roll_number']
+
+    def __str__(self):
+        return f"{self.student.roll_number} — Y{self.academic_year.year} Fees: Total ₹{self.total_fee_amount} (Paid ₹{self.amount_paid})"
+
+    def save(self, *args, **kwargs):
+        def clamp(val, max_val=10000000.0):
+            try:
+                v = float(val or 0)
+                if v < 0: return 0.0
+                if v > max_val: return max_val
+                return round(v, 2)
+            except (ValueError, TypeError, OverflowError):
+                return 0.0
+
+        col = clamp(self.college_fee)
+        hos = clamp(self.hostel_fee)
+        bus = clamp(self.bus_fee)
+        nba = clamp(self.nba_fee)
+        exm = clamp(self.exam_fee)
+        bbk = clamp(self.book_bank_fee)
+        oth = clamp(self.other_fee)
+        paid = clamp(self.amount_paid)
+
+        self.college_fee   = col
+        self.hostel_fee    = hos
+        self.bus_fee       = bus
+        self.nba_fee       = nba
+        self.exam_fee      = exm
+        self.book_bank_fee = bbk
+        self.other_fee     = oth
+        self.amount_paid   = paid
+
+        self.total_fee_amount = clamp(col + hos + bus + nba + exm + bbk + oth, max_val=70000000.0)
+        self.due_amount       = clamp(max(0, self.total_fee_amount - paid))
+
+        # Rule: If all fee components are zero OR balance due is <= 0, status is 'paid' (Fully Paid)
+        if self.total_fee_amount == 0 or self.due_amount <= 0:
+            self.status = 'paid'
+        elif paid > 0:
+            self.status = 'partial'
+        else:
+            self.status = 'pending'
+
+        super().save(*args, **kwargs)

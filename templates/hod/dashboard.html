@@ -4,138 +4,312 @@
 {% block title %}HOD Dashboard — {{ department.code }}{% endblock %}
 
 {% block page_header %}
-<div class="page-header-strip">
-  <div class="ph-left">
-    <h1 class="ph-title"><i class="fas fa-shield-alt me-2 text-accent"></i>HOD Dashboard — {{ department.code }}</h1>
-    <p class="ph-sub">Head of Department panel for {{ department.name }}</p>
-  </div>
-  <div class="ph-right">
-    <a href="{% url 'faculty:dashboard' %}" class="btn-sm-accent text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 6px 12px; font-size: 0.8rem;">
-      <i class="fas fa-chalkboard-teacher"></i>Teaching Panel
-    </a>
+<!-- Futuristic Hero Welcome Banner -->
+<div class="hod-hero-card mb-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge bg-danger text-uppercase px-2.5 py-1" style="font-size: 0.68rem; letter-spacing: 0.05em; font-weight: 700;">
+          <i class="fas fa-shield-alt me-1"></i>HOD Control Center
+        </span>
+        <span class="badge bg-dark border border-secondary text-muted px-2.5 py-1" style="font-size: 0.68rem;">
+          <i class="fas fa-circle text-success me-1" style="font-size: 0.5rem;"></i>Active Session
+        </span>
+      </div>
+      <h1 class="fw-bold text-white mb-1" style="font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; letter-spacing: 0.02em;">
+        Welcome, {{ request.user.get_full_name|default:request.user.username }}
+      </h1>
+      <p class="text-muted small mb-0 d-flex align-items-center gap-2">
+        <i class="fas fa-university text-accent"></i>
+        <span>Head of Department — <strong>{{ department.name }} ({{ department.code }})</strong></span>
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="{% url 'faculty:dashboard' %}" class="btn-vvit-outline d-inline-flex align-items-center gap-2 py-2 px-3">
+        <i class="fas fa-chalkboard-teacher text-accent"></i>
+        <span>Switch to Teaching Panel</span>
+      </a>
+      <a href="{% url 'notifications:manage' %}" class="btn-vvit-primary d-inline-flex align-items-center gap-2 py-2 px-3">
+        <i class="fas fa-bullhorn"></i>
+        <span>Post Notice</span>
+      </a>
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block content %}
-<!-- KPI Stats Row -->
+<!-- 4 Dynamic KPI Stat Cards -->
 <div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3">
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-val">{{ student_count }}</span>
-        <div class="kpi-icon bg-blue"><i class="fas fa-user-graduate"></i></div>
+  <!-- Card 1: Students in Branch -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <a href="{% url 'hod:manage_students' %}" class="text-decoration-none">
+      <div class="kpi-card h-100">
+        <div class="kpi-top">
+          <div>
+            <span class="kpi-lbl">Branch Students</span>
+            <span class="kpi-val text-white d-block mt-1">{{ student_count }}</span>
+          </div>
+          <div class="kpi-icon-clean text-accent"><i class="fas fa-graduation-cap"></i></div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between text-muted pt-2 border-top border-secondary border-opacity-10 mt-2" style="font-size:0.75rem;">
+          <span><i class="fas fa-layer-group me-1 text-accent"></i>{{ section_count }} Sections</span>
+          <span class="text-accent fw-bold">Directory <i class="fas fa-arrow-right ms-1"></i></span>
+        </div>
       </div>
-      <span class="kpi-lbl">Students in Branch</span>
+    </a>
+  </div>
+
+  <!-- Card 2: Branch Faculty -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <a href="{% url 'hod:manage_faculty' %}" class="text-decoration-none">
+      <div class="kpi-card h-100">
+        <div class="kpi-top">
+          <div>
+            <span class="kpi-lbl">Branch Faculty</span>
+            <span class="kpi-val text-white d-block mt-1">{{ faculty_count }}</span>
+          </div>
+          <div class="kpi-icon-clean text-warning"><i class="fas fa-chalkboard-teacher"></i></div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between text-muted pt-2 border-top border-secondary border-opacity-10 mt-2" style="font-size:0.75rem;">
+          <span><i class="fas fa-user-check me-1 text-warning"></i>Teaching Staff</span>
+          <span class="text-warning fw-bold">Faculty Logs <i class="fas fa-arrow-right ms-1"></i></span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Card 3: Active Subjects -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <a href="{% url 'hod:subject_mapping' %}" class="text-decoration-none">
+      <div class="kpi-card h-100">
+        <div class="kpi-top">
+          <div>
+            <span class="kpi-lbl">Active Subjects</span>
+            <span class="kpi-val text-white d-block mt-1">{{ subject_count }}</span>
+          </div>
+          <div class="kpi-icon-clean" style="color:#c084fc;"><i class="fas fa-book-open"></i></div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between text-muted pt-2 border-top border-secondary border-opacity-10 mt-2" style="font-size:0.75rem;">
+          <span><i class="fas fa-project-diagram me-1 text-purple"></i>Mapped Subjects</span>
+          <span class="text-purple fw-bold" style="color:#c084fc !important;">Map Faculty <i class="fas fa-arrow-right ms-1"></i></span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Card 4: Attendance Today -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <a href="{% url 'hod:faculty_attendance' %}" class="text-decoration-none">
+      <div class="kpi-card h-100">
+        <div class="kpi-top">
+          <div>
+            <span class="kpi-lbl">Attendance Today</span>
+            <span class="kpi-val text-white d-block mt-1" style="font-size:1.5rem;">
+              <span class="text-success">{{ present_today }}</span> <span class="text-muted" style="font-size:0.9rem;">P</span> / 
+              <span class="text-danger">{{ absent_today }}</span> <span class="text-muted" style="font-size:0.9rem;">A</span>
+            </span>
+          </div>
+          <div class="kpi-icon-clean text-success"><i class="fas fa-clipboard-check"></i></div>
+        </div>
+        {% with total_att=present_today|add:absent_today %}
+        {% if total_att > 0 %}
+          {% widthratio present_today total_att 100 as att_pct %}
+          <div class="hod-att-progress-track mt-2 mb-1">
+            <div class="hod-att-progress-fill" style="width: {{ att_pct }}%;"></div>
+          </div>
+          <div class="d-flex justify-content-between text-muted" style="font-size:0.7rem;">
+            <span>{{ att_pct }}% Present Rate</span>
+            <span class="text-success fw-bold">View Logs <i class="fas fa-arrow-right ms-1"></i></span>
+          </div>
+        {% else %}
+          <div class="hod-att-progress-track mt-2 mb-1">
+            <div class="hod-att-progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="d-flex justify-content-between text-muted" style="font-size:0.7rem;">
+            <span>No logs today</span>
+            <span class="text-success fw-bold">View Logs <i class="fas fa-arrow-right ms-1"></i></span>
+          </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- 4 Categorized Command Hubs -->
+<div class="row g-4 mb-4">
+  <!-- Hub 1: Academic & Curriculum -->
+  <div class="col-lg-6">
+    <div class="glass-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-graduation-cap me-2 text-accent"></i>Academic & Curriculum Command</h3>
+        <span class="badge bg-dark border border-secondary text-muted">Core Modules</span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <a href="{% url 'hod:add_subject' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-plus-circle"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Add New Subject</div>
+              <small class="text-muted" style="font-size:0.75rem;">Create branch subject</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_subjects' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-book-open"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Manage Subjects</div>
+              <small class="text-muted" style="font-size:0.75rem;">Branch subjects directory</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:upload_mid_marks' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-file-upload"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Mid Marks (Add & Edit)</div>
+              <small class="text-muted" style="font-size:0.75rem;">Branch Mid 1 & Mid 2 marks</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:subject_mapping' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-project-diagram"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Subject Mapping</div>
+              <small class="text-muted" style="font-size:0.75rem;">Link subjects to faculty</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_timetable' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Manage Timetables</div>
+              <small class="text-muted" style="font-size:0.75rem;">Schedule class slots</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:attendance_list' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-check-double"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Attendance Overrides</div>
+              <small class="text-muted" style="font-size:0.75rem;">Audit & edit logs</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:assign_teacher' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-user-plus"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Assign Counsellors</div>
+              <small class="text-muted" style="font-size:0.75rem;">Map student mentors</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_fees' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-receipt"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Student Fees & Dues</div>
+              <small class="text-muted" style="font-size:0.75rem;">Branch fee structures</small>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="col-6 col-lg-3">
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-val">{{ faculty_count }}</span>
-        <div class="kpi-icon bg-orange"><i class="fas fa-chalkboard-teacher"></i></div>
+  <!-- Hub 2: Faculty Administration -->
+  <div class="col-lg-6">
+    <div class="glass-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-users-cog me-2 text-accent"></i>Faculty Administration</h3>
+        {% if pending_leave_count > 0 %}
+        <span class="badge bg-danger px-2.5 py-1" style="font-size:0.7rem; animation: pulse 2s infinite;">
+          {{ pending_leave_count }} Pending Leave
+        </span>
+        {% else %}
+        <span class="badge bg-dark border border-secondary text-muted">Staff Management</span>
+        {% endif %}
       </div>
-      <span class="kpi-lbl">Branch Faculty</span>
-    </div>
-  </div>
-
-  <div class="col-6 col-lg-3">
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-val">{{ subject_count }}</span>
-        <div class="kpi-icon bg-purple"><i class="fas fa-book"></i></div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_faculty' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Faculty Directory</div>
+              <small class="text-muted" style="font-size:0.75rem;">Staff profiles & roles</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:faculty_attendance' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-user-clock"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Faculty Attendance</div>
+              <small class="text-muted" style="font-size:0.75rem;">Track staff logs</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_class_transfers' %}" class="hod-command-tile">
+            <div class="tile-icon text-primary"><i class="fas fa-exchange-alt"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Class Transfers & Audit</div>
+              <small class="text-muted" style="font-size:0.75rem;">Whose class taken by whom & when</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-12">
+          <a href="{% url 'hod:manage_leave_requests' %}" class="hod-command-tile">
+            <div class="tile-icon"><i class="fas fa-calendar-minus"></i></div>
+            <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold" style="font-size:0.88rem;">Leave Approvals</div>
+                <small class="text-muted" style="font-size:0.75rem;">Review & approve staff leave requests</small>
+              </div>
+              {% if pending_leave_count > 0 %}
+              <span class="badge bg-danger rounded-pill px-2.5 py-1">{{ pending_leave_count }}</span>
+              {% endif %}
+            </div>
+          </a>
+        </div>
       </div>
-      <span class="kpi-lbl">Active Subjects</span>
-    </div>
-  </div>
-
-  <div class="col-6 col-lg-3">
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-val">{{ present_today }} / {{ absent_today }}</span>
-        <div class="kpi-icon bg-green"><i class="fas fa-clipboard-check"></i></div>
-      </div>
-      <span class="kpi-lbl">Attendance Today (P / A)</span>
     </div>
   </div>
 </div>
 
+<!-- Bottom Section: Notice Board & Pending Achievements Verification Queue -->
 <div class="row g-4">
-  <!-- Quick Actions Panel -->
+  <!-- Notice Board Summary -->
   <div class="col-lg-6">
-    <div class="glass-card mb-4">
-      <div class="card-header-custom mb-3">
-        <h3 class="card-title-custom"><i class="fas fa-directions me-2 text-accent"></i>Quick Administration Links</h3>
-      </div>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <a href="{% url 'notifications:manage' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-bullhorn text-accent me-2"></i>Notices & Announcements
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:subject_mapping' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-book text-accent me-2"></i>Subject-Faculty Mapping
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:assign_teacher' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-user-plus text-accent me-2"></i>Assign Teachers/Counsellors
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_timetable' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-calendar-alt text-accent me-2"></i>Manage Timetables
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_students' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-user-graduate text-accent me-2"></i>Students Directory
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_faculty' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-chalkboard-teacher text-accent me-2"></i>Faculty Directory
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:faculty_attendance' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-user-clock text-accent me-2"></i>Faculty Attendance
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:attendance_list' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-check-double text-accent me-2"></i>Attendance Overrides
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:verify_achievements' %}" class="btn-vvit-outline w-100 py-3 text-start">
-            <i class="fas fa-trophy text-accent me-2"></i>Verify Achievements
-            {% if pending_achievements %}
-            <span class="badge bg-danger ms-1">{{ pending_achievements|length }}</span>
-            {% endif %}
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notice Board Summary -->
-    <div class="glass-card">
-      <div class="card-header-custom mb-3">
-        <h3 class="card-title-custom"><i class="fas fa-bell me-2 text-accent"></i>Notice Board</h3>
+    <div class="glass-card h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-bell me-2 text-accent"></i>Notice Board Feed</h3>
+        <a href="{% url 'notifications:manage' %}" class="btn-sm-accent text-decoration-none" style="font-size:0.75rem; padding:4px 10px;">
+          <i class="fas fa-plus me-1"></i>New Notice
+        </a>
       </div>
       <div class="list-group list-group-flush">
         {% for notice in notices %}
-        <div class="list-group-item bg-transparent text-white border-0 px-0 pb-3">
-          <div class="d-flex justify-content-between">
-            <h5 class="fw-bold mb-1" style="font-size:0.95rem; color:var(--accent-bright);">{{ notice.title }}</h5>
-            <small class="text-muted">{{ notice.created_at|date:"d M H:i" }}</small>
+        <div class="list-group-item bg-transparent text-white border-bottom border-secondary border-opacity-10 px-0 py-2.5">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <h5 class="fw-bold mb-1" style="font-size:0.9rem; color:var(--accent-bright);">{{ notice.title }}</h5>
+              <p class="text-muted small mb-0" style="line-height:1.4;">{{ notice.message|truncatewords:20 }}</p>
+            </div>
+            <small class="text-muted flex-shrink-0" style="font-size:0.7rem;">{{ notice.created_at|date:"d M, H:i" }}</small>
           </div>
-          <p class="text-muted small mb-0">{{ notice.message }}</p>
         </div>
         {% empty %}
-        <p class="text-muted py-3 text-center mb-0">No active notices.</p>
+        <div class="text-center py-4 text-muted">
+          <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+          <p class="small mb-0">No active notices published.</p>
+        </div>
         {% endfor %}
       </div>
     </div>
@@ -144,31 +318,42 @@
   <!-- Pending Achievements Review -->
   <div class="col-lg-6">
     <div class="glass-card h-100">
-      <div class="card-header-custom mb-3">
-        <h3 class="card-title-custom"><i class="fas fa-trophy me-2 text-accent"></i>Pending Achievements Verification</h3>
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-trophy me-2 text-accent"></i>Achievement Verifications</h3>
+        {% if pending_achievements %}
+        <span class="badge bg-danger rounded-pill px-2.5 py-1" style="font-size:0.7rem;">
+          {{ pending_achievements|length }} Pending
+        </span>
+        {% else %}
+        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2.5 py-1" style="font-size:0.7rem;">
+          <i class="fas fa-check-circle me-1"></i>All Verified
+        </span>
+        {% endif %}
       </div>
-      
+
       <div class="row g-3">
         {% for ach in pending_achievements %}
         <div class="col-12">
-          <div class="p-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h5 class="fw-bold text-primary mb-1">{{ ach.title }}</h5>
-                <p class="text-muted small mb-2">{{ ach.description }}</p>
-                <div class="d-flex gap-2 align-items-center">
-                  <span class="badge {% if ach.category == 'curricular' %}bg-blue{% else %}bg-green{% endif %} text-uppercase" style="font-size: 0.65rem;">
+          <div class="p-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md);">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <h5 class="fw-bold text-white mb-0" style="font-size:0.92rem;">{{ ach.title }}</h5>
+                  <span class="badge {% if ach.category == 'curricular' %}bg-danger{% else %}bg-purple{% endif %} text-uppercase" style="font-size: 0.62rem;">
                     {{ ach.get_category_display }}
                   </span>
-                  <span class="text-muted small">Submitted by: <strong>{{ ach.user.get_full_name }}</strong> ({{ ach.user.username }})</span>
+                </div>
+                <p class="text-muted small mb-2" style="font-size:0.78rem; line-height:1.4;">{{ ach.description }}</p>
+                <div class="text-muted small" style="font-size:0.72rem;">
+                  <i class="fas fa-user me-1 text-accent"></i>Submitted by: <strong>{{ ach.user.get_full_name }}</strong> ({{ ach.user.username }})
                 </div>
               </div>
-              <div class="d-flex gap-2">
-                <a href="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="btn btn-sm btn-success py-1 px-2" style="font-size:0.75rem;">
-                  <i class="fas fa-check"></i>
+              <div class="d-flex gap-1.5 flex-shrink-0">
+                <a href="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="btn btn-sm btn-success py-1.5 px-2.5" style="font-size:0.75rem;" title="Approve">
+                  <i class="fas fa-check me-1"></i>Approve
                 </a>
-                <a href="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="btn btn-sm btn-danger py-1 px-2" style="font-size:0.75rem;" onclick="return confirm('Reject this achievement?')">
-                  <i class="fas fa-times"></i>
+                <a href="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="btn btn-sm btn-danger py-1.5 px-2.5" style="font-size:0.75rem;" title="Reject" onclick="return confirm('Reject this achievement?')">
+                  <i class="fas fa-times me-1"></i>Reject
                 </a>
               </div>
             </div>
@@ -176,9 +361,9 @@
         </div>
         {% empty %}
         <div class="col-12 text-center py-5 text-muted">
-          <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
-          <h5>All Clean!</h5>
-          <p class="small text-muted mb-0">No pending curricular or co-curricular achievements to verify.</p>
+          <i class="fas fa-award fa-3x mb-2 text-success opacity-75"></i>
+          <h5 class="fw-bold text-white">Queue Clean!</h5>
+          <p class="small text-muted mb-0">No pending student or faculty achievement verifications waiting.</p>
         </div>
         {% endfor %}
       </div>

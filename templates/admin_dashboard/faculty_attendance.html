@@ -20,8 +20,8 @@
 <!-- KPI Stats Cards -->
 <div class="row g-4 mb-4">
   <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card kpi-info">
-      <div class="kpi-icon"><i class="fas fa-users-tie"></i></div>
+    <div class="kpi-card kpi-neutral">
+      <div class="kpi-icon"><i class="fas fa-chalkboard-teacher text-accent"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ faculties.count }}</span>
         <span class="kpi-label">Active Faculty</span>
@@ -58,14 +58,14 @@
 </div>
 
 <!-- Tabs: Mark Attendance & View Attendance Logs -->
-<ul class="nav nav-tabs custom-tabs mb-4" id="adminAttTab" role="tablist">
+<ul class="nav nav-pills mb-4 border-0" id="adminAttTab" role="tablist" style="gap: 10px;">
   <li class="nav-item" role="presentation">
-    <button class="nav-link active fw-bold" id="admin-mark-tab" data-bs-toggle="tab" data-bs-target="#admin-mark-pane" type="button" role="tab">
+    <button class="nav-link btn-vvit-tab active" id="admin-mark-tab" data-bs-toggle="tab" data-bs-target="#admin-mark-pane" type="button" role="tab">
       <i class="fas fa-edit me-2"></i>Mark / Update Daily Attendance
     </button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link fw-bold" id="admin-view-tab" data-bs-toggle="tab" data-bs-target="#admin-view-pane" type="button" role="tab">
+    <button class="nav-link btn-vvit-tab" id="admin-view-tab" data-bs-toggle="tab" data-bs-target="#admin-view-pane" type="button" role="tab">
       <i class="fas fa-list-alt me-2"></i>View System Attendance Logs & Reports
     </button>
   </li>
@@ -78,7 +78,7 @@
       <form method="GET" class="row g-3 align-items-center mb-3">
         <div class="col-md-4">
           <label class="form-label fw-bold small text-muted">Filter by Department</label>
-          <select name="branch" class="form-select form-select-sm" onchange="this.form.submit()">
+          <select name="branch" class="vvit-select" onchange="this.form.submit()">
             <option value="">-- All Departments --</option>
             {% for b in branches %}
             <option value="{{ b.id }}" {% if selected_branch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
@@ -87,7 +87,7 @@
         </div>
         <div class="col-md-4">
           <label class="form-label fw-bold small text-muted">Select Date to Mark:</label>
-          <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date }}" onchange="this.form.submit()">
+          <input type="date" name="date" class="vvit-input" value="{{ selected_date }}" onchange="this.form.submit()">
         </div>
       </form>
 
@@ -110,23 +110,31 @@
               {% for fac in faculties %}
               {% with rec=today_records|get_item:fac.id %}
               <tr>
-                <td><strong>{{ fac.employee_id }}</strong></td>
-                <td>{{ fac.user.get_full_name }}</td>
-                <td><span class="badge bg-dark">{{ fac.department.code|default:"GEN" }}</span></td>
                 <td>
-                  <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" {% if not rec or rec.status == 'P' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-outline-success" for="adm_p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
+                  <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-accent text-decoration-none fw-bold hover-bright" title="View Faculty Profile">
+                    <i class="fas fa-id-badge me-1" style="font-size:0.75rem;"></i>{{ fac.employee_id }}
+                  </a>
+                </td>
+                <td>
+                  <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-white text-decoration-none fw-bold hover-accent" title="View Faculty Profile">
+                    {{ fac.user.get_full_name }}
+                  </a>
+                </td>
+                <td><span class="badge-section small">{{ fac.department.code|default:"GEN" }}</span></td>
+                <td>
+                  <div class="btn-group att-status-group" role="group">
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" autocomplete="off" {% if not rec or rec.status == 'P' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-att-pill btn-att-present" for="adm_p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" {% if rec and rec.status == 'A' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-outline-danger" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-att-pill btn-att-absent" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" {% if rec and rec.status == 'L' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-outline-info" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" autocomplete="off" {% if rec and rec.status == 'L' %}checked{% endif %}>
+                    <label class="btn btn-sm btn-att-pill btn-att-leave" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
                   </div>
                 </td>
                 <td>
-                  <input type="text" name="remarks_{{ fac.id }}" class="form-control form-control-sm" value="{{ rec.remarks|default:'' }}" placeholder="Remarks...">
+                  <input type="text" name="remarks_{{ fac.id }}" class="vvit-input py-1 fs-6" value="{{ rec.remarks|default:'' }}" placeholder="Remarks...">
                 </td>
               </tr>
               {% endwith %}
@@ -135,8 +143,8 @@
           </table>
         </div>
 
-        <div class="mt-3 text-end">
-          <button type="submit" class="btn-sm-accent py-2 px-4 border-0">
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn-vvit-primary px-4 py-2">
             <i class="fas fa-save me-2"></i>Save Faculty Attendance
           </button>
         </div>
@@ -151,7 +159,7 @@
         <input type="hidden" name="date" value="{{ selected_date }}">
         <div class="col-md-3">
           <label class="form-label fw-bold small text-muted">Department</label>
-          <select name="branch" class="form-select form-select-sm">
+          <select name="branch" class="vvit-select">
             <option value="">-- All Departments --</option>
             {% for b in branches %}
             <option value="{{ b.id }}" {% if selected_branch_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.code }}</option>
@@ -162,7 +170,6 @@
           <label class="form-label fw-bold small text-muted">Month-wise Filter</label>
           <div class="date-input-wrapper">
             <input type="month" name="month_year" class="vvit-input" value="{{ month_year }}">
-            <i class="fas fa-calendar-alt cal-icon" title="Select Month"></i>
           </div>
         </div>
         <div class="col-md-2">
@@ -180,10 +187,10 @@
           </div>
         </div>
         <div class="col-md-2 d-flex gap-2">
-          <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
+          <button type="submit" class="btn-vvit-primary w-100 py-2">
             <i class="fas fa-filter me-1"></i>Filter
           </button>
-          <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="btn btn-sm btn-outline-secondary py-2">
+          <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="btn-vvit-secondary py-2 px-3">
             <i class="fas fa-redo"></i>
           </a>
         </div>
@@ -213,20 +220,28 @@
             {% for r in records %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td><strong>{{ r.date|date:"d M Y (D)" }}</strong></td>
-              <td><span class="badge bg-secondary">{{ r.faculty.department.code|default:"GEN" }}</span></td>
-              <td>{{ r.faculty.employee_id }}</td>
-              <td>{{ r.faculty.user.get_full_name }}</td>
+              <td><strong class="text-white">{{ r.date|date:"d M Y (D)" }}</strong></td>
+              <td><span class="badge-section small">{{ r.faculty.department.code|default:"GEN" }}</span></td>
+              <td>
+                <a href="{% url 'accounts:faculty_detail' r.faculty.id %}" class="text-accent fw-bold text-decoration-none hover-bright" title="View Profile">
+                  <i class="fas fa-id-badge me-1" style="font-size:0.75rem;"></i>{{ r.faculty.employee_id }}
+                </a>
+              </td>
+              <td>
+                <a href="{% url 'accounts:faculty_detail' r.faculty.id %}" class="text-white text-decoration-none fw-bold hover-accent" title="View Profile">
+                  {{ r.faculty.user.get_full_name }}
+                </a>
+              </td>
               <td>
                 {% if r.status == 'P' %}
-                <span class="badge bg-success">Present</span>
+                <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Present</span>
                 {% elif r.status == 'A' %}
-                <span class="badge bg-danger">Absent</span>
+                <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Absent</span>
                 {% else %}
-                <span class="badge bg-info">On Leave</span>
+                <span class="status-pill status-pending"><i class="fas fa-plane-departure me-1"></i>On Leave</span>
                 {% endif %}
               </td>
-              <td>{{ r.remarks|default:"--" }}</td>
+              <td class="text-white-50">{{ r.remarks|default:"--" }}</td>
               <td>{{ r.marked_by.get_full_name|default:"Admin/System" }}</td>
             </tr>
             {% endfor %}

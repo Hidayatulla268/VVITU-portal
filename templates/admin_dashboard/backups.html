@@ -71,7 +71,7 @@
               <td><strong>{{ b.filename }}</strong></td>
               <td>{{ b.created_at|date:"d M Y, h:i A" }}</td>
               <td class="text-end">{{ b.file_size|filesizeformat }}</td>
-              <td>{{ b.created_by.get_full_name|default:b.created_by.username }}</td>
+              <td>{% if b.created_by %}{{ b.created_by.get_full_name|default:b.created_by.username }}{% else %}System / Automated{% endif %}</td>
               <td class="text-center">
                 {% if b.exists %}
                 <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.75rem; padding: 4px 8px;">Available on Disk</span>

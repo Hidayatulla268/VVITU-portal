@@ -10,7 +10,7 @@
     <p class="ph-sub">Correct the attendance entry for student {{ record.student.roll_number }}</p>
   </div>
   <div class="ph-right">
-    <button onclick="window.history.back();" class="btn-vvit-outline">
+    <button type="button" onclick="window.history.back();" class="btn-vvit-outline">
       <i class="fas fa-arrow-left me-2"></i>Back
     </button>
   </div>
@@ -40,7 +40,7 @@
         </tr>
         <tr>
           <td class="text-muted">Marked By:</td>
-          <td>{{ record.marked_by.user.get_full_name|default:"System" }}</td>
+          <td>{% if record.marked_by and record.marked_by.user %}{{ record.marked_by.user.get_full_name }}{% else %}System{% endif %}</td>
         </tr>
       </table>
 

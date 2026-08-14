@@ -3,8 +3,11 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-from functools import wraps
+import logging
 import datetime
+from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 from accounts.models import User, Student, Faculty, DEOProfile, Achievement
 from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification
@@ -60,7 +63,9 @@ def manage_students(request):
         qs = qs.filter(
             Q(roll_number__icontains=search) | 
             Q(user__first_name__icontains=search) | 
-            Q(user__last_name__icontains=search)
+            Q(user__last_name__icontains=search) |
+            Q(branch__code__icontains=search) |
+            Q(branch__name__icontains=search)
         )
         
     from django.core.paginator import Paginator
@@ -244,10 +249,8 @@ def attendance_list(request):
             # Constraint: DEO can only edit if within 1 day (today or yesterday)
             today = timezone.localdate()
             delta = today - selected_date
-            allow_edit = (delta.days <= 1)
-            
-        except Exception:
-            pass
+        except (ValueError, Section.DoesNotExist, Exception) as e:
+            logger.warning(f"DEO attendance_list fetch failed for section={section_id}, date={date_str}: {e}")
             
     return render(request, 'deo/attendance_list.html', {
         'sections': sections,
@@ -451,3 +454,156 @@ def upload_marks(request):
         'current_results':     current_results,
     }
     return render(request, 'deo/upload_marks.html', context)
+
+
+@deo_required
+def manage_fees(request):
+    """
+    Allows DEO to view, update, and manage student fee structures and payments strictly for their assigned branch.
+    """
+    from accounts.models import Student, StudentFee
+    from core.models import Year
+    from django.db.models import Q
+
+    branch = request.branch
+    years = Year.objects.all()
+    
+    year_id = request.GET.get('year', '')
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('q', '').strip()
+
+    # Strictly scope students to DEO's assigned branch
+    students = Student.objects.filter(branch=branch, is_active=True, user__is_deleted=False).select_related('user', 'branch', 'section', 'year').order_by('roll_number')
+
+    if year_id:
+        students = students.filter(year_id=year_id)
+    if search:
+        students = students.filter(
+            Q(roll_number__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(branch__code__icontains=search) |
+            Q(branch__name__icontains=search)
+        )
+
+    sel_year = Year.objects.filter(id=year_id).first() if year_id else Year.objects.first()
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_single':
+            stu_id = request.POST.get('student_id')
+            # Scoped security: DEO can only edit students in their own branch
+            stu = get_object_or_404(Student, id=stu_id, branch=branch)
+
+            def parse_val(v, max_limit=10000000.0):
+                if not v: return 0.0
+                try:
+                    val = float(str(v).strip())
+                    if val < 0: return 0.0
+                    if val > max_limit: return max_limit
+                    return round(val, 2)
+                except (ValueError, TypeError, OverflowError): return 0.0
+
+            col = parse_val(request.POST.get('college_fee'))
+            hos = parse_val(request.POST.get('hostel_fee'))
+            bus = parse_val(request.POST.get('bus_fee'))
+            nba = parse_val(request.POST.get('nba_fee'))
+            exm = parse_val(request.POST.get('exam_fee'))
+            bbk = parse_val(request.POST.get('book_bank_fee'))
+            oth = parse_val(request.POST.get('other_fee'))
+            paid = parse_val(request.POST.get('amount_paid'))
+            remarks = request.POST.get('remarks', '').strip()
+            due_date_str = request.POST.get('due_date', '').strip()
+            due_date = due_date_str if due_date_str else None
+
+            fee_year = stu.year or sel_year or Year.objects.first()
+            fee_rec, created = StudentFee.objects.get_or_create(
+                student=stu,
+                academic_year=fee_year
+            )
+            try:
+                fee_rec.college_fee = col
+                fee_rec.hostel_fee = hos
+                fee_rec.bus_fee = bus
+                fee_rec.nba_fee = nba
+                fee_rec.exam_fee = exm
+                fee_rec.book_bank_fee = bbk
+                fee_rec.other_fee = oth
+                fee_rec.amount_paid = paid
+                fee_rec.remarks = remarks
+                fee_rec.due_date = due_date
+                fee_rec.updated_by = request.user
+                fee_rec.save()
+                messages.success(request, f"Fee record updated successfully for {stu.roll_number}.")
+            except Exception as err:
+                logger.error(f"Error saving fee record for student {stu.roll_number}: {err}")
+                messages.error(request, f"Could not update fees for {stu.roll_number}: Invalid or excessive fee amount entered.")
+
+            return redirect(f"{request.path}?year={year_id}&q={search}&status={status_filter}")
+            return redirect(f"{request.path}?year={year_id}&q={search}&status={status_filter}")
+
+        elif action == 'bulk_assign':
+            def parse_val(v):
+                if not v: return 0.0
+                try: return float(str(v).strip())
+                except (ValueError, TypeError): return 0.0
+
+            col = parse_val(request.POST.get('college_fee'))
+            nba = parse_val(request.POST.get('nba_fee'))
+            exm = parse_val(request.POST.get('exam_fee'))
+            bbk = parse_val(request.POST.get('book_bank_fee'))
+            oth = parse_val(request.POST.get('other_fee'))
+
+            count = 0
+            for stu in students:
+                fee_year = stu.year or sel_year or Year.objects.first()
+                fee_rec, created = StudentFee.objects.get_or_create(
+                    student=stu,
+                    academic_year=fee_year
+                )
+                fee_rec.college_fee = col
+                fee_rec.nba_fee = nba
+                fee_rec.exam_fee = exm
+                fee_rec.book_bank_fee = bbk
+                fee_rec.other_fee = oth
+                fee_rec.updated_by = request.user
+                fee_rec.save()
+                count += 1
+
+            messages.success(request, f"Standard fee structure applied to {count} students in {branch.code}.")
+            return redirect(f"{request.path}?year={year_id}")
+
+    # Ensure every active student has a StudentFee record for their academic year
+    for stu in students:
+        fee_year = stu.year or sel_year or Year.objects.first()
+        if fee_year:
+            StudentFee.objects.get_or_create(student=stu, academic_year=fee_year)
+
+    fee_records = StudentFee.objects.filter(student__in=students)
+    if year_id:
+        fee_records = fee_records.filter(academic_year_id=year_id)
+    if status_filter:
+        fee_records = fee_records.filter(status=status_filter)
+
+    fee_dict = {f.student_id: f for f in fee_records}
+    
+    total_expected = sum(float(f.total_fee_amount) for f in fee_records)
+    total_collected = sum(float(f.amount_paid) for f in fee_records)
+    total_outstanding = sum(float(f.due_amount) for f in fee_records)
+
+    return render(request, 'admin_dashboard/manage_fees.html', {
+        'students': students,
+        'fee_dict': fee_dict,
+        'years': years,
+        'department': branch,
+        'sel_year': sel_year,
+        'year_id': year_id,
+        'search': search,
+        'status_filter': status_filter,
+        'total_expected': total_expected,
+        'total_collected': total_collected,
+        'total_outstanding': total_outstanding,
+        'role': 'deo',
+    })

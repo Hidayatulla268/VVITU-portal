@@ -29,15 +29,15 @@ if '*' not in ALLOWED_HOSTS and 'testserver' not in ALLOWED_HOSTS:
 # ── Production HTTPS / Cookie security ──────
 # These are SAFE to leave as-is in dev (DEBUG=True bypasses most of them).
 # In production set DJANGO_DEBUG=False and point to your real HTTPS domain.
-SECURE_SSL_REDIRECT          = False  # redirect HTTP → HTTPS in prod
+SECURE_SSL_REDIRECT          = False  # True in production, False in dev
 SECURE_HSTS_SECONDS          = 0 if DEBUG else 31536000  # 1 year HSTS in prod
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD          = not DEBUG
 SECURE_BROWSER_XSS_FILTER   = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS              = 'DENY'
-SESSION_COOKIE_SECURE        = False
-CSRF_COOKIE_SECURE           = False
+SESSION_COOKIE_SECURE        = False # True in production (HTTPS only)
+CSRF_COOKIE_SECURE           = False  # True in production (HTTPS only)
 SESSION_COOKIE_HTTPONLY      = True
 SESSION_COOKIE_SAMESITE      = 'Lax'
 CSRF_COOKIE_HTTPONLY         = True
@@ -194,7 +194,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

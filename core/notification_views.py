@@ -16,7 +16,8 @@ Staff and Admin views:
 """
 
 import json
-from django.db import models
+import logging
+
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -28,6 +29,8 @@ from django.utils.dateparse import parse_datetime
 
 from core.models import Notification, NotificationRead, Branch, Section
 from accounts.models import User
+
+logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────
@@ -49,43 +52,70 @@ def get_user_notifications(user, limit=None):
         try:
             user_branch = user.student_profile.branch
             user_section = user.student_profile.section
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"get_user_notifications: student profile lookup for user {user.pk}: {e}")
     elif user_role in ['faculty', 'hod', 'lab_technician']:
         try:
             user_branch = user.faculty_profile.department
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"get_user_notifications: faculty profile lookup for user {user.pk}: {e}")
     elif user_role == 'deo':
         try:
             user_branch = user.deo_profile.branch
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.debug(f"get_user_notifications: deo profile lookup for user {user.pk}: {e}")
 
-    # Precise Targeting Query:
-    # 1. Sent to everyone (target_all=True)
-    # 2. Sent to this specific user (target_user=user)
-    # 3. Sent to a group matching user's branch/section/role
-    combination_q = Q(target_all=False, target_user__isnull=True)
-    
-    if user_branch:
-        combination_q &= (Q(target_branch__isnull=True) | Q(target_branch=user_branch))
+    # ─────────────────────────────────────────────────────────
+    # STUDENT NOTIFICATION RESTRICTION RULE:
+    # Students can ONLY see notifications sent by Admin or HOD
+    # (or system result releases) that specifically target students.
+    # ─────────────────────────────────────────────────────────
+    if user_role == 'student':
+        sender_q = (
+            Q(created_by__role__in=['admin', 'hod']) |
+            Q(created_by__is_superuser=True) |
+            Q(created_by__isnull=True) |
+            Q(target_user=user)
+        )
+        role_q = Q(target_user=user) | Q(target_role='student') | Q(target_all=True)
+
+        if user_branch:
+            branch_q = Q(target_branch__isnull=True) | Q(target_branch=user_branch)
+        else:
+            branch_q = Q(target_branch__isnull=True)
+
+        if user_section:
+            section_q = Q(target_section__isnull=True) | Q(target_section=user_section)
+        else:
+            section_q = Q(target_section__isnull=True)
+
+        target_q = sender_q & role_q & branch_q & section_q
     else:
-        combination_q &= Q(target_branch__isnull=True)
+        # Standard Staff/Admin Targeting Query:
+        combination_q = Q(target_all=False, target_user__isnull=True)
         
-    if user_section:
-        combination_q &= (Q(target_section__isnull=True) | Q(target_section=user_section))
-    else:
-        combination_q &= Q(target_section__isnull=True)
-        
-    if user_role:
-        combination_q &= (Q(target_role='') | Q(target_role=user_role))
-    else:
-        combination_q &= Q(target_role='')
+        if user_branch:
+            combination_q &= (Q(target_branch__isnull=True) | Q(target_branch=user_branch))
+        else:
+            combination_q &= Q(target_branch__isnull=True)
+            
+        if user_section:
+            combination_q &= (Q(target_section__isnull=True) | Q(target_section=user_section))
+        else:
+            combination_q &= Q(target_section__isnull=True)
+            
+        if user_role:
+            combination_q &= (Q(target_role='') | Q(target_role=user_role))
+        else:
+            combination_q &= Q(target_role='')
 
-    target_q = Q(target_all=True) | Q(target_user=user) | combination_q
+        target_q = Q(target_all=True) | Q(target_user=user) | combination_q
 
-    qs = qs.filter(target_q).select_related('created_by').order_by('-created_at')
+    qs = qs.filter(target_q)
+    if user_role == 'student':
+        qs = qs.exclude(target_role='faculty').exclude(title__icontains='leave').exclude(message__icontains='leave request')
+
+    qs = qs.select_related('created_by').order_by('-created_at')
 
     if limit:
         qs = qs[:limit]
@@ -216,13 +246,13 @@ def manage_notices(request):
         if user.role in ['hod', 'faculty', 'lab_technician']:
             try:
                 branch = user.faculty_profile.department
-            except Exception:
-                pass
+            except (AttributeError, Exception) as e:
+                logger.debug(f"manage_notices: faculty profile lookup for user {user.pk}: {e}")
         elif user.role == 'deo':
             try:
                 branch = user.deo_profile.branch
-            except Exception:
-                pass
+            except (AttributeError, Exception) as e:
+                logger.debug(f"manage_notices: deo profile lookup for user {user.pk}: {e}")
 
         notices = Notification.objects.filter(is_deleted=False).filter(
             Q(created_by=user) | Q(target_branch=branch)
@@ -253,13 +283,13 @@ def create_notification(request):
     if user.role == 'hod':
         try:
             branch = user.faculty_profile.department
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.warning(f"create_notification: HOD faculty_profile lookup failed for user {user.pk}: {e}")
     elif user.role == 'deo':
         try:
             branch = user.deo_profile.branch
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.warning(f"create_notification: DEO deo_profile lookup failed for user {user.pk}: {e}")
 
     if branch:
         sections = Section.objects.filter(branch=branch).select_related('year')
@@ -367,13 +397,13 @@ def edit_notification(request, pk):
     if user.role == 'hod':
         try:
             branch = user.faculty_profile.department
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.warning(f"edit_notification: HOD faculty_profile lookup failed for user {user.pk}: {e}")
     elif user.role == 'deo':
         try:
             branch = user.deo_profile.branch
-        except Exception:
-            pass
+        except (AttributeError, Exception) as e:
+            logger.warning(f"edit_notification: DEO deo_profile lookup failed for user {user.pk}: {e}")
 
     if branch:
         sections = Section.objects.filter(branch=branch).select_related('year')
@@ -486,7 +516,7 @@ def edit_notification(request, pk):
 def delete_notification(request, pk):
     if request.user.role not in ['admin', 'hod', 'deo']:
         messages.error(request, 'Access denied.')
-        return redirect('accounts:redirect')
+        return redirect('notifications:manage')
 
     n = get_object_or_404(Notification, pk=pk)
     if request.user.role != 'admin' and n.created_by != request.user:

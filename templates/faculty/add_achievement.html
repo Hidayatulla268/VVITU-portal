@@ -77,7 +77,7 @@
               </div>
               <div>
                 {% if ach.is_verified %}
-                <span class="badge bg-success text-uppercase" style="font-size: 0.65rem;" title="Verified by {{ ach.verified_by.get_full_name|default:ach.verified_by.username }}">
+                <span class="badge bg-success text-uppercase" style="font-size: 0.65rem;" title="Verified by {% if ach.verified_by %}{{ ach.verified_by.get_full_name|default:ach.verified_by.username }}{% else %}HOD/Faculty{% endif %}">
                   <i class="fas fa-check-circle me-1"></i>Verified
                 </span>
                 {% else %}

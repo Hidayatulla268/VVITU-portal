@@ -26,7 +26,7 @@ def login_view(request):
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
-        password = request.POST.get('password', '').strip()
+        password = request.POST.get('password', '')
 
         # Resolve username case-insensitively, also supporting email-based login
         from django.contrib.auth import get_user_model
@@ -100,8 +100,8 @@ def set_password(request):
         return redirect(request.user.get_dashboard_url())
 
     if request.method == 'POST':
-        password = request.POST.get('password', '').strip()
-        confirm_password = request.POST.get('confirm_password', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
 
         if not password:
             messages.error(request, "Password cannot be empty.")
@@ -185,9 +185,9 @@ def change_password(request):
         return redirect(request.user.get_dashboard_url())
 
     if request.method == 'POST':
-        current_password = request.POST.get('current_password', '').strip()
-        new_password = request.POST.get('new_password', '').strip()
-        confirm_password = request.POST.get('confirm_password', '').strip()
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
 
         if not current_password or not new_password or not confirm_password:
             messages.error(request, "All password fields are required.")

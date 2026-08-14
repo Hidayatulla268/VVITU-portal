@@ -50,29 +50,63 @@
             </span>
           </td>
           <td>
-            <small class="text-muted">
-              {% if notice.target_all %}
-                <span class="badge bg-primary">Everyone</span>
-              {% elif notice.target_user %}
-                <span class="badge bg-info">User: {{ notice.target_user.username }}</span>
-              {% elif notice.target_section %}
-                <span class="badge bg-success">Class: {{ notice.target_section }}</span>
-              {% elif notice.target_branch %}
-                {% if notice.target_role %}
-                  <span class="badge bg-warning text-dark">{{ notice.target_branch.code }} {{ notice.target_role|capfirst }}s</span>
-                {% else %}
-                  <span class="badge bg-warning text-dark">{{ notice.target_branch.code }} Branch Wide</span>
-                {% endif %}
-              {% elif notice.target_role %}
-                <span class="badge bg-secondary">All {{ notice.target_role|capfirst }}s</span>
+            {% if notice.target_all %}
+              <span class="badge-audience badge-audience-all" title="Sent to all portal users">
+                <i class="fas fa-globe"></i>Everyone
+              </span>
+            {% elif notice.target_user %}
+              <span class="badge-audience badge-audience-user" title="Direct user notification">
+                <i class="fas fa-user"></i>User: {{ notice.target_user.username }}
+              </span>
+            {% elif notice.target_section %}
+              <span class="badge-audience badge-audience-section" title="Class Section audience">
+                <i class="fas fa-school"></i>Class: {{ notice.target_section }}
+              </span>
+            {% elif notice.target_branch %}
+              {% if notice.target_role %}
+                <span class="badge-audience badge-audience-branch" title="Department role broadcast">
+                  <i class="fas fa-building"></i>{{ notice.target_branch.code }} {{ notice.target_role|capfirst }}s
+                </span>
               {% else %}
-                —
+                <span class="badge-audience badge-audience-branch" title="Department wide broadcast">
+                  <i class="fas fa-building-columns"></i>{{ notice.target_branch.code }} Branch Wide
+                </span>
               {% endif %}
-            </small>
+            {% elif notice.target_role %}
+              {% if notice.target_role == 'admin' %}
+                <span class="badge-audience badge-audience-admin" title="Admin audience">
+                  <i class="fas fa-user-shield"></i>All Admins
+                </span>
+              {% elif notice.target_role == 'hod' %}
+                <span class="badge-audience badge-audience-hod" title="HOD audience">
+                  <i class="fas fa-user-tie"></i>All HODs
+                </span>
+              {% elif notice.target_role == 'faculty' %}
+                <span class="badge-audience badge-audience-faculty" title="Faculty audience">
+                  <i class="fas fa-chalkboard-teacher"></i>All Faculty
+                </span>
+              {% elif notice.target_role == 'student' %}
+                <span class="badge-audience badge-audience-student" title="Student audience">
+                  <i class="fas fa-user-graduate"></i>All Students
+                </span>
+              {% elif notice.target_role == 'deo' %}
+                <span class="badge-audience badge-audience-deo" title="DEO audience">
+                  <i class="fas fa-keyboard"></i>All DEOs
+                </span>
+              {% else %}
+                <span class="badge-audience badge-audience-role" title="{{ notice.target_role }} audience">
+                  <i class="fas fa-users"></i>All {{ notice.target_role|capfirst }}s
+                </span>
+              {% endif %}
+            {% else %}
+              <span class="badge-audience badge-audience-neutral" title="System / Department broadcast">
+                <i class="fas fa-users"></i>Department / System
+              </span>
+            {% endif %}
           </td>
           <td>
             <small class="text-muted">
-              {{ notice.created_by.get_full_name|default:notice.created_by.username }}
+              {% if notice.created_by %}{{ notice.created_by.get_full_name|default:notice.created_by.username }}{% else %}System{% endif %}
             </small>
           </td>
           <td><small class="text-muted">{{ notice.created_at|date:"d M Y, H:i" }}</small></td>

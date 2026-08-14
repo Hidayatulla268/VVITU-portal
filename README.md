@@ -25,7 +25,15 @@ A production-grade college ERP web application built with Django, featuring a gl
     *   Full support for Monday–Saturday timetable scheduling. Includes room/lab location badges (e.g. "Block C - Room 305") and faculty class allocations.
 *   **Comprehensive Password Management**: Self-service password change (`/accounts/change-password/`) restricted to authorized roles (Admin, HOD, DEO). Students and Faculty are prevented from self-service password changes, requiring resets via Admin/HOD/DEO management tools.
 *   **Faculty Attendance & Daily Tracking**: Allows HODs and Admins to monitor and log daily faculty attendance (`Present`, `Absent`, `On Leave`, `Official Duty`) with check-in timestamps and remarks. Faculty members can review their monthly attendance summary.
-*   **Class Period Substitutions / Transfers**: Faculty members on leave or duty can transfer scheduled class periods to substitute colleagues within their department for specific dates. Substitute faculty receive authority to mark student attendance for the transferred slots.
+*   **College-Wide Class Proxy & Substitution Audit (Admin & HOD)**:
+    *   **Cross-Branch Proxy Allocation**: Administrators have complete college-wide control to assign substitute faculty across any academic department, while HODs manage substitutions within their branch.
+    *   **Conflict-Free Substitute Availability Engine**: Real-time AJAX calculation filters faculty members with zero scheduling collisions, no existing proxy assignments, and no active leaves for that period.
+    *   **Automated Multi-Channel Dispatch**: Instantly triggers Fast2SMS, transactional Email, and in-app bell notifications to the assigned substitute teacher.
+*   **Faculty Class Discussion Logs & Student Class Diary (`ClassDiary` Model)**:
+    *   **Optional Attendance Logging**: Teaching staff can optionally enter the topics covered, lecture concepts discussed, and homework/reading assignments directly while marking attendance.
+    *   **Dedicated Faculty Management Panel (`/faculty/class-diary/`)**: Full CRUD interface for teachers to create, backfill, search, edit, or delete lesson notes.
+    *   **Student Daily Lesson Feed (`/student/class-diary/`)**: Students can review what was taught day-by-day in their section, search topic keywords, and check homework tasks, accompanied by a dynamic dashboard overview widget.
+*   **Resilient Multi-Format Date Parsing Engine (`core/transfer_utils.py`)**: `parse_flexible_date()` handles standard ISO dates, human-friendly Flatpickr dates (`Fri, 14 Aug 2026`), and multiple calendar formats seamlessly across all AJAX views and forms.
 *   **HOD Dashboard & Dual Panel**: Allows Heads of Departments to view departmental stats, assign faculty to subjects/classes, designate counselors/class teachers, manage and publish branch timetables, approve student/faculty achievements, and toggle between HOD administration and Faculty teaching panels.
 *   **DEO Dashboard**: Enables Data Entry Operators to add/edit students within their assigned branch, upload marks, and edit attendance records within a strict **1-day editing window** (older edits require HOD authorization).
 *   **Unified Notices Board System**: Multi-scoped notifications system allowing Admin, HODs, and DEOs to compose and manage notices targeted to everyone, specific roles, specific branches, specific classes, or single users with quick navbar shortcuts.
@@ -72,23 +80,24 @@ VVITU_Portal/
 │   └── profile_detail_views.py  # Read-only student & faculty detail views for Admin/HOD
 │
 ├── core/                 # Shared academic models, notifications centre, and tasks
-│   ├── models.py         # Branch, Section, Subject, Timetable, FacultyAttendance, FacultyLeaveRequest, Result, Notification
+│   ├── models.py         # Branch, Section, Subject, Timetable, ClassDiary, FacultyAttendance, FacultyLeaveRequest, Result, Notification
 │   ├── notification_views.py # Full notifications CRUD — compose, manage, delete
-│   └── sms_utils.py      # Fast2SMS SMS notification dispatcher
+│   ├── sms_utils.py      # Fast2SMS SMS notification dispatcher
+│   └── transfer_utils.py # Free faculty calculator, flexible date parser & class history engine
 │
-├── student/              # Student dashboard, results summary, backlogs alert, past papers
-├── faculty/              # Mark attendance, reports, leave applications, class transfers, marks upload
-├── admin_dashboard/      # Admin settings, staff management, global CRUD, leave request approvals
+├── student/              # Student dashboard, class diary, results summary, backlogs alert, past papers
+├── faculty/              # Mark attendance, class diary, reports, leave applications, class transfers, marks upload
+├── admin_dashboard/      # Admin settings, staff management, global CRUD, proxy audit, leave request approvals
 ├── hod/                  # HOD department manager, approvals, leave applications, timetable editors
 ├── deo/                  # DEO branch lists, attendance records, upload pages
 │
 ├── templates/            # HTML templates (extends core/base.html)
 │   ├── core/base.html    # Master layout: navbar, sidebar, theme switcher, notifications dropdown
 │   ├── accounts/         # Profile details, student backlogs card, first-time password reset
-│   ├── student/          # Dashboard, results, backlogs banner, calendar, past papers
-│   ├── faculty/          # Dashboard, attendance sheet, leave requests, reports, marks upload
-│   ├── admin_dashboard/  # Admin staff/student managers, leave request approvals, bulk CSV pages
-│   ├── hod/              # HOD department manager, leave applications, approvals, timetable editors
+│   ├── student/          # Dashboard, class_diary.html, results, backlogs banner, calendar, past papers
+│   ├── faculty/          # Dashboard, class_diary.html, attendance sheet, leave requests, reports, marks upload
+│   ├── admin_dashboard/  # Admin staff/student managers, faculty_class_history.html, leave approvals, bulk CSV
+│   ├── hod/              # HOD department manager, manage_class_transfers.html, approvals, timetable editors
 │   └── deo/              # DEO branch lists, attendance records, upload pages
 │
 ├── static/

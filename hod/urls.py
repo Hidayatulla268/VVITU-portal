@@ -33,8 +33,16 @@ urlpatterns = [
     path('subjects/add/',            views.add_subject,               name='add_subject'),
     path('subjects/<int:pk>/delete/',views.delete_subject,            name='delete_subject'),
 
+    # Branch Scoped Marks CRUD (Mid 1 & Mid 2)
+    path('mid-marks/',               views.upload_mid_marks,          name='upload_mid_marks'),
+
     # Leave Management
     path('leave-requests/',               views.manage_leave_requests, name='manage_leave_requests'),
     path('leave-requests/<int:pk>/<str:action>/', views.action_leave_request, name='action_leave_request'),
     path('leave-requests/cancel/<int:pk>/', views.cancel_leave_request, name='cancel_leave_request'),
+    # Fee Management
+    path('fees/',                    views.manage_fees,               name='manage_fees'),
+    # Class Transfer Audit & Proxy Management
+    path('class-transfers/',         views.manage_class_transfers,            name='manage_class_transfers'),
+    path('ajax/branch-timetable/',   views.ajax_get_branch_timetable_slots,  name='ajax_branch_timetable'),
 ]

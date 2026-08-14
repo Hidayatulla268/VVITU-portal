@@ -25,7 +25,9 @@ function toggleTheme() {
 (function () { applyTheme(localStorage.getItem(THEME_KEY) || 'dark'); })();
 
 
-/* ── 2. SIDEBAR TOGGLE ───────────────────────────────────────────── */
+/* ── 2. SIDEBAR TOGGLE & SCROLL PERSISTENCE ─────────────────────── */
+const SIDEBAR_SCROLL_KEY = 'vvit_sidebar_scroll';
+
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -33,6 +35,37 @@ function toggleSidebar() {
   const open = sidebar.classList.toggle('open');
   if (overlay) overlay.classList.toggle('open', open);
   document.body.style.overflow = open ? 'hidden' : '';
+}
+
+function initSidebarScrollPersistence() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+
+  // Record scroll position continuously as user scrolls
+  sidebar.addEventListener('scroll', () => {
+    sessionStorage.setItem(SIDEBAR_SCROLL_KEY, sidebar.scrollTop);
+  }, { passive: true });
+
+  // Save scroll position when clicking any navigation link
+  sidebar.querySelectorAll('a.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      sessionStorage.setItem(SIDEBAR_SCROLL_KEY, sidebar.scrollTop);
+    });
+  });
+
+  // Restore saved scroll position if available
+  const savedScroll = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+  if (savedScroll !== null) {
+    sidebar.scrollTop = parseInt(savedScroll, 10);
+  }
+
+  // Ensure active navigation item is scrolled into view
+  const activeLink = sidebar.querySelector('a.nav-link.active');
+  if (activeLink) {
+    setTimeout(() => {
+      activeLink.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+    }, 50);
+  }
 }
 
 window.addEventListener('resize', () => {
@@ -177,7 +210,52 @@ function triggerStaggeredEntrance() {
 }
 
 
-/* ── 10. DOM READY ───────────────────────────────────────────────── */
+/* ── 10. BUTTON RIPPLE EFFECT ───────────────────────────────────── */
+function initButtonRipples() {
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-vvit-primary, .btn-vvit-secondary, .btn-vvit-outline, .btn-vvit-success, .btn-vvit-danger, .btn-sm-accent, .btn-sm-danger, .btn-sm-edit, .btn-download, .btn-vvit-tab, .vvit-btn, .vvit-btn-primary, .vvit-btn-secondary, .vvit-btn-danger, .vvit-btn-success, .btn-leave-approve, .btn-leave-reject, .btn-leave-remarks, .btn-leave-apply, .theme-toggle-btn, .notif-bell-btn, .page-btn, .btn-login');
+    if (!btn) return;
+    
+    const rect = btn.getBoundingClientRect();
+    const wave = document.createElement('span');
+    wave.className = 'vvit-ripple-wave';
+    const size = Math.max(rect.width, rect.height);
+    wave.style.width = wave.style.height = `${size}px`;
+    wave.style.left = `${e.clientX - rect.left - size / 2}px`;
+    wave.style.top = `${e.clientY - rect.top - size / 2}px`;
+    
+    btn.appendChild(wave);
+    setTimeout(() => wave.remove(), 650);
+  });
+}
+
+
+/* ── 10b. DATE INPUT PICKER TRIGGER ─────────────────────────────── */
+function initDateInputPickerTrigger() {
+  document.addEventListener('click', e => {
+    const wrapper = e.target.closest('.date-input-wrapper');
+    if (!wrapper) return;
+    
+    const inputs = Array.from(wrapper.querySelectorAll('input'));
+    for (const inp of inputs) {
+      if (inp._flatpickr) {
+        inp._flatpickr.open();
+        return;
+      }
+    }
+    const visibleInp = wrapper.querySelector('input:not([type="hidden"])') || inputs[0];
+    if (visibleInp) {
+      if (typeof visibleInp.showPicker === 'function') {
+        try { visibleInp.showPicker(); } catch (err) {}
+      } else {
+        visibleInp.focus();
+      }
+    }
+  });
+}
+
+
+/* ── 11. DOM READY ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Re-apply theme so icon updates correctly
   applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
@@ -185,6 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initToasts();
   animatePctBars();
   animateGauge();
+  initButtonRipples();
+  initSidebarScrollPersistence();
+  initDateInputPickerTrigger();
   document.body.classList.add('js-loaded');
   triggerStaggeredEntrance();
 

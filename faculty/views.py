@@ -13,8 +13,11 @@ permission mapping (both resolve to faculty:* URLs).
 """
 
 import io
+import logging
 import datetime
 from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -28,7 +31,7 @@ from django.views.decorators.http import require_POST
 from accounts.models import Faculty, Student, Achievement, FacultyLeaveRequest
 from core.models import (
     Section, Timetable, Attendance, Subject, Result, Exam, Year,
-    FacultyAttendance, ClassTransfer
+    FacultyAttendance, ClassTransfer, ClassDiary
 )
 from core.sms_utils import send_absent_notifications, send_absent_sms_to_parent
 
@@ -226,6 +229,65 @@ def ajax_get_timetable(request):
     return JsonResponse({'slots': data})
 
 
+@login_required
+def ajax_get_free_faculty(request):
+    """Return JSON list of free faculty for a specific (date, period)."""
+    date_str = request.GET.get('date')
+    period_str = request.GET.get('period')
+    branch_id_str = request.GET.get('branch_id') or request.GET.get('department')
+    exclude_fac_id = request.GET.get('exclude_faculty_id')
+
+    if not date_str or not period_str:
+        return JsonResponse({'error': 'date and period parameters required'}, status=400)
+
+    from core.transfer_utils import get_free_faculty_for_period, parse_flexible_date
+    from core.models import Branch
+    from accounts.models import Faculty
+
+    req_date = parse_flexible_date(date_str)
+    if not req_date:
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
+
+    try:
+        period = int(period_str)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid period format'}, status=400)
+
+
+    current_fac = getattr(request.user, 'faculty_profile', None)
+
+    dept = None
+    if branch_id_str and branch_id_str.isdigit():
+        dept = Branch.objects.filter(id=int(branch_id_str)).first()
+    elif request.user.role != 'admin' and current_fac:
+        dept = current_fac.department
+
+    exclude_fac = None
+    if exclude_fac_id and exclude_fac_id.isdigit():
+        exclude_fac = Faculty.objects.filter(id=int(exclude_fac_id)).first()
+    elif current_fac:
+        exclude_fac = current_fac
+
+    free_fac_qs = get_free_faculty_for_period(
+        date=req_date,
+        period=period,
+        department=dept,
+        exclude_faculty=exclude_fac
+    )
+
+    data = [
+        {
+            'id': f.id,
+            'name': f.full_name,
+            'employee_id': f.employee_id,
+            'department': f.department.code if f.department else 'Gen',
+        }
+        for f in free_fac_qs
+    ]
+    return JsonResponse({'free_faculty': data})
+
+
+
 # ─────────────────────────────────────────────
 # MARK ATTENDANCE
 # ─────────────────────────────────────────────
@@ -277,6 +339,23 @@ def mark_attendance(request):
             return redirect('faculty:mark_attendance')
 
         slot = get_object_or_404(Timetable, id=slot_id)
+
+        # Check if faculty is original faculty on approved leave for att_date
+        from accounts.models import FacultyLeaveRequest
+        if slot.faculty == faculty:
+            on_leave = FacultyLeaveRequest.objects.filter(
+                faculty=faculty,
+                start_date__lte=att_date,
+                end_date__gte=att_date,
+                status='approved'
+            ).exists()
+            if on_leave:
+                messages.error(
+                    request,
+                    f"You are on approved leave for {att_date.strftime('%d-%b-%Y')}. You cannot post attendance for your classes. Substitute faculty must post attendance."
+                )
+                return redirect('faculty:mark_attendance')
+
         students_in_section = Student.objects.filter(section_id=section_id, is_active=True, user__is_deleted=False)
 
         saved_count = 0
@@ -302,7 +381,31 @@ def mark_attendance(request):
                 if sent:
                     sms_count += 1
 
+        # Mark ClassTransfer as completed if substitute faculty marked attendance
+        ClassTransfer.objects.filter(timetable_entry=slot, date=att_date).update(status='completed')
+
+        # Optional Class Discussion / Lesson Log
+        topic_covered = request.POST.get('topic_covered', '').strip()
+        if topic_covered:
+            discussion_summary = request.POST.get('discussion_summary', '').strip()
+            homework_assignment = request.POST.get('homework_assignment', '').strip()
+            ClassDiary.objects.update_or_create(
+                timetable_entry=slot,
+                date=att_date,
+                defaults={
+                    'section': slot.section,
+                    'subject': slot.subject,
+                    'faculty': faculty,
+                    'period': slot.period,
+                    'topic_covered': topic_covered,
+                    'discussion_summary': discussion_summary,
+                    'homework_assignment': homework_assignment,
+                }
+            )
+
         msg_text = f"Attendance saved for {saved_count} students."
+        if topic_covered:
+            msg_text += " Class discussion notes recorded."
         if sms_count > 0:
             msg_text += f" ({sms_count} absence SMS notification(s) sent to parents)."
         messages.success(request, msg_text)
@@ -315,6 +418,131 @@ def mark_attendance(request):
         'faculty':     faculty,
     }
     return render(request, 'faculty/mark_attendance.html', context)
+
+
+# ─────────────────────────────────────────────
+# CLASS DIARY / LESSON DISCUSSION LOG
+# ─────────────────────────────────────────────
+@faculty_required
+def class_diary(request):
+    """
+    Dedicated view for faculty to view, add, edit, and search daily class discussion logs.
+    """
+    faculty = request.faculty
+    today = timezone.localdate()
+    from core.transfer_utils import parse_flexible_date
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'save_entry':
+            entry_id = request.POST.get('entry_id')
+            slot_id = request.POST.get('slot_id')
+            date_str = request.POST.get('date', '').strip()
+            topic_covered = request.POST.get('topic_covered', '').strip()
+            discussion_summary = request.POST.get('discussion_summary', '').strip()
+            homework_assignment = request.POST.get('homework_assignment', '').strip()
+
+            entry_date = parse_flexible_date(date_str) or today
+
+            if not topic_covered:
+                messages.error(request, "Topic covered is required.")
+                return redirect('faculty:class_diary')
+
+            if entry_id and entry_id.isdigit():
+                entry = get_object_or_404(ClassDiary, id=int(entry_id), faculty=faculty)
+                entry.topic_covered = topic_covered
+                entry.discussion_summary = discussion_summary
+                entry.homework_assignment = homework_assignment
+                entry.save()
+                messages.success(request, f"Class log for {entry.subject.code} on {entry.date.strftime('%d-%b-%Y')} updated successfully.")
+            elif slot_id and slot_id.isdigit():
+                slot = get_object_or_404(Timetable, id=int(slot_id))
+                ClassDiary.objects.update_or_create(
+                    timetable_entry=slot,
+                    date=entry_date,
+                    defaults={
+                        'section': slot.section,
+                        'subject': slot.subject,
+                        'faculty': faculty,
+                        'period': slot.period,
+                        'topic_covered': topic_covered,
+                        'discussion_summary': discussion_summary,
+                        'homework_assignment': homework_assignment,
+                    }
+                )
+                messages.success(request, f"Class discussion log for {slot.subject.code} ({slot.section}) recorded successfully.")
+            return redirect('faculty:class_diary')
+
+        elif action == 'delete_entry':
+            entry_id = request.POST.get('entry_id')
+            if entry_id and entry_id.isdigit():
+                entry = get_object_or_404(ClassDiary, id=int(entry_id), faculty=faculty)
+                subj_code = entry.subject.code
+                d_str = entry.date.strftime('%d-%b-%Y')
+                entry.delete()
+                messages.success(request, f"Class log for {subj_code} on {d_str} deleted.")
+            return redirect('faculty:class_diary')
+
+    # Filters
+    search_query = request.GET.get('search', '').strip()
+    section_id = request.GET.get('section_id', '').strip()
+    subject_id = request.GET.get('subject_id', '').strip()
+    date_from_str = request.GET.get('date_from', '').strip()
+    date_to_str = request.GET.get('date_to', '').strip()
+
+    diary_qs = ClassDiary.objects.filter(faculty=faculty).select_related('section__branch', 'subject', 'timetable_entry')
+
+    if search_query:
+        diary_qs = diary_qs.filter(
+            Q(topic_covered__icontains=search_query) |
+            Q(discussion_summary__icontains=search_query) |
+            Q(homework_assignment__icontains=search_query) |
+            Q(subject__name__icontains=search_query) |
+            Q(subject__code__icontains=search_query)
+        )
+
+    if section_id and section_id.isdigit():
+        diary_qs = diary_qs.filter(section_id=int(section_id))
+
+    if subject_id and subject_id.isdigit():
+        diary_qs = diary_qs.filter(subject_id=int(subject_id))
+
+    date_from = parse_flexible_date(date_from_str)
+    date_to = parse_flexible_date(date_to_str)
+
+    if date_from:
+        diary_qs = diary_qs.filter(date__gte=date_from)
+    if date_to:
+        diary_qs = diary_qs.filter(date__lte=date_to)
+
+    entries = diary_qs.order_by('-date', 'period')
+
+    # Sections & Subjects handled by this faculty
+    handled_sec_ids = Timetable.objects.filter(faculty=faculty).values_list('section_id', flat=True).distinct()
+    handled_sections = Section.objects.filter(id__in=handled_sec_ids).select_related('branch', 'year')
+    handled_subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
+
+    # Today's slots for quick modal selection
+    day_name = today.strftime('%A')
+    today_slots = Timetable.objects.filter(faculty=faculty, day__iexact=day_name).select_related('section__branch', 'subject').order_by('period')
+
+    # All weekly slots for faculty
+    all_slots = Timetable.objects.filter(faculty=faculty).select_related('section__branch', 'subject').order_by('day', 'period')
+
+    context = {
+        'entries': entries,
+        'handled_sections': handled_sections,
+        'handled_subjects': handled_subjects,
+        'today_slots': today_slots,
+        'all_slots': all_slots,
+        'search_query': search_query,
+        'section_id': int(section_id) if section_id and section_id.isdigit() else '',
+        'subject_id': int(subject_id) if subject_id and subject_id.isdigit() else '',
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'today': today,
+    }
+    return render(request, 'faculty/class_diary.html', context)
 
 
 # ─────────────────────────────────────────────
@@ -347,6 +575,24 @@ def transfer_class(request):
             messages.error(request, "Cannot transfer class to yourself.")
             return redirect('faculty:dashboard')
 
+        # Verify substitute faculty is FREE during this period
+        from core.transfer_utils import get_free_faculty_for_period
+        from core.sms_utils import send_class_transfer_notification
+
+        free_fac = get_free_faculty_for_period(
+            date=transfer_date,
+            period=slot.period,
+            department=faculty.department,
+            exclude_faculty=faculty
+        )
+
+        if substitute not in free_fac:
+            messages.error(
+                request,
+                f"Prof. {substitute.full_name} has another scheduled class or proxy assignment during Period {slot.period} on {transfer_date.strftime('%d-%b-%Y')}. Please select an available free faculty member."
+            )
+            return redirect('faculty:dashboard')
+
         transfer, created = ClassTransfer.objects.update_or_create(
             timetable_entry=slot,
             date=transfer_date,
@@ -358,9 +604,12 @@ def transfer_class(request):
             }
         )
 
+        # Send instant SMS & Email notification to substitute faculty
+        send_class_transfer_notification(transfer)
+
         messages.success(
             request,
-            f"Class P{slot.period} ({slot.subject.code}) transferred to {substitute.full_name} for {transfer_date.strftime('%d-%b-%Y')}."
+            f"Class P{slot.period} ({slot.subject.code}) transferred to Prof. {substitute.full_name} for {transfer_date.strftime('%d-%b-%Y')}. SMS & Email notification dispatched."
         )
         return redirect('faculty:dashboard')
 
@@ -1091,8 +1340,8 @@ def upload_marks(request):
                     target_role='admin',
                     created_by=request.user
                 )
-            except Exception:
-                pass
+            except Exception as notif_err:
+                logger.warning(f"Failed to create HOD mark upload notification: {notif_err}")
 
         return redirect(f"{request.path}?year={year_id}&subject={subj_id}&exam={ex_id}&section={sec_id}")
         
@@ -1210,9 +1459,11 @@ def leave_requests(request):
                                 Notification.objects.create(
                                     title=notif_title,
                                     message=notif_msg,
-                                    notif_type=Notification.TYPE_ALERT,
+                                    notif_type=Notification.TYPE_ANNOUNCEMENT,
                                     priority=Notification.PRIORITY_HIGH,
                                     target_user=hod,
+                                    target_role='hod',
+                                    target_all=False,
                                     created_by=request.user
                                 )
                                 # Email Notification
@@ -1235,9 +1486,11 @@ def leave_requests(request):
                             Notification.objects.create(
                                 title=notif_title,
                                 message=notif_msg,
-                                notif_type=Notification.TYPE_ALERT,
+                                notif_type=Notification.TYPE_ANNOUNCEMENT,
                                 priority=Notification.PRIORITY_HIGH,
                                 target_user=adm,
+                                target_role='admin',
+                                target_all=False,
                                 created_by=request.user
                             )
                             # Email Notification
@@ -1250,7 +1503,7 @@ def leave_requests(request):
                                     fail_silently=True
                                 )
                     except Exception as e:
-                        pass
+                        logger.warning(f"Failed to notify admins for leave request: {e}")
 
                     messages.success(request, "Leave request submitted successfully! Pending approval from HOD or Admin.")
                     return redirect('faculty:leave_requests')

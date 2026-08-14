@@ -37,7 +37,7 @@
     </div>
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card kpi-info">
+    <div class="kpi-card kpi-warning">
       <div class="kpi-icon"><i class="fas fa-plane-departure"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ leave_count }}</span>
@@ -47,7 +47,7 @@
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="kpi-card kpi-neutral">
-      <div class="kpi-icon"><i class="fas fa-calculator"></i></div>
+      <div class="kpi-icon"><i class="fas fa-calculator text-accent"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ percentage }}%</span>
         <span class="kpi-label">Attendance Rate</span>
@@ -63,7 +63,6 @@
       <label class="form-label fw-bold small"><i class="fas fa-calendar-alt me-1 text-accent"></i>Month-wise Filter</label>
       <div class="date-input-wrapper">
         <input type="month" name="month_year" class="vvit-input" value="{{ month_year }}">
-        <i class="fas fa-calendar-alt cal-icon" title="Select Month"></i>
       </div>
     </div>
     <div class="col-md-3">
@@ -81,10 +80,10 @@
       </div>
     </div>
     <div class="col-md-3 d-flex gap-2">
-      <button type="submit" class="btn-sm-accent w-100 py-2 border-0">
+      <button type="submit" class="btn-vvit-primary w-100 py-2">
         <i class="fas fa-filter me-1"></i>Apply Filter
       </button>
-      <a href="{% url 'faculty:my_attendance' %}" class="btn btn-sm btn-outline-secondary py-2">
+      <a href="{% url 'faculty:my_attendance' %}" class="btn-vvit-secondary py-2 px-3">
         <i class="fas fa-redo"></i>
       </a>
     </div>
@@ -114,17 +113,17 @@
         {% for rec in records %}
         <tr>
           <td>{{ forloop.counter }}</td>
-          <td><strong>{{ rec.date|date:"d M Y (D)" }}</strong></td>
+          <td><strong class="text-white">{{ rec.date|date:"d M Y (D)" }}</strong></td>
           <td>
             {% if rec.status == 'P' %}
-            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Present</span>
+            <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Present</span>
             {% elif rec.status == 'A' %}
-            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Absent</span>
+            <span class="status-pill status-rejected"><i class="fas fa-times-circle me-1"></i>Absent</span>
             {% else %}
-            <span class="badge bg-info"><i class="fas fa-plane-departure me-1"></i>On Leave</span>
+            <span class="status-pill status-pending"><i class="fas fa-plane-departure me-1"></i>On Leave</span>
             {% endif %}
           </td>
-          <td>{{ rec.remarks|default:"--" }}</td>
+          <td class="text-white-50">{{ rec.remarks|default:"--" }}</td>
           <td>
             {% if rec.marked_by %}
             {{ rec.marked_by.get_full_name }} ({{ rec.marked_by.role|upper }})

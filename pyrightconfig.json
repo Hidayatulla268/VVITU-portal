@@ -1,0 +1,35 @@
+{
+  "venvPath": ".",
+  "venv": "venv",
+  "extraPaths": [
+    ".",
+    "venv/Lib/site-packages"
+  ],
+  "typeCheckingMode": "basic",
+  "plugins": [
+    {
+      "name": "mypy_django_plugin.main"
+    }
+  ],
+  "reportMissingModuleSource": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportCallIssue": "none",
+  "reportOperatorIssue": "none",
+  "reportIndexIssue": "none",
+  "reportReturnType": "none",
+  "reportArgumentType": "none",
+  "reportAssignmentType": "none",
+  "reportFunctionMemberAccess": "none",
+  "reportMissingImports": "warning",
+  "reportUndefinedVariable": "warning",
+  "reportUnusedImport": "warning",
+  "useLibraryCodeForTypes": true,
+  "pythonVersion": "3.11",
+  "exclude": [
+    "venv/**",
+    "**/migrations/**",
+    "staticfiles/**",
+    "backups/**"
+  ]
+}

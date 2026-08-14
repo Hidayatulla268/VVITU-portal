@@ -19,7 +19,7 @@ from django.contrib import messages
 from accounts.models import Student, Achievement
 from core.models import (
     Timetable, Attendance, Result, Exam,
-    AcademicCalendar, QuestionPaper, Subject,
+    AcademicCalendar, QuestionPaper, Subject, ClassDiary
 )
 
 import datetime
@@ -154,17 +154,94 @@ def dashboard(request):
     counsellor    = student.counsellor.user    if student.counsellor    else None
     cgpa          = student.calculate_cgpa()
 
+    # Recent Class Discussion Logs for student's section
+    recent_class_logs = []
+    if student.section:
+        recent_class_logs = (
+            ClassDiary.objects
+            .filter(section=student.section)
+            .select_related('subject', 'faculty__user')
+            .order_by('-date', '-period')[:5]
+        )
+
     return render(request, 'student/dashboard.html', {
-        'student':       student,
-        'stats':         stats,
-        'overall':       overall,
-        'daily':         daily,
-        'class_teacher': class_teacher,
-        'counsellor':    counsellor,
-        'cgpa':          cgpa,
-        'ai_prediction': _predict_attendance(student),
-        'chart_labels':  [s['code'] for s in stats],
-        'chart_data':    [s['percentage'] for s in stats],
+        'student':           student,
+        'stats':             stats,
+        'overall':           overall,
+        'daily':             daily,
+        'class_teacher':     class_teacher,
+        'counsellor':        counsellor,
+        'cgpa':              cgpa,
+        'ai_prediction':     _predict_attendance(student),
+        'chart_labels':      [s['code'] for s in stats],
+        'chart_data':        [s['percentage'] for s in stats],
+        'recent_class_logs': recent_class_logs,
+    })
+
+
+@student_required
+def class_diary(request):
+    """
+    Displays daily class lesson & discussion logs for the student's section.
+    Allows filtering by subject, date range, and keyword search.
+    """
+    student = request.student
+    section = student.section
+    today   = timezone.localdate()
+    from core.transfer_utils import parse_flexible_date
+
+    if not section:
+        return render(request, 'student/class_diary.html', {'no_section': True, 'entries': []})
+
+    search_query  = request.GET.get('search', '').strip()
+    subject_id    = request.GET.get('subject_id', '').strip()
+    date_from_str = request.GET.get('date_from', '').strip()
+    date_to_str   = request.GET.get('date_to', '').strip()
+
+    diary_qs = (
+        ClassDiary.objects
+        .filter(section=section)
+        .select_related('subject', 'faculty__user', 'timetable_entry')
+    )
+
+    if search_query:
+        diary_qs = diary_qs.filter(
+            Q(topic_covered__icontains=search_query) |
+            Q(discussion_summary__icontains=search_query) |
+            Q(homework_assignment__icontains=search_query) |
+            Q(subject__name__icontains=search_query) |
+            Q(subject__code__icontains=search_query) |
+            Q(faculty__user__first_name__icontains=search_query) |
+            Q(faculty__user__last_name__icontains=search_query)
+        )
+
+    if subject_id and subject_id.isdigit():
+        diary_qs = diary_qs.filter(subject_id=int(subject_id))
+
+    date_from = parse_flexible_date(date_from_str)
+    date_to   = parse_flexible_date(date_to_str)
+
+    if date_from:
+        diary_qs = diary_qs.filter(date__gte=date_from)
+    if date_to:
+        diary_qs = diary_qs.filter(date__lte=date_to)
+
+    entries = diary_qs.order_by('-date', '-period')
+
+    # Get subjects taught in this section
+    section_subj_ids = Timetable.objects.filter(section=section).values_list('subject_id', flat=True).distinct()
+    section_subjects = Subject.objects.filter(id__in=section_subj_ids, is_deleted=False)
+
+    return render(request, 'student/class_diary.html', {
+        'student': student,
+        'section': section,
+        'entries': entries,
+        'section_subjects': section_subjects,
+        'search_query': search_query,
+        'subject_id': int(subject_id) if subject_id and subject_id.isdigit() else '',
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'today': today,
     })
 
 

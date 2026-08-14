@@ -11,8 +11,12 @@ Design notes:
  - Result.grade is auto-computed on save.
 """
 
+import logging
+
 from django.db import models
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────
@@ -43,8 +47,8 @@ class Branch(models.Model):
                         branch=self,
                         year=year_obj
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Branch.save section creation failed: {e}")
 
 
 def ensure_sections_for_all_branches():
@@ -56,8 +60,8 @@ def ensure_sections_for_all_branches():
             for y in years:
                 for sec_name in ['A', 'B']:
                     Section.objects.get_or_create(name=sec_name, branch=b, year=y)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"ensure_sections_for_all_branches failed: {e}")
 
 
 # ─────────────────────────────────────────────
@@ -222,6 +226,7 @@ class ClassTransfer(models.Model):
     date               = models.DateField(db_index=True)
     reason             = models.CharField(max_length=255, blank=True, null=True)
     status             = models.CharField(max_length=15, choices=STATUS_CHOICES, default='accepted')
+    reminder_sent      = models.BooleanField(default=False, help_text='Set True once 15-min advance SMS/email reminder is sent')
     created_at         = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -346,15 +351,15 @@ class Result(models.Model):
                 m1 = Result.objects.filter(student=self.student, subject=self.subject, exam__exam_type='mid1', exam__semester=self.exam.semester).first()
                 if m1 and m1.max_marks > 0:
                     mid1_pct = float(m1.marks_obtained) / float(m1.max_marks) * 100
-            except Exception:
-                pass
+            except (ValueError, TypeError, Exception):
+                mid1_pct = 0.0
                 
             try:
                 m2 = Result.objects.filter(student=self.student, subject=self.subject, exam__exam_type='mid2', exam__semester=self.exam.semester).first()
                 if m2 and m2.max_marks > 0:
                     mid2_pct = float(m2.marks_obtained) / float(m2.max_marks) * 100
-            except Exception:
-                pass
+            except (ValueError, TypeError, Exception):
+                mid2_pct = 0.0
                 
             # 2. 80/20 Rule for Mids
             top_mid_pct = max(mid1_pct, mid2_pct)
@@ -592,6 +597,32 @@ class Notification(models.Model):
             self.TYPE_SYSTEM:       'notif-grey',
         }.get(self.notif_type, 'notif-grey')
 
+    @property
+    def target_display(self):
+        """Returns human-friendly target audience descriptor."""
+        if self.target_all:
+            return "Everyone (All Users)"
+        if self.target_user:
+            return f"User: {self.target_user.username}"
+        if self.target_section:
+            return f"Class: {self.target_section}"
+        if self.target_branch:
+            if self.target_role:
+                return f"{self.target_branch.code} {self.target_role.capitalize()}s"
+            return f"{self.target_branch.code} Branch Wide"
+        if self.target_role:
+            role_map = {
+                'admin': 'All Admins',
+                'hod': 'All HODs',
+                'faculty': 'All Faculty',
+                'student': 'All Students',
+                'deo': 'All DEOs',
+                'lab_technician': 'All Lab Technicians',
+            }
+            return role_map.get(self.target_role, f"All {self.target_role.capitalize()}s")
+        return "Department / System"
+
+
 
 class NotificationRead(models.Model):
     """Tracks which notifications a user has already read."""
@@ -621,4 +652,36 @@ class DatabaseBackup(models.Model):
 
     def __str__(self):
         return f"Backup: {self.filename} ({self.created_at})"
+
+
+# ─────────────────────────────────────────────
+# CLASS DIARY / DAILY LESSON LOG
+# ─────────────────────────────────────────────
+class ClassDiary(models.Model):
+    """
+    Daily lesson & discussion log recorded by faculty for a class session.
+    Allows faculty to optionally log topics covered, key concepts discussed,
+    and homework/reading assignments. Visible to students of that section.
+    """
+    timetable_entry     = models.ForeignKey(Timetable, on_delete=models.CASCADE, related_name='diary_entries', db_index=True)
+    section             = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='diary_logs', db_index=True)
+    subject             = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='diary_logs', db_index=True)
+    faculty             = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, related_name='diary_logs', db_index=True)
+    date                = models.DateField(db_index=True)
+    period              = models.IntegerField(default=1)
+    topic_covered       = models.CharField(max_length=255, help_text="Core topic or chapter covered in class")
+    discussion_summary  = models.TextField(blank=True, help_text="Key takeaways, concepts, or theorems discussed")
+    homework_assignment = models.TextField(blank=True, help_text="Homework, practice problems, or reading material assigned")
+    created_at          = models.DateTimeField(auto_now_add=True)
+    updated_at          = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', 'period']
+        unique_together = ('timetable_entry', 'date')
+        verbose_name = 'Class Diary'
+        verbose_name_plural = 'Class Diaries'
+
+    def __str__(self):
+        return f"{self.date} | P{self.period} - {self.subject.code} ({self.section}) - {self.topic_covered[:40]}"
+
 

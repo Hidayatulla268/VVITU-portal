@@ -1,11 +1,18 @@
+import logging
+import datetime as dt
+from functools import wraps
+
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q, Count
 from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
-import datetime as dt
-from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 from accounts.models import User, Student, Faculty, Achievement, FacultyLeaveRequest
 from core.models import (
@@ -68,6 +75,11 @@ def dashboard(request):
         Q(user__student_profile__branch=dept) | Q(user__faculty_profile__department=dept)
     ).select_related('user').order_by('-created_at')
     
+    # Pending leave requests in department
+    pending_leave_count = FacultyLeaveRequest.objects.filter(
+        faculty__department=dept, status='pending'
+    ).exclude(faculty=request.faculty).count()
+    
     context = {
         'student_count': student_count,
         'faculty_count': faculty_count,
@@ -77,6 +89,7 @@ def dashboard(request):
         'absent_today': absent_today,
         'notices': notices,
         'pending_achievements': pending_achievements,
+        'pending_leave_count': pending_leave_count,
         'department': dept,
     }
     return render(request, 'hod/dashboard.html', context)
@@ -761,8 +774,8 @@ def attendance_list(request):
                 student__section=selected_section,
                 date=selected_date
             ).select_related('student__user', 'timetable_entry__subject', 'timetable_entry__faculty__user')
-        except Exception as e:
-            pass
+        except (ValueError, Section.DoesNotExist, Exception) as e:
+            logger.warning(f"HOD attendance_list fetch failed for section={section_id}, date={date_str}: {e}")
             
     return render(request, 'hod/attendance_list.html', {
         'sections': sections,
@@ -819,6 +832,17 @@ def release_results(request):
             release_obj.released_at = timezone.now()
             release_obj.released_by = request.user
             release_obj.save()
+
+            # Create in-app Notification for students
+            Notification.objects.create(
+                title=f"Result Released: {exam.name}",
+                message=f"Results for '{exam.name}' have been published by HOD {dept.code}. Log in to your student portal to view your grades and CGPA.",
+                notif_type=Notification.TYPE_RESULT,
+                priority=Notification.PRIORITY_URGENT,
+                target_role='student',
+                target_branch=dept,
+                created_by=request.user
+            )
 
             # Send emails & parent SMS if not already sent
             sms_sent_count = 0
@@ -887,18 +911,42 @@ def release_results(request):
 @hod_required
 def manage_subjects(request):
     dept = request.department
+    years = Year.objects.all().order_by('year')
     qs = Subject.objects.filter(branch=dept, is_deleted=False).select_related('year', 'faculty__user').order_by('year', 'semester', 'name')
     
-    search = request.GET.get('q', '')
+    search = request.GET.get('q', '').strip()
+    year_filter = request.GET.get('year', '').strip()
+    sem_filter = request.GET.get('sem', '').strip()
+    type_filter = request.GET.get('type', '').strip()
+
     if search:
         qs = qs.filter(
             Q(name__icontains=search) | 
-            Q(code__icontains=search)
+            Q(code__icontains=search) |
+            Q(faculty__user__first_name__icontains=search) |
+            Q(faculty__user__last_name__icontains=search)
         )
+    if year_filter:
+        qs = qs.filter(year_id=year_filter)
+    if sem_filter:
+        qs = qs.filter(semester=sem_filter)
+    if type_filter == 'lab':
+        qs = qs.filter(is_lab=True)
+    elif type_filter == 'theory':
+        qs = qs.filter(is_lab=False)
         
     paginator = Paginator(qs, 25)
     page = paginator.get_page(request.GET.get('page', 1))
-    return render(request, 'hod/manage_subjects.html', {'page': page, 'search': search, 'department': dept})
+    return render(request, 'hod/manage_subjects.html', {
+        'page': page,
+        'search': search,
+        'year_filter': year_filter,
+        'sem_filter': sem_filter,
+        'type_filter': type_filter,
+        'years': years,
+        'department': dept,
+    })
+
 
 
 @hod_required
@@ -1031,14 +1079,14 @@ def manage_leave_requests(request):
                                 f"from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}. "
                                 f"Admin approval is required."
                             ),
-                            notif_type=Notification.TYPE_ALERT,
+                            notif_type=Notification.TYPE_ANNOUNCEMENT,
                             priority=Notification.PRIORITY_HIGH,
                             target_all=False,
                             target_role='admin',
                             created_by=request.user
                         )
-                    except Exception:
-                        pass
+                    except Exception as notif_err:
+                        logger.warning(f"Failed to create HOD leave notification for admin: {notif_err}")
                         
                     messages.success(request, "Your leave application has been submitted to College Administration for approval.")
                     return redirect('hod:manage_leave_requests')
@@ -1104,7 +1152,7 @@ def action_leave_request(request, pk, action):
         notif_msg = (
             f"Your leave request for {leave_req.get_leave_type_display()} "
             f"({leave_req.start_date.strftime('%d-%b-%Y')} to {leave_req.end_date.strftime('%d-%b-%Y')}) "
-            f"has been {status_text} by HOD {request.user.get_full_name() or request.user.username}."
+            f"has been {status_text} by HOD ({request.user.get_full_name() or request.user.username})."
         )
         if remarks:
             notif_msg += f" Remarks: {remarks}"
@@ -1112,26 +1160,50 @@ def action_leave_request(request, pk, action):
         Notification.objects.create(
             title=f"Leave Request {status_text}",
             message=notif_msg,
-            notif_type=Notification.TYPE_ALERT,
+            notif_type=Notification.TYPE_ANNOUNCEMENT,
             priority=Notification.PRIORITY_HIGH,
             target_user=leave_req.faculty.user,
+            target_role='faculty',
+            target_all=False,
             created_by=request.user
         )
         
-        from core.sms_utils import send_sms
+        # 1. Email Notification
         if leave_req.faculty.user.email:
-            from django.core.mail import send_mail
+            email_subject = f"[Leave Request {status_text}] VVITU Faculty Leave Status Update"
+            email_body = f"""Dear {leave_req.faculty.full_name},
+
+Your leave application request has been reviewed by your HOD.
+
+Details:
+- Leave Type: {leave_req.get_leave_type_display()}
+- Duration: {leave_req.start_date.strftime('%d-%b-%Y')} to {leave_req.end_date.strftime('%d-%b-%Y')} ({leave_req.total_days} days)
+- Status: {status_text.upper()}
+- Action By: HOD ({request.user.get_full_name() or request.user.username})
+- Remarks: {remarks if remarks else 'N/A'}
+
+Please log in to the VVITU Portal to view your leave history.
+
+Regards,
+VVIT University Administration
+"""
             send_mail(
-                subject=f"[Leave Request {status_text}] VVITU Leave Application",
-                message=notif_msg,
+                subject=email_subject,
+                message=email_body,
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
                 recipient_list=[leave_req.faculty.user.email],
                 fail_silently=True
             )
-        if leave_req.faculty.phone:
-            send_sms(leave_req.faculty.phone, f"VVITU: Leave Request {status_text} by HOD. Log in for details.")
-    except Exception:
-        pass
+            
+        # 2. SMS Notification
+        from core.sms_utils import send_sms
+        phone_num = leave_req.faculty.phone or getattr(leave_req.faculty.user, 'phone', '')
+        if phone_num:
+            sms_text = f"VVITU ALERT: Your {leave_req.get_leave_type_display()} leave request ({leave_req.start_date.strftime('%d/%m')} to {leave_req.end_date.strftime('%d/%m')}) has been {status_text} by HOD. Log in for details."
+            send_sms(phone_num, sms_text)
+
+    except Exception as dispatch_err:
+        logger.warning(f"Failed to send leave action notification/SMS/email: {dispatch_err}")
         
     messages.success(request, f"Leave request for {leave_req.faculty.full_name} {new_status} successfully.")
     return redirect('hod:manage_leave_requests')
@@ -1143,4 +1215,319 @@ def cancel_leave_request(request, pk):
     leave_req.delete()
     messages.success(request, "Your leave application has been cancelled.")
     return redirect('hod:manage_leave_requests')
+
+
+@hod_required
+def upload_mid_marks(request):
+    """
+    Allows HOD to add and edit Mid Term 1 and Mid Term 2 marks for any subject
+    and student in their department branch. Semester Final marks are strictly excluded.
+    """
+    from faculty.views import upload_marks
+    return upload_marks(request)
+
+
+@hod_required
+def manage_fees(request):
+    """
+    Allows HOD to view, update, and manage student fee structures and payments for their branch.
+    """
+    from accounts.models import Student, StudentFee
+    from core.models import Year
+    from django.db.models import Q
+
+    dept = request.department
+    years = Year.objects.all()
+    
+    year_id = request.GET.get('year', '')
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('q', '').strip()
+
+    students = Student.objects.filter(branch=dept, is_active=True, user__is_deleted=False).select_related('user', 'branch', 'section', 'year').order_by('roll_number')
+
+    if year_id:
+        students = students.filter(year_id=year_id)
+    if search:
+        students = students.filter(
+            Q(roll_number__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(branch__code__icontains=search) |
+            Q(branch__name__icontains=search)
+        )
+
+    sel_year = Year.objects.filter(id=year_id).first() if year_id else Year.objects.first()
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_single':
+            stu_id = request.POST.get('student_id')
+            stu = get_object_or_404(Student, id=stu_id, branch=dept)
+
+            def parse_val(v, max_limit=10000000.0):
+                if not v: return 0.0
+                try:
+                    val = float(str(v).strip())
+                    if val < 0: return 0.0
+                    if val > max_limit: return max_limit
+                    return round(val, 2)
+                except (ValueError, TypeError, OverflowError): return 0.0
+
+            col = parse_val(request.POST.get('college_fee'))
+            hos = parse_val(request.POST.get('hostel_fee'))
+            bus = parse_val(request.POST.get('bus_fee'))
+            nba = parse_val(request.POST.get('nba_fee'))
+            exm = parse_val(request.POST.get('exam_fee'))
+            bbk = parse_val(request.POST.get('book_bank_fee'))
+            oth = parse_val(request.POST.get('other_fee'))
+            paid = parse_val(request.POST.get('amount_paid'))
+            remarks = request.POST.get('remarks', '').strip()
+            due_date_str = request.POST.get('due_date', '').strip()
+            due_date = due_date_str if due_date_str else None
+
+            fee_year = stu.year or sel_year or Year.objects.first()
+            fee_rec, created = StudentFee.objects.get_or_create(
+                student=stu,
+                academic_year=fee_year
+            )
+            try:
+                fee_rec.college_fee = col
+                fee_rec.hostel_fee = hos
+                fee_rec.bus_fee = bus
+                fee_rec.nba_fee = nba
+                fee_rec.exam_fee = exm
+                fee_rec.book_bank_fee = bbk
+                fee_rec.other_fee = oth
+                fee_rec.amount_paid = paid
+                fee_rec.remarks = remarks
+                fee_rec.due_date = due_date
+                fee_rec.updated_by = request.user
+                fee_rec.save()
+                messages.success(request, f"Fee record updated successfully for {stu.roll_number}.")
+            except Exception as err:
+                logger.error(f"Error saving fee record for student {stu.roll_number}: {err}")
+                messages.error(request, f"Could not update fees for {stu.roll_number}: Invalid or excessive fee amount entered.")
+
+            return redirect(f"{request.path}?year={year_id}&q={search}&status={status_filter}")
+
+        elif action == 'bulk_assign':
+            def parse_val(v):
+                if not v: return 0.0
+                try: return float(str(v).strip())
+                except (ValueError, TypeError): return 0.0
+
+            col = parse_val(request.POST.get('college_fee'))
+            nba = parse_val(request.POST.get('nba_fee'))
+            exm = parse_val(request.POST.get('exam_fee'))
+            bbk = parse_val(request.POST.get('book_bank_fee'))
+            oth = parse_val(request.POST.get('other_fee'))
+
+            count = 0
+            for stu in students:
+                fee_year = stu.year or sel_year or Year.objects.first()
+                fee_rec, created = StudentFee.objects.get_or_create(
+                    student=stu,
+                    academic_year=fee_year
+                )
+                fee_rec.college_fee = col
+                fee_rec.nba_fee = nba
+                fee_rec.exam_fee = exm
+                fee_rec.book_bank_fee = bbk
+                fee_rec.other_fee = oth
+                fee_rec.updated_by = request.user
+                fee_rec.save()
+                count += 1
+
+            messages.success(request, f"Standard fee structure applied to {count} students in {dept.code}.")
+            return redirect(f"{request.path}?year={year_id}")
+
+    # Ensure every active student has a StudentFee record for their academic year
+    for stu in students:
+        fee_year = stu.year or sel_year or Year.objects.first()
+        if fee_year:
+            StudentFee.objects.get_or_create(student=stu, academic_year=fee_year)
+
+    fee_records = StudentFee.objects.filter(student__in=students)
+    if year_id:
+        fee_records = fee_records.filter(academic_year_id=year_id)
+    if status_filter:
+        fee_records = fee_records.filter(status=status_filter)
+
+    fee_dict = {f.student_id: f for f in fee_records}
+    
+    total_expected = sum(float(f.total_fee_amount) for f in fee_records)
+    total_collected = sum(float(f.amount_paid) for f in fee_records)
+    total_outstanding = sum(float(f.due_amount) for f in fee_records)
+
+    return render(request, 'admin_dashboard/manage_fees.html', {
+        'students': students,
+        'fee_dict': fee_dict,
+        'years': years,
+        'department': dept,
+        'sel_year': sel_year,
+        'year_id': year_id,
+        'search': search,
+        'status_filter': status_filter,
+        'total_expected': total_expected,
+        'total_collected': total_collected,
+        'total_outstanding': total_outstanding,
+        'role': 'hod',
+    })
+
+
+@hod_required
+def manage_class_transfers(request):
+    """
+    HOD View — Audit log of all class transfers, proxy assignments, and faculty class history in department.
+    Allows HOD to search by faculty name, subject code, employee ID, and date range to see
+    exact details of which faculty member conducted which class, at what date & time, for which section.
+    """
+    import datetime
+    from core.transfer_utils import get_conducted_class_history
+
+    dept = request.department
+    today = timezone.localdate()
+
+    # Search & Filter Parameters
+    search_faculty = request.GET.get('search_faculty', '').strip()
+    selected_fac_id = request.GET.get('faculty_id', '').strip()
+    date_from_str = request.GET.get('date_from', '').strip()
+    date_to_str = request.GET.get('date_to', '').strip()
+
+    from core.transfer_utils import parse_flexible_date
+    date_from = parse_flexible_date(date_from_str)
+    date_to = parse_flexible_date(date_to_str)
+
+    # Conducted Class History (Branch Scoped)
+    conducted_history = get_conducted_class_history(
+        branch=dept,
+        faculty=selected_fac_id if selected_fac_id else None,
+        search_query=search_faculty,
+        date_from=date_from,
+        date_to=date_to
+    )
+
+    # Department faculty list for search dropdown
+    dept_faculty = Faculty.objects.filter(department=dept, is_active=True).select_related('user').order_by('user__first_name')
+    day_name = today.strftime('%A')
+    day_slots = Timetable.objects.filter(section__branch=dept, day__iexact=day_name).select_related('faculty__user', 'subject', 'section')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'assign_proxy':
+            timetable_id = request.POST.get('timetable_id')
+            substitute_id = request.POST.get('substitute_id')
+            reason = request.POST.get('reason', 'HOD Proxy Assignment')
+            date_val_str = request.POST.get('date', '').strip()
+
+            t_date = parse_flexible_date(date_val_str) or today
+
+            slot = get_object_or_404(Timetable, id=timetable_id)
+            substitute = get_object_or_404(Faculty, id=substitute_id, is_active=True)
+
+
+            from core.transfer_utils import get_free_faculty_for_period
+            from core.sms_utils import send_class_transfer_notification
+
+            # Verify substitute is FREE
+            free_fac = get_free_faculty_for_period(
+                date=t_date,
+                period=slot.period,
+                department=dept,
+                exclude_faculty=slot.faculty
+            )
+
+            if substitute not in free_fac:
+                messages.error(
+                    request,
+                    f"Prof. {substitute.full_name} is NOT free during Period {slot.period} on {t_date.strftime('%d-%b-%Y')}."
+                )
+            else:
+                transfer_obj, _ = ClassTransfer.objects.update_or_create(
+                    timetable_entry=slot,
+                    date=t_date,
+                    defaults={
+                        'original_faculty': slot.faculty,
+                        'substitute_faculty': substitute,
+                        'reason': reason,
+                        'status': 'accepted',
+                    }
+                )
+                send_class_transfer_notification(transfer_obj)
+                messages.success(
+                    request,
+                    f"Assigned Period {slot.period} ({slot.subject.code}) to Prof. {substitute.full_name}. SMS & Email notification dispatched."
+                )
+            return redirect('hod:manage_class_transfers')
+
+    context = {
+        'department': dept,
+        'conducted_history': conducted_history,
+        'dept_faculty': dept_faculty,
+        'day_slots': day_slots,
+        'search_faculty': search_faculty,
+        'selected_fac_id': selected_fac_id,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+        'today': today,
+    }
+    return render(request, 'hod/manage_class_transfers.html', context)
+
+
+@hod_required
+def ajax_get_branch_timetable_slots(request):
+    """
+    Return JSON list of scheduled class slots for HOD's branch on a specific date/day_of_week.
+    Each slot contains: id, period, timing, subject_code, subject_name, faculty_name, section_name.
+    """
+    from core.transfer_utils import parse_flexible_date
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': 'date parameter required'}, status=400)
+
+    req_date = parse_flexible_date(date_str)
+    if not req_date:
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
+
+    day_name = req_date.strftime('%A')
+    dept = request.department
+
+
+    slots = Timetable.objects.filter(
+        section__branch=dept,
+        day__iexact=day_name
+    ).select_related('subject', 'faculty__user', 'section', 'section__year').order_by('period', 'section__name')
+
+    period_timings = {
+        1: "09:00 AM - 09:50 AM",
+        2: "09:50 AM - 10:40 AM",
+        3: "10:50 AM - 11:40 AM",
+        4: "11:40 AM - 12:30 PM",
+        5: "01:20 PM - 02:10 PM",
+        6: "02:10 PM - 03:00 PM",
+        7: "03:10 PM - 04:00 PM",
+        8: "04:00 PM - 04:50 PM",
+    }
+
+    data = []
+    for s in slots:
+        start_t = s.start_time.strftime("%I:%M %p") if getattr(s, 'start_time', None) else None
+        end_t   = s.end_time.strftime("%I:%M %p") if getattr(s, 'end_time', None) else None
+        timing_str = f"{start_t} - {end_t}" if (start_t and end_t) else period_timings.get(s.period, f"Period {s.period}")
+
+        data.append({
+            'id': s.id,
+            'period': s.period,
+            'timing': timing_str,
+            'subject_code': s.subject.code if s.subject else 'N/A',
+            'subject_name': s.subject.name if s.subject else 'N/A',
+            'original_faculty_id': s.faculty.id if s.faculty else None,
+            'original_faculty_name': f"Prof. {s.faculty.full_name}" if s.faculty else "Unassigned",
+            'section_name': f"Y{s.section.year.year} Sec {s.section.name}" if (s.section and s.section.year) else (s.section.name if s.section else ''),
+        })
+
+    return JsonResponse({'slots': data, 'day_name': day_name, 'date_str': req_date.strftime('%d-%b-%Y')})
+
 

@@ -15,4 +15,7 @@ urlpatterns = [
     
     # Scoped Marks Upload
     path('upload-marks/',            views.upload_marks,       name='upload_marks'),
+    
+    # Scoped Fees Management
+    path('fees/',                    views.manage_fees,          name='manage_fees'),
 ]
