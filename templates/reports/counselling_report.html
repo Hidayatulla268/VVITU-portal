@@ -33,31 +33,31 @@
   <div class="glass-card mb-4 print-header-card text-center p-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom border-secondary border-opacity-25">
       <div class="d-flex align-items-center gap-3 text-start">
-        <div class="univ-emblem-box d-flex align-items-center justify-content-center rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25" style="width: 60px; height: 60px;">
+        <div class="univ-emblem-box d-flex align-items-center justify-content-center rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25" style="width: 56px; height: 56px; min-width: 56px;">
           <i class="fas fa-graduation-cap fa-2x text-accent"></i>
         </div>
         <div>
-          <h2 class="univ-heading fw-bold mb-0" style="color: var(--accent); font-size: 1.35rem; letter-spacing: -0.01em;">
+          <h2 class="univ-heading fw-bold mb-0" style="color: var(--accent, #991b1b); font-size: 1.25rem; letter-spacing: -0.01em;">
             VASIREDDY VENKATADRI INTERNATIONAL TECHNOLOGICAL UNIVERSITY
           </h2>
-          <div class="univ-subtext small text-muted">
+          <div class="univ-subtext text-muted mt-1" style="font-size: 0.82rem; line-height: 1.4;">
             Approved by AICTE, New Delhi • Accredited by NAAC with 'A+' Grade • ISO 9001:2015 Certified
           </div>
-          <div class="univ-subtext small text-muted">
+          <div class="univ-subtext text-muted" style="font-size: 0.82rem; line-height: 1.4;">
             Nambur (V), Pedakakani (M), Guntur District, Andhra Pradesh — 522508
           </div>
         </div>
       </div>
       <div class="text-end">
-        <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25 px-3 py-2 fw-bold" style="font-size: 0.85rem;">
+        <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25 px-3 py-1.5 fw-bold" style="font-size: 0.82rem; letter-spacing: 0.04em;">
           CONFIDENTIAL DOSSIER
         </span>
-        <div class="text-muted small mt-1">Generated: {{ dossier.generated_at }}</div>
+        <div class="text-muted small mt-1" style="font-size: 0.78rem;">Generated: {{ dossier.generated_at }}</div>
       </div>
     </div>
 
     <div class="dossier-title-strip py-2 mt-2">
-      <h3 class="fw-bold text-uppercase mb-0" style="color: var(--text-primary); font-size: 1.15rem; letter-spacing: 0.05em;">
+      <h3 class="fw-bold text-uppercase mb-0" style="color: var(--text-primary); font-size: 1.1rem; letter-spacing: 0.04em;">
         STUDENT COUNSELLING & COMPREHENSIVE ACADEMIC RECORD
       </h3>
     </div>
@@ -66,8 +66,8 @@
   <!-- Student Demographic & Family Details Card -->
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
-      <h4 class="card-title-custom mb-0"><i class="fas fa-user-circle me-2 text-accent"></i>1. Student Profile & Family Information</h4>
-      <span class="badge bg-primary bg-opacity-75 text-light px-3 py-1">{{ dossier.roll_number }}</span>
+      <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-user-circle me-2 text-accent"></i>1. Student Profile & Family Information</h4>
+      <span class="badge bg-primary bg-opacity-75 text-light px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.roll_number }}</span>
     </div>
 
     <div class="row g-4 align-items-start">
@@ -75,17 +75,17 @@
       <div class="col-lg-2 col-md-3 text-center">
         <div class="dossier-photo-wrapper mx-auto mb-2">
           {% if dossier.profile_picture_url %}
-            <img src="{{ dossier.profile_picture_url }}" alt="{{ dossier.full_name }}" class="dossier-student-photo" style="width: 130px; height: 155px; object-fit: cover; border-radius: 8px; border: 3px solid var(--accent, #991b1b); box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+            <img src="{{ dossier.profile_picture_url }}" alt="{{ dossier.full_name }}" class="dossier-student-photo" style="width: 125px; height: 150px; object-fit: cover; border-radius: 8px; border: 3px solid var(--accent, #991b1b); box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
           {% else %}
-            <div class="dossier-photo-placeholder d-flex flex-column align-items-center justify-content-center mx-auto" style="width: 130px; height: 155px; border-radius: 8px; background: linear-gradient(135deg, rgba(220,38,38,0.08), rgba(15,23,42,0.05)); border: 2px dashed #94a3b8; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-              <div style="font-size: 2.4rem; font-weight: 800; color: var(--accent, #991b1b); font-family: var(--font-display, sans-serif);">
+            <div class="dossier-photo-placeholder d-flex flex-column align-items-center justify-content-center mx-auto" style="width: 125px; height: 150px; border-radius: 8px; background: linear-gradient(135deg, rgba(220,38,38,0.08), rgba(15,23,42,0.05)); border: 2px dashed #94a3b8; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+              <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent, #991b1b); font-family: var(--font-display, sans-serif);">
                 {{ dossier.initials }}
               </div>
               <span class="badge bg-secondary bg-opacity-25 text-muted px-2 py-0.5 mt-2" style="font-size: 0.65rem; letter-spacing: 0.05em; font-weight: 700;">STUDENT PHOTO</span>
             </div>
           {% endif %}
         </div>
-        <span class="badge bg-dark text-white px-2 py-1 small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em; background-color: #0f172a !important;">
+        <span class="badge bg-dark text-white px-2.5 py-1 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.04em; background-color: #0f172a !important;">
           {{ dossier.roll_number }}
         </span>
       </div>
@@ -156,19 +156,19 @@
               <tr>
                 <th style="color: var(--text-muted);">Tuition Dues:</th>
                 <td>
-                  <span class="badge {% if dossier.fees_pending > 0 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% endif %} px-2 py-1">
+                  <span class="badge {% if dossier.fees_pending > 0 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% endif %} px-2 py-0.5" style="font-size: 0.8rem;">
                     INR {{ dossier.fees_pending|floatformat:2 }}
                   </span>
-                  <small class="text-muted ms-1">({{ dossier.fees_updated_at }})</small>
+                  <small class="text-muted ms-1" style="font-size: 0.78rem;">({{ dossier.fees_updated_at }})</small>
                 </td>
               </tr>
               <tr>
                 <th style="color: var(--text-muted);">Permanent Address:</th>
-                <td class="small" style="color: var(--text-secondary);">{{ dossier.permanent_address }}</td>
+                <td style="color: var(--text-secondary); font-size: 0.85rem;">{{ dossier.permanent_address }}</td>
               </tr>
               <tr>
                 <th style="color: var(--text-muted);">Present Address:</th>
-                <td class="small" style="color: var(--text-secondary);">{{ dossier.present_address }}</td>
+                <td style="color: var(--text-secondary); font-size: 0.85rem;">{{ dossier.present_address }}</td>
               </tr>
             </tbody>
           </table>
@@ -183,8 +183,8 @@
       <div class="kpi-card kpi-danger">
         <div class="kpi-icon"><i class="fas fa-award"></i></div>
         <div class="kpi-body">
-          <span class="kpi-value">{{ dossier.cgpa }}</span>
-          <span class="kpi-label">Cumulative CGPA</span>
+          <span class="kpi-value" style="font-size: 1.35rem; font-weight: 700;">{{ dossier.cgpa }}</span>
+          <span class="kpi-label" style="font-size: 0.78rem;">Cumulative CGPA</span>
         </div>
       </div>
     </div>
@@ -192,8 +192,8 @@
       <div class="kpi-card kpi-success">
         <div class="kpi-icon"><i class="fas fa-certificate"></i></div>
         <div class="kpi-body">
-          <span class="kpi-value">{{ dossier.total_credits_earned }} / {{ dossier.total_cumulative_credits }}</span>
-          <span class="kpi-label">Credits Earned</span>
+          <span class="kpi-value" style="font-size: 1.35rem; font-weight: 700;">{{ dossier.total_credits_earned }} / {{ dossier.total_cumulative_credits }}</span>
+          <span class="kpi-label" style="font-size: 0.78rem;">Credits Earned</span>
         </div>
       </div>
     </div>
@@ -201,8 +201,8 @@
       <div class="kpi-card {% if dossier.active_backlogs_count > 0 %}kpi-warning{% else %}kpi-info{% endif %}">
         <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
         <div class="kpi-body">
-          <span class="kpi-value">{{ dossier.active_backlogs_count }}</span>
-          <span class="kpi-label">Active Backlogs</span>
+          <span class="kpi-value" style="font-size: 1.35rem; font-weight: 700;">{{ dossier.active_backlogs_count }}</span>
+          <span class="kpi-label" style="font-size: 0.78rem;">Active Backlogs</span>
         </div>
       </div>
     </div>
@@ -210,8 +210,8 @@
       <div class="kpi-card kpi-neutral">
         <div class="kpi-icon"><i class="fas fa-user-clock"></i></div>
         <div class="kpi-body">
-          <span class="kpi-value">{{ dossier.overall_attendance_pct }}%</span>
-          <span class="kpi-label">Overall Attendance</span>
+          <span class="kpi-value" style="font-size: 1.35rem; font-weight: 700;">{{ dossier.overall_attendance_pct }}%</span>
+          <span class="kpi-label" style="font-size: 0.78rem;">Overall Attendance</span>
         </div>
       </div>
     </div>
@@ -220,30 +220,29 @@
   <!-- Semester-by-Semester Performance & Marks Breakdown -->
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
-      <h4 class="card-title-custom mb-0"><i class="fas fa-graduation-cap me-2 text-accent"></i>2. Semester-Wise Examination Results & Grades</h4>
-      <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ dossier.semester_reports|length }} Semester(s) Tracked</span>
+      <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-graduation-cap me-2 text-accent"></i>2. Semester-Wise Examination Results & Grades</h4>
+      <span class="badge bg-secondary bg-opacity-50 px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.semester_reports|length }} Semester(s) Tracked</span>
     </div>
 
     {% for sem in dossier.semester_reports %}
     <div class="semester-report-block mb-4 p-3 rounded-3" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px solid var(--clr-border, rgba(255,255,255,0.1));">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
         <div class="d-flex align-items-center gap-2">
-          <span class="fw-bolder" style="color: #000000 !important; font-size: 1.15rem; letter-spacing: -0.01em;">
+          <span class="badge fw-bold" style="background-color: #0f172a !important; color: #ffffff !important; font-size: 0.85rem; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.02em;">
             Semester {{ sem.semester }}
           </span>
-          <span class="text-muted mx-1" style="color: #64748b !important;">•</span>
-          <span class="fw-bold" style="color: #000000 !important; font-size: 1.05rem;">
+          <span class="fw-bold" style="color: #0f172a !important; font-size: 1.02rem;">
             Academic Grade & Marks Sheet
           </span>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-30 px-3 py-1">
-            SGPA: <strong>{{ sem.sgpa }}</strong>
+          <span class="badge bg-danger bg-opacity-15 text-danger border border-danger border-opacity-30 px-2.5 py-1" style="font-size: 0.82rem;">
+            SGPA: <strong class="ms-0.5">{{ sem.sgpa }}</strong>
           </span>
-          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-30 px-3 py-1">
-            Credits: <strong>{{ sem.credits_earned }}/{{ sem.total_credits }}</strong>
+          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-30 px-2.5 py-1" style="font-size: 0.82rem;">
+            Credits: <strong class="ms-0.5">{{ sem.credits_earned }}/{{ sem.total_credits }}</strong>
           </span>
-          <span class="badge {% if sem.status == 'Pass' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif 'Fail' in sem.status %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} px-3 py-1">
+          <span class="badge {% if sem.status == 'Pass' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif 'Fail' in sem.status %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} px-2.5 py-1" style="font-size: 0.82rem;">
             {{ sem.status }}
           </span>
         </div>
@@ -253,47 +252,47 @@
         <table class="vvit-table">
           <thead>
             <tr>
-              <th>Subject Code</th>
-              <th>Subject Title</th>
-              <th>Credits</th>
-              <th class="text-center">Mid 1</th>
-              <th class="text-center">Mid 2</th>
-              <th class="text-center">Sem Exam</th>
-              <th class="text-center">Total Score</th>
-              <th class="text-center">Grade</th>
-              <th class="text-center">Points</th>
-              <th class="text-end">Result</th>
+              <th style="font-size: 0.82rem;">Subject Code</th>
+              <th style="font-size: 0.82rem;">Subject Title</th>
+              <th style="font-size: 0.82rem;">Credits</th>
+              <th class="text-center" style="font-size: 0.82rem;">Mid 1</th>
+              <th class="text-center" style="font-size: 0.82rem;">Mid 2</th>
+              <th class="text-center" style="font-size: 0.82rem;">Sem Exam</th>
+              <th class="text-center" style="font-size: 0.82rem;">Total Score</th>
+              <th class="text-center" style="font-size: 0.82rem;">Grade</th>
+              <th class="text-center" style="font-size: 0.82rem;">Points</th>
+              <th class="text-end" style="font-size: 0.82rem;">Result</th>
             </tr>
           </thead>
           <tbody>
             {% for s in sem.subjects %}
             <tr>
-              <td><span class="badge bg-primary bg-opacity-75 text-light">{{ s.code }}</span></td>
-              <td class="fw-semibold" style="color: var(--text-primary);">{{ s.name }}</td>
-              <td>{{ s.credits }}</td>
-              <td class="text-center text-muted small">{{ s.mid1_marks }}</td>
-              <td class="text-center text-muted small">{{ s.mid2_marks }}</td>
-              <td class="text-center text-muted small">{{ s.final_marks }}</td>
-              <td class="text-center fw-bold" style="color: var(--text-primary);">{{ s.total_score }}</td>
+              <td><span class="badge bg-primary bg-opacity-75 text-light" style="font-size: 0.8rem;">{{ s.code }}</span></td>
+              <td class="fw-semibold" style="color: var(--text-primary); font-size: 0.88rem;">{{ s.name }}</td>
+              <td style="font-size: 0.88rem;">{{ s.credits }}</td>
+              <td class="text-center text-muted" style="font-size: 0.85rem;">{{ s.mid1_marks }}</td>
+              <td class="text-center text-muted" style="font-size: 0.85rem;">{{ s.mid2_marks }}</td>
+              <td class="text-center text-muted" style="font-size: 0.85rem;">{{ s.final_marks }}</td>
+              <td class="text-center fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">{{ s.total_score }}</td>
               <td class="text-center">
-                <span class="badge {% if s.grade == 'S' or s.grade == 'A' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif s.grade == 'B' or s.grade == 'C' or s.grade == 'D' %}bg-info bg-opacity-20 text-info border border-info border-opacity-30{% elif s.grade == 'E' %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% elif s.grade == 'F' or s.grade == 'Ab' %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} fw-bold px-2 py-1">
+                <span class="badge {% if s.grade == 'S' or s.grade == 'A' %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif s.grade == 'B' or s.grade == 'C' or s.grade == 'D' %}bg-info bg-opacity-20 text-info border border-info border-opacity-30{% elif s.grade == 'E' %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% elif s.grade == 'F' or s.grade == 'Ab' %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% else %}bg-secondary bg-opacity-20 text-muted{% endif %} fw-bold px-2 py-0.5" style="font-size: 0.82rem; min-width: 28px;">
                   {{ s.grade }}
                 </span>
               </td>
-              <td class="text-center">{{ s.grade_points }}</td>
+              <td class="text-center" style="font-size: 0.88rem;">{{ s.grade_points }}</td>
               <td class="text-end">
                 {% if s.status == 'Pass' %}
-                  <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-1"><i class="fas fa-check me-1"></i>Pass</span>
+                  <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size: 0.8rem;"><i class="fas fa-check me-1"></i>Pass</span>
                 {% elif s.status == 'Fail' %}
-                  <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2 py-1"><i class="fas fa-xmark me-1"></i>Backlog</span>
+                  <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 px-2 py-0.5" style="font-size: 0.8rem;"><i class="fas fa-xmark me-1"></i>Backlog</span>
                 {% else %}
-                  <span class="badge bg-secondary bg-opacity-20 text-muted px-2 py-1">Pending</span>
+                  <span class="badge bg-secondary bg-opacity-20 text-muted px-2 py-0.5" style="font-size: 0.8rem;">Pending</span>
                 {% endif %}
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="10" class="text-center py-3" style="color: #4b5563 !important;">No exam records uploaded for <strong style="color: #000000 !important;">Semester {{ sem.semester }}</strong>.</td>
+              <td colspan="10" class="text-center py-3" style="color: #4b5563 !important; font-size: 0.88rem;">No exam records uploaded for <strong style="color: #000000 !important;">Semester {{ sem.semester }}</strong>.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -304,33 +303,33 @@
       {% if sem.attendance_rows %}
       <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <small class="fw-bold text-uppercase" style="color: #000000 !important; letter-spacing: 0.05em; font-size: 0.85rem;">
+          <span class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: #0f172a !important; letter-spacing: 0.04em; font-size: 0.85rem;">
             <i class="fas fa-calendar-check text-info me-1"></i>Semester {{ sem.semester }} Subject Attendance Details
-          </small>
-          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-2 py-1" style="font-size: 0.75rem;">
+          </span>
+          <span class="badge bg-info bg-opacity-15 text-info border border-info border-opacity-25 px-2 py-0.5" style="font-size: 0.78rem;">
             Semester Attendance: {{ sem.attendance_pct }}% ({{ sem.present_classes }}/{{ sem.total_classes }} classes)
           </span>
         </div>
         <div class="table-responsive">
-          <table class="table table-sm table-borderless vvit-table mb-0" style="font-size: 0.8rem;">
+          <table class="table table-sm table-borderless vvit-table mb-0">
             <thead>
               <tr>
-                <th>Subject</th>
-                <th class="text-center">Conducted</th>
-                <th class="text-center">Attended</th>
-                <th class="text-center">Absent</th>
-                <th class="text-end">Attendance %</th>
+                <th style="font-size: 0.8rem;">Subject</th>
+                <th class="text-center" style="font-size: 0.8rem;">Conducted</th>
+                <th class="text-center" style="font-size: 0.8rem;">Attended</th>
+                <th class="text-center" style="font-size: 0.8rem;">Absent</th>
+                <th class="text-end" style="font-size: 0.8rem;">Attendance %</th>
               </tr>
             </thead>
             <tbody>
               {% for a in sem.attendance_rows %}
               <tr>
-                <td>{{ a.code }} - {{ a.name }}</td>
-                <td class="text-center">{{ a.total }}</td>
-                <td class="text-center text-success fw-semibold">{{ a.present }}</td>
-                <td class="text-center text-danger">{{ a.absent }}</td>
+                <td style="font-size: 0.85rem;">{{ a.code }} - {{ a.name }}</td>
+                <td class="text-center" style="font-size: 0.85rem;">{{ a.total }}</td>
+                <td class="text-center text-success fw-semibold" style="font-size: 0.85rem;">{{ a.present }}</td>
+                <td class="text-center text-danger" style="font-size: 0.85rem;">{{ a.absent }}</td>
                 <td class="text-end">
-                  <span class="badge {% if a.percentage >= 75 %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif a.percentage >= 65 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% endif %} px-2 py-1">
+                  <span class="badge {% if a.percentage >= 75 %}bg-success bg-opacity-20 text-success border border-success border-opacity-30{% elif a.percentage >= 65 %}bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30{% else %}bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30{% endif %} px-2 py-0.5" style="font-size: 0.8rem;">
                     {{ a.percentage }}%
                   </span>
                 </td>
@@ -348,8 +347,8 @@
   <!-- Verified Achievements & Co-Curricular Records -->
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
-      <h4 class="card-title-custom mb-0"><i class="fas fa-trophy me-2 text-accent"></i>3. Co-Curricular, Extra-Curricular & Certifications</h4>
-      <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ dossier.achievements|length }} Record(s)</span>
+      <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-trophy me-2 text-accent"></i>3. Co-Curricular, Extra-Curricular & Certifications</h4>
+      <span class="badge bg-secondary bg-opacity-50 px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.achievements|length }} Record(s)</span>
     </div>
 
     {% if dossier.achievements %}
@@ -357,22 +356,22 @@
       <table class="vvit-table">
         <thead>
           <tr>
-            <th>Event / Certification Title</th>
-            <th>Category</th>
-            <th>Date</th>
-            <th>Description / Highlights</th>
-            <th class="text-end">Verification</th>
+            <th style="font-size: 0.82rem;">Event / Certification Title</th>
+            <th style="font-size: 0.82rem;">Category</th>
+            <th style="font-size: 0.82rem;">Date</th>
+            <th style="font-size: 0.82rem;">Description / Highlights</th>
+            <th class="text-end" style="font-size: 0.82rem;">Verification</th>
           </tr>
         </thead>
         <tbody>
           {% for ach in dossier.achievements %}
           <tr>
-            <td class="fw-bold" style="color: var(--text-primary);">{{ ach.title }}</td>
-            <td><span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25">{{ ach.category }}</span></td>
-            <td>{{ ach.date_achieved|date:"d M Y"|default:"—" }}</td>
-            <td class="small" style="color: var(--text-secondary); max-width: 320px;">{{ ach.description|default:"—" }}</td>
+            <td class="fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">{{ ach.title }}</td>
+            <td><span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25" style="font-size: 0.8rem;">{{ ach.category }}</span></td>
+            <td style="font-size: 0.85rem;">{{ ach.date_achieved|date:"d M Y"|default:"—" }}</td>
+            <td style="color: var(--text-secondary); max-width: 320px; font-size: 0.85rem;">{{ ach.description|default:"—" }}</td>
             <td class="text-end">
-              <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-1">
+              <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-0.5" style="font-size: 0.8rem;">
                 <i class="fas fa-check-circle me-1"></i>Verified
               </span>
             </td>
@@ -384,7 +383,7 @@
     {% else %}
     <div class="text-center py-4 text-muted">
       <i class="fas fa-award fa-2x mb-2 opacity-50"></i>
-      <p class="mb-0 small">No extracurricular or certification records recorded yet.</p>
+      <p class="mb-0" style="font-size: 0.85rem;">No extracurricular or certification records recorded yet.</p>
     </div>
     {% endif %}
   </div>
@@ -392,34 +391,34 @@
   <!-- Official Endorsements, Observations & Signatures -->
   <div class="glass-card mb-4 print-signature-card">
     <div class="card-header-custom mb-3">
-      <h4 class="card-title-custom mb-0"><i class="fas fa-signature me-2 text-accent"></i>4. Official Counselling Observations & Sign-off</h4>
+      <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-signature me-2 text-accent"></i>4. Official Counselling Observations & Sign-off</h4>
     </div>
 
-    <div class="p-3 rounded-3 mb-4" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px dashed var(--clr-border, rgba(255,255,255,0.2)); min-height: 90px;">
-      <div class="small text-muted fw-bold mb-2 text-uppercase" style="letter-spacing: 0.05em;">Faculty Counsellor Periodic Remarks & Action Plan:</div>
-      <div class="small text-muted italic">Regular academic monitoring and attendance tracking completed. Student is advised to maintain consistent performance and attend all laboratory / practical sessions.</div>
+    <div class="p-3 rounded-3 mb-4" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px dashed var(--clr-border, rgba(255,255,255,0.2)); min-height: 80px;">
+      <div class="text-muted fw-bold mb-1 text-uppercase" style="letter-spacing: 0.05em; font-size: 0.8rem;">Faculty Counsellor Periodic Remarks & Action Plan:</div>
+      <div class="text-muted" style="font-size: 0.88rem; line-height: 1.5; font-style: italic;">Regular academic monitoring and attendance tracking completed. Student is advised to maintain consistent performance and attend all laboratory / practical sessions.</div>
     </div>
 
     <div class="row g-4 pt-3 text-center print-sig-row">
       <div class="col-3">
-        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
-        <div class="fw-bold small" style="color: var(--text-primary);">Student Signature</div>
-        <small class="text-muted">Date: {{ dossier.today_date }}</small>
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border, #cbd5e1); margin: 0 15px;"></div>
+        <div class="fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">Student Signature</div>
+        <small class="text-muted" style="font-size: 0.78rem;">Date: {{ dossier.today_date }}</small>
       </div>
       <div class="col-3">
-        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
-        <div class="fw-bold small" style="color: var(--text-primary);">Faculty Counsellor</div>
-        <small class="text-muted">Prof. {{ dossier.counsellor_name }}</small>
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border, #cbd5e1); margin: 0 15px;"></div>
+        <div class="fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">Faculty Counsellor</div>
+        <small class="text-muted" style="font-size: 0.78rem;">Prof. {{ dossier.counsellor_name }}</small>
       </div>
       <div class="col-3">
-        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
-        <div class="fw-bold small" style="color: var(--text-primary);">Head of Department (HOD)</div>
-        <small class="text-muted">Dept. of {{ dossier.branch_code }}</small>
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border, #cbd5e1); margin: 0 15px;"></div>
+        <div class="fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">Head of Department</div>
+        <small class="text-muted" style="font-size: 0.78rem;">Dept. of {{ dossier.branch_code }}</small>
       </div>
       <div class="col-3">
-        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border); margin: 0 15px;"></div>
-        <div class="fw-bold small" style="color: var(--text-primary);">Principal / Dean</div>
-        <small class="text-muted">VVITU, Nambur</small>
+        <div class="sig-line mb-2" style="border-top: 1.5px solid var(--clr-border, #cbd5e1); margin: 0 15px;"></div>
+        <div class="fw-bold" style="color: var(--text-primary); font-size: 0.88rem;">Principal / Dean</div>
+        <small class="text-muted" style="font-size: 0.78rem;">VVITU, Nambur</small>
       </div>
     </div>
   </div>
@@ -429,12 +428,25 @@
 <!-- Styles for Screen and Print -->
 <style>
 .dossier-info-table th {
-  padding: 5px 8px;
-  font-size: 0.84rem;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 .dossier-info-table td {
-  padding: 5px 8px;
-  font-size: 0.85rem;
+  padding: 6px 8px;
+  font-size: 0.88rem;
+}
+
+.counselling-dossier-wrapper .vvit-table th {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 8px 10px;
+}
+
+.counselling-dossier-wrapper .vvit-table td {
+  font-size: 0.88rem;
+  padding: 8px 10px;
 }
 
 @media print {
@@ -454,7 +466,7 @@
   body, html {
     background: #ffffff !important;
     color: #000000 !important;
-    font-size: 10pt !important;
+    font-size: 9.5pt !important;
   }
 
   .vvit-main {
