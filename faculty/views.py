@@ -159,10 +159,18 @@ def dashboard(request):
 # ─────────────────────────────────────────────
 @faculty_required
 def ajax_get_students(request):
-    """Return JSON list of students in a section (for attendance form)."""
+    """
+    Return JSON list of students in a section (for attendance form).
+    If date and slot_id are provided, pre-populate each student's saved attendance status ('P' or 'A')
+    and any saved ClassDiary lesson details for that slot and date.
+    """
     section_id = request.GET.get('section_id')
+    date_str   = request.GET.get('date')
+    slot_id    = request.GET.get('slot_id')
+
     if not section_id:
         return JsonResponse({'error': 'section_id required'}, status=400)
+
     students = (
         Student.objects
         .filter(section_id=section_id, is_active=True, user__is_deleted=False)
@@ -170,15 +178,57 @@ def ajax_get_students(request):
         .order_by('roll_number')
         .only('id', 'roll_number', 'user__first_name', 'user__last_name')
     )
+
+    # Check for existing attendance records & diary notes
+    att_map = {}
+    already_marked = False
+    diary_data = None
+
+    if slot_id and date_str:
+        try:
+            att_date = datetime.date.fromisoformat(date_str)
+            records = Attendance.objects.filter(
+                timetable_entry_id=slot_id,
+                date=att_date,
+                student__section_id=section_id
+            ).values('student_id', 'status')
+
+            for r in records:
+                att_map[r['student_id']] = r['status']
+
+            if att_map:
+                already_marked = True
+
+            # Check if ClassDiary was previously saved for this slot + date
+            diary = ClassDiary.objects.filter(timetable_entry_id=slot_id, date=att_date).first()
+            if diary:
+                diary_data = {
+                    'unit_number': diary.unit_number,
+                    'topic_covered': diary.topic_covered or '',
+                    'discussion_summary': diary.discussion_summary or '',
+                    'homework_assignment': diary.homework_assignment or '',
+                }
+        except (ValueError, TypeError):
+            pass
+
     data = [
         {
             'id':          s.id,
             'roll_number': s.roll_number,
             'name':        s.user.get_full_name(),
+            'status':      att_map.get(s.id, 'P'),  # Default to 'P' if not marked before
+            'is_saved':    s.id in att_map,
         }
         for s in students
     ]
-    return JsonResponse({'students': data})
+
+    return JsonResponse({
+        'students':       data,
+        'already_marked': already_marked,
+        'marked_count':   len(att_map),
+        'total_count':    len(data),
+        'diary':          diary_data,
+    })
 
 
 # ─────────────────────────────────────────────

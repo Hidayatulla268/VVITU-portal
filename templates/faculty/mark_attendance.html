@@ -94,8 +94,11 @@
   <!-- Student Attendance Panel -->
   <div class="col-xl-8">
     <div class="glass-card">
-      <div class="card-header-custom" id="attendancePanelHeader">
-        <h3 class="card-title-custom"><i class="fas fa-clipboard-list me-2 text-accent"></i>Student List</h3>
+      <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2" id="attendancePanelHeader">
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="card-title-custom mb-0"><i class="fas fa-clipboard-list me-2 text-accent"></i>Student List</h3>
+          <span id="attStatusPill" class="d-none"></span>
+        </div>
         <div class="d-flex gap-2">
           <button type="button" class="btn-sm-accent d-none" id="markAllPresent" onclick="markAll('P')">
             <i class="fas fa-check me-1"></i>All Present
@@ -109,14 +112,14 @@
       <!-- Loading spinner -->
       <div id="loadingSpinner" class="text-center py-5 d-none">
         <div class="spinner-ring"></div>
-        <p class="mt-3 text-muted">Loading students…</p>
+        <p class="mt-3 text-muted">Loading class attendance records…</p>
       </div>
 
       <!-- Empty placeholder -->
       <div id="emptyPlaceholder" class="empty-state py-5">
         <i class="fas fa-users empty-icon fa-3x mb-3"></i>
         <h5>No Students Loaded</h5>
-        <p class="text-muted">Select a section and period, then click "Load Students".</p>
+        <p class="text-muted">Select a section and period, then click "Load Class Roll Sheet".</p>
       </div>
 
       <!-- Attendance rows (injected by JS) -->
@@ -172,7 +175,7 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label text-muted small fw-bold">Syllabus Unit</label>
-                <select name="unit_number" class="vvit-select">
+                <select name="unit_number" id="diaryUnitSelect" class="vvit-select">
                   <option value="1" selected>Unit 1</option>
                   <option value="2">Unit 2</option>
                   <option value="3">Unit 3</option>
@@ -183,15 +186,15 @@
               </div>
               <div class="col-md-8">
                 <label class="form-label text-muted small fw-bold">Topics Covered / Lesson Name</label>
-                <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Binary Search Trees, AVL Rotations Algorithm" />
+                <input type="text" name="topic_covered" id="diaryTopicInput" class="vvit-input" placeholder="e.g. Binary Search Trees, AVL Rotations Algorithm" />
               </div>
               <div class="col-md-6">
                 <label class="form-label text-muted small fw-bold">Discussion Key Concepts / Summary</label>
-                <textarea name="discussion_summary" class="vvit-input" rows="2" placeholder="Key formulas, examples discussed, code patterns, or lecture takeaways..."></textarea>
+                <textarea name="discussion_summary" id="diarySummaryInput" class="vvit-input" rows="2" placeholder="Key formulas, examples discussed, code patterns, or lecture takeaways..."></textarea>
               </div>
               <div class="col-md-6">
                 <label class="form-label text-muted small fw-bold">Homework / Next Class Task</label>
-                <textarea name="homework_assignment" class="vvit-input" rows="2" placeholder="Assigned problem set, textbook readings, or preparation for next class..."></textarea>
+                <textarea name="homework_assignment" id="diaryHomeworkInput" class="vvit-input" rows="2" placeholder="Assigned problem set, textbook readings, or preparation for next class..."></textarea>
               </div>
             </div>
           </div>
@@ -199,7 +202,7 @@
 
         <!-- Final submit inside the form -->
         <div class="p-3 pt-0">
-          <button type="submit" form="attendanceForm" class="btn-vvit-success w-100">
+          <button type="submit" id="submitAttendanceBtn" form="attendanceForm" class="btn-vvit-success w-100">
             <i class="fas fa-save me-2"></i>Save Attendance & Class Discussion Notes
           </button>
         </div>
@@ -217,18 +220,25 @@ const AJAX_STUDENTS_URL  = "{% url 'faculty:ajax_students' %}";
 const AJAX_TIMETABLE_URL = "{% url 'faculty:ajax_timetable' %}";
 const CSRFTOKEN          = "{{ csrf_token }}";
 
-const sectionSelect = document.getElementById('sectionSelect');
-const dateInput     = document.getElementById('dateInput');
-const slotSelect    = document.getElementById('slotSelect');
-const loadBtn       = document.getElementById('loadStudentsBtn');
-const dayHidden     = document.getElementById('dayHidden');
-const spinner       = document.getElementById('loadingSpinner');
-const emptyPH       = document.getElementById('emptyPlaceholder');
-const attRows       = document.getElementById('attendanceRows');
-const tbody         = document.getElementById('studentTableBody');
-const markAllP      = document.getElementById('markAllPresent');
-const markAllA      = document.getElementById('markAllAbsent');
-const slotCard      = document.getElementById('slotDetailsCard');
+const sectionSelect      = document.getElementById('sectionSelect');
+const dateInput          = document.getElementById('dateInput');
+const slotSelect         = document.getElementById('slotSelect');
+const loadBtn            = document.getElementById('loadStudentsBtn');
+const dayHidden          = document.getElementById('dayHidden');
+const spinner            = document.getElementById('loadingSpinner');
+const emptyPH            = document.getElementById('emptyPlaceholder');
+const attRows            = document.getElementById('attendanceRows');
+const tbody              = document.getElementById('studentTableBody');
+const markAllP           = document.getElementById('markAllPresent');
+const markAllA           = document.getElementById('markAllAbsent');
+const slotCard           = document.getElementById('slotDetailsCard');
+const attStatusPill      = document.getElementById('attStatusPill');
+const submitAttendanceBtn= document.getElementById('submitAttendanceBtn');
+
+const diaryUnitSelect    = document.getElementById('diaryUnitSelect');
+const diaryTopicInput    = document.getElementById('diaryTopicInput');
+const diarySummaryInput  = document.getElementById('diarySummaryInput');
+const diaryHomeworkInput = document.getElementById('diaryHomeworkInput');
 
 let currentSlotsData = [];
 
@@ -324,6 +334,11 @@ async function loadSlots() {
     }
 
     loadBtn.disabled = !slotSelect.value;
+
+    // If attendance table is currently open, auto-refresh it with the newly selected slot's records
+    if (!attRows.classList.contains('d-none')) {
+      loadStudentsRollSheet();
+    }
   } catch(e) {
     slotSelect.innerHTML = '<option value="">Error loading slots</option>';
   }
@@ -332,26 +347,40 @@ async function loadSlots() {
 slotSelect.addEventListener('change', () => {
   loadBtn.disabled = !slotSelect.value;
   updateSlotPreviewCard(slotSelect.value);
+  if (!attRows.classList.contains('d-none')) {
+    loadStudentsRollSheet();
+  }
 });
 
-sectionSelect.addEventListener('change', loadSlots);
-dateInput.addEventListener('change', loadSlots);
+sectionSelect.addEventListener('change', () => {
+  loadSlots();
+});
 
-// Load students
-loadBtn.addEventListener('click', async () => {
+dateInput.addEventListener('change', () => {
+  loadSlots();
+});
+
+// Load students roll sheet with existing attendance status and class diary notes
+async function loadStudentsRollSheet() {
   const sectionId = sectionSelect.value;
-  if (!sectionId) return;
+  const slotId    = slotSelect.value;
+  const dateVal   = getDateValue();
+
+  if (!sectionId || !slotId) return;
 
   spinner.classList.remove('d-none');
   emptyPH.classList.add('d-none');
   attRows.classList.add('d-none');
 
   try {
-    const res  = await fetch(`${AJAX_STUDENTS_URL}?section_id=${sectionId}`);
+    const res  = await fetch(`${AJAX_STUDENTS_URL}?section_id=${sectionId}&slot_id=${slotId}&date=${dateVal}`);
     const data = await res.json();
 
     tbody.innerHTML = '';
     data.students.forEach((st, idx) => {
+      const isPresent = (st.status === 'P');
+      const isAbsent  = (st.status === 'A');
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td class="text-muted small">${idx + 1}</td>
@@ -367,19 +396,51 @@ loadBtn.addEventListener('click', async () => {
         </td>
         <td class="text-center">
           <input type="radio" name="attendance_${st.id}" value="P" form="attendanceForm"
-                 id="p_${st.id}" class="att-radio att-radio-present" checked
+                 id="p_${st.id}" class="att-radio att-radio-present" ${isPresent ? 'checked' : ''}
                  onchange="updateCounts()"/>
           <label for="p_${st.id}" class="radio-label-present">P</label>
         </td>
         <td class="text-center">
           <input type="radio" name="attendance_${st.id}" value="A" form="attendanceForm"
-                 id="a_${st.id}" class="att-radio att-radio-absent"
+                 id="a_${st.id}" class="att-radio att-radio-absent" ${isAbsent ? 'checked' : ''}
                  onchange="updateCounts()"/>
           <label for="a_${st.id}" class="radio-label-absent">A</label>
         </td>
       `;
       tbody.appendChild(row);
     });
+
+    // Populate existing Class Diary notes if found
+    if (data.diary) {
+      if (diaryUnitSelect) diaryUnitSelect.value = String(data.diary.unit_number || '1');
+      if (diaryTopicInput) diaryTopicInput.value = data.diary.topic_covered || '';
+      if (diarySummaryInput) diarySummaryInput.value = data.diary.discussion_summary || '';
+      if (diaryHomeworkInput) diaryHomeworkInput.value = data.diary.homework_assignment || '';
+    } else {
+      if (diaryUnitSelect) diaryUnitSelect.value = '1';
+      if (diaryTopicInput) diaryTopicInput.value = '';
+      if (diarySummaryInput) diarySummaryInput.value = '';
+      if (diaryHomeworkInput) diaryHomeworkInput.value = '';
+    }
+
+    // Status Indicator Badge in Header
+    if (data.already_marked) {
+      attStatusPill.className = 'badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 px-2.5 py-1';
+      attStatusPill.style.fontSize = '0.8rem';
+      attStatusPill.innerHTML = `<i class="fas fa-check-double me-1"></i>Saved (${data.marked_count}/${data.total_count} records) — Ready to Edit`;
+      attStatusPill.classList.remove('d-none');
+      if (submitAttendanceBtn) {
+        submitAttendanceBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Attendance & Class Discussion Notes';
+      }
+    } else {
+      attStatusPill.className = 'badge bg-info bg-opacity-20 text-info border border-info border-opacity-30 px-2.5 py-1';
+      attStatusPill.style.fontSize = '0.8rem';
+      attStatusPill.innerHTML = '<i class="fas fa-pen-to-square me-1"></i>New Attendance Entry';
+      attStatusPill.classList.remove('d-none');
+      if (submitAttendanceBtn) {
+        submitAttendanceBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Attendance & Class Discussion Notes';
+      }
+    }
 
     spinner.classList.add('d-none');
     attRows.classList.remove('d-none');
@@ -391,7 +452,9 @@ loadBtn.addEventListener('click', async () => {
     emptyPH.classList.remove('d-none');
     emptyPH.querySelector('p').textContent = 'Failed to load students. Try again.';
   }
-});
+}
+
+loadBtn.addEventListener('click', loadStudentsRollSheet);
 
 function markAll(status) {
   document.querySelectorAll(`.att-radio-${status === 'P' ? 'present' : 'absent'}`).forEach(r => {
