@@ -183,6 +183,7 @@ def ajax_get_students(request):
     att_map = {}
     already_marked = False
     diary_data = None
+    synced_from_period = None
 
     if slot_id and date_str:
         try:
@@ -199,8 +200,37 @@ def ajax_get_students(request):
             if att_map:
                 already_marked = True
 
-            # Check if ClassDiary was previously saved for this slot + date
+            # If not marked on this specific slot, check if another slot for this section & faculty on this day was marked
+            slot_obj = Timetable.objects.filter(id=slot_id).first()
+            if not already_marked and slot_obj and slot_obj.faculty:
+                peer_slots = Timetable.objects.filter(
+                    section_id=section_id,
+                    day=slot_obj.day,
+                    faculty=slot_obj.faculty
+                ).exclude(id=slot_id)
+
+                for ps in peer_slots:
+                    peer_records = Attendance.objects.filter(
+                        timetable_entry_id=ps.id,
+                        date=att_date,
+                        student__section_id=section_id
+                    ).values('student_id', 'status')
+                    if peer_records.exists():
+                        for r in peer_records:
+                            att_map[r['student_id']] = r['status']
+                        already_marked = True
+                        synced_from_period = ps.period
+                        break
+
+            # Check if ClassDiary was previously saved for this slot + date (or peer slot)
             diary = ClassDiary.objects.filter(timetable_entry_id=slot_id, date=att_date).first()
+            if not diary and synced_from_period:
+                diary = ClassDiary.objects.filter(
+                    section_id=section_id,
+                    faculty=request.faculty,
+                    date=att_date
+                ).first()
+
             if diary:
                 diary_data = {
                     'unit_number': diary.unit_number,
@@ -223,11 +253,12 @@ def ajax_get_students(request):
     ]
 
     return JsonResponse({
-        'students':       data,
-        'already_marked': already_marked,
-        'marked_count':   len(att_map),
-        'total_count':    len(data),
-        'diary':          diary_data,
+        'students':           data,
+        'already_marked':     already_marked,
+        'synced_from_period': synced_from_period,
+        'marked_count':       len(att_map),
+        'total_count':        len(data),
+        'diary':              diary_data,
     })
 
 
@@ -259,22 +290,32 @@ def ajax_get_timetable(request):
         7: "03:10 PM - 04:00 PM",
         8: "04:00 PM - 04:50 PM",
     }
+    slots_list = list(slots)
     data = []
-    for s in slots:
+    for s in slots_list:
         start_t = s.start_time.strftime("%I:%M %p") if getattr(s, 'start_time', None) else None
         end_t   = s.end_time.strftime("%I:%M %p") if getattr(s, 'end_time', None) else None
         timing_str = f"{start_t} - {end_t}" if (start_t and end_t) else period_timings.get(s.period, "Scheduled Slot")
         is_my_slot = (s.faculty == faculty)
+
+        # Detect other periods on the same day for the same faculty & section
+        linked_periods = [
+            p.period for p in slots_list
+            if p.id != s.id and p.faculty_id == s.faculty_id
+        ]
+
         data.append({
-            'id':           s.id,
-            'period':       s.period,
-            'subject_code':  s.subject.code,
-            'subject_name':  s.subject.name,
-            'subject_short': s.subject.short_name,
-            'room_number':  getattr(s, 'room_number', 'Room 101') or 'Room 101',
-            'timing':       timing_str,
-            'faculty_name': s.faculty.full_name if s.faculty else "Faculty",
-            'is_my_slot':   is_my_slot,
+            'id':               s.id,
+            'period':           s.period,
+            'subject_code':     s.subject.code,
+            'subject_name':     s.subject.name,
+            'subject_short':    s.subject.short_name,
+            'room_number':      getattr(s, 'room_number', 'Room 101') or 'Room 101',
+            'timing':           timing_str,
+            'faculty_name':     s.faculty.full_name if s.faculty else "Faculty",
+            'is_my_slot':       is_my_slot,
+            'linked_periods':   linked_periods,
+            'has_multi_periods':len(linked_periods) > 0,
         })
     return JsonResponse({'slots': data})
 
@@ -406,6 +447,20 @@ def mark_attendance(request):
                 )
                 return redirect('faculty:mark_attendance')
 
+        # Check if faculty has multiple classes scheduled on this day for the same section
+        # (e.g. 2-period lab block or multiple lectures)
+        sync_same_day = (request.POST.get('sync_same_day_slots', '1') == '1')
+        target_slots = [slot]
+        if sync_same_day:
+            peer_slots = list(
+                Timetable.objects.filter(
+                    section=slot.section,
+                    day=slot.day,
+                    faculty=faculty
+                ).exclude(id=slot.id)
+            )
+            target_slots.extend(peer_slots)
+
         students_in_section = Student.objects.filter(section_id=section_id, is_active=True, user__is_deleted=False)
 
         saved_count = 0
@@ -416,12 +471,13 @@ def mark_attendance(request):
             if status not in ('P', 'A'):
                 status = 'A'
             
-            att_rec, created = Attendance.objects.update_or_create(
-                student=student,
-                timetable_entry=slot,
-                date=att_date,
-                defaults={'status': status, 'marked_by': faculty},
-            )
+            for target_slot in target_slots:
+                att_rec, created = Attendance.objects.update_or_create(
+                    student=student,
+                    timetable_entry=target_slot,
+                    date=att_date,
+                    defaults={'status': status, 'marked_by': faculty},
+                )
             saved_count += 1
 
             # Trigger absent notifications to parent & student if marked absent
@@ -432,7 +488,8 @@ def mark_attendance(request):
                     sms_count += 1
 
         # Mark ClassTransfer as completed if substitute faculty marked attendance
-        ClassTransfer.objects.filter(timetable_entry=slot, date=att_date).update(status='completed')
+        for target_slot in target_slots:
+            ClassTransfer.objects.filter(timetable_entry=target_slot, date=att_date).update(status='completed')
 
         # Optional Class Discussion / Lesson Log
         topic_covered = request.POST.get('topic_covered', '').strip()
@@ -448,22 +505,28 @@ def mark_attendance(request):
 
             discussion_summary = request.POST.get('discussion_summary', '').strip()
             homework_assignment = request.POST.get('homework_assignment', '').strip()
-            ClassDiary.objects.update_or_create(
-                timetable_entry=slot,
-                date=att_date,
-                defaults={
-                    'section': slot.section,
-                    'subject': slot.subject,
-                    'faculty': faculty,
-                    'period': slot.period,
-                    'unit_number': unit_number,
-                    'topic_covered': topic_covered,
-                    'discussion_summary': discussion_summary,
-                    'homework_assignment': homework_assignment,
-                }
-            )
+            for target_slot in target_slots:
+                ClassDiary.objects.update_or_create(
+                    timetable_entry=target_slot,
+                    date=att_date,
+                    defaults={
+                        'section': target_slot.section,
+                        'subject': target_slot.subject,
+                        'faculty': faculty,
+                        'period': target_slot.period,
+                        'unit_number': unit_number,
+                        'topic_covered': topic_covered,
+                        'discussion_summary': discussion_summary,
+                        'homework_assignment': homework_assignment,
+                    }
+                )
 
-        msg_text = f"Attendance saved for {saved_count} students."
+        if len(target_slots) > 1:
+            periods_str = ", ".join(f"Period {s.period}" for s in sorted(target_slots, key=lambda x: x.period))
+            msg_text = f"Attendance automatically saved for {saved_count} students across {len(target_slots)} periods ({periods_str})."
+        else:
+            msg_text = f"Attendance saved for {saved_count} students (Period {slot.period})."
+
         if topic_covered:
             msg_text += " Class discussion notes recorded."
         if sms_count > 0:

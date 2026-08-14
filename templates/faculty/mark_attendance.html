@@ -79,6 +79,19 @@
           </div>
         </div>
 
+        <!-- Multi-Period Class Auto-Sync Notice & Toggle -->
+        <div id="multiPeriodNotice" class="p-3 mb-3 border rounded-3 bg-info bg-opacity-10 border-info border-opacity-30 d-none">
+          <div class="form-check form-switch mb-1 d-flex align-items-center gap-2">
+            <input class="form-check-input mt-0" type="checkbox" name="sync_same_day_slots" id="syncSameDaySlots" value="1" checked style="cursor: pointer; width: 2.2em; height: 1.2em;" />
+            <label class="form-check-label small fw-bold text-light" for="syncSameDaySlots" style="cursor: pointer;">
+              <i class="fas fa-link text-info me-1"></i>Auto-sync with same-day class (<span id="linkedPeriodsText">Period 2</span>)
+            </label>
+          </div>
+          <small class="text-muted d-block" style="font-size: 0.76rem; line-height: 1.35;">
+            You teach this class multiple times today. Marking attendance here will automatically record and update it for both periods!
+          </small>
+        </div>
+
         <!-- Load students button -->
         <button type="button" id="loadStudentsBtn" class="btn-vvit-primary w-100 mb-3" disabled>
           <i class="fas fa-users me-2"></i>Load Class Roll Sheet
@@ -95,7 +108,7 @@
   <div class="col-xl-8">
     <div class="glass-card">
       <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2" id="attendancePanelHeader">
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
           <h3 class="card-title-custom mb-0"><i class="fas fa-clipboard-list me-2 text-accent"></i>Student List</h3>
           <span id="attStatusPill" class="d-none"></span>
         </div>
@@ -232,6 +245,8 @@ const tbody              = document.getElementById('studentTableBody');
 const markAllP           = document.getElementById('markAllPresent');
 const markAllA           = document.getElementById('markAllAbsent');
 const slotCard           = document.getElementById('slotDetailsCard');
+const multiPeriodNotice  = document.getElementById('multiPeriodNotice');
+const linkedPeriodsText  = document.getElementById('linkedPeriodsText');
 const attStatusPill      = document.getElementById('attStatusPill');
 const submitAttendanceBtn= document.getElementById('submitAttendanceBtn');
 
@@ -261,6 +276,7 @@ function updateSlotPreviewCard(selectedSlotId) {
   const slotObj = currentSlotsData.find(s => String(s.id) === String(selectedSlotId));
   if (!slotObj) {
     slotCard.classList.add('d-none');
+    if (multiPeriodNotice) multiPeriodNotice.classList.add('d-none');
     return;
   }
   document.getElementById('previewPeriodBadge').textContent  = `P${slotObj.period}`;
@@ -279,6 +295,15 @@ function updateSlotPreviewCard(selectedSlotId) {
     statusEl.innerHTML = `<i class="fas fa-user-clock me-1"></i>Instructor: ${slotObj.faculty_name}`;
   }
   slotCard.classList.remove('d-none');
+
+  // Handle Multi-Period Notice
+  if (slotObj.has_multi_periods && slotObj.linked_periods && slotObj.linked_periods.length > 0) {
+    const linkedStr = slotObj.linked_periods.map(p => `Period ${p}`).join(' & ');
+    if (linkedPeriodsText) linkedPeriodsText.textContent = linkedStr;
+    if (multiPeriodNotice) multiPeriodNotice.classList.remove('d-none');
+  } else {
+    if (multiPeriodNotice) multiPeriodNotice.classList.add('d-none');
+  }
 }
 
 // Fetch timetable slots for current section + date day
@@ -291,6 +316,7 @@ async function loadSlots() {
     slotSelect.innerHTML = '<option value="">— Select section & date first —</option>';
     slotSelect.disabled = true;
     slotCard.classList.add('d-none');
+    if (multiPeriodNotice) multiPeriodNotice.classList.add('d-none');
     loadBtn.disabled = true;
     return;
   }
@@ -299,6 +325,7 @@ async function loadSlots() {
   slotSelect.disabled  = true;
   loadBtn.disabled     = true;
   slotCard.classList.add('d-none');
+  if (multiPeriodNotice) multiPeriodNotice.classList.add('d-none');
 
   try {
     const res  = await fetch(`${AJAX_TIMETABLE_URL}?section_id=${sectionId}&day=${day}`);
@@ -313,7 +340,8 @@ async function loadSlots() {
       opt.value = s.id;
       const isMine = s.is_my_slot ? " (Your Class ⭐)" : ` (${s.faculty_name})`;
       const subjShort = s.subject_short || s.subject_code;
-      opt.textContent = `P${s.period} [${s.timing}] — ${subjShort} (${s.subject_code}): ${s.subject_name}${isMine}`;
+      const multiTag = s.has_multi_periods ? ` [Linked: P${s.period} & P${s.linked_periods.join(', P')}]` : '';
+      opt.textContent = `P${s.period} [${s.timing}] — ${subjShort} (${s.subject_code}): ${s.subject_name}${multiTag}${isMine}`;
       slotSelect.appendChild(opt);
 
       // Auto-preselect first slot belonging to this faculty
@@ -425,9 +453,15 @@ async function loadStudentsRollSheet() {
 
     // Status Indicator Badge in Header
     if (data.already_marked) {
-      attStatusPill.className = 'badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 px-2.5 py-1';
-      attStatusPill.style.fontSize = '0.8rem';
-      attStatusPill.innerHTML = `<i class="fas fa-check-double me-1"></i>Saved (${data.marked_count}/${data.total_count} records) — Ready to Edit`;
+      if (data.synced_from_period) {
+        attStatusPill.className = 'badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-30 px-2.5 py-1';
+        attStatusPill.style.fontSize = '0.8rem';
+        attStatusPill.innerHTML = `<i class="fas fa-link me-1"></i>Auto-Synced with Period ${data.synced_from_period} (Ready to Edit/Save)`;
+      } else {
+        attStatusPill.className = 'badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 px-2.5 py-1';
+        attStatusPill.style.fontSize = '0.8rem';
+        attStatusPill.innerHTML = `<i class="fas fa-check-double me-1"></i>Saved (${data.marked_count}/${data.total_count} records) — Ready to Edit`;
+      }
       attStatusPill.classList.remove('d-none');
       if (submitAttendanceBtn) {
         submitAttendanceBtn.innerHTML = '<i class="fas fa-save me-2"></i>Update Attendance & Class Discussion Notes';
