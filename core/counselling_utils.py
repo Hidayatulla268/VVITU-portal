@@ -245,10 +245,28 @@ def get_student_counselling_dossier(student):
     achievements_qs = Achievement.objects.filter(user=student.user).order_by('-date_achieved')
     achievements_list = list(achievements_qs)
 
+    # 7. Student Photo / Profile Picture
+    profile_pic_url = None
+    profile_pic_path = None
+    if hasattr(student, 'user') and student.user and student.user.profile_picture:
+        try:
+            profile_pic_url = student.user.profile_picture.url
+            if hasattr(student.user.profile_picture, 'path') and os.path.exists(student.user.profile_picture.path):
+                profile_pic_path = student.user.profile_picture.path
+        except Exception:
+            pass
+
+    first_n = student.user.first_name if (hasattr(student, 'user') and student.user and student.user.first_name) else ''
+    last_n = student.user.last_name if (hasattr(student, 'user') and student.user and student.user.last_name) else ''
+    initials = f"{first_n[:1]}{last_n[:1]}".upper() or 'ST'
+
     return {
         'student': student,
         'roll_number': student.roll_number,
         'full_name': student.full_name or student.user.get_full_name(),
+        'profile_picture_url': profile_pic_url,
+        'profile_picture_path': profile_pic_path,
+        'initials': initials,
         'email': email,
         'personal_mobile': personal_mobile,
         'gender': gender_val,
@@ -487,15 +505,51 @@ def generate_counselling_report_pdf(student):
         ]
     ]
 
-    profile_table = Table(profile_data, colWidths=[90, 170, 95, 168])
-    profile_table.setStyle(TableStyle([
+    profile_details_table = Table(profile_data, colWidths=[78, 142, 84, 139])
+    profile_details_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('TOPPADDING', (0,0), (-1,-1), 2.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
     ]))
-    elements.append(profile_table)
+
+    # Student Photo in PDF
+    from reportlab.platypus import Image as RLImage
+    photo_cell = None
+    if dossier.get('profile_picture_path') and os.path.exists(dossier['profile_picture_path']):
+        try:
+            photo_cell = RLImage(dossier['profile_picture_path'], width=68, height=84)
+        except Exception:
+            photo_cell = None
+
+    if not photo_cell:
+        photo_cell = [
+            Spacer(1, 20),
+            Paragraph(f"<font size=16 color='#991B1B'><b>{dossier['initials']}</b></font>", table_cell_center),
+            Spacer(1, 12),
+            Paragraph("<font size=6 color='#64748B'><b>STUDENT<br/>PHOTO</b></font>", table_cell_center)
+        ]
+
+    photo_box_table = Table([[photo_cell]], colWidths=[74])
+    photo_box_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F1F5F9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#94A3B8')),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+    ]))
+
+    combined_profile_table = Table([[photo_box_table, profile_details_table]], colWidths=[78, 445])
+    combined_profile_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+    elements.append(combined_profile_table)
     elements.append(Spacer(1, 8))
 
     # ── ACADEMIC SUMMARY KPI BAR ──────────────────────────────────────────────
