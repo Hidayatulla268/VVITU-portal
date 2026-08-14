@@ -157,12 +157,12 @@
 
         <!-- Optional Class Discussion & Lesson Log Section -->
         <div class="px-3 pt-3">
-          <div class="card bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded-3 p-3 shadow-sm mb-3">
+          <div class="rounded-3 p-3 shadow-sm mb-3" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px solid var(--clr-border, rgba(255,255,255,0.1));">
             <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
               <div class="d-flex align-items-center gap-2">
                 <i class="fas fa-book-reader text-accent fs-5"></i>
-                <span class="fw-bold text-white">Today's Class Topic & Discussion Details</span>
-                <span class="badge bg-secondary bg-opacity-50 text-light px-2 py-1" style="font-size: 0.75rem;">Optional</span>
+                <span class="fw-bold" style="color: var(--text-primary);">Today's Class Topic & Discussion Details</span>
+                <span class="badge bg-secondary bg-opacity-50 px-2 py-1" style="font-size: 0.75rem;">Optional</span>
               </div>
               <small class="text-muted"><i class="fas fa-eye text-info me-1"></i>Visible to class students</small>
             </div>
@@ -171,7 +171,7 @@
             </p>
             <div class="row g-3">
               <div class="col-md-4">
-                <label class="form-label text-light small fw-semibold">Syllabus Unit</label>
+                <label class="form-label text-muted small fw-bold">Syllabus Unit</label>
                 <select name="unit_number" class="vvit-select">
                   <option value="1" selected>Unit 1</option>
                   <option value="2">Unit 2</option>
@@ -182,15 +182,15 @@
                 </select>
               </div>
               <div class="col-md-8">
-                <label class="form-label text-light small fw-semibold">Topics Covered / Lesson Name</label>
+                <label class="form-label text-muted small fw-bold">Topics Covered / Lesson Name</label>
                 <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Binary Search Trees, AVL Rotations Algorithm" />
               </div>
               <div class="col-md-6">
-                <label class="form-label text-light small fw-semibold">Discussion Key Concepts / Summary</label>
+                <label class="form-label text-muted small fw-bold">Discussion Key Concepts / Summary</label>
                 <textarea name="discussion_summary" class="vvit-input" rows="2" placeholder="Key formulas, examples discussed, code patterns, or lecture takeaways..."></textarea>
               </div>
               <div class="col-md-6">
-                <label class="form-label text-light small fw-semibold">Homework / Next Class Task</label>
+                <label class="form-label text-muted small fw-bold">Homework / Next Class Task</label>
                 <textarea name="homework_assignment" class="vvit-input" rows="2" placeholder="Assigned problem set, textbook readings, or preparation for next class..."></textarea>
               </div>
             </div>

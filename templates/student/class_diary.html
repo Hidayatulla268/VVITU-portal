@@ -67,81 +67,87 @@
   </form>
 </div>
 
-<!-- Class Discussion Logs Feed -->
+<!-- Class Discussion Logs Feed / Table -->
 <div class="glass-card">
   <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
     <h3 class="card-title-custom mb-0"><i class="fas fa-chalkboard-user me-2 text-accent"></i>Class Discussion Timeline</h3>
-    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ entries.count }} Note(s)</span>
+    <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ entries.count }} Note(s)</span>
   </div>
 
   {% if entries %}
-  <div class="d-flex flex-column gap-3">
-    {% for entry in entries %}
-    <div class="card bg-dark bg-opacity-40 border border-secondary border-opacity-25 rounded-3 p-3 shadow-sm hover-elevate">
-      <!-- Header with Period, Subject & Faculty -->
-      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
-            Period {{ entry.period }}
-          </span>
-          <span class="badge bg-primary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.82rem;">
-            {{ entry.subject.code }}
-          </span>
-          <span class="badge bg-info bg-opacity-75 text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
-            {{ entry.unit_label }}
-          </span>
-          <span class="text-white fw-bold">{{ entry.subject.name }}</span>
-          <span class="badge bg-secondary bg-opacity-50 text-light px-2 py-1">
-            <i class="fas fa-user-tie text-accent me-1"></i>Prof. {{ entry.faculty.full_name }}
-          </span>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-dark border border-secondary border-opacity-50 text-warning px-2 py-1">
-            <i class="far fa-calendar-alt me-1"></i>{{ entry.date|date:"D, d M Y" }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Topic Covered -->
-      <div class="p-2 mb-2 rounded-2 bg-dark bg-opacity-50 border-start border-3 border-accent">
-        <div class="small text-muted fw-bold mb-1"><i class="fas fa-lightbulb text-warning me-1"></i>TOPIC COVERED IN CLASS:</div>
-        <div class="text-light fw-semibold" style="font-size: 0.95rem;">{{ entry.topic_covered }}</div>
-      </div>
-
-      <!-- Discussion Summary / Key Points -->
-      {% if entry.discussion_summary %}
-      <div class="mb-2">
-        <div class="small text-muted fw-bold mb-1"><i class="fas fa-align-left text-info me-1"></i>KEY CONCEPTS & DISCUSSION SUMMARY:</div>
-        <div class="text-light small opacity-90 ps-2" style="white-space: pre-line;">{{ entry.discussion_summary }}</div>
-      </div>
-      {% endif %}
-
-      <!-- Homework / Next Class Assignment -->
-      {% if entry.homework_assignment %}
-      <div class="p-2 mt-1 rounded-2 bg-warning bg-opacity-10 border border-warning border-opacity-25">
-        <div class="small text-warning fw-bold mb-1"><i class="fas fa-pencil-alt me-1"></i>HOMEWORK / ASSIGNMENT / NEXT CLASS PREP:</div>
-        <div class="text-light small ps-1" style="white-space: pre-line;">{{ entry.homework_assignment }}</div>
-      </div>
-      {% endif %}
-
-      <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary border-opacity-25">
-        <small class="text-muted" style="font-size: 0.75rem;">
-          <i class="fas fa-clock me-1"></i>Recorded at {{ entry.created_at|date:"d M Y, h:i A" }}
-          {% if entry.updated_at != entry.created_at %} (Updated {{ entry.updated_at|date:"d M, h:i A" }}){% endif %}
-        </small>
-        <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-25 px-2 py-1" style="font-size: 0.72rem;">
-          <i class="fas fa-check-double me-1"></i>Verified Lesson
-        </span>
-      </div>
-    </div>
-    {% endfor %}
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Date & Period</th>
+          <th>Syllabus Unit</th>
+          <th>Subject</th>
+          <th>Faculty</th>
+          <th>Topics Covered</th>
+          <th>Discussion / Concepts</th>
+          <th>Homework / Tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td>
+            <div class="fw-bold" style="color: var(--text-primary);">{{ entry.date|date:"d M Y" }}</div>
+            <div class="mt-1">
+              <span class="badge bg-accent text-dark fw-bold" style="font-size: 0.72rem;">
+                Period {{ entry.period }}
+              </span>
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-30 fw-bold" style="font-size: 0.75rem;">
+              {{ entry.unit_label }}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-primary bg-opacity-75 text-light">{{ entry.subject.code }}</span>
+            <div class="small fw-semibold mt-1" style="color: var(--text-primary);">{{ entry.subject.name }}</div>
+          </td>
+          <td>
+            <div class="small fw-bold" style="color: var(--text-primary);"><i class="fas fa-user-tie me-1 text-accent"></i>Prof. {{ entry.faculty.full_name }}</div>
+          </td>
+          <td>
+            <div class="fw-bold" style="color: var(--text-primary); max-width: 240px;">
+              {{ entry.topic_covered }}
+            </div>
+            <small class="text-muted" style="font-size: 0.72rem;">
+              <i class="fas fa-clock me-1"></i>Logged at {{ entry.created_at|date:"h:i A" }}
+            </small>
+          </td>
+          <td>
+            {% if entry.discussion_summary %}
+              <div class="small text-muted" style="max-width: 280px; line-height: 1.4; white-space: pre-line;">{{ entry.discussion_summary }}</div>
+            {% else %}
+              <span class="text-muted small italic">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if entry.homework_assignment %}
+              <div class="p-2 rounded border border-warning border-opacity-25" style="background: rgba(245, 158, 11, 0.08); max-width: 220px;">
+                <div class="small fw-bold text-warning mb-1"><i class="fas fa-pencil-alt me-1"></i>Homework:</div>
+                <div class="small" style="color: var(--text-secondary); line-height: 1.3; white-space: pre-line;">{{ entry.homework_assignment }}</div>
+              </div>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
   {% else %}
   <div class="text-center py-5">
     <i class="fas fa-book-open-reader fa-3x text-muted mb-3 opacity-50"></i>
-    <h5 class="text-muted">No class discussion notes found</h5>
+    <h5 style="color: var(--text-primary);">No class discussion notes found</h5>
     <p class="text-muted small">Your faculty will post discussion notes, covered topics, and assignments here after each class session.</p>
   </div>
   {% endif %}
 </div>
 {% endblock %}
+
