@@ -663,12 +663,22 @@ class ClassDiary(models.Model):
     Allows faculty to optionally log topics covered, key concepts discussed,
     and homework/reading assignments. Visible to students of that section.
     """
+    UNIT_CHOICES = (
+        (1, 'Unit 1'),
+        (2, 'Unit 2'),
+        (3, 'Unit 3'),
+        (4, 'Unit 4'),
+        (5, 'Unit 5'),
+        (6, 'Other / Revision / Lab'),
+    )
+
     timetable_entry     = models.ForeignKey(Timetable, on_delete=models.CASCADE, related_name='diary_entries', db_index=True)
     section             = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='diary_logs', db_index=True)
     subject             = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='diary_logs', db_index=True)
     faculty             = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, related_name='diary_logs', db_index=True)
     date                = models.DateField(db_index=True)
     period              = models.IntegerField(default=1)
+    unit_number         = models.IntegerField(choices=UNIT_CHOICES, default=1, db_index=True, help_text="Syllabus unit number (1 to 5, or Other/Revision)")
     topic_covered       = models.CharField(max_length=255, help_text="Core topic or chapter covered in class")
     discussion_summary  = models.TextField(blank=True, help_text="Key takeaways, concepts, or theorems discussed")
     homework_assignment = models.TextField(blank=True, help_text="Homework, practice problems, or reading material assigned")
@@ -682,6 +692,13 @@ class ClassDiary(models.Model):
         verbose_name_plural = 'Class Diaries'
 
     def __str__(self):
-        return f"{self.date} | P{self.period} - {self.subject.code} ({self.section}) - {self.topic_covered[:40]}"
+        return f"{self.date} | P{self.period} - {self.subject.code} ({self.section}) [Unit {self.unit_number}] - {self.topic_covered[:40]}"
+
+    @property
+    def unit_label(self):
+        if self.unit_number in [1, 2, 3, 4, 5]:
+            return f"Unit {self.unit_number}"
+        return "Other / Revision"
+
 
 

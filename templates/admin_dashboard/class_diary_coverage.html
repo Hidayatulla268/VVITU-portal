@@ -1,0 +1,331 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Class Diary & Syllabus Coverage Audit | Admin Portal{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h2 class="text-white fw-bold mb-1">
+      <i class="fas fa-book-reader text-accent me-2"></i>College-Wide Class Diary & Syllabus Coverage Audit
+    </h2>
+    <p class="text-muted small mb-0">
+      Real-time academic oversight of daily lectures, topics covered, and syllabus completion across <strong>all university departments</strong>
+    </p>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <span class="badge bg-danger bg-opacity-25 border border-danger text-light px-3 py-2 fs-6">
+      <i class="fas fa-shield-halved me-1 text-accent"></i>University Administration
+    </span>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-md-3">
+    <div class="kpi-card kpi-primary">
+      <div class="kpi-icon"><i class="fas fa-book-bookmark"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_logs_count }}</span>
+        <span class="kpi-label">Total Logs Recorded</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-icon"><i class="fas fa-chalkboard-user"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ active_faculty_count }}</span>
+        <span class="kpi-label">Active Faculty</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-icon"><i class="fas fa-book-open"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ active_subjects_count }}</span>
+        <span class="kpi-label">Subjects Covered</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="kpi-card kpi-accent">
+      <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ avg_progress }}%</span>
+        <span class="kpi-label">Avg. University Syllabus</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 1: University Syllabus & Unit Completion Progress Table ── -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-layer-group me-2 text-accent"></i>College-Wide Faculty Syllabus & Unit Progress
+    </h3>
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ coverage_stats|length }} Teaching Assignment(s)</span>
+  </div>
+
+  {% if coverage_stats %}
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Branch</th>
+          <th>Faculty Member</th>
+          <th>Subject</th>
+          <th>Section</th>
+          <th>Units Covered</th>
+          <th style="min-width: 140px;">Syllabus Progress</th>
+          <th>Total Logs</th>
+          <th>Latest Topic & Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stat in coverage_stats %}
+        <tr>
+          <td>
+            <span class="badge bg-danger bg-opacity-75 text-light fw-bold">{{ stat.branch.code|default:"Gen" }}</span>
+          </td>
+          <td>
+            <div class="fw-bold text-white"><i class="fas fa-user-tie me-1 text-accent"></i>Prof. {{ stat.faculty.full_name }}</div>
+            <small class="text-muted">{{ stat.faculty.employee_id }}</small>
+          </td>
+          <td>
+            <span class="badge bg-primary bg-opacity-75 text-light">{{ stat.subject.code }}</span>
+            <div class="text-light small mt-1">{{ stat.subject.name }}</div>
+          </td>
+          <td>
+            <span class="badge bg-secondary bg-opacity-50 text-light">{{ stat.section }}</span>
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+              {% for u in "12345"|make_list %}
+                {% if u|add:"0" in stat.covered_units %}
+                  <span class="badge bg-success bg-opacity-75 text-white" style="font-size: 0.72rem;" title="Unit {{ u }} Covered">
+                    <i class="fas fa-check me-1"></i>U{{ u }}
+                  </span>
+                {% else %}
+                  <span class="badge bg-dark border border-secondary text-muted" style="font-size: 0.72rem;" title="Unit {{ u }} Pending">
+                    U{{ u }}
+                  </span>
+                {% endif %}
+              {% endfor %}
+              {% if 6 in stat.covered_units %}
+                <span class="badge bg-info bg-opacity-50 text-light" style="font-size: 0.7rem;" title="Revision / Lab / Other">Rev</span>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1 bg-dark bg-opacity-50 border border-secondary border-opacity-25" style="height: 8px;">
+                <div class="progress-bar {% if stat.progress_pct >= 80 %}bg-success{% elif stat.progress_pct >= 40 %}bg-warning{% else %}bg-danger{% endif %}"
+                     role="progressbar" style="width: {{ stat.progress_pct }}%;" aria-valuenow="{{ stat.progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <span class="small fw-bold text-light">{{ stat.progress_pct }}%</span>
+            </div>
+            <small class="text-muted" style="font-size: 0.72rem;">{{ stat.units_done_count }} / 5 Units</small>
+          </td>
+          <td>
+            <span class="badge bg-dark border border-secondary border-opacity-50 text-white fw-bold px-2 py-1">
+              {{ stat.total_logs }}
+            </span>
+          </td>
+          <td>
+            {% if stat.latest_log %}
+              <div class="text-light small fw-semibold" style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ stat.latest_log.topic_covered }}">
+                {{ stat.latest_log.topic_covered }}
+              </div>
+              <small class="text-muted"><i class="far fa-calendar-alt me-1 text-warning"></i>{{ stat.latest_log.date|date:"d M Y" }} (P{{ stat.latest_log.period }})</small>
+            {% else %}
+              <span class="text-muted small italic">No lectures logged</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-4">
+    <i class="fas fa-chalkboard-user fa-2x text-muted mb-2 opacity-50"></i>
+    <p class="text-muted small mb-0">No teaching assignments match the selected filter.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── SECTION 2: Filters & University-Wide Class Discussion Logs ── -->
+<div class="glass-card mb-4">
+  <form method="get" action="{% url 'admin_dashboard:class_diary_coverage' %}" class="row g-3 align-items-end">
+    <div class="col-lg-3 col-md-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-search me-1 text-accent"></i>Search Topics / Keywords</label>
+      <div class="search-input-wrapper" style="position: relative; display: flex; align-items: center; width: 100%;">
+        <i class="fas fa-search search-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted, #94a3b8); z-index: 5; pointer-events: none; font-size: 0.88rem;"></i>
+        <input type="text" name="search" class="vvit-input" style="padding-left: 38px !important; width: 100%;" placeholder="Topic, keywords, faculty, subject..." value="{{ search_query }}">
+      </div>
+    </div>
+
+    <div class="col-lg-2 col-md-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-building-columns me-1 text-accent"></i>Branch / Dept</label>
+      <select name="branch_id" class="vvit-select">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+          <option value="{{ b.id }}" {% if branch_id == b.id %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-2 col-md-4">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-user-tie me-1 text-accent"></i>Faculty</label>
+      <select name="faculty_id" class="vvit-select">
+        <option value="">All Faculty</option>
+        {% for f in all_faculty %}
+          <option value="{{ f.id }}" {% if faculty_id == f.id %}selected{% endif %}>Prof. {{ f.full_name }} ({{ f.department.code|default:'Gen' }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-2 col-md-4">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-book me-1 text-accent"></i>Subject</label>
+      <select name="subject_id" class="vvit-select">
+        <option value="">All Subjects</option>
+        {% for subj in all_subjects %}
+          <option value="{{ subj.id }}" {% if subject_id == subj.id %}selected{% endif %}>{{ subj.code }} - {{ subj.short_name|default:subj.name }} ({{ subj.branch.code }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-1 col-md-4 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-school me-1 text-accent"></i>Section</label>
+      <select name="section_id" class="vvit-select">
+        <option value="">All</option>
+        {% for sec in all_sections %}
+          <option value="{{ sec.id }}" {% if section_id == sec.id %}selected{% endif %}>{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-2 col-md-4 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-layer-group me-1 text-accent"></i>Unit</label>
+      <select name="unit_number" class="vvit-select">
+        <option value="">All Units</option>
+        {% for u_val, u_name in unit_choices %}
+          <option value="{{ u_val }}" {% if unit_number == u_val %}selected{% endif %}>{{ u_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-2 col-md-4 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-calendar-day me-1 text-accent"></i>From Date</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date_from" class="vvit-input" value="{{ date_from }}">
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-lg-2 col-md-4 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-calendar-day me-1 text-accent"></i>To Date</label>
+      <div class="date-input-wrapper">
+        <input type="date" name="date_to" class="vvit-input" value="{{ date_to }}">
+        <i class="fas fa-calendar-days cal-icon"></i>
+      </div>
+    </div>
+
+    <div class="col-lg-2 col-md-4 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-fill" style="min-height: 42px;" title="Apply filter">
+        <i class="fas fa-filter me-1"></i>Filter
+      </button>
+      <a href="{% url 'admin_dashboard:class_diary_coverage' %}" class="btn-vvit-secondary flex-fill" style="min-height: 42px;" title="Reset filters">
+        <i class="fas fa-rotate-left"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Detailed Logs Registry -->
+<div class="glass-card">
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+    <h3 class="card-title-custom mb-0"><i class="fas fa-list-check me-2 text-accent"></i>University Class Lecture Timeline</h3>
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ entries.count }} Record(s)</span>
+  </div>
+
+  {% if entries %}
+  <div class="d-flex flex-column gap-3">
+    {% for entry in entries %}
+    <div class="card bg-dark bg-opacity-40 border border-secondary border-opacity-25 rounded-3 p-3 shadow-sm hover-elevate">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
+            Period {{ entry.period }}
+          </span>
+          <span class="badge bg-danger bg-opacity-75 text-light fw-bold px-2 py-1" style="font-size: 0.82rem;">
+            {{ entry.section.branch.code|default:entry.subject.branch.code }}
+          </span>
+          <span class="badge bg-info bg-opacity-75 text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
+            {{ entry.unit_label }}
+          </span>
+          <span class="badge bg-primary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.82rem;">
+            {{ entry.subject.code }}
+          </span>
+          <span class="text-white fw-bold">{{ entry.subject.name }}</span>
+          <span class="badge bg-secondary bg-opacity-50 text-light px-2 py-1">
+            <i class="fas fa-school me-1 text-accent"></i>{{ entry.section }}
+          </span>
+          <span class="badge bg-dark border border-secondary border-opacity-50 text-light px-2 py-1">
+            <i class="fas fa-chalkboard-user me-1 text-warning"></i>Prof. {{ entry.faculty.full_name }}
+          </span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">
+            <i class="far fa-calendar-alt me-1 text-warning"></i>{{ entry.date|date:"D, d M Y" }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Topic Covered -->
+      <div class="p-2 mb-2 rounded-2 bg-dark bg-opacity-50 border-start border-3 border-accent">
+        <div class="small text-muted fw-bold mb-1"><i class="fas fa-lightbulb text-warning me-1"></i>TOPIC COVERED:</div>
+        <div class="text-light fw-semibold" style="font-size: 0.95rem;">{{ entry.topic_covered }}</div>
+      </div>
+
+      <!-- Discussion Summary -->
+      {% if entry.discussion_summary %}
+      <div class="mb-2">
+        <div class="small text-muted fw-bold mb-1"><i class="fas fa-align-left text-info me-1"></i>KEY CONCEPTS / DISCUSSION:</div>
+        <div class="text-light small opacity-90 ps-2" style="white-space: pre-line;">{{ entry.discussion_summary }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Homework / Next Class Assignment -->
+      {% if entry.homework_assignment %}
+      <div class="p-2 mt-1 rounded-2 bg-warning bg-opacity-10 border border-warning border-opacity-25">
+        <div class="small text-warning fw-bold mb-1"><i class="fas fa-pencil-alt me-1"></i>HOMEWORK / ASSIGNMENT:</div>
+        <div class="text-light small ps-1" style="white-space: pre-line;">{{ entry.homework_assignment }}</div>
+      </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary border-opacity-25">
+        <small class="text-muted" style="font-size: 0.75rem;">
+          <i class="fas fa-clock me-1"></i>Logged at {{ entry.created_at|date:"d M Y, h:i A" }}
+          {% if entry.updated_at != entry.created_at %} (Updated {{ entry.updated_at|date:"d M, h:i A" }}){% endif %}
+        </small>
+        <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-1" style="font-size: 0.72rem;">
+          <i class="fas fa-check-circle me-1"></i>Published to Section Students
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="fas fa-book-open-reader fa-3x text-muted mb-3 opacity-50"></i>
+    <h5 class="text-light">No class discussion logs found matching the filter criteria</h5>
+    <p class="text-muted small">Select a different branch or clear filters to view all recorded logs.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

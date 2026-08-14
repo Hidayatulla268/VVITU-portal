@@ -617,6 +617,41 @@ def get_free_faculty_for_period(date, period, department=None, exclude_faculty=N
     proxy_ids = set(ClassTransfer.objects.filter(date=date, timetable_entry__period=period, status__in=['pending', 'accepted']).values_list('substitute_faculty_id', flat=True))
     leave_ids = set(FacultyLeaveRequest.objects.filter(start_date__lte=date, end_date__gte=date, status__in=['approved', 'pending']).values_list('faculty_id', flat=True))
     
-    return faculty_qs.exclude(id__in=busy_ids | proxy_ids | leave_ids)
+### AA. Syllabus / Unit Coverage & Class Discussion Tracker
+*   **What it is:** A comprehensive academic progress monitoring framework that allows faculty to record daily lecture notes, key discussion takeaways, homework, and the specific syllabus unit covered (`Unit 1` to `Unit 5`, plus `Other/Revision/Lab`). Students can view what was taught on their portal. HODs have access to a department-scoped coverage tracker showing which faculty taught which topics and real-time unit completion progress pills (U1..U5) for every subject in their branch. System Administrators have college-wide visibility across all 11 departments with branch-filtering and institutional syllabus completion KPIs.
+*   **Why it is useful:** Solves the core educational oversight challenge. Department heads and deans no longer need manual paper logs or guesswork to know how much of the curriculum has been taught before mid-terms and finals. Real-time unit completion badges immediately highlight lagging subjects, enabling timely intervention and ensuring students receive full curriculum coverage.
+
+---
+
+## 3. Key Code Constructs and Algorithms
+
+### Q. Syllabus Unit Coverage & Scoped Class Diary Analytics Engine
+Calculates real-time unit completion percentages and aggregates faculty lecture logs:
+```python
+# ── Unit Coverage Computation per Faculty & Subject ──
+logs = ClassDiary.objects.filter(faculty=fac, subject=subj, section=sec)
+total_logs = logs.count()
+covered_units = set(logs.values_list('unit_number', flat=True))
+
+# Syllabus completion out of standard 5 units
+standard_units_covered = [u for u in [1, 2, 3, 4, 5] if u in covered_units]
+unit_count = len(standard_units_covered)
+progress_pct = min(100, int((unit_count / 5.0) * 100))
+latest_log = logs.order_by('-date', '-period').first()
+
+# Scoped query for HODs (strictly current department)
+hod_diary_qs = ClassDiary.objects.filter(
+    Q(section__branch=dept) | Q(faculty__department=dept) | Q(subject__branch=dept)
+).distinct().select_related('section__branch', 'subject', 'faculty__user')
+
+# University-wide query for Admin (all 11 branches with dynamic branch filter)
+admin_diary_qs = ClassDiary.objects.all().select_related(
+    'section__branch', 'section__year', 'subject__branch', 'faculty__user', 'faculty__department'
+)
+if branch_id:
+    admin_diary_qs = admin_diary_qs.filter(
+        Q(section__branch_id=branch_id) | Q(subject__branch_id=branch_id) | Q(faculty__department_id=branch_id)
+    )
 ```
+
 

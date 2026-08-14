@@ -2573,6 +2573,164 @@ def ajax_get_free_faculty(request):
     return JsonResponse({'free_faculty': data})
 
 
+# ─────────────────────────────────────────────
+# ADMIN COLLEGE-WIDE CLASS DIARY & SYLLABUS TRACKER
+# ─────────────────────────────────────────────
+@admin_required
+def class_diary_coverage(request):
+    """
+    Allows Administrator to track which faculty discussed which topics across all branches,
+    and monitor unit completion / syllabus progress college-wide.
+    """
+    from core.transfer_utils import parse_flexible_date
+    from core.models import ClassDiary
+
+    # Filters
+    search_query = request.GET.get('search', '').strip()
+    branch_id    = request.GET.get('branch_id', '').strip()
+    year_id      = request.GET.get('year_id', '').strip()
+    faculty_id   = request.GET.get('faculty_id', '').strip()
+    subject_id   = request.GET.get('subject_id', '').strip()
+    section_id   = request.GET.get('section_id', '').strip()
+    unit_filter  = request.GET.get('unit_number', '').strip()
+    date_from_str= request.GET.get('date_from', '').strip()
+    date_to_str  = request.GET.get('date_to', '').strip()
+
+    base_qs = ClassDiary.objects.all().select_related('section__branch', 'section__year', 'subject__branch', 'faculty__user', 'faculty__department')
+
+    diary_qs = base_qs
+
+    if branch_id and branch_id.isdigit():
+        diary_qs = diary_qs.filter(Q(section__branch_id=int(branch_id)) | Q(subject__branch_id=int(branch_id)) | Q(faculty__department_id=int(branch_id)))
+
+    if year_id and year_id.isdigit():
+        diary_qs = diary_qs.filter(section__year_id=int(year_id))
+
+    if faculty_id and faculty_id.isdigit():
+        diary_qs = diary_qs.filter(faculty_id=int(faculty_id))
+
+    if subject_id and subject_id.isdigit():
+        diary_qs = diary_qs.filter(subject_id=int(subject_id))
+
+    if section_id and section_id.isdigit():
+        diary_qs = diary_qs.filter(section_id=int(section_id))
+
+    if unit_filter and unit_filter.isdigit():
+        diary_qs = diary_qs.filter(unit_number=int(unit_filter))
+
+    if search_query:
+        diary_qs = diary_qs.filter(
+            Q(topic_covered__icontains=search_query) |
+            Q(discussion_summary__icontains=search_query) |
+            Q(homework_assignment__icontains=search_query) |
+            Q(faculty__user__first_name__icontains=search_query) |
+            Q(faculty__user__last_name__icontains=search_query) |
+            Q(faculty__employee_id__icontains=search_query) |
+            Q(subject__name__icontains=search_query) |
+            Q(subject__code__icontains=search_query) |
+            Q(section__branch__name__icontains=search_query) |
+            Q(section__branch__code__icontains=search_query)
+        )
+
+    date_from = parse_flexible_date(date_from_str)
+    date_to   = parse_flexible_date(date_to_str)
+
+    if date_from:
+        diary_qs = diary_qs.filter(date__gte=date_from)
+    if date_to:
+        diary_qs = diary_qs.filter(date__lte=date_to)
+
+    entries = diary_qs.order_by('-date', 'period')
+
+    # Dropdown lists for Admin
+    branches = Branch.objects.all().order_by('code')
+    years = Year.objects.all().order_by('year')
+    all_faculty = Faculty.objects.filter(is_active=True, user__is_deleted=False).select_related('user', 'department').order_by('department__code', 'user__first_name')
+    all_subjects = Subject.objects.filter(is_deleted=False).select_related('branch', 'year').order_by('branch__code', 'code')
+    all_sections = Section.objects.all().select_related('branch', 'year').order_by('branch__code', 'year__year', 'name')
+
+    if branch_id and branch_id.isdigit():
+        b_id = int(branch_id)
+        all_faculty = all_faculty.filter(department_id=b_id)
+        all_subjects = all_subjects.filter(branch_id=b_id)
+        all_sections = all_sections.filter(branch_id=b_id)
+
+    # ── Syllabus / Unit Coverage Aggregation per Faculty & Subject ──
+    coverage_stats = []
+    timetable_qs = Timetable.objects.all().select_related('faculty__user', 'faculty__department', 'subject__branch', 'section__branch', 'section__year')
+    if branch_id and branch_id.isdigit():
+        timetable_qs = timetable_qs.filter(section__branch_id=int(branch_id))
+
+    pair_keys = set()
+    for t in timetable_qs:
+        if not t.faculty:
+            continue
+        key = (t.faculty_id, t.subject_id, t.section_id)
+        if key in pair_keys:
+            continue
+        pair_keys.add(key)
+
+        fac = t.faculty
+        subj = t.subject
+        sec = t.section
+
+        logs = base_qs.filter(faculty=fac, subject=subj, section=sec)
+        total_logs = logs.count()
+        covered_units = set(logs.values_list('unit_number', flat=True))
+
+        standard_units_covered = [u for u in [1, 2, 3, 4, 5] if u in covered_units]
+        unit_count = len(standard_units_covered)
+        progress_pct = min(100, int((unit_count / 5.0) * 100))
+
+        latest_log = logs.order_by('-date', '-period').first()
+
+        coverage_stats.append({
+            'faculty': fac,
+            'subject': subj,
+            'section': sec,
+            'branch': sec.branch if sec else (subj.branch if subj else fac.department),
+            'total_logs': total_logs,
+            'covered_units': covered_units,
+            'units_done_count': unit_count,
+            'progress_pct': progress_pct,
+            'latest_log': latest_log,
+        })
+
+    coverage_stats.sort(key=lambda x: (getattr(x['branch'], 'code', ''), x['subject'].code, str(x['section'])))
+
+    # University-wide KPIs
+    total_logs_count = base_qs.count()
+    active_faculty_count = base_qs.values('faculty').distinct().count()
+    active_subjects_count = base_qs.values('subject').distinct().count()
+    avg_progress = int(sum(c['progress_pct'] for c in coverage_stats) / len(coverage_stats)) if coverage_stats else 0
+
+    context = {
+        'entries': entries,
+        'coverage_stats': coverage_stats,
+        'branches': branches,
+        'years': years,
+        'all_faculty': all_faculty,
+        'all_subjects': all_subjects,
+        'all_sections': all_sections,
+        'total_logs_count': total_logs_count,
+        'active_faculty_count': active_faculty_count,
+        'active_subjects_count': active_subjects_count,
+        'avg_progress': avg_progress,
+        'search_query': search_query,
+        'branch_id': int(branch_id) if branch_id and branch_id.isdigit() else '',
+        'year_id': int(year_id) if year_id and year_id.isdigit() else '',
+        'faculty_id': int(faculty_id) if faculty_id and faculty_id.isdigit() else '',
+        'subject_id': int(subject_id) if subject_id and subject_id.isdigit() else '',
+        'section_id': int(section_id) if section_id and section_id.isdigit() else '',
+        'unit_number': int(unit_filter) if unit_filter and unit_filter.isdigit() else '',
+        'unit_choices': ClassDiary.UNIT_CHOICES,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
+    }
+    return render(request, 'admin_dashboard/class_diary_coverage.html', context)
+
+
+
 
 
 

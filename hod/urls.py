@@ -45,4 +45,7 @@ urlpatterns = [
     # Class Transfer Audit & Proxy Management
     path('class-transfers/',         views.manage_class_transfers,            name='manage_class_transfers'),
     path('ajax/branch-timetable/',   views.ajax_get_branch_timetable_slots,  name='ajax_branch_timetable'),
+    # Class Diary & Syllabus Coverage
+    path('class-diary/',             views.class_diary_coverage,              name='class_diary_coverage'),
 ]
+

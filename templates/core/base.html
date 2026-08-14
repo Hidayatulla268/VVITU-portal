@@ -240,6 +240,9 @@
       <a href="{% url 'hod:manage_class_transfers' %}" class="nav-link {% if 'class_transfers' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Audit</span>
       </a>
+      <a href="{% url 'hod:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
+      </a>
       <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
         <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
@@ -339,6 +342,9 @@
       </a>
       <a href="{% url 'admin_dashboard:faculty_class_history' %}" class="nav-link {% if 'faculty_class_history' in request.resolver_match.url_name or 'class_transfers' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Audit</span>
+      </a>
+      <a href="{% url 'admin_dashboard:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
       </a>
       <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-cubes nav-icon"></i><span>Manage Sections</span>

@@ -387,6 +387,15 @@ def mark_attendance(request):
         # Optional Class Discussion / Lesson Log
         topic_covered = request.POST.get('topic_covered', '').strip()
         if topic_covered:
+            unit_val = request.POST.get('unit_number', '').strip()
+            unit_number = int(unit_val) if unit_val.isdigit() and 1 <= int(unit_val) <= 6 else 1
+            # Auto-detect unit from topic string if default 1 was used and text mentions Unit 2..5
+            if unit_number == 1:
+                import re
+                m = re.search(r'unit\s*([1-5])', topic_covered, re.IGNORECASE)
+                if m:
+                    unit_number = int(m.group(1))
+
             discussion_summary = request.POST.get('discussion_summary', '').strip()
             homework_assignment = request.POST.get('homework_assignment', '').strip()
             ClassDiary.objects.update_or_create(
@@ -397,6 +406,7 @@ def mark_attendance(request):
                     'subject': slot.subject,
                     'faculty': faculty,
                     'period': slot.period,
+                    'unit_number': unit_number,
                     'topic_covered': topic_covered,
                     'discussion_summary': discussion_summary,
                     'homework_assignment': homework_assignment,
@@ -416,12 +426,13 @@ def mark_attendance(request):
         'today':       today.isoformat(),
         'min_date':    min_date.isoformat(),
         'faculty':     faculty,
+        'unit_choices': ClassDiary.UNIT_CHOICES,
     }
     return render(request, 'faculty/mark_attendance.html', context)
 
 
 # ─────────────────────────────────────────────
-# CLASS DIARY / LESSON DISCUSSION LOG
+# CLASS DIARY / LESSON DISCUSSION LOGS
 # ─────────────────────────────────────────────
 @faculty_required
 def class_diary(request):
@@ -438,11 +449,13 @@ def class_diary(request):
             entry_id = request.POST.get('entry_id')
             slot_id = request.POST.get('slot_id')
             date_str = request.POST.get('date', '').strip()
+            unit_val = request.POST.get('unit_number', '').strip()
             topic_covered = request.POST.get('topic_covered', '').strip()
             discussion_summary = request.POST.get('discussion_summary', '').strip()
             homework_assignment = request.POST.get('homework_assignment', '').strip()
 
             entry_date = parse_flexible_date(date_str) or today
+            unit_number = int(unit_val) if unit_val.isdigit() and 1 <= int(unit_val) <= 6 else 1
 
             if not topic_covered:
                 messages.error(request, "Topic covered is required.")
@@ -450,6 +463,7 @@ def class_diary(request):
 
             if entry_id and entry_id.isdigit():
                 entry = get_object_or_404(ClassDiary, id=int(entry_id), faculty=faculty)
+                entry.unit_number = unit_number
                 entry.topic_covered = topic_covered
                 entry.discussion_summary = discussion_summary
                 entry.homework_assignment = homework_assignment
@@ -465,6 +479,7 @@ def class_diary(request):
                         'subject': slot.subject,
                         'faculty': faculty,
                         'period': slot.period,
+                        'unit_number': unit_number,
                         'topic_covered': topic_covered,
                         'discussion_summary': discussion_summary,
                         'homework_assignment': homework_assignment,
@@ -487,6 +502,7 @@ def class_diary(request):
     search_query = request.GET.get('search', '').strip()
     section_id = request.GET.get('section_id', '').strip()
     subject_id = request.GET.get('subject_id', '').strip()
+    unit_filter = request.GET.get('unit_number', '').strip()
     date_from_str = request.GET.get('date_from', '').strip()
     date_to_str = request.GET.get('date_to', '').strip()
 
@@ -506,6 +522,9 @@ def class_diary(request):
 
     if subject_id and subject_id.isdigit():
         diary_qs = diary_qs.filter(subject_id=int(subject_id))
+
+    if unit_filter and unit_filter.isdigit():
+        diary_qs = diary_qs.filter(unit_number=int(unit_filter))
 
     date_from = parse_flexible_date(date_from_str)
     date_to = parse_flexible_date(date_to_str)
@@ -538,6 +557,8 @@ def class_diary(request):
         'search_query': search_query,
         'section_id': int(section_id) if section_id and section_id.isdigit() else '',
         'subject_id': int(subject_id) if subject_id and subject_id.isdigit() else '',
+        'unit_number': int(unit_filter) if unit_filter and unit_filter.isdigit() else '',
+        'unit_choices': ClassDiary.UNIT_CHOICES,
         'date_from': date_from_str,
         'date_to': date_to_str,
         'today': today,

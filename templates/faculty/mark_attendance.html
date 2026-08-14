@@ -170,9 +170,20 @@
               Optionally enter what was taught and discussed in today's class. Students of this section will be able to review these notes on their portal.
             </p>
             <div class="row g-3">
-              <div class="col-12">
+              <div class="col-md-4">
+                <label class="form-label text-light small fw-semibold">Syllabus Unit</label>
+                <select name="unit_number" class="vvit-select">
+                  <option value="1" selected>Unit 1</option>
+                  <option value="2">Unit 2</option>
+                  <option value="3">Unit 3</option>
+                  <option value="4">Unit 4</option>
+                  <option value="5">Unit 5</option>
+                  <option value="6">Other / Revision / Lab</option>
+                </select>
+              </div>
+              <div class="col-md-8">
                 <label class="form-label text-light small fw-semibold">Topics Covered / Lesson Name</label>
-                <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Unit 3: Binary Search Trees, In-order Traversal Algorithm" />
+                <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Binary Search Trees, AVL Rotations Algorithm" />
               </div>
               <div class="col-md-6">
                 <label class="form-label text-light small fw-semibold">Discussion Key Concepts / Summary</label>

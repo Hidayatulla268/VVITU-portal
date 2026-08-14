@@ -29,8 +29,12 @@ A production-grade college ERP web application built with Django, featuring a gl
     *   **Cross-Branch Proxy Allocation**: Administrators have complete college-wide control to assign substitute faculty across any academic department, while HODs manage substitutions within their branch.
     *   **Conflict-Free Substitute Availability Engine**: Real-time AJAX calculation filters faculty members with zero scheduling collisions, no existing proxy assignments, and no active leaves for that period.
     *   **Automated Multi-Channel Dispatch**: Instantly triggers Fast2SMS, transactional Email, and in-app bell notifications to the assigned substitute teacher.
+*   **Syllabus & Unit Coverage Progress Tracker (Admin & HOD)**:
+    *   **Unit-Level Tracking (Units 1–5 + Revision)**: Every class discussion log tags the specific syllabus unit covered by the instructor.
+    *   **HOD Department-Scoped Overview (`/hod/class-diary/`)**: Branch heads can monitor faculty topic discussions, unit coverage completion pills (U1..U5 with done/pending indicators), syllabus progress percentage (0-100%), and latest topic dates across all branch teaching assignments.
+    *   **Admin College-Wide Audit (`/admin-portal/class-diary/`)**: University Administrators have full institutional visibility across all 11 branches with real-time branch filters, institutional syllabus completion metrics, and chronological lecture logs feed.
 *   **Faculty Class Discussion Logs & Student Class Diary (`ClassDiary` Model)**:
-    *   **Optional Attendance Logging**: Teaching staff can optionally enter the topics covered, lecture concepts discussed, and homework/reading assignments directly while marking attendance.
+    *   **Optional Attendance Logging**: Teaching staff can optionally enter the syllabus unit, topics covered, lecture concepts discussed, and homework/reading assignments directly while marking attendance.
     *   **Dedicated Faculty Management Panel (`/faculty/class-diary/`)**: Full CRUD interface for teachers to create, backfill, search, edit, or delete lesson notes.
     *   **Student Daily Lesson Feed (`/student/class-diary/`)**: Students can review what was taught day-by-day in their section, search topic keywords, and check homework tasks, accompanied by a dynamic dashboard overview widget.
 *   **Resilient Multi-Format Date Parsing Engine (`core/transfer_utils.py`)**: `parse_flexible_date()` handles standard ISO dates, human-friendly Flatpickr dates (`Fri, 14 Aug 2026`), and multiple calendar formats seamlessly across all AJAX views and forms.
@@ -96,8 +100,8 @@ VVITU_Portal/
 │   ├── accounts/         # Profile details, student backlogs card, first-time password reset
 │   ├── student/          # Dashboard, class_diary.html, results, backlogs banner, calendar, past papers
 │   ├── faculty/          # Dashboard, class_diary.html, attendance sheet, leave requests, reports, marks upload
-│   ├── admin_dashboard/  # Admin staff/student managers, faculty_class_history.html, leave approvals, bulk CSV
-│   ├── hod/              # HOD department manager, manage_class_transfers.html, approvals, timetable editors
+│   ├── admin_dashboard/  # Admin staff/student managers, class_diary_coverage.html, faculty_class_history.html, leave approvals, bulk CSV
+│   ├── hod/              # HOD department manager, class_diary_coverage.html, manage_class_transfers.html, approvals, timetable editors
 │   └── deo/              # DEO branch lists, attendance records, upload pages
 │
 ├── static/

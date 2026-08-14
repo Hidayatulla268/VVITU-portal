@@ -61,18 +61,28 @@
       </div>
     </div>
 
-    <div class="col-lg-2 col-md-6">
-      <label class="form-label text-muted small fw-bold"><i class="fas fa-school me-1 text-accent"></i>Filter Section</label>
+    <div class="col-lg-2 col-md-4 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-layer-group me-1 text-accent"></i>Syllabus Unit</label>
+      <select name="unit_number" class="vvit-select">
+        <option value="">All Units</option>
+        {% for u_val, u_name in unit_choices %}
+          <option value="{{ u_val }}" {% if unit_number == u_val %}selected{% endif %}>{{ u_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-lg-1 col-md-4 col-6">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-school me-1 text-accent"></i>Section</label>
       <select name="section_id" class="vvit-select">
-        <option value="">All Sections</option>
+        <option value="">All</option>
         {% for sec in handled_sections %}
           <option value="{{ sec.id }}" {% if section_id == sec.id %}selected{% endif %}>{{ sec }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="col-lg-2 col-md-6">
-      <label class="form-label text-muted small fw-bold"><i class="fas fa-book me-1 text-accent"></i>Filter Subject</label>
+    <div class="col-lg-2 col-md-4">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-book me-1 text-accent"></i>Subject</label>
       <select name="subject_id" class="vvit-select">
         <option value="">All Subjects</option>
         {% for subj in handled_subjects %}
@@ -124,6 +134,9 @@
           <span class="badge bg-accent text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
             Period {{ entry.period }}
           </span>
+          <span class="badge bg-info bg-opacity-75 text-dark fw-bold px-2 py-1" style="font-size: 0.82rem;">
+            {{ entry.unit_label }}
+          </span>
           <span class="badge bg-primary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.82rem;">
             {{ entry.subject.code }}
           </span>
@@ -137,7 +150,7 @@
             <i class="far fa-calendar-alt me-1 text-warning"></i>{{ entry.date|date:"D, d M Y" }}
           </span>
           <button type="button" class="btn btn-sm btn-outline-warning py-0 px-2"
-                  onclick="openEditLogModal('{{ entry.id }}', '{{ entry.topic_covered|escapejs }}', '{{ entry.discussion_summary|escapejs }}', '{{ entry.homework_assignment|escapejs }}', '{{ entry.date|date:'Y-m-d' }}', '{{ entry.subject.code }} — {{ entry.section }}')"
+                  onclick="openEditLogModal('{{ entry.id }}', '{{ entry.topic_covered|escapejs }}', '{{ entry.discussion_summary|escapejs }}', '{{ entry.homework_assignment|escapejs }}', '{{ entry.date|date:'Y-m-d' }}', '{{ entry.subject.code }} — {{ entry.section }}', '{{ entry.unit_number }}')"
                   title="Edit Notes">
             <i class="fas fa-edit"></i>
           </button>
@@ -179,8 +192,8 @@
           <i class="fas fa-clock me-1"></i>Logged at {{ entry.created_at|date:"d M Y, h:i A" }}
           {% if entry.updated_at != entry.created_at %} (Updated {{ entry.updated_at|date:"d M, h:i A" }}){% endif %}
         </small>
-        <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-2 py-1" style="font-size: 0.72rem;">
-          <i class="fas fa-check-circle me-1"></i>Published to Students
+        <span class="badge bg-dark border border-secondary border-opacity-50 text-muted" style="font-size: 0.72rem;">
+          <i class="fas fa-chalkboard-user me-1 text-accent"></i>Prof. {{ faculty.full_name }}
         </span>
       </div>
     </div>
@@ -189,7 +202,7 @@
   {% else %}
   <div class="text-center py-5">
     <i class="fas fa-book-open-reader fa-3x text-muted mb-3 opacity-50"></i>
-    <h5 class="text-muted">No class discussion logs found</h5>
+    <h5 class="text-light">No class discussion logs found</h5>
     <p class="text-muted small">You can record discussion notes when marking attendance or click <strong>+ Add Class Discussion Log</strong> above.</p>
   </div>
   {% endif %}
@@ -201,7 +214,7 @@
     <div class="modal-content glass-modal border-0 shadow-lg">
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title text-white fw-bold" id="addClassLogModalLabel">
-          <i class="fas fa-book-reader text-accent me-2"></i>Record Class Discussion Log
+          <i class="fas fa-book-bookmark text-accent me-2"></i>Record Class Discussion Log
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -236,9 +249,21 @@
             </select>
           </div>
 
-          <div class="col-12">
+          <div class="col-md-4">
+            <label class="form-label text-white small fw-bold">Syllabus Unit *</label>
+            <select name="unit_number" class="vvit-select">
+              <option value="1" selected>Unit 1</option>
+              <option value="2">Unit 2</option>
+              <option value="3">Unit 3</option>
+              <option value="4">Unit 4</option>
+              <option value="5">Unit 5</option>
+              <option value="6">Other / Revision / Lab</option>
+            </select>
+          </div>
+
+          <div class="col-md-8">
             <label class="form-label text-white small fw-bold">Topic(s) Covered in Class *</label>
-            <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Unit 2: Graph Traversals - Depth First Search (DFS)" required>
+            <input type="text" name="topic_covered" class="vvit-input" placeholder="e.g. Graph Traversals - Depth First Search (DFS)" required>
           </div>
 
           <div class="col-12">
@@ -280,7 +305,18 @@
           <div class="col-12">
             <div class="p-2 rounded bg-dark bg-opacity-50 text-white small" id="editSlotLabel"></div>
           </div>
-          <div class="col-12">
+          <div class="col-md-4">
+            <label class="form-label text-white small fw-bold">Syllabus Unit *</label>
+            <select name="unit_number" id="editUnitNumber" class="vvit-select">
+              <option value="1">Unit 1</option>
+              <option value="2">Unit 2</option>
+              <option value="3">Unit 3</option>
+              <option value="4">Unit 4</option>
+              <option value="5">Unit 5</option>
+              <option value="6">Other / Revision / Lab</option>
+            </select>
+          </div>
+          <div class="col-md-8">
             <label class="form-label text-white small fw-bold">Topic(s) Covered in Class *</label>
             <input type="text" name="topic_covered" id="editTopicCovered" class="vvit-input" required>
           </div>
@@ -307,12 +343,15 @@
 
 {% block extra_js %}
 <script>
-function openEditLogModal(id, topic, discussion, homework, dateStr, slotLabel) {
+function openEditLogModal(id, topic, discussion, homework, dateStr, slotLabel, unitNum) {
   document.getElementById('editEntryId').value = id;
   document.getElementById('editTopicCovered').value = topic;
   document.getElementById('editDiscussionSummary').value = discussion;
   document.getElementById('editHomeworkAssignment').value = homework;
   document.getElementById('editSlotLabel').innerHTML = `<i class="fas fa-chalkboard text-accent me-1"></i><strong>${slotLabel}</strong> &bull; Date: ${dateStr}`;
+  if (document.getElementById('editUnitNumber')) {
+    document.getElementById('editUnitNumber').value = unitNum || 1;
+  }
   const modalEl = document.getElementById('editClassLogModal');
   const modal = new bootstrap.Modal(modalEl);
   modal.show();

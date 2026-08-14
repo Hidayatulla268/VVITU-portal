@@ -46,6 +46,7 @@ urlpatterns = [
     path('attendance/report/',       views.admin_attendance_report, name='admin_attendance_report'),
     path('faculty-class-history/',   views.faculty_class_history, name='faculty_class_history'),
     path('class-transfers/',         views.faculty_class_history, name='manage_class_transfers'),
+    path('class-diary/',             views.class_diary_coverage,  name='class_diary_coverage'),
     path('ajax/branch-timetable/',   views.ajax_get_all_timetable_slots, name='ajax_branch_timetable'),
     path('ajax/free-faculty/',       views.ajax_get_free_faculty, name='ajax_free_faculty'),
 
