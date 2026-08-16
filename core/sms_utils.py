@@ -124,17 +124,13 @@ def send_email_to_student(student, subject, body):
 
     email_addr = student.user.email.strip()
     try:
-        # Avoid socket blocking if SMTP credentials are slow/unreachable
-        from django.core.mail import get_connection
-        backend = getattr(settings, 'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-        connection = get_connection(backend, fail_silently=True, timeout=2)
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'VVITU Portal <noreply@vvitu.ac.in>')
         send_mail(
             subject=subject,
             message=body,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'VVITU Portal <noreply@vvitu.ac.in>'),
+            from_email=from_email,
             recipient_list=[email_addr],
             fail_silently=True,
-            connection=connection
         )
         print(f"\n[EMAIL SENT] -> To: {email_addr}")
         print(f"Subject: {subject}\nBody: {body}\n")
