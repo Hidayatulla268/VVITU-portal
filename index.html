@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VVITU Portal — Complete ERP System</title>
-  <meta name="description" content="A production-grade college ERP built with Django — glassmorphism UI, role-based access control, AI attendance prediction, and scalability for 300,000+ students."/>
+  <title>VVITU Portal — Complete ERP System & Academic Management</title>
+  <meta name="description" content="A production-grade college ERP built with Django — glassmorphism UI, role-based access control, counselling dossier PDF generator, syllabus coverage tracker, and R23 regulation grading."/>
   <meta property="og:title" content="VVITU Portal — Complete ERP System"/>
   <meta property="og:description" content="Production-grade Django ERP for Vasireddy Venkatadri International Technological University"/>
   <meta property="og:type" content="website"/>
@@ -13,7 +13,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
@@ -28,6 +28,7 @@
     --gold:        #fbbf24;
     --violet:      #8b5cf6;
     --blue:        #3b82f6;
+    --emerald:     #10b981;
     --text:        #f0f0f5;
     --muted:       #9ca3af;
     --faint:       #6b7280;
@@ -59,29 +60,26 @@
 
   a { color: var(--accent-b); text-decoration: none; }
   a:hover { color: var(--text); }
-  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(220,38,38,0.5); border-radius: 3px; }
 
   /* ═══════════════════════════════════════════
-     CANVAS PARTICLE FIELD
+     CANVAS PARTICLE FIELD & MESH
   ═══════════════════════════════════════════ */
   #canvas {
     position: fixed; inset: 0;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.55;
+    opacity: 0.65;
   }
 
-  /* ═══════════════════════════════════════════
-     BACKGROUND LAYERS
-  ═══════════════════════════════════════════ */
   .bg-mesh {
     position: fixed; inset: 0;
     z-index: 0;
     background:
-      radial-gradient(ellipse 60% 50% at 20% 30%, rgba(220,38,38,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 40% at 80% 70%, rgba(139,92,246,0.09) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 50% at 50% 10%, rgba(59,130,246,0.07) 0%, transparent 60%);
+      radial-gradient(ellipse 60% 50% at 20% 30%, rgba(220,38,38,0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 70%, rgba(139,92,246,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 50% 10%, rgba(59,130,246,0.09) 0%, transparent 60%);
     animation: mesh-drift 20s ease-in-out infinite alternate;
   }
   @keyframes mesh-drift {
@@ -98,171 +96,57 @@
     animation: grid-scroll 30s linear infinite;
   }
   @keyframes grid-scroll {
-    to { background-position: 50px 50px; }
-  }
-
-  /* Film grain */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 9000;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 180px 180px;
-    opacity: 0.025;
-    animation: grain 0.2s steps(1) infinite;
-    mix-blend-mode: screen;
-  }
-  @keyframes grain {
-    0%  { transform: translate(0,0); }
-    20% { transform: translate(-3%,-2%); }
-    40% { transform: translate(2%,3%); }
-    60% { transform: translate(-2%,1%); }
-    80% { transform: translate(3%,-3%); }
-  }
-
-  /* Cinematic vignette */
-  body::after {
-    content: '';
-    position: fixed; inset: 0; z-index: 8990;
-    pointer-events: none;
-    background: radial-gradient(ellipse 80% 70% at 50% 50%,
-      transparent 40%, rgba(0,0,0,0.32) 70%, rgba(0,0,0,0.72) 100%);
-    mix-blend-mode: multiply;
-  }
-
-  /* Floating orbs */
-  .orb {
-    position: fixed; border-radius: 50%;
-    pointer-events: none; z-index: 0;
-    filter: blur(1px);
-  }
-  .orb-1 {
-    width: 500px; height: 500px; top: -100px; left: -100px;
-    background: radial-gradient(circle, rgba(220,38,38,0.10) 0%, transparent 70%);
-    animation: orb-drift 18s ease-in-out infinite alternate;
-  }
-  .orb-2 {
-    width: 350px; height: 350px; bottom: 0; right: -80px;
-    background: radial-gradient(circle, rgba(139,92,246,0.09) 0%, transparent 70%);
-    animation: orb-drift 14s ease-in-out infinite alternate-reverse;
-  }
-  .orb-3 {
-    width: 280px; height: 280px; top: 40%; left: 55%;
-    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
-    animation: orb-drift 22s ease-in-out infinite alternate;
-  }
-  @keyframes orb-drift {
-    0%   { transform: translate(0,0) scale(1); }
-    50%  { transform: translate(30px, 40px) scale(1.12); }
-    100% { transform: translate(-20px, 20px) scale(0.92); }
+    0%   { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
   }
 
   /* ═══════════════════════════════════════════
-     NAV
+     NAVBAR
   ═══════════════════════════════════════════ */
   .nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-    height: 66px;
-    background: rgba(3,3,10,0.78);
+    height: 68px;
+    background: rgba(3,3,10,0.82);
     backdrop-filter: var(--blur);
     -webkit-backdrop-filter: var(--blur);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 1px 0 rgba(255,255,255,0.03), 0 4px 24px rgba(0,0,0,0.6);
-    display: flex; align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: space-between;
     padding: 0 2rem;
-    justify-content: space-between;
-    overflow: hidden;
   }
-  /* Volumetric light sweep */
-  .nav::before {
-    content: '';
-    position: absolute; top: 0; left: -60%; right: -60%; height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%, rgba(220,38,38,0.7) 35%,
-      rgba(251,191,36,0.5) 50%, rgba(139,92,246,0.6) 65%, transparent 100%);
-    animation: nav-sweep 6s ease-in-out infinite;
-  }
-  @keyframes nav-sweep {
-    0%   { opacity:0; transform: translateX(-40%); }
-    30%  { opacity:1; }
-    70%  { opacity:1; }
-    100% { opacity:0; transform: translateX(40%); }
-  }
-
-  .nav-brand {
-    display: flex; align-items: center; gap: 14px;
-  }
+  .nav-brand { display: flex; align-items: center; gap: 14px; }
   .nav-logo-ring {
-    width: 46px; height: 46px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     border: 2px solid rgba(220,38,38,0.55);
     background: rgba(220,38,38,0.12);
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-d); font-weight: 700;
     font-size: 1.05rem; color: var(--accent-b);
-    animation: logo-pulse 3s ease-in-out infinite;
-    box-shadow: 0 0 16px rgba(220,38,38,0.3), 0 0 32px rgba(220,38,38,0.1);
+    box-shadow: 0 0 16px rgba(220,38,38,0.3);
   }
-  @keyframes logo-pulse {
-    0%,100% { box-shadow: 0 0 12px rgba(220,38,38,0.3), 0 0 24px rgba(220,38,38,0.1); }
-    50%      { box-shadow: 0 0 22px rgba(220,38,38,0.55), 0 0 44px rgba(220,38,38,0.2); }
-  }
-  .nav-title {
-    display: flex; flex-direction: column; line-height: 1.1;
-  }
-  .nav-title-main {
-    font-family: var(--font-d); font-weight: 700;
-    font-size: 1.3rem; color: var(--accent-b); letter-spacing: 0.06em;
-  }
-  .nav-title-sub {
-    font-size: 0.65rem; color: var(--muted);
-    letter-spacing: 0.12em; text-transform: uppercase;
-  }
-
-  .nav-links {
-    display: flex; align-items: center; gap: 8px;
-  }
+  .nav-title-main { font-family: var(--font-d); font-weight: 700; font-size: 1.3rem; color: var(--accent-b); }
+  .nav-title-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
   .nav-link {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 8px 16px; border-radius: var(--r-sm);
-    font-size: 0.82rem; font-weight: 500;
-    color: var(--muted); border: 1px solid transparent;
+    padding: 8px 14px; border-radius: var(--r-sm);
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
     transition: all 0.25s ease;
   }
-  .nav-link:hover {
-    color: var(--text);
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.1);
-  }
+  .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
   .nav-cta {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 9px 20px; border-radius: var(--r-sm);
     font-size: 0.85rem; font-weight: 600;
     font-family: var(--font-d); letter-spacing: 0.05em;
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-    color: #fff;
-    border: none;
-    box-shadow: 0 4px 16px rgba(220,38,38,0.4), 0 0 0 1px rgba(255,255,255,0.07);
-    transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
-    position: relative; overflow: hidden;
-    cursor: pointer;
+    color: #fff; border: none;
+    box-shadow: 0 4px 16px rgba(220,38,38,0.4);
+    transition: all 0.3s ease;
   }
-  .nav-cta::after {
-    content: '';
-    position: absolute; top: -50%; left: -75%;
-    width: 50%; height: 200%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
-    transform: skewX(-20deg);
-    transition: left 0.5s ease;
-  }
-  .nav-cta:hover::after { left: 125%; }
-  .nav-cta:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(220,38,38,0.55), 0 0 40px rgba(220,38,38,0.2);
-    color: #fff;
-  }
+  .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(220,38,38,0.6); color: #fff; }
 
   /* ═══════════════════════════════════════════
-     HERO
+     HERO SECTION
   ═══════════════════════════════════════════ */
   .hero {
     min-height: 100vh;
@@ -271,1215 +155,365 @@
     padding: 7rem 2rem 5rem;
     position: relative; z-index: 1;
   }
-  .hero-inner { max-width: 860px; }
-
+  .hero-inner { max-width: 900px; }
   .hero-badge {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 18px; border-radius: 30px;
     background: rgba(220,38,38,0.12);
     border: 1px solid rgba(220,38,38,0.28);
     font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
-    color: var(--accent-b);
-    text-transform: uppercase;
-    margin-bottom: 2rem;
+    color: var(--accent-b); text-transform: uppercase;
+    margin-bottom: 1.8rem;
     animation: badge-float 4s ease-in-out infinite;
   }
-  @keyframes badge-float {
-    0%,100% { transform: translateY(0); }
-    50%      { transform: translateY(-4px); }
-  }
-  .badge-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent-b);
-    box-shadow: 0 0 8px var(--accent-b);
-    animation: dot-blink 1.8s ease-in-out infinite;
-  }
-  @keyframes dot-blink {
-    0%,100% { opacity:1; }
-    50%      { opacity:0.3; }
-  }
-
-  .hero h1 {
-    font-family: var(--font-d); font-weight: 700;
-    font-size: clamp(2.6rem, 6vw, 5rem);
-    line-height: 1.08;
+  @keyframes badge-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-b); box-shadow: 0 0 8px var(--accent-b); }
+  
+  .hero-title {
+    font-family: var(--font-d); font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+    font-weight: 700; line-height: 1.1; margin-bottom: 1.2rem;
     letter-spacing: -0.01em;
-    margin-bottom: 1.2rem;
-    background: linear-gradient(135deg,
-      #ffffff 0%, #f0f0f5 30%,
-      #ef4444 55%, #fbbf24 75%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    background-size: 200% 200%;
-    animation: hero-grad 8s ease-in-out infinite alternate;
   }
-  @keyframes hero-grad {
-    0%   { background-position: 0% 0%; }
-    100% { background-position: 100% 100%; }
+  .hero-gradient {
+    background: linear-gradient(135deg, #ffffff 30%, #f87171 65%, #fbbf24 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-
-  .hero-sub {
-    font-size: 1.05rem; color: var(--muted);
-    max-width: 660px; margin: 0 auto 2.5rem;
-    line-height: 1.7;
-  }
-  .hero-sub strong { color: var(--text); }
-
-  .hero-actions {
-    display: flex; gap: 14px; justify-content: center;
-    flex-wrap: wrap; margin-bottom: 3.5rem;
-  }
+  .hero-subtitle { font-size: 1.1rem; color: var(--muted); max-width: 700px; margin: 0 auto 2.5rem; line-height: 1.7; }
+  
+  .hero-actions { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 3.5rem; }
   .btn-primary {
-    display: inline-flex; align-items: center; gap: 9px;
-    padding: 13px 28px; border-radius: var(--r-md);
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 32px; border-radius: var(--r-md);
     font-family: var(--font-d); font-size: 1rem; font-weight: 700;
-    letter-spacing: 0.06em;
     background: linear-gradient(135deg, #dc2626, #991b1b);
-    color: #fff; border: none;
-    box-shadow: 0 6px 24px rgba(220,38,38,0.45), 0 0 0 1px rgba(255,255,255,0.07);
+    color: #fff; border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 30px rgba(220,38,38,0.45);
     transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
-    position: relative; overflow: hidden;
-    cursor: pointer;
   }
-  .btn-primary::after {
-    content: '';
-    position: absolute; top: -50%; left: -75%;
-    width: 50%; height: 200%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
-    transform: skewX(-20deg);
-    transition: left 0.5s ease;
-  }
-  .btn-primary:hover::after { left: 125%; }
-  .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 36px rgba(220,38,38,0.55), 0 0 50px rgba(220,38,38,0.2);
-    color: #fff;
-  }
-  .btn-outline {
-    display: inline-flex; align-items: center; gap: 9px;
-    padding: 13px 28px; border-radius: var(--r-md);
-    font-family: var(--font-d); font-size: 1rem; font-weight: 700;
-    letter-spacing: 0.06em;
-    background: transparent; color: var(--text);
-    border: 1px solid rgba(255,255,255,0.15);
-    backdrop-filter: blur(8px);
+  .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 14px 40px rgba(220,38,38,0.65); color: #fff; }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 28px; border-radius: var(--r-md);
+    font-family: var(--font-d); font-size: 1rem; font-weight: 600;
+    background: rgba(255,255,255,0.05); color: var(--text);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
     transition: all 0.3s ease;
-    cursor: pointer;
   }
-  .btn-outline:hover {
-    background: rgba(255,255,255,0.07);
-    border-color: rgba(220,38,38,0.4);
-    color: var(--accent-b);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(220,38,38,0.12);
-  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); transform: translateY(-3px); }
 
-  /* Stats bar */
+  /* Hero Stats Counter Bar */
   .hero-stats {
-    display: flex; justify-content: center; gap: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: var(--r-xl);
-    padding: 18px 32px;
-    max-width: 580px; margin: 0 auto;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4);
-    animation: float3d 6s ease-in-out infinite;
+    display: flex; align-items: center; justify-content: center; gap: 2rem;
+    padding: 1.5rem 2.5rem; border-radius: var(--r-xl);
+    background: rgba(10,10,22,0.6); backdrop-filter: var(--blur);
+    border: 1px solid rgba(255,255,255,0.09);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   }
-  @keyframes float3d {
-    0%,100% { transform: translateY(0) rotateX(0deg); }
-    50%      { transform: translateY(-6px) rotateX(1deg); }
-  }
-  .stat-item {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; gap: 2px;
-  }
-  .stat-val {
-    font-family: var(--font-d); font-size: 1.5rem; font-weight: 700;
-    color: var(--accent-b);
-    text-shadow: 0 0 14px rgba(239,68,68,0.55);
-    animation: num-glow 3s ease-in-out infinite alternate;
-  }
-  @keyframes num-glow {
-    0%   { text-shadow: 0 0 8px rgba(239,68,68,0.45); }
-    100% { text-shadow: 0 0 22px rgba(239,68,68,0.9), 0 0 40px rgba(239,68,68,0.35); }
-  }
-  .stat-lbl {
-    font-size: 0.65rem; color: var(--faint);
-    text-transform: uppercase; letter-spacing: 0.08em;
-  }
-  .stat-div {
-    width: 1px; height: 38px;
-    background: rgba(255,255,255,0.08);
-    align-self: center;
-  }
-
-  /* 3D Scroll indicator */
-  .scroll-hint {
-    position: absolute; bottom: 2.5rem; left: 50%;
-    transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    opacity: 0.4; animation: scroll-fade 2.5s ease-in-out infinite;
-  }
-  @keyframes scroll-fade {
-    0%,100% { opacity: 0.35; transform: translateX(-50%) translateY(0); }
-    50%      { opacity: 0.7;  transform: translateX(-50%) translateY(-5px); }
-  }
-  .scroll-hint span { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
-  .scroll-arrow { font-size: 1.1rem; color: var(--accent); }
+  .stat-num { font-family: var(--font-d); font-size: 1.8rem; font-weight: 700; color: var(--accent-b); }
+  .stat-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
   /* ═══════════════════════════════════════════
-     SECTION BASE
+     SECTION BASE & CARDS
   ═══════════════════════════════════════════ */
-  section { position: relative; z-index: 1; padding: 6rem 2rem; }
+  section { position: relative; z-index: 1; padding: 5.5rem 2rem; }
   .section-inner { max-width: 1200px; margin: 0 auto; }
   .section-label {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--accent-b);
-    margin-bottom: 1rem;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent-b); margin-bottom: 0.8rem;
   }
-  .section-label::before {
-    content: ''; display: block;
-    width: 20px; height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--violet));
-    border-radius: 1px;
-  }
-  .section-title {
-    font-family: var(--font-d); font-weight: 700;
-    font-size: clamp(1.8rem, 4vw, 2.8rem);
-    line-height: 1.15; margin-bottom: 1rem;
-    color: var(--text);
-  }
-  .section-desc { font-size: 0.95rem; color: var(--muted); max-width: 620px; }
+  .section-title { font-family: var(--font-d); font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.8rem; }
+  .section-desc { font-size: 0.95rem; color: var(--muted); max-width: 650px; }
 
-  /* ═══════════════════════════════════════════
-     GLASS CARD
-  ═══════════════════════════════════════════ */
-  .glass-card {
-    background: var(--glass);
-    backdrop-filter: var(--blur);
-    -webkit-backdrop-filter: var(--blur);
-    border-radius: var(--r-lg);
-    padding: 1.75rem;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease;
-  }
-  /* Iridescent border via pseudo */
-  .glass-card::before {
-    content: '';
-    position: absolute; inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg,
-      rgba(220,38,38,0.4), rgba(139,92,246,0.3),
-      rgba(59,130,246,0.25), rgba(251,191,36,0.2),
-      rgba(220,38,38,0.4));
-    background-size: 300% 300%;
-    animation: iris 9s ease-in-out infinite;
-    z-index: -1;
-  }
-  /* Inner sheen */
-  .glass-card::after {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(135deg,
-      rgba(255,255,255,0.07) 0%, transparent 50%,
-      rgba(255,255,255,0.03) 100%);
-    pointer-events: none;
-  }
-  @keyframes iris {
-    0%   { background-position: 0% 0%; }
-    50%  { background-position: 100% 100%; }
-    100% { background-position: 0% 0%; }
-  }
-  .glass-card:hover {
-    transform: translateY(-6px) perspective(800px) rotateX(2deg);
-    box-shadow:
-      0 24px 60px rgba(0,0,0,0.5),
-      0 0 30px rgba(220,38,38,0.14),
-      0 0 60px rgba(139,92,246,0.07);
-  }
-
-  /* ═══════════════════════════════════════════
-     FEATURES SECTION
-  ═══════════════════════════════════════════ */
-  #features { background: rgba(0,0,0,0.25); }
+  /* Feature Grid Cards */
   .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem; margin-top: 3.5rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.6rem; margin-top: 3.5rem;
   }
   .feature-card {
-    background: var(--glass);
-    backdrop-filter: var(--blur);
-    border-radius: var(--r-lg);
-    padding: 2rem;
+    background: var(--glass); backdrop-filter: var(--blur);
+    border-radius: var(--r-lg); padding: 2.2rem;
+    border: 1px solid rgba(255,255,255,0.08);
     position: relative; overflow: hidden;
-    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s ease;
-    cursor: default;
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
   }
   .feature-card::before {
-    content: '';
-    position: absolute; inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg,
-      rgba(220,38,38,0.35), rgba(139,92,246,0.25),
-      rgba(59,130,246,0.2), rgba(220,38,38,0.35));
-    background-size: 300% 300%;
-    animation: iris 10s ease-in-out infinite;
-    z-index: -1;
+    content: ''; position: absolute; inset: -1px; border-radius: inherit;
+    background: linear-gradient(135deg, rgba(220,38,38,0.35), rgba(139,92,246,0.25), rgba(59,130,246,0.2), rgba(220,38,38,0.35));
+    background-size: 300% 300%; animation: iris 10s ease-in-out infinite; z-index: -1;
   }
-  .feature-card::after {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--top-line, linear-gradient(90deg, var(--accent), transparent));
-    border-radius: var(--r-lg) var(--r-lg) 0 0;
-  }
-  .feature-card:hover {
-    transform: translateY(-8px) perspective(800px) rotateX(3deg);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 30px rgba(220,38,38,0.14);
-  }
+  @keyframes iris { 0% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } 100% { background-position: 0% 0%; } }
+  .feature-card:hover { transform: translateY(-8px); box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 30px rgba(220,38,38,0.18); }
   .feature-icon {
-    width: 52px; height: 52px; border-radius: 14px;
+    width: 54px; height: 54px; border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem; margin-bottom: 1.2rem;
-    background: var(--icon-bg, rgba(220,38,38,0.14));
-    color: var(--icon-clr, #ef4444);
-    box-shadow: 0 0 12px var(--icon-shadow, rgba(239,68,68,0.2));
-    transition: all 0.3s ease;
+    font-size: 1.4rem; margin-bottom: 1.2rem;
+    background: rgba(220,38,38,0.14); color: var(--accent-b);
+    box-shadow: 0 0 16px rgba(239,68,68,0.25);
   }
-  .feature-card:hover .feature-icon {
-    transform: scale(1.1) rotateY(15deg);
-    box-shadow: 0 0 20px var(--icon-shadow, rgba(239,68,68,0.35));
-  }
-  .feature-title {
-    font-family: var(--font-d); font-size: 1.1rem; font-weight: 700;
-    color: var(--text); margin-bottom: 0.6rem;
-  }
-  .feature-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.65; }
+  .feature-title { font-family: var(--font-d); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.6rem; color: #fff; }
+  .feature-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.65; }
 
-  /* ═══════════════════════════════════════════
-     TECH STACK
-  ═══════════════════════════════════════════ */
-  #stack { }
-  .stack-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem; margin-top: 3rem;
+  /* Interactive Feature Preview Tabs */
+  .preview-section { background: rgba(0,0,0,0.3); border-radius: var(--r-xl); padding: 3rem; margin-top: 3.5rem; border: 1px solid rgba(255,255,255,0.08); }
+  .preview-tabs { display: flex; gap: 12px; margin-bottom: 2rem; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 10px 20px; border-radius: var(--r-sm); font-family: var(--font-d); font-weight: 700; font-size: 0.9rem;
+    background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.3s ease;
   }
+  .tab-btn.active, .tab-btn:hover { background: rgba(220,38,38,0.18); color: #fff; border-color: var(--accent-b); box-shadow: 0 0 16px rgba(220,38,38,0.3); }
+  .preview-content { display: none; }
+  .preview-content.active { display: block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Stack Grid */
+  .stack-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.2rem; margin-top: 3rem; }
   .stack-item {
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(14px);
-    border-radius: var(--r-md);
-    padding: 1.4rem 1.2rem;
-    border: 1px solid rgba(255,255,255,0.07);
-    display: flex; flex-direction: column; align-items: center;
-    gap: 10px; text-align: center;
-    transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
-    position: relative; overflow: hidden;
+    background: rgba(0,0,0,0.4); border-radius: var(--r-md); padding: 1.5rem; border: 1px solid rgba(255,255,255,0.08);
+    display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; transition: all 0.3s ease;
   }
-  .stack-item::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, var(--stack-clr, #dc2626), transparent);
-    border-radius: var(--r-md) var(--r-md) 0 0;
-  }
-  .stack-item:hover {
-    transform: translateY(-5px);
-    border-color: rgba(220,38,38,0.3);
-    box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 16px rgba(220,38,38,0.08);
-  }
-  .stack-icon {
-    font-size: 1.8rem;
-    color: var(--stack-clr, #dc2626);
-    filter: drop-shadow(0 0 8px var(--stack-clr, rgba(220,38,38,0.4)));
-  }
-  .stack-name { font-family: var(--font-d); font-weight: 700; font-size: 0.95rem; color: var(--text); }
-  .stack-role { font-size: 0.72rem; color: var(--faint); }
+  .stack-item:hover { transform: translateY(-5px); border-color: var(--accent-b); box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+  .stack-icon { font-size: 2rem; color: var(--accent-b); }
+  .stack-name { font-family: var(--font-d); font-weight: 700; font-size: 1rem; }
+  .stack-role { font-size: 0.75rem; color: var(--faint); }
 
-  /* ═══════════════════════════════════════════
-     ROLES SECTION
-  ═══════════════════════════════════════════ */
-  #roles { background: rgba(0,0,0,0.2); }
-  .roles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.2rem; margin-top: 3rem;
-  }
+  /* Roles Grid */
+  .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.4rem; margin-top: 3rem; }
   .role-card {
-    background: var(--glass);
-    backdrop-filter: var(--blur);
-    border-radius: var(--r-lg);
-    padding: 1.8rem 1.4rem;
-    text-align: center;
-    position: relative; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
-    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
-    cursor: default;
+    background: var(--glass); backdrop-filter: var(--blur); border-radius: var(--r-lg); padding: 2rem 1.5rem; text-align: center;
+    border: 1px solid rgba(255,255,255,0.08); transition: all 0.35s ease;
   }
-  .role-card:hover {
-    transform: translateY(-8px) perspective(600px) rotateX(4deg);
-    border-color: rgba(220,38,38,0.3);
-    box-shadow: 0 24px 50px rgba(0,0,0,0.5), 0 0 25px rgba(220,38,38,0.1);
-  }
+  .role-card:hover { transform: translateY(-8px); border-color: var(--accent-b); box-shadow: 0 20px 45px rgba(0,0,0,0.5); }
   .role-avatar {
-    width: 68px; height: 68px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem; margin: 0 auto 1.2rem;
-    background: var(--role-bg, rgba(220,38,38,0.14));
-    color: var(--role-clr, #ef4444);
-    border: 2px solid var(--role-border, rgba(220,38,38,0.25));
-    box-shadow: 0 0 16px var(--role-glow, rgba(239,68,68,0.2));
-    transition: all 0.4s ease;
+    width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem; margin: 0 auto 1rem; background: rgba(220,38,38,0.14); color: var(--accent-b); border: 2px solid rgba(220,38,38,0.3);
   }
-  .role-card:hover .role-avatar {
-    transform: rotateY(360deg);
-    box-shadow: 0 0 28px var(--role-glow, rgba(239,68,68,0.4));
-  }
-  .role-name {
-    font-family: var(--font-d); font-size: 1.05rem; font-weight: 700;
-    color: var(--text); margin-bottom: 0.5rem;
-  }
-  .role-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+  .role-name { font-family: var(--font-d); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .role-desc { font-size: 0.82rem; color: var(--muted); }
 
-  /* ═══════════════════════════════════════════
-     CREDENTIALS
-  ═══════════════════════════════════════════ */
-  #credentials { }
-  .cred-table-wrap {
-    margin-top: 3rem; overflow-x: auto;
-    border-radius: var(--r-lg);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-    position: relative;
-  }
-  .cred-table-wrap::before {
-    content: '';
-    position: absolute; inset: -1px; border-radius: var(--r-lg);
-    background: linear-gradient(135deg,
-      rgba(220,38,38,0.4), rgba(139,92,246,0.25), rgba(59,130,246,0.2), rgba(220,38,38,0.35));
-    background-size: 300% 300%;
-    animation: iris 9s ease-in-out infinite;
-    z-index: -1;
-  }
-  table {
-    width: 100%; border-collapse: collapse;
-    background: rgba(6,6,14,0.85);
-    backdrop-filter: blur(20px);
-    border-radius: var(--r-lg);
-    overflow: hidden;
-    font-size: 0.85rem;
-  }
-  thead { background: rgba(220,38,38,0.12); }
-  thead th {
-    padding: 14px 16px;
-    font-family: var(--font-d); font-size: 0.78rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--muted); text-align: left;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-  }
-  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s ease; }
-  tbody tr:last-child { border: none; }
-  tbody tr:hover { background: rgba(220,38,38,0.06); }
-  td { padding: 13px 16px; color: var(--text); vertical-align: middle; }
-  .role-badge {
-    display: inline-flex; align-items: center;
-    padding: 4px 12px; border-radius: 20px;
-    font-size: 0.75rem; font-weight: 700;
-    font-family: var(--font-d); letter-spacing: 0.04em;
-    background: rgba(220,38,38,0.14);
-    color: var(--accent-b);
-    border: 1px solid rgba(220,38,38,0.28);
-  }
-  .code-span {
-    font-family: var(--font-m); font-size: 0.8rem;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 6px; padding: 2px 8px;
-    color: var(--gold);
-  }
-
-  /* Warning banner */
-  .warn-banner {
-    display: flex; align-items: flex-start; gap: 14px;
-    background: rgba(245,158,11,0.1);
-    border: 1px solid rgba(245,158,11,0.28);
-    border-radius: var(--r-md);
-    padding: 16px 20px;
-    margin-top: 1.5rem;
-    font-size: 0.85rem; color: #fbbf24;
-  }
-  .warn-banner i { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
-
-  /* ═══════════════════════════════════════════
-     DEPLOY SECTION
-  ═══════════════════════════════════════════ */
-  #deploy { background: rgba(0,0,0,0.25); }
-  .deploy-steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.4rem; margin-top: 3rem;
-  }
+  /* Deploy Steps */
+  .deploy-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.4rem; margin-top: 3rem; }
   .deploy-step {
-    background: var(--glass);
-    backdrop-filter: var(--blur);
-    border-radius: var(--r-lg);
-    padding: 1.8rem;
-    border: 1px solid rgba(255,255,255,0.07);
-    position: relative; overflow: hidden;
-    transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+    background: var(--glass); border-radius: var(--r-lg); padding: 1.8rem; border: 1px solid rgba(255,255,255,0.08); position: relative;
   }
-  .deploy-step:hover {
-    transform: translateY(-6px);
-    border-color: rgba(220,38,38,0.25);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-  }
-  .step-num {
-    font-family: var(--font-d); font-size: 3.5rem; font-weight: 700;
-    line-height: 1; color: rgba(220,38,38,0.15);
-    position: absolute; top: 12px; right: 18px;
-    pointer-events: none;
-  }
-  .step-title {
-    font-family: var(--font-d); font-size: 1rem; font-weight: 700;
-    color: var(--text); margin-bottom: 0.5rem;
-  }
-  .step-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+  .step-num { font-family: var(--font-d); font-size: 3rem; font-weight: 700; color: rgba(220,38,38,0.15); position: absolute; top: 12px; right: 18px; }
+  .step-title { font-family: var(--font-d); font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
 
-  /* Code blocks */
-  .code-block {
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--r-md);
-    padding: 1.2rem 1.4rem;
-    font-family: var(--font-m); font-size: 0.82rem;
-    color: #a3e635; line-height: 1.75;
-    overflow-x: auto;
-    margin-top: 1.5rem;
-  }
-  .code-block .comment { color: #6b7280; }
-  .code-block .cmd     { color: #93c5fd; }
-
-  /* ═══════════════════════════════════════════
-     FOOTER
-  ═══════════════════════════════════════════ */
-  footer {
-    position: relative; z-index: 1;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(20px);
-    padding: 2.5rem 2rem;
-    text-align: center;
-  }
-  .footer-logo { margin-bottom: 1rem; }
-  .footer-logo span {
-    font-family: var(--font-d); font-weight: 700;
-    font-size: 1.4rem; color: var(--accent-b); letter-spacing: 0.08em;
-    text-shadow: 0 0 16px rgba(239,68,68,0.4);
-  }
-  .footer-copy { font-size: 0.78rem; color: var(--faint); }
-  .footer-copy a { color: var(--accent-b); }
-
-  /* ═══════════════════════════════════════════
-     ENTRANCE ANIMATIONS
-  ═══════════════════════════════════════════ */
-  .reveal {
-    opacity: 0;
-    transform: perspective(800px) translateZ(-40px) translateY(24px);
-    transition: opacity 0.75s cubic-bezier(0.22,1,0.36,1),
-                transform 0.75s cubic-bezier(0.22,1,0.36,1);
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: perspective(800px) translateZ(0) translateY(0);
-  }
-
-  /* ═══════════════════════════════════════════
-     ARCHITECTURE SECTION
-  ═══════════════════════════════════════════ */
-  #architecture { background: rgba(0,0,0,0.3); }
-
-  /* Layer rows */
-  .arch-diagram {
-    margin-top: 3.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-  }
-
-  /* Animated connector between rows */
-  .arch-connector {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 52px;
-    position: relative;
-    z-index: 2;
-  }
-  .arch-connector svg {
-    overflow: visible;
-  }
-  .flow-line {
-    stroke: url(#flowGrad);
-    stroke-width: 2;
-    fill: none;
-    stroke-dasharray: 8 5;
-    animation: dash-flow 1.8s linear infinite;
-  }
-  .flow-arrow {
-    fill: var(--accent-b);
-    filter: drop-shadow(0 0 4px rgba(239,68,68,0.7));
-  }
-  @keyframes dash-flow {
-    to { stroke-dashoffset: -26; }
-  }
-
-  /* Layer label */
-  .arch-layer-label {
-    text-align: center;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--faint);
-    margin-bottom: 0.9rem;
-  }
-
-  /* Row of nodes */
-  .arch-row {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  /* Individual arch node */
-  .arch-node {
-    flex: 0 0 auto;
-    min-width: 130px;
-    max-width: 180px;
-    background: rgba(8,8,18,0.70);
-    backdrop-filter: blur(18px);
-    border-radius: 14px;
-    padding: 1.1rem 1rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.07);
-    transition: transform 0.35s cubic-bezier(0.22,1,0.36,1),
-                box-shadow 0.35s ease;
-    cursor: default;
-  }
-  /* top accent line */
-  .arch-node::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: var(--node-top, linear-gradient(90deg, var(--accent), transparent));
-    border-radius: 14px 14px 0 0;
-  }
-  /* subtle inner sheen */
-  .arch-node::after {
-    content: '';
-    position: absolute; inset: 0; border-radius: inherit;
-    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
-    pointer-events: none;
-  }
-  .arch-node:hover {
-    transform: translateY(-5px) perspective(600px) rotateX(4deg);
-    box-shadow:
-      0 16px 40px rgba(0,0,0,0.5),
-      0 0 20px var(--node-glow, rgba(220,38,38,0.15));
-    border-color: var(--node-border, rgba(220,38,38,0.3));
-  }
-  .arch-node-icon {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: var(--node-clr, #ef4444);
-    filter: drop-shadow(0 0 6px var(--node-clr, rgba(239,68,68,0.5)));
-    display: block;
-  }
-  .arch-node-name {
-    font-family: var(--font-d);
-    font-size: 0.9rem; font-weight: 700;
-    color: var(--text); margin-bottom: 3px;
-  }
-  .arch-node-tag {
-    font-size: 0.65rem; color: var(--faint);
-    letter-spacing: 0.06em;
-  }
-
-  /* Wide single-node hero layer */
-  .arch-node-wide {
-    min-width: 260px; max-width: 380px;
-    padding: 1.2rem 2rem;
-  }
-
-  /* Django apps row — special wider grid */
-  .arch-apps-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 0.8rem;
-    max-width: 880px;
-    margin: 0 auto;
-    width: 100%;
-  }
-  .arch-apps-row .arch-node {
-    min-width: unset; max-width: unset;
-  }
-
-  /* Middleware / infra layer (horizontal pill) */
-  .arch-middleware-row {
-    display: flex; gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .arch-pill {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 22px; border-radius: 40px;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.09);
-    font-size: 0.82rem; font-weight: 600;
-    font-family: var(--font-d); letter-spacing: 0.04em;
-    color: var(--text);
-    transition: all 0.3s ease;
-    position: relative; overflow: hidden;
-  }
-  .arch-pill::before {
-    content: '';
-    position: absolute; inset: -1px; border-radius: inherit;
-    background: linear-gradient(135deg,
-      rgba(220,38,38,0.35), rgba(139,92,246,0.25), rgba(59,130,246,0.2), rgba(220,38,38,0.3));
-    background-size: 300% 300%;
-    animation: iris 8s ease-in-out infinite;
-    z-index: -1;
-  }
-  .arch-pill:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 14px var(--pill-glow, rgba(220,38,38,0.15));
-  }
-  .arch-pill i { color: var(--pill-clr, var(--accent-b)); font-size: 0.9rem; }
-
-  /* Data layer — bottom nodes */
-  .arch-data-row {
-    display: flex; gap: 1rem;
-    justify-content: center; flex-wrap: wrap;
-    max-width: 900px; margin: 0 auto; width: 100%;
-  }
-
-  /* ═══════════════════════════════════════════
-     RESPONSIVE
-  ═══════════════════════════════════════════ */
-  @media (max-width: 768px) {
-    .nav-links { display: none; }
-    section { padding: 4rem 1.2rem; }
-    .hero { padding: 6rem 1.2rem 4rem; }
-    .hero-stats { padding: 14px 20px; }
-    .stat-val { font-size: 1.2rem; }
-    .hero h1 { font-size: 2.4rem; }
-    .arch-node-wide { min-width: 200px; }
-    .arch-apps-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
-  }
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem; color: var(--muted); }
   </style>
 </head>
 <body>
 
-<!-- CANVAS PARTICLE FIELD -->
-<canvas id="canvas"></canvas>
-
-<!-- BACKGROUND LAYERS -->
 <div class="bg-mesh"></div>
 <div class="bg-grid"></div>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="orb orb-3"></div>
+<canvas id="canvas"></canvas>
 
-<!-- ═══════════ NAV ═══════════ -->
+<!-- ═══════════ NAVIGATION ═══════════ -->
 <nav class="nav">
   <div class="nav-brand">
-    <div class="nav-logo-ring">VV</div>
+    <div class="nav-logo-ring">V</div>
     <div class="nav-title">
-      <span class="nav-title-main">VVITU</span>
-      <span class="nav-title-sub">Academic Portal</span>
+      <span class="nav-title-main">VVITU PORTAL</span>
+      <span class="nav-title-sub">Academic ERP &amp; Counselling Engine</span>
     </div>
   </div>
+
   <div class="nav-links">
-    <a href="#features" class="nav-link"><i class="fas fa-rocket"></i> Features</a>
-    <a href="#stack" class="nav-link"><i class="fas fa-layer-group"></i> Stack</a>
+    <a href="#features" class="nav-link"><i class="fas fa-cubes"></i> Features</a>
+    <a href="#showcase" class="nav-link"><i class="fas fa-desktop"></i> Live Showcase</a>
     <a href="#roles" class="nav-link"><i class="fas fa-users"></i> Roles</a>
-    <a href="#credentials" class="nav-link"><i class="fas fa-key"></i> Credentials</a>
-    <a href="#architecture" class="nav-link"><i class="fas fa-sitemap"></i> Architecture</a>
-    <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="nav-link">
-      <i class="fab fa-github"></i> GitHub
+    <a href="#stack" class="nav-link"><i class="fas fa-layer-group"></i> Tech Stack</a>
+    <a href="#deploy" class="nav-link"><i class="fas fa-terminal"></i> Quick Start</a>
+    <a href="https://vvitu-portal-jrsk.onrender.com/accounts/login/" target="_blank" class="nav-cta">
+      <i class="fas fa-sign-in-alt"></i> Live Portal Login
     </a>
   </div>
-  <a href="/accounts/login/" class="nav-cta portal-link" data-path="/accounts/login/">
-    <i class="fas fa-sign-in-alt"></i> Enter Portal
-  </a>
 </nav>
 
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
   <div class="hero-inner">
     <div class="hero-badge">
-      <span class="badge-dot"></span>
-      Production-Grade ERP System
+      <span class="badge-dot"></span> Official University Academic ERP &amp; PDF Engine
     </div>
 
-    <h1>VVITU Portal —<br/>Complete ERP System</h1>
+    <h1 class="hero-title">
+      Comprehensive College ERP with <br/>
+      <span class="hero-gradient">ReportLab PDF &amp; R23 Grading</span>
+    </h1>
 
-    <p class="hero-sub">
-      A <strong>production-grade college ERP</strong> for
-      <strong>Vasireddy Venkatadri International Technological University</strong>,
-      Nambur, Guntur — built with Django, glassmorphism UI, role-based access control,
-      AI attendance prediction, and scalability for <strong>300,000+ concurrent students</strong>.
+    <p class="hero-subtitle">
+      Automating Vasireddy Venkatadri International Technological University — complete student academic dossiers, 
+      period attendance prefilling, unit-wise syllabus coverage, parent SMS alerts, and multi-role dashboards.
     </p>
 
     <div class="hero-actions">
-      <a href="/accounts/login/" class="btn-primary portal-link" data-path="/accounts/login/">
-        <i class="fas fa-sign-in-alt"></i> Enter ERP Portal
+      <a href="https://vvitu-portal-jrsk.onrender.com/accounts/login/" target="_blank" class="btn-primary">
+        <i class="fas fa-rocket"></i> Access Live University Portal
       </a>
-      <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener" class="btn-outline">
-        <i class="fab fa-github"></i> View on GitHub
-      </a>
-      <a href="#features" class="btn-outline">
-        <i class="fas fa-rocket"></i> Explore Features
+      <a href="#showcase" class="btn-secondary">
+        <i class="fas fa-file-pdf"></i> View Feature Showcase
       </a>
     </div>
 
+    <!-- Live Counter Bar -->
     <div class="hero-stats">
-      <div class="stat-item">
-        <span class="stat-val">20K+</span>
-        <span class="stat-lbl">Students</span>
+      <div>
+        <div class="stat-num">300,000+</div>
+        <div class="stat-lbl">Student Record Capacity</div>
       </div>
-      <div class="stat-div"></div>
-      <div class="stat-item">
-        <span class="stat-val">500+</span>
-        <span class="stat-lbl">Faculty</span>
+      <div style="width:1px; height:35px; background:rgba(255,255,255,0.1);"></div>
+      <div>
+        <div class="stat-num">8 Semesters</div>
+        <div class="stat-lbl">R23 SGPA / CGPA Calculation</div>
       </div>
-      <div class="stat-div"></div>
-      <div class="stat-item">
-        <span class="stat-val">5</span>
-        <span class="stat-lbl">Roles</span>
-      </div>
-      <div class="stat-div"></div>
-      <div class="stat-item">
-        <span class="stat-val">NAAC</span>
-        <span class="stat-lbl">A+ Accredited</span>
+      <div style="width:1px; height:35px; background:rgba(255,255,255,0.1);"></div>
+      <div>
+        <div class="stat-num">100% Automated</div>
+        <div class="stat-lbl">Counselling PDF Generator</div>
       </div>
     </div>
-  </div>
-
-  <div class="scroll-hint">
-    <span>Scroll</span>
-    <i class="fas fa-chevron-down scroll-arrow"></i>
   </div>
 </section>
 
-<!-- ═══════════ FEATURES ═══════════ -->
+<!-- ═══════════ NEW FEATURES SECTION ═══════════ -->
 <section id="features">
   <div class="section-inner">
-    <div class="reveal">
-      <div class="section-label"><i class="fas fa-rocket"></i> Key Features</div>
-      <h2 class="section-title">Everything a University Needs</h2>
-      <p class="section-desc">A complete ERP with tightly scoped roles, secure data pipelines, and AI-powered analytics — all wrapped in a glassmorphism interface.</p>
-    </div>
+    <div class="section-label"><i class="fas fa-star"></i> Enterprise Features</div>
+    <h2 class="section-title">Built for Scalable Academic Excellence</h2>
+    <p class="section-desc">Every feature engineered for high data integrity, automation, and real-time administrative intelligence.</p>
 
     <div class="features-grid">
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#dc2626,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(220,38,38,0.14);--icon-clr:#ef4444;--icon-shadow:rgba(239,68,68,0.2);">
-          <i class="fas fa-shield-alt"></i>
-        </div>
-        <div class="feature-title">Role-Based Access Control</div>
-        <p class="feature-desc">Highly secure dashboard routing for Students, Faculty, HODs, DEOs, and Admin — each with tailored sidebar navigation and scoped permissions.</p>
+      
+      <!-- Feature 1 -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
+        <h3 class="feature-title">Student Counselling Dossier &amp; PDF</h3>
+        <p class="feature-desc">
+          Compiles demographic data, family profiles, pending fee status, 8-semester exam SGPA/CGPA, 
+          subject attendance records, and achievements into an official multi-page ReportLab PDF document with running canvas headers and signatures.
+        </p>
       </div>
 
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#8b5cf6,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(139,92,246,0.14);--icon-clr:#a78bfa;--icon-shadow:rgba(139,92,246,0.2);">
-          <i class="fas fa-brain"></i>
-        </div>
-        <div class="feature-title">AI Attendance Predictor</div>
-        <p class="feature-desc">Scikit-learn linear regression analyzes student attendance records and predicts semester-end outcomes with visual trend indicators.</p>
+      <!-- Feature 2 -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-book-open"></i></div>
+        <h3 class="feature-title">Class Diary &amp; Syllabus Coverage</h3>
+        <p class="feature-desc">
+          Faculty log period-by-period class topics, unit numbers (Units 1 to 5), and teaching methodology. 
+          HODs and Admins track real-time departmental syllabus progress percentages with visual progress meters.
+        </p>
       </div>
 
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#3b82f6,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(59,130,246,0.14);--icon-clr:#60a5fa;--icon-shadow:rgba(59,130,246,0.2);">
-          <i class="fas fa-bell"></i>
-        </div>
-        <div class="feature-title">Unified Notification System</div>
-        <p class="feature-desc">Multi-scoped notices targeted to everyone, specific roles, branches, classes, or single users with real-time delivery and quick compose.</p>
+      <!-- Feature 3 -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
+        <h3 class="feature-title">Attendance Prefill &amp; Multi-Period Sync</h3>
+        <p class="feature-desc">
+          Automatically pre-fills student class lists with default status 'Present' to save faculty marking time. 
+          Multi-period sync propagates attendance records across consecutive timetable period slots instantly.
+        </p>
       </div>
 
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#10b981,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(16,185,129,0.14);--icon-clr:#34d399;--icon-shadow:rgba(16,185,129,0.2);">
-          <i class="fas fa-file-excel"></i>
-        </div>
-        <div class="feature-title">Excel & PDF Exports</div>
-        <p class="feature-desc">Dynamically generated attendance and marks reports available for download on demand via openpyxl and reportlab.</p>
+      <!-- Feature 4 -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-calculator"></i></div>
+        <h3 class="feature-title">R23 Regulation SGPA / CGPA Engine</h3>
+        <p class="feature-desc">
+          Implements JNTUK/R23 academic regulations — Mid 1, Mid 2, Final, and Supplementary exam grading 
+          (Letter grades S=10 to F=0), active backlog tracking, and dynamic cumulative CGPA calculation.
+        </p>
       </div>
 
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#fbbf24,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(251,191,36,0.14);--icon-clr:#fbbf24;--icon-shadow:rgba(251,191,36,0.2);">
-          <i class="fas fa-upload"></i>
-        </div>
-        <div class="feature-title">Bulk CSV Uploads</div>
-        <p class="feature-desc">Instantly upload spreadsheets to create thousands of student profiles and populate test marks in seconds.</p>
+      <!-- Feature 5 -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-sms"></i></div>
+        <h3 class="feature-title">Parent SMS &amp; Low-Attendance Alerts</h3>
+        <p class="feature-desc">
+          Automated SMS notification pipeline that alerts parents when student attendance falls below 
+          the mandatory 75% threshold, ensuring proactive intervention and legal compliance.
+        </p>
       </div>
 
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#ef4444,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(239,68,68,0.14);--icon-clr:#ef4444;--icon-shadow:rgba(239,68,68,0.2);">
-          <i class="fas fa-lock"></i>
-        </div>
-        <div class="feature-title">Advanced Security Hardening</div>
-        <p class="feature-desc">Rate limiting (5 attempts/min per IP), HSTS, SameSite/HttpOnly session cookies, Referrer-Policy headers, and first-time password flow.</p>
+      <!-- Feature 6 -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+        <h3 class="feature-title">Role-Based Access Control (RBAC)</h3>
+        <p class="feature-desc">
+          Five strictly scoped roles (Admin, HOD, Faculty, Student, DEO) guarded by custom Django middleware 
+          to enforce data privacy, departmental scoping, and action authorization.
+        </p>
       </div>
 
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#06b6d4,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(6,182,212,0.14);--icon-clr:#22d3ee;--icon-shadow:rgba(6,182,212,0.2);">
-          <i class="fas fa-calendar-alt"></i>
-        </div>
-        <div class="feature-title">HOD & Admin Timetable Engine</div>
-        <p class="feature-desc">Publish and manage branch timetables, assign faculty to subjects/classes, designate counselors, and audit college-wide schedules.</p>
-      </div>
-
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#14b8a6,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(20,184,166,0.14);--icon-clr:#2dd4bf;--icon-shadow:rgba(20,184,166,0.2);">
-          <i class="fas fa-book-reader"></i>
-        </div>
-        <div class="feature-title">Class Diary & Daily Lesson Notes</div>
-        <p class="feature-desc">Faculty optionally log lecture topics, discussion takeaways, and homework while marking attendance. Students review a chronological section lesson feed.</p>
-      </div>
-
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#6366f1,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(99,102,241,0.14);--icon-clr:#818cf8;--icon-shadow:rgba(99,102,241,0.2);">
-          <i class="fas fa-layer-group"></i>
-        </div>
-        <div class="feature-title">Syllabus & Unit Coverage Tracker</div>
-        <p class="feature-desc">Real-time academic oversight. HODs track branch teaching progress (Units 1-5 completion pills & % covered), while Admins monitor college-wide curriculum delivery across all 11 branches.</p>
-      </div>
-
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#0ea5e9,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(14,165,233,0.14);--icon-clr:#38bdf8;--icon-shadow:rgba(14,165,233,0.2);">
-          <i class="fas fa-id-card-clip"></i>
-        </div>
-        <div class="feature-title">Student Counselling Dossier & PDF</div>
-        <p class="feature-desc">Unified 360° student record: personal info, family, fee status, semester-by-semester marks & SGPA, attendance %, backlogs, achievements, and 4-tier signature blocks with official ReportLab PDF download.</p>
-      </div>
-
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#a855f7,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(168,85,247,0.14);--icon-clr:#c084fc;--icon-shadow:rgba(168,85,247,0.2);">
-          <i class="fas fa-chalkboard-user"></i>
-        </div>
-        <div class="feature-title">Cross-Branch Proxy & Transfers</div>
-        <p class="feature-desc">College-wide substitute class delegation with conflict-free availability calculation, leave checks, and instant multi-channel SMS/Email alerts.</p>
-      </div>
-
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#f97316,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(249,115,22,0.14);--icon-clr:#fb923c;--icon-shadow:rgba(249,115,22,0.2);">
-          <i class="fas fa-trophy"></i>
-        </div>
-        <div class="feature-title">Achievements System</div>
-        <p class="feature-desc">Students and faculty submit academic and co-curricular achievements for HOD verification and public profile display.</p>
-      </div>
-
-      <div class="feature-card reveal" style="--top-line: linear-gradient(90deg,#ec4899,transparent);">
-        <div class="feature-icon" style="--icon-bg:rgba(236,72,153,0.14);--icon-clr:#f472b6;--icon-shadow:rgba(236,72,153,0.2);">
-          <i class="fas fa-user-edit"></i>
-        </div>
-        <div class="feature-title">DEO Data Entry Panel</div>
-        <p class="feature-desc">Branch-scoped operators add/edit students, upload marks, and edit attendance within a strict 1-day editing window.</p>
-      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ ARCHITECTURE ═══════════ -->
-<section id="architecture">
-  <div class="section-inner">
-    <div class="reveal">
-      <div class="section-label"><i class="fas fa-sitemap"></i> System Architecture</div>
-      <h2 class="section-title">How Everything Fits Together</h2>
-      <p class="section-desc">A layered, production-grade Django architecture — from the browser through middleware, role-scoped apps, ORM, AI engine, and cloud storage.</p>
-    </div>
+<!-- ═══════════ INTERACTIVE FEATURE SHOWCASE ═══════════ -->
+<section id="showcase" class="preview-section section-inner">
+  <div class="section-label"><i class="fas fa-eye"></i> Live Module Showcase</div>
+  <h2 class="section-title">Interactive Module Preview</h2>
+  <p class="section-desc" style="margin-bottom:2rem;">Explore the core operational interfaces powering the VVITU Portal system.</p>
 
-    <div class="arch-diagram">
-
-      <!-- SVG gradient defs (hidden) -->
-      <svg width="0" height="0" style="position:absolute">
-        <defs>
-          <linearGradient id="flowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#ef4444" stop-opacity="0.9"/>
-            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.7"/>
-          </linearGradient>
-          <linearGradient id="flowGradH" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.7"/>
-            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.7"/>
-          </linearGradient>
-        </defs>
-      </svg>
-
-      <!-- LAYER 1: Browser / Client -->
-      <div class="arch-layer-label reveal">Client Layer</div>
-      <div class="arch-row reveal">
-        <div class="arch-node arch-node-wide"
-             style="--node-top:linear-gradient(90deg,#60a5fa,transparent);
-                    --node-clr:#60a5fa;--node-glow:rgba(96,165,250,0.2);
-                    --node-border:rgba(96,165,250,0.3);">
-          <i class="fas fa-globe arch-node-icon"></i>
-          <div class="arch-node-name">Browser / Client</div>
-          <div class="arch-node-tag">Bootstrap 5 · Chart.js 4 · Font Awesome 6 · Custom CSS</div>
-        </div>
-      </div>
-
-      <!-- Connector 1 -->
-      <div class="arch-connector reveal">
-        <svg width="40" height="52" viewBox="0 0 40 52">
-          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
-          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
-        </svg>
-      </div>
-
-      <!-- LAYER 2: Web Server + Middleware -->
-      <div class="arch-layer-label reveal">Server & Middleware Layer</div>
-      <div class="arch-middleware-row reveal">
-        <div class="arch-pill" style="--pill-clr:#fbbf24;--pill-glow:rgba(251,191,36,0.2);">
-          <i class="fas fa-server"></i> Gunicorn WSGI
-        </div>
-        <div class="arch-pill" style="--pill-clr:#ef4444;--pill-glow:rgba(239,68,68,0.2);">
-          <i class="fas fa-shield-alt"></i> Rate Limiter (5/min per IP)
-        </div>
-        <div class="arch-pill" style="--pill-clr:#a78bfa;--pill-glow:rgba(167,139,250,0.2);">
-          <i class="fas fa-lock"></i> RBAC Middleware
-        </div>
-        <div class="arch-pill" style="--pill-clr:#34d399;--pill-glow:rgba(52,211,153,0.2);">
-          <i class="fas fa-cookie-bite"></i> HSTS · SameSite · HttpOnly
-        </div>
-      </div>
-
-      <!-- Connector 2 -->
-      <div class="arch-connector reveal">
-        <svg width="40" height="52" viewBox="0 0 40 52">
-          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
-          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
-        </svg>
-      </div>
-
-      <!-- LAYER 3: Django Application Layer -->
-      <div class="arch-layer-label reveal">Django Application Layer</div>
-      <div class="arch-apps-row reveal">
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#ef4444,transparent);
-                    --node-clr:#ef4444;--node-glow:rgba(239,68,68,0.18);
-                    --node-border:rgba(239,68,68,0.3);">
-          <i class="fas fa-user-circle arch-node-icon"></i>
-          <div class="arch-node-name">accounts</div>
-          <div class="arch-node-tag">Login · Profile · Auth</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#fbbf24,transparent);
-                    --node-clr:#fbbf24;--node-glow:rgba(251,191,36,0.18);
-                    --node-border:rgba(251,191,36,0.3);">
-          <i class="fas fa-user-graduate arch-node-icon"></i>
-          <div class="arch-node-name">student</div>
-          <div class="arch-node-tag">Dashboard · Results · Calendar</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#34d399,transparent);
-                    --node-clr:#34d399;--node-glow:rgba(52,211,153,0.18);
-                    --node-border:rgba(52,211,153,0.3);">
-          <i class="fas fa-chalkboard-teacher arch-node-icon"></i>
-          <div class="arch-node-name">faculty</div>
-          <div class="arch-node-tag">Attendance · Marks · Reports</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#a78bfa,transparent);
-                    --node-clr:#a78bfa;--node-glow:rgba(167,139,250,0.18);
-                    --node-border:rgba(167,139,250,0.3);">
-          <i class="fas fa-user-tie arch-node-icon"></i>
-          <div class="arch-node-name">hod</div>
-          <div class="arch-node-tag">Branch · Timetable · Approvals</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#60a5fa,transparent);
-                    --node-clr:#60a5fa;--node-glow:rgba(96,165,250,0.18);
-                    --node-border:rgba(96,165,250,0.3);">
-          <i class="fas fa-keyboard arch-node-icon"></i>
-          <div class="arch-node-name">deo</div>
-          <div class="arch-node-tag">Data Entry · Attendance</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#f97316,transparent);
-                    --node-clr:#f97316;--node-glow:rgba(249,115,22,0.18);
-                    --node-border:rgba(249,115,22,0.3);">
-          <i class="fas fa-tachometer-alt arch-node-icon"></i>
-          <div class="arch-node-name">admin</div>
-          <div class="arch-node-tag">CRUD · Global Access</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#22d3ee,transparent);
-                    --node-clr:#22d3ee;--node-glow:rgba(34,211,238,0.18);
-                    --node-border:rgba(34,211,238,0.3);">
-          <i class="fas fa-bell arch-node-icon"></i>
-          <div class="arch-node-name">core</div>
-          <div class="arch-node-tag">Notifications · Models · Tasks</div>
-        </div>
-      </div>
-
-      <!-- Connector 3 -->
-      <div class="arch-connector reveal">
-        <svg width="40" height="52" viewBox="0 0 40 52">
-          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
-          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
-        </svg>
-      </div>
-
-      <!-- LAYER 4: ORM / Models -->
-      <div class="arch-layer-label reveal">ORM & Models Layer</div>
-      <div class="arch-row reveal">
-        <div class="arch-node arch-node-wide"
-             style="--node-top:linear-gradient(90deg,#8b5cf6,#3b82f6);
-                    --node-clr:#a78bfa;--node-glow:rgba(139,92,246,0.2);
-                    --node-border:rgba(139,92,246,0.3);">
-          <i class="fas fa-database arch-node-icon"></i>
-          <div class="arch-node-name">Django ORM</div>
-          <div class="arch-node-tag">User · Student · Faculty · Branch · Section · Subject · Timetable · Notification · Achievement</div>
-        </div>
-      </div>
-
-      <!-- Connector 4 -->
-      <div class="arch-connector reveal">
-        <svg width="40" height="52" viewBox="0 0 40 52">
-          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
-          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
-        </svg>
-      </div>
-
-      <!-- LAYER 5: Data / AI / Exports -->
-      <div class="arch-layer-label reveal">Data, AI & Export Layer</div>
-      <div class="arch-data-row reveal">
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#336791,transparent);
-                    --node-clr:#60a5fa;--node-glow:rgba(96,165,250,0.2);
-                    --node-border:rgba(96,165,250,0.3);">
-          <i class="fas fa-database arch-node-icon"></i>
-          <div class="arch-node-name">PostgreSQL</div>
-          <div class="arch-node-tag">Production DB</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#dc382d,transparent);
-                    --node-clr:#f87171;--node-glow:rgba(248,113,113,0.2);
-                    --node-border:rgba(248,113,113,0.3);">
-          <i class="fas fa-bolt arch-node-icon"></i>
-          <div class="arch-node-name">Redis</div>
-          <div class="arch-node-tag">Cache Layer</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#f97316,transparent);
-                    --node-clr:#fb923c;--node-glow:rgba(251,146,60,0.2);
-                    --node-border:rgba(251,146,60,0.3);">
-          <i class="fas fa-robot arch-node-icon"></i>
-          <div class="arch-node-name">scikit-learn</div>
-          <div class="arch-node-tag">AI Predictor</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#10b981,transparent);
-                    --node-clr:#34d399;--node-glow:rgba(52,211,153,0.2);
-                    --node-border:rgba(52,211,153,0.3);">
-          <i class="fas fa-file-excel arch-node-icon"></i>
-          <div class="arch-node-name">openpyxl</div>
-          <div class="arch-node-tag">Excel Export</div>
-        </div>
-        <div class="arch-node"
-             style="--node-top:linear-gradient(90deg,#ef4444,transparent);
-                    --node-clr:#f87171;--node-glow:rgba(239,68,68,0.2);
-                    --node-border:rgba(239,68,68,0.3);">
-          <i class="fas fa-file-pdf arch-node-icon"></i>
-          <div class="arch-node-name">ReportLab</div>
-          <div class="arch-node-tag">PDF Export</div>
-        </div>
-      </div>
-
-      <!-- Connector 5 -->
-      <div class="arch-connector reveal">
-        <svg width="40" height="52" viewBox="0 0 40 52">
-          <line class="flow-line" x1="20" y1="0" x2="20" y2="40"/>
-          <polygon class="flow-arrow" points="20,52 13,38 27,38"/>
-        </svg>
-      </div>
-
-      <!-- LAYER 6: Cloud / Deployment -->
-      <div class="arch-layer-label reveal">Deployment & Cloud Layer</div>
-      <div class="arch-middleware-row reveal">
-        <div class="arch-pill" style="--pill-clr:#34d399;--pill-glow:rgba(52,211,153,0.2);">
-          <i class="fab fa-github"></i> GitHub Source
-        </div>
-        <div class="arch-pill" style="--pill-clr:#a78bfa;--pill-glow:rgba(167,139,250,0.2);">
-          <i class="fas fa-cloud-upload-alt"></i> Render Blueprint
-        </div>
-        <div class="arch-pill" style="--pill-clr:#fbbf24;--pill-glow:rgba(251,191,36,0.2);">
-          <i class="fas fa-cogs"></i> Auto-Migrate &amp; Seed
-        </div>
-        <div class="arch-pill" style="--pill-clr:#60a5fa;--pill-glow:rgba(96,165,250,0.2);">
-          <i class="fas fa-network-wired"></i> PostgreSQL + Redis Managed
-        </div>
-      </div>
-
-    </div><!-- /arch-diagram -->
+  <div class="preview-tabs">
+    <button class="tab-btn active" onclick="showTab('dossier')"><i class="fas fa-file-pdf"></i> Counselling PDF Dossier</button>
+    <button class="tab-btn" onclick="showTab('diary')"><i class="fas fa-book-reader"></i> Class Diary &amp; Syllabus</button>
+    <button class="tab-btn" onclick="showTab('results')"><i class="fas fa-award"></i> R23 SGPA Result Card</button>
+    <button class="tab-btn" onclick="showTab('sms')"><i class="fas fa-comment-dots"></i> Parent SMS Alert Engine</button>
   </div>
-</section>
 
-<!-- ═══════════ TECH STACK ═══════════ -->
-<section id="stack">
-  <div class="section-inner">
-    <div class="reveal">
-      <div class="section-label"><i class="fas fa-layer-group"></i> Technology Stack</div>
-      <h2 class="section-title">Built on Proven Technologies</h2>
-      <p class="section-desc">Every layer carefully chosen for performance, scalability and developer experience.</p>
+  <!-- Tab 1: Dossier -->
+  <div id="dossier" class="preview-content active">
+    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+      <h3 style="color:#ef4444; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-graduation-cap"></i> Student Counselling Dossier &amp; PDF</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Generates official ReportLab PDF documents with university seal, demographic profile card, academic KPI bar, semester marks tables, attendance breakdown, achievements, and signature blocks.
+      </p>
+      <div style="display:flex; gap:15px; flex-wrap:wrap;">
+        <span class="code-span">CGPA: 8.92</span>
+        <span class="code-span">Credits Earned: 120 / 160</span>
+        <span class="code-span">Attendance: 88.5%</span>
+        <span class="code-span">Format: ReportLab NumberedCanvas PDF</span>
+      </div>
     </div>
+  </div>
 
-    <div class="stack-grid">
-      <div class="stack-item reveal" style="--stack-clr:#44b883;">
-        <i class="fab fa-python stack-icon" style="--stack-clr:#3b82f6;"></i>
-        <div class="stack-name">Django 4.2</div>
-        <div class="stack-role">Backend Framework</div>
+  <!-- Tab 2: Diary -->
+  <div id="diary" class="preview-content">
+    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+      <h3 style="color:#34d399; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-tasks"></i> Class Diary &amp; Unit Coverage Tracking</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Faculty log unit topics (Units 1 to 5) taught during each period. HODs track departmental syllabus completion rates with visual percentage progress meters.
+      </p>
+      <div style="background:rgba(255,255,255,0.05); height:12px; border-radius:6px; overflow:hidden; margin-top:10px;">
+        <div style="width:85%; height:100%; background:linear-gradient(90deg, #10b981, #34d399);"></div>
       </div>
-      <div class="stack-item reveal" style="--stack-clr:#7952b3;">
-        <i class="fab fa-bootstrap stack-icon" style="--stack-clr:#7952b3;"></i>
-        <div class="stack-name">Bootstrap 5</div>
-        <div class="stack-role">Responsive UI</div>
-      </div>
-      <div class="stack-item reveal" style="--stack-clr:#FF6384;">
-        <i class="fas fa-chart-bar stack-icon" style="--stack-clr:#FF6384;"></i>
-        <div class="stack-name">Chart.js 4</div>
-        <div class="stack-role">Data Visualisation</div>
-      </div>
-      <div class="stack-item reveal" style="--stack-clr:#336791;">
-        <i class="fas fa-database stack-icon" style="--stack-clr:#336791;"></i>
-        <div class="stack-name">PostgreSQL</div>
-        <div class="stack-role">Production Database</div>
-      </div>
-      <div class="stack-item reveal" style="--stack-clr:#dc382d;">
-        <i class="fas fa-bolt stack-icon" style="--stack-clr:#dc382d;"></i>
-        <div class="stack-name">Redis</div>
-        <div class="stack-role">Caching Layer</div>
-      </div>
-      <div class="stack-item reveal" style="--stack-clr:#f7931e;">
-        <i class="fas fa-robot stack-icon" style="--stack-clr:#f7931e;"></i>
-        <div class="stack-name">scikit-learn</div>
-        <div class="stack-role">AI / ML Predictor</div>
-      </div>
-      <div class="stack-item reveal" style="--stack-clr:#10b981;">
-        <i class="fas fa-file-excel stack-icon" style="--stack-clr:#10b981;"></i>
-        <div class="stack-name">openpyxl</div>
-        <div class="stack-role">Excel Export</div>
-      </div>
-      <div class="stack-item reveal" style="--stack-clr:#ef4444;">
-        <i class="fas fa-file-pdf stack-icon" style="--stack-clr:#ef4444;"></i>
-        <div class="stack-name">ReportLab</div>
-        <div class="stack-role">PDF Generation</div>
+      <span style="font-size:0.75rem; color:var(--muted); display:block; margin-top:6px;">CSE Department Syllabus Progress: 85% Completed</span>
+    </div>
+  </div>
+
+  <!-- Tab 3: Results -->
+  <div id="results" class="preview-content">
+    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+      <h3 style="color:#fbbf24; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-chart-line"></i> R23 Regulation SGPA &amp; CGPA Engine</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Computes Mid 1, Mid 2, Final, and Supplementary exam scores into official letter grades (S, A, B, C, D, E, F) and grade points under R23 regulations.
+      </p>
+      <span class="code-span">Formula: SGPA = ∑(Grade_Points × Credits) / ∑(Credits)</span>
+    </div>
+  </div>
+
+  <!-- Tab 4: SMS -->
+  <div id="sms" class="preview-content">
+    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+      <h3 style="color:#60a5fa; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-sms"></i> Automated Parent SMS Alerts</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Triggers instant SMS notifications to parent mobile numbers whenever student attendance drops below 75%.
+      </p>
+      <div style="background:rgba(59,130,246,0.12); padding:10px 15px; border-radius:8px; border:1px solid rgba(59,130,246,0.3); font-size:0.85rem; color:#93c5fd;">
+        "Dear Parent, attendance for student 24BQ1A4942 has dropped to 68.2%. Please contact class teacher."
       </div>
     </div>
   </div>
@@ -1488,348 +522,161 @@
 <!-- ═══════════ ROLES ═══════════ -->
 <section id="roles">
   <div class="section-inner">
-    <div class="reveal">
-      <div class="section-label"><i class="fas fa-users"></i> User Roles</div>
-      <h2 class="section-title">Five Carefully Scoped Access Levels</h2>
-      <p class="section-desc">Each role has a tailored dashboard, navigation, and strictly enforced permission scope.</p>
-    </div>
+    <div class="section-label"><i class="fas fa-users"></i> Access Control</div>
+    <h2 class="section-title">Five Scoped Portal Roles</h2>
+    <p class="section-desc">Each user role has a custom dashboard, navigation panel, and strictly enforced permissions.</p>
 
     <div class="roles-grid">
-      <div class="role-card reveal"
-           style="--role-bg:rgba(239,68,68,0.14);--role-clr:#ef4444;--role-border:rgba(239,68,68,0.28);--role-glow:rgba(239,68,68,0.22);">
+      <div class="role-card">
         <div class="role-avatar"><i class="fas fa-user-shield"></i></div>
-        <div class="role-name">Admin</div>
-        <p class="role-desc">Full system access — CRUD for all entities, global reports, backup management.</p>
+        <div class="role-name">Super Admin</div>
+        <p class="role-desc">Full system access — global CRUD, fee management, result releases, database backups.</p>
       </div>
-      <div class="role-card reveal"
-           style="--role-bg:rgba(139,92,246,0.14);--role-clr:#a78bfa;--role-border:rgba(139,92,246,0.28);--role-glow:rgba(139,92,246,0.22);">
+      <div class="role-card">
         <div class="role-avatar"><i class="fas fa-user-tie"></i></div>
         <div class="role-name">HOD</div>
-        <p class="role-desc">Branch management, timetables, approvals, and a personal faculty teaching panel.</p>
+        <p class="role-desc">Department oversight — class teacher assignment, leave approvals, syllabus coverage tracking.</p>
       </div>
-      <div class="role-card reveal"
-           style="--role-bg:rgba(59,130,246,0.14);--role-clr:#60a5fa;--role-border:rgba(59,130,246,0.28);--role-glow:rgba(59,130,246,0.22);">
-        <div class="role-avatar"><i class="fas fa-keyboard"></i></div>
-        <div class="role-name">DEO</div>
-        <p class="role-desc">Branch-scoped data entry — students, marks, attendance with time-locked edits.</p>
-      </div>
-      <div class="role-card reveal"
-           style="--role-bg:rgba(16,185,129,0.14);--role-clr:#34d399;--role-border:rgba(16,185,129,0.28);--role-glow:rgba(16,185,129,0.22);">
+      <div class="role-card">
         <div class="role-avatar"><i class="fas fa-chalkboard-teacher"></i></div>
         <div class="role-name">Faculty</div>
-        <p class="role-desc">Mark attendance, upload marks, view student results, submit achievements.</p>
+        <p class="role-desc">Period attendance marking (prefill &amp; sync), class diary entries, student counselling reviews.</p>
       </div>
-      <div class="role-card reveal"
-           style="--role-bg:rgba(251,191,36,0.14);--role-clr:#fbbf24;--role-border:rgba(251,191,36,0.28);--role-glow:rgba(251,191,36,0.22);">
+      <div class="role-card">
         <div class="role-avatar"><i class="fas fa-user-graduate"></i></div>
         <div class="role-name">Student</div>
-        <p class="role-desc">View results, attendance, timetable, AI prediction, and submit achievements.</p>
+        <p class="role-desc">View SGPA/CGPA cards, attendance breakdown, timetable, achievement upload, PDF downloads.</p>
+      </div>
+      <div class="role-card">
+        <div class="role-avatar"><i class="fas fa-keyboard"></i></div>
+        <div class="role-name">DEO</div>
+        <p class="role-desc">Data entry operator — batch student enrollment, attendance adjustments, marks upload.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ CREDENTIALS ═══════════ -->
-<section id="credentials">
+<!-- ═══════════ TECH STACK ═══════════ -->
+<section id="stack">
   <div class="section-inner">
-    <div class="reveal">
-      <div class="section-label"><i class="fas fa-key"></i> Default Credentials</div>
-      <h2 class="section-title">Test Accounts After Seeding</h2>
-      <p class="section-desc">All accounts share the default password <code class="code-span">vvit@1234</code> after running <code class="code-span">python manage.py seed_data</code>.</p>
-    </div>
+    <div class="section-label"><i class="fas fa-layer-group"></i> Architecture</div>
+    <h2 class="section-title">Modern Technology Stack</h2>
+    <p class="section-desc">High-performance components carefully chosen for scale, security, and developer experience.</p>
 
-    <div class="cred-table-wrap reveal">
-      <table>
-        <thead>
-          <tr>
-            <th>Role</th>
-            <th>Username / Range</th>
-            <th>Branch / Scope</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><span class="role-badge">Admin</span></td>
-            <td><code class="code-span">admin</code></td>
-            <td>Global</td>
-            <td>Full System Access & CRUD</td>
-          </tr>
-          <tr>
-            <td><span class="role-badge">HOD</span></td>
-            <td><code class="code-span">HOD001</code> – <code class="code-span">HOD008</code></td>
-            <td>CSE, ECE, EEE, IT, CSM, CSD, CIVIL, MECH</td>
-            <td>Full Branch Management & Teaching Panel</td>
-          </tr>
-          <tr>
-            <td><span class="role-badge">DEO</span></td>
-            <td><code class="code-span">DEO001</code> – <code class="code-span">DEO008</code></td>
-            <td>Branch-scoped</td>
-            <td>Branch-scoped Data Operator</td>
-          </tr>
-          <tr>
-            <td><span class="role-badge">Faculty</span></td>
-            <td><code class="code-span">EMP001</code> – <code class="code-span">EMP016</code></td>
-            <td>2 per branch</td>
-            <td>Class Teachers, Counsellors, Subject Instructors</td>
-          </tr>
-          <tr>
-            <td><span class="role-badge">Student</span></td>
-            <td><code class="code-span">24BQ1A4942</code> (CSE A) …</td>
-            <td>Various (66 total)</td>
-            <td>Students across Years 1–4 with branch roll numbers</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="warn-banner reveal">
-      <i class="fas fa-exclamation-triangle"></i>
-      <div><strong>Production Security:</strong> Change all default passwords immediately when deploying to any live or public-facing environment.</div>
+    <div class="stack-grid">
+      <div class="stack-item">
+        <i class="fab fa-python stack-icon" style="color:#3b82f6;"></i>
+        <div class="stack-name">Django 4.2.7</div>
+        <div class="stack-role">Backend &amp; ORM</div>
+      </div>
+      <div class="stack-item">
+        <i class="fas fa-file-pdf stack-icon" style="color:#ef4444;"></i>
+        <div class="stack-name">ReportLab</div>
+        <div class="stack-role">PDF Generation Engine</div>
+      </div>
+      <div class="stack-item">
+        <i class="fas fa-database stack-icon" style="color:#336791;"></i>
+        <div class="stack-name">PostgreSQL</div>
+        <div class="stack-role">Relational Database</div>
+      </div>
+      <div class="stack-item">
+        <i class="fab fa-bootstrap stack-icon" style="color:#7952b3;"></i>
+        <div class="stack-name">Bootstrap 5</div>
+        <div class="stack-role">Responsive UI &amp; Glassmorphism</div>
+      </div>
+      <div class="stack-item">
+        <i class="fas fa-sms stack-icon" style="color:#10b981;"></i>
+        <div class="stack-name">Twilio SMS</div>
+        <div class="stack-role">Parent Alert API</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ SETUP & DEPLOY ═══════════ -->
+<!-- ═══════════ DEPLOYMENT ═══════════ -->
 <section id="deploy">
   <div class="section-inner">
-    <div class="reveal">
-      <div class="section-label"><i class="fas fa-terminal"></i> Quick Start</div>
-      <h2 class="section-title">Up & Running in 5 Steps</h2>
-      <p class="section-desc">Clone, install, migrate, seed, and launch — the entire flow takes under 5 minutes.</p>
-    </div>
+    <div class="section-label"><i class="fas fa-terminal"></i> Quick Start</div>
+    <h2 class="section-title">Run Locally in 4 Steps</h2>
+    <p class="section-desc">Clone the repository and spin up the complete environment in under 3 minutes.</p>
 
     <div class="deploy-steps">
-      <div class="deploy-step reveal">
+      <div class="deploy-step">
         <div class="step-num">01</div>
-        <div class="step-title">Clone & Virtualenv</div>
-        <p class="step-desc">Clone the repo and create a Python virtual environment.</p>
+        <div class="step-title">Clone &amp; Setup Venv</div>
+        <p class="step-desc"><code class="code-span">git clone https://github.com/Hidayatulla268/VVITU-portal.git</code></p>
       </div>
-      <div class="deploy-step reveal">
+      <div class="deploy-step">
         <div class="step-num">02</div>
         <div class="step-title">Install Dependencies</div>
-        <p class="step-desc">Run <code class="code-span">pip install -r requirements.txt</code> to get all packages.</p>
+        <p class="step-desc"><code class="code-span">pip install -r requirements.txt</code></p>
       </div>
-      <div class="deploy-step reveal">
+      <div class="deploy-step">
         <div class="step-num">03</div>
-        <div class="step-title">Apply Migrations</div>
-        <p class="step-desc">Run <code class="code-span">python manage.py migrate</code> to set up the database schema.</p>
+        <div class="step-title">Migrate &amp; Seed Data</div>
+        <p class="step-desc"><code class="code-span">python manage.py migrate &amp;&amp; python manage.py seed_data</code></p>
       </div>
-      <div class="deploy-step reveal">
+      <div class="deploy-step">
         <div class="step-num">04</div>
-        <div class="step-title">Seed Sample Data</div>
-        <p class="step-desc">Run <code class="code-span">python manage.py seed_data</code> to create branches, accounts, timetables and attendance records.</p>
-      </div>
-      <div class="deploy-step reveal">
-        <div class="step-num">05</div>
         <div class="step-title">Launch Dev Server</div>
-        <p class="step-desc">Run <code class="code-span">python manage.py runserver</code> and open <code class="code-span">http://127.0.0.1:8000/</code>.</p>
+        <p class="step-desc"><code class="code-span">python manage.py runserver</code></p>
       </div>
-      <div class="deploy-step reveal">
-        <div class="step-num">☁</div>
-        <div class="step-title">One-Click Render</div>
-        <p class="step-desc">Push to GitHub and link to Render — the <code class="code-span">render.yaml</code> blueprint auto-provisions PostgreSQL, runs migrations, and seeds data.</p>
-      </div>
-    </div>
-
-    <div class="code-block reveal">
-      <span class="comment"># Windows — quick start</span><br/>
-      <span class="cmd">python -m venv venv && venv\Scripts\activate</span><br/>
-      <span class="cmd">pip install -r requirements.txt</span><br/>
-      <span class="cmd">python manage.py migrate</span><br/>
-      <span class="cmd">python manage.py seed_data</span><br/>
-      <span class="cmd">python manage.py runserver</span>
     </div>
   </div>
 </section>
 
 <!-- ═══════════ FOOTER ═══════════ -->
 <footer>
-  <div class="footer-logo">
-    <span>VVITU Portal</span>
-  </div>
-  <p class="footer-copy">
-    &copy; <span id="yr"></span> Vasireddy Venkatadri International Technological University, Nambur, Guntur, Andhra Pradesh.<br/>
-    Built with ❤️ — <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank" rel="noopener">View on GitHub</a>
+  <p>&copy; <span id="yr"></span> Vasireddy Venkatadri International Technological University. All rights reserved.</p>
+  <p style="margin-top:8px;">
+    Official Portal: <a href="https://vvitu-portal-jrsk.onrender.com" target="_blank">vvitu-portal-jrsk.onrender.com</a> | 
+    <a href="https://github.com/Hidayatulla268/VVITU-portal" target="_blank"><i class="fab fa-github"></i> View GitHub Repository</a>
   </p>
 </footer>
 
-<!-- ═══════════ SCRIPTS ═══════════ -->
 <script>
-/* ── Copyright year ── */
 document.getElementById('yr').textContent = new Date().getFullYear();
 
-/* ──────────────────────────────────────────
-   PARTICLE CANVAS
-──────────────────────────────────────────── */
+// Particle Canvas Animation
 (function() {
   const canvas = document.getElementById('canvas');
-  const ctx    = canvas.getContext('2d');
-  let W, H, particles = [];
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
+  let particles = [];
 
-  const COLORS = [
-    'rgba(220,38,38,', 'rgba(139,92,246,',
-    'rgba(59,130,246,', 'rgba(251,191,36,'
-  ];
+  window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
 
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+  for(let i=0; i<80; i++) {
+    particles.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 2 + 0.5,
+      vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+      color: ['rgba(220,38,38,0.5)', 'rgba(139,92,246,0.4)', 'rgba(59,130,246,0.4)'][Math.floor(Math.random()*3)]
+    });
   }
-  window.addEventListener('resize', resize);
-  resize();
-
-  function Particle() {
-    this.reset();
-  }
-  Particle.prototype.reset = function() {
-    this.x    = Math.random() * W;
-    this.y    = Math.random() * H;
-    this.r    = Math.random() * 1.8 + 0.4;
-    this.clr  = COLORS[Math.floor(Math.random() * COLORS.length)];
-    this.a    = Math.random() * 0.55 + 0.1;
-    this.vx   = (Math.random() - 0.5) * 0.4;
-    this.vy   = (Math.random() - 0.5) * 0.4;
-    this.life = 0;
-    this.maxLife = Math.random() * 300 + 150;
-  };
-  Particle.prototype.update = function() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.life++;
-    if (this.life > this.maxLife ||
-        this.x < -5 || this.x > W + 5 ||
-        this.y < -5 || this.y > H + 5) this.reset();
-  };
-  Particle.prototype.draw = function() {
-    const t = this.life / this.maxLife;
-    const a = this.a * (t < 0.1 ? t * 10
-                        : t > 0.9 ? (1 - t) * 10
-                        : 1);
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-    ctx.fillStyle = this.clr + a + ')';
-    ctx.fill();
-  };
-
-  // Connection lines between close particles
-  function drawConnections() {
-    const MAX_DIST = 110;
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < MAX_DIST) {
-          const a = (1 - dist / MAX_DIST) * 0.12;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(220,38,38,${a})`;
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
-        }
-      }
-    }
-  }
-
-  // Init particles
-  const COUNT = Math.min(120, Math.floor(W * H / 8000));
-  for (let i = 0; i < COUNT; i++) particles.push(new Particle());
 
   function loop() {
-    ctx.clearRect(0, 0, W, H);
-    drawConnections();
-    particles.forEach(p => { p.update(); p.draw(); });
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0 || p.x > W) p.vx *= -1;
+      if(p.y < 0 || p.y > H) p.vy *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = p.color; ctx.fill();
+    });
     requestAnimationFrame(loop);
   }
   loop();
-
-  // Mouse interaction
-  let mx = -999, my = -999;
-  window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-  window.addEventListener('mouseleave', () => { mx = -999; my = -999; });
-  // Repel nearby particles from cursor
-  setInterval(() => {
-    particles.forEach(p => {
-      const dx = p.x - mx, dy = p.y - my;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 80) {
-        p.vx += (dx / dist) * 0.3;
-        p.vy += (dy / dist) * 0.3;
-        // clamp speed
-        const spd = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-        if (spd > 2) { p.vx /= spd / 2; p.vy /= spd / 2; }
-      }
-    });
-  }, 30);
 })();
 
-/* ──────────────────────────────────────────
-   SCROLL REVEAL (IntersectionObserver)
-──────────────────────────────────────────── */
-const revealEls = document.querySelectorAll('.reveal');
-const observer  = new IntersectionObserver((entries) => {
-  entries.forEach((entry, i) => {
-    if (entry.isIntersecting) {
-      // stagger siblings
-      const siblings = Array.from(entry.target.parentNode.children)
-        .filter(el => el.classList.contains('reveal'));
-      const idx = siblings.indexOf(entry.target);
-      setTimeout(() => {
-        entry.target.classList.add('visible');
-      }, idx * 80);
-      observer.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-revealEls.forEach(el => observer.observe(el));
-
-/* ──────────────────────────────────────────
-   3D CARD TILT on mouse move
-──────────────────────────────────────────── */
-document.querySelectorAll('.feature-card, .glass-card, .role-card, .stack-item').forEach(card => {
-  card.addEventListener('mousemove', e => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const cx = rect.width  / 2;
-    const cy = rect.height / 2;
-    const rotX =  ((y - cy) / cy) * -5;
-    const rotY =  ((x - cx) / cx) *  6;
-    card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-6px)`;
-  });
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = '';
-  });
-});
-
-/* ──────────────────────────────────────────
-   SMOOTH SCROLL for nav links
-──────────────────────────────────────────── */
-document.querySelectorAll('a[href^="#"]').forEach(link => {
-  link.addEventListener('click', e => {
-    const target = document.querySelector(link.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
-});
-
-/* ──────────────────────────────────────────
-   PORTAL URL MAPPING
-   Configure your Render / Railway backend URL here.
-   Example: 'https://vvit-portal.onrender.com'
-   Leave as empty string '' for relative path routing.
-──────────────────────────────────────────── */
-const PORTAL_URL = 'https://vvitu-portal-jrsk.onrender.com';
-
-document.querySelectorAll('.portal-link').forEach(el => {
-  const path = el.getAttribute('data-path') || '/accounts/login/';
-  el.href = PORTAL_URL ? (PORTAL_URL.replace(/\/$/, '') + path) : path;
-});
+// Interactive Tab Switcher
+function showTab(tabId) {
+  document.querySelectorAll('.preview-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
 </script>
 </body>
 </html>
