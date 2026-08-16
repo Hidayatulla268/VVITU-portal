@@ -19,8 +19,18 @@ def student_detail_view(request, pk):
     user = request.user
     can_view = False
 
-    if user.role in ['admin', 'hod', 'deo', 'faculty', 'lab_technician']:
+    if user.role in ['admin', 'hod', 'deo']:
         can_view = True
+    elif user.role in ['faculty', 'lab_technician']:
+        try:
+            faculty_profile = user.faculty_profile
+            is_counsellor = (student.counsellor == faculty_profile)
+            is_class_teacher = (student.class_teacher == faculty_profile)
+            is_subject_teacher = student.section and Timetable.objects.filter(section=student.section, faculty=faculty_profile).exists()
+            if is_counsellor or is_class_teacher or is_subject_teacher:
+                can_view = True
+        except (ObjectDoesNotExist, AttributeError):
+            can_view = False
     elif user.role == 'student':
         try:
             if user.student_profile.pk == student.pk:

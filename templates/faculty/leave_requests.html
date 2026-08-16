@@ -125,11 +125,12 @@
           </td>
           <td class="text-end">
             {% if leave.status == 'pending' %}
-              <a href="{% url 'faculty:cancel_leave_request' leave.id %}" 
-                 class="btn-leave-reject"
-                 onclick="return confirm('Are you sure you want to cancel this leave application?');">
-                <i class="fas fa-ban me-1"></i>Cancel
-              </a>
+              <form method="POST" action="{% url 'faculty:cancel_leave_request' leave.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this leave application?');">
+                {% csrf_token %}
+                <button type="submit" class="btn-leave-reject border-0 bg-transparent">
+                  <i class="fas fa-ban me-1"></i>Cancel
+                </button>
+              </form>
             {% else %}
               <span class="text-muted small"><i class="fas fa-lock me-1"></i>Finalized</span>
             {% endif %}

@@ -4,11 +4,15 @@ VVIT Portal — Accounts Views
 Handles login, logout, and post-login role-based redirect.
 """
 
+import os
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from .models import Student, Faculty
 
 
@@ -51,8 +55,10 @@ def login_view(request):
 
             login(request, user)
             messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
-            # Honour ?next= param if present, else go to role dashboard
-            next_url = request.GET.get('next', user.get_dashboard_url())
+            # Honour ?next= param safely if present and internal, else go to role dashboard
+            next_url = request.GET.get('next') or request.POST.get('next')
+            if not next_url or not url_has_allowed_host_and_scheme(url=next_url, allowed_hosts={request.get_host()}):
+                next_url = user.get_dashboard_url()
             return redirect(next_url)
         else:
             messages.error(request, "Invalid username or password. Please try again.")
@@ -107,23 +113,26 @@ def set_password(request):
             messages.error(request, "Password cannot be empty.")
         elif password != confirm_password:
             messages.error(request, "Passwords do not match.")
-        elif len(password) < 6:
-            messages.error(request, "Password must be at least 6 characters long.")
         else:
-            # Set new password
-            request.user.set_password(password)
-            request.user.save()
-            
-            # Update student profile first login flag
-            profile.is_first_login = False
-            profile.save()
-            
-            # Since password changed, we must update the session auth hash to prevent logout
-            from django.contrib.auth import update_session_auth_hash
-            update_session_auth_hash(request, request.user)
-            
-            messages.success(request, "Your password has been set successfully! This is now your permanent password.")
-            return redirect(request.user.get_dashboard_url())
+            try:
+                validate_password(password, user=request.user)
+                # Set new password
+                request.user.set_password(password)
+                request.user.save()
+                
+                # Update student profile first login flag
+                profile.is_first_login = False
+                profile.save()
+                
+                # Since password changed, we must update the session auth hash to prevent logout
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, request.user)
+                
+                messages.success(request, "Your password has been set successfully! This is now your permanent password.")
+                return redirect(request.user.get_dashboard_url())
+            except ValidationError as e:
+                for error in e.messages:
+                    messages.error(request, error)
 
     return render(request, 'accounts/set_password.html')
 
@@ -143,10 +152,20 @@ def profile_view(request):
 
     if request.method == 'POST':
         if 'profile_picture' in request.FILES:
-            user.profile_picture = request.FILES['profile_picture']
-            user.save()
-            messages.success(request, "Profile picture updated successfully!")
-            return redirect('accounts:profile')
+            pic = request.FILES['profile_picture']
+            ext = os.path.splitext(pic.name)[1].lower()
+            allowed_exts = ['.jpg', '.jpeg', '.png', '.webp']
+            max_size = 5 * 1024 * 1024  # 5MB
+
+            if ext not in allowed_exts:
+                messages.error(request, "Invalid image format. Allowed formats: JPG, JPEG, PNG, WEBP.")
+            elif pic.size > max_size:
+                messages.error(request, "Image file size exceeds maximum limit of 5MB.")
+            else:
+                user.profile_picture = pic
+                user.save()
+                messages.success(request, "Profile picture updated successfully!")
+                return redirect('accounts:profile')
         phone_val = request.POST.get('phone', '').strip()
         if phone_val:
             user.phone = phone_val
@@ -195,17 +214,20 @@ def change_password(request):
             messages.error(request, "Current password is incorrect.")
         elif new_password != confirm_password:
             messages.error(request, "New passwords do not match.")
-        elif len(new_password) < 6:
-            messages.error(request, "New password must be at least 6 characters long.")
         else:
-            request.user.set_password(new_password)
-            request.user.save()
+            try:
+                validate_password(new_password, user=request.user)
+                request.user.set_password(new_password)
+                request.user.save()
 
-            from django.contrib.auth import update_session_auth_hash
-            update_session_auth_hash(request, request.user)
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, request.user)
 
-            messages.success(request, "Your password has been changed successfully!")
-            return redirect('accounts:profile')
+                messages.success(request, "Your password has been changed successfully!")
+                return redirect('accounts:profile')
+            except ValidationError as e:
+                for error in e.messages:
+                    messages.error(request, error)
 
     return render(request, 'accounts/change_password.html')
 

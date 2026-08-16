@@ -27,6 +27,7 @@ from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
 from django.conf import settings as django_settings
+from django.views.decorators.http import require_POST
 
 from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequest
 from core.models import (
@@ -1549,6 +1550,7 @@ def download_backup(request, pk):
 
 
 @admin_required
+@require_POST
 def restore_backup(request, pk):
     """Restore database from a selected JSON backup file."""
     from django.core.management import call_command
@@ -1575,6 +1577,7 @@ def restore_backup(request, pk):
 
 
 @admin_required
+@require_POST
 def delete_backup(request, pk):
     """Delete a backup record and its corresponding file on disk."""
     from core.models import DatabaseBackup

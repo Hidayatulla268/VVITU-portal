@@ -358,12 +358,18 @@
                 </div>
               </div>
               <div class="d-flex gap-1.5 flex-shrink-0">
-                <a href="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="btn btn-sm btn-success py-1.5 px-2.5" style="font-size:0.75rem;" title="Approve">
-                  <i class="fas fa-check me-1"></i>Approve
-                </a>
-                <a href="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="btn btn-sm btn-danger py-1.5 px-2.5" style="font-size:0.75rem;" title="Reject" onclick="return confirm('Reject this achievement?')">
-                  <i class="fas fa-times me-1"></i>Reject
-                </a>
+                <form method="POST" action="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-success py-1.5 px-2.5" style="font-size:0.75rem;" title="Approve">
+                    <i class="fas fa-check me-1"></i>Approve
+                  </button>
+                </form>
+                <form method="POST" action="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="d-inline" onsubmit="return confirm('Reject this achievement?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger py-1.5 px-2.5" style="font-size:0.75rem;" title="Reject">
+                    <i class="fas fa-times me-1"></i>Reject
+                  </button>
+                </form>
               </div>
             </div>
           </div>

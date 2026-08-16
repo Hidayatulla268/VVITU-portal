@@ -126,7 +126,16 @@ function confirmRestore(restoreUrl, filename) {
     `Do you wish to proceed?`
   );
   if (confirmed) {
-    window.location.href = restoreUrl;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = restoreUrl;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    form.appendChild(csrfInput);
+    document.body.appendChild(form);
+    form.submit();
   }
 }
 </script>

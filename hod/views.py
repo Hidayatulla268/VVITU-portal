@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
@@ -394,6 +395,7 @@ def verify_achievements(request):
     return render(request, 'hod/verify_achievements.html', {'achievements': achievements})
 
 @hod_required
+@require_POST
 def verify_achievement_action(request, pk, action_type):
     dept = request.department
     ach = get_object_or_404(Achievement, id=pk)
@@ -1424,7 +1426,7 @@ def manage_class_transfers(request):
 
             t_date = parse_flexible_date(date_val_str) or today
 
-            slot = get_object_or_404(Timetable, id=timetable_id)
+            slot = get_object_or_404(Timetable, id=timetable_id, section__branch=dept)
             substitute = get_object_or_404(Faculty, id=substitute_id, is_active=True)
 
 

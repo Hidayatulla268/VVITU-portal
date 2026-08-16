@@ -171,6 +171,17 @@ def ajax_get_students(request):
     if not section_id:
         return JsonResponse({'error': 'section_id required'}, status=400)
 
+    # Section Authorization Check for faculty
+    faculty = getattr(request, 'faculty', None)
+    if request.user.role not in ['admin', 'hod']:
+        if not faculty:
+            return JsonResponse({'error': 'Faculty profile not found'}, status=403)
+        has_tt_slot = Timetable.objects.filter(faculty=faculty, section_id=section_id).exists()
+        has_proxy = ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__section_id=section_id).exists()
+        is_mentor_or_ct = Student.objects.filter(Q(class_teacher=faculty) | Q(counsellor=faculty), section_id=section_id).exists()
+        if not (has_tt_slot or has_proxy or is_mentor_or_ct):
+            return JsonResponse({'error': 'Unauthorized section access'}, status=403)
+
     students = (
         Student.objects
         .filter(section_id=section_id, is_active=True, user__is_deleted=False)
@@ -431,6 +442,22 @@ def mark_attendance(request):
 
         slot = get_object_or_404(Timetable, id=slot_id)
 
+        # Authorization check: verify faculty owns slot, has active proxy transfer, or is class teacher
+        is_slot_owner = (slot.faculty == faculty)
+        is_proxy = ClassTransfer.objects.filter(
+            substitute_faculty=faculty, timetable_entry=slot, date=att_date
+        ).exists()
+        is_class_teacher = Student.objects.filter(section=slot.section, class_teacher=faculty).exists()
+        is_admin_or_hod = request.user.role in ['admin', 'hod']
+
+        if not (is_slot_owner or is_proxy or is_class_teacher or is_admin_or_hod):
+            messages.error(request, "You are not authorized to mark attendance for this timetable slot.")
+            return redirect('faculty:mark_attendance')
+
+        if section_id and int(section_id) != slot.section_id:
+            messages.error(request, "Selected section does not match the timetable slot.")
+            return redirect('faculty:mark_attendance')
+
         # Check if faculty is original faculty on approved leave for att_date
         from accounts.models import FacultyLeaveRequest
         if slot.faculty == faculty:
@@ -584,6 +611,12 @@ def class_diary(request):
                 messages.success(request, f"Class log for {entry.subject.code} on {entry.date.strftime('%d-%b-%Y')} updated successfully.")
             elif slot_id and slot_id.isdigit():
                 slot = get_object_or_404(Timetable, id=int(slot_id))
+                is_slot_owner = (slot.faculty == faculty)
+                is_proxy = ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry=slot, date=entry_date).exists()
+                if not (is_slot_owner or is_proxy or request.user.role in ['admin']):
+                    messages.error(request, "You are not authorized to record class diary for this timetable slot.")
+                    return redirect('faculty:class_diary')
+
                 ClassDiary.objects.update_or_create(
                     timetable_entry=slot,
                     date=entry_date,
@@ -1666,6 +1699,7 @@ def leave_requests(request):
 
 
 @faculty_required
+@require_POST
 def cancel_leave_request(request, pk):
     faculty = request.faculty
     leave_req = get_object_or_404(FacultyLeaveRequest, pk=pk, faculty=faculty)

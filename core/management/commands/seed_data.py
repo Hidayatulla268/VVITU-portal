@@ -19,7 +19,16 @@ import random
 class Command(BaseCommand):
     help = 'Seeds sample academic data for all branches.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--reset-passwords',
+            action='store_true',
+            default=False,
+            help='Reset passwords of existing users to default (vvit@1234)',
+        )
+
     def handle(self, *args, **options):
+        reset_passwords = options.get('reset_passwords', False)
         self.stdout.write(self.style.MIGRATE_HEADING("=" * 60))
         self.stdout.write(self.style.MIGRATE_HEADING("  VVIT Portal - Loading Comprehensive Sample Data"))
         self.stdout.write(self.style.MIGRATE_HEADING("=" * 60))
@@ -33,10 +42,10 @@ class Command(BaseCommand):
                 first_name='Portal', last_name='Admin',
                 role='admin',
             )
-        else:
+        elif reset_passwords:
             admin_user.set_password('vvit@1234')
             admin_user.save()
-        self.stdout.write(self.style.SUCCESS("[OK] Admin user: admin / vvit@1234"))
+        self.stdout.write(self.style.SUCCESS("[OK] Admin user processed"))
 
         # 2. BRANCHES
         branches_data = [
@@ -79,7 +88,8 @@ class Command(BaseCommand):
         def make_faculty(emp_id, fname, lname, dept, role='faculty', phone='9000000001'):
             u = User.objects.filter(username=emp_id).first()
             if u:
-                u.set_password('vvit@1234')
+                if reset_passwords:
+                    u.set_password('vvit@1234')
                 u.role = role
                 u.phone = phone
                 u.save()
@@ -139,7 +149,8 @@ class Command(BaseCommand):
                     email=username.lower() + '@vvit.net', role='deo', phone=f'987654321{idx+1}'
                 )
             else:
-                deo_user.set_password('vvit@1234')
+                if reset_passwords:
+                    deo_user.set_password('vvit@1234')
                 deo_user.role = 'deo'
                 deo_user.save()
             
@@ -372,7 +383,8 @@ class Command(BaseCommand):
             
             u = User.objects.filter(username=roll).first()
             if u:
-                u.set_password('vvit@1234')
+                if reset_passwords:
+                    u.set_password('vvit@1234')
                 u.save()
                 stu = Student.objects.filter(roll_number=roll).first()
                 if stu:
