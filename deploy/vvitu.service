@@ -1,0 +1,53 @@
+# ═══════════════════════════════════════════════════════════════════
+# VVITU University Portal — Systemd Service Configuration
+# Place at: /etc/systemd/system/vvitu.service
+# Control with:
+#   sudo systemctl daemon-reload
+#   sudo systemctl start vvitu
+#   sudo systemctl enable vvitu
+#   sudo systemctl status vvitu
+# ═══════════════════════════════════════════════════════════════════
+
+[Unit]
+Description=VVITU University Portal Gunicorn Daemon
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/vvitu
+
+# Load production environment variables (.env)
+EnvironmentFile=/var/www/vvitu/.env
+
+# Gunicorn Startup Command
+# Workers = (2 * CPU cores) + 1. For a 4-core server, 9 workers is optimal.
+ExecStart=/var/www/vvitu/venv/bin/gunicorn VVITU_Portal.wsgi:application \
+    --name vvitu_portal \
+    --workers 5 \
+    --threads 2 \
+    --worker-class gthread \
+    --worker-connections 1000 \
+    --max-requests 5000 \
+    --max-requests-jitter 500 \
+    --timeout 120 \
+    --bind 127.0.0.1:8000 \
+    --access-logfile /var/log/vvitu/gunicorn_access.log \
+    --error-logfile /var/log/vvitu/gunicorn_error.log \
+    --capture-output \
+    --enable-stdio-inheritance
+
+# Auto-Restart Policy on Crashes
+Restart=always
+RestartSec=5s
+
+# Security Hardening for Systemd
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
