@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
-from accounts.models import User, Student, Faculty, Achievement, FacultyLeaveRequest
+from accounts.models import User, Student, Faculty, Achievement, FacultyLeaveRequest, generate_secure_temp_password
 from core.models import (
     Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result,
     Notification, ResultRelease, FacultyAttendance, ClassTransfer,
@@ -475,9 +475,10 @@ def add_student(request):
         if not email:
             email = f"{username}@vvitu.net"
 
+        temp_pwd = p.get('password', '').strip() or generate_secure_temp_password()
         user = User.objects.create_user(
             username=username,
-            password=p.get('password', 'vvit@1234'),
+            password=temp_pwd,
             first_name=first_name,
             last_name=last_name,
             email=email,
@@ -670,9 +671,10 @@ def add_faculty(request):
             return redirect('hod:add_faculty')
             
         email = p.get('email', '').strip()
+        temp_pwd = p.get('password', '').strip() or generate_secure_temp_password()
         user = User.objects.create_user(
             username=emp_id,
-            password=p.get('password', 'vvit@1234'),
+            password=temp_pwd,
             first_name=first_name,
             last_name=last_name,
             email=email,
@@ -697,7 +699,7 @@ def add_faculty(request):
             created_by=request.user
         )
         
-        messages.success(request, f"Faculty {emp_id} created successfully.")
+        messages.success(request, f"Faculty {emp_id} created successfully! (Initial Password: {temp_pwd})")
         return redirect('hod:manage_faculty')
         
     return render(request, 'hod/add_faculty.html')

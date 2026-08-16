@@ -274,14 +274,15 @@ ADMIN_INDEX_TITLE = 'VVITU Site Administration'
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.trycloudflare.com',
-    'https://*.lhr.life',
-    'https://*.serveousercontent.com',
-    'https://*.onrender.com',        # Render production hosting
-    'https://*.up.railway.app',      # Railway production hosting
-    'https://*.ngrok.io',            # ngrok tunnels for local testing
-    'https://*.ngrok-free.app',      # ngrok free tier
-]
+# CSRF Trusted Origins (Configured strictly via environment variable, defaulting to exact domains)
+_csrf_env = config('DJANGO_CSRF_TRUSTED_ORIGINS', default='', cast=str).strip()
+if _csrf_env:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_env.split(',') if origin.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'https://vvitu-portal-jrsk.onrender.com',
+    ]
 
 

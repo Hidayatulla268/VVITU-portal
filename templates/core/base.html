@@ -480,6 +480,25 @@ async function loadNotifications() {
   }
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function sanitizeUrl(url) {
+  if (!url) return '';
+  url = String(url).trim();
+  if (url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')) {
+    return encodeURI(url);
+  }
+  return '';
+}
+
 function renderDropdown(items, unreadCount) {
   const body  = document.getElementById('notifPanelBody');
   const badge = document.getElementById('navbarNotifBadge');
@@ -502,36 +521,54 @@ function renderDropdown(items, unreadCount) {
     return;
   }
 
-  body.innerHTML = items.map(n => `
-    <div class="notif-drop-item ${n.is_read ? '' : 'unread'}"
-         data-id="${n.id}" data-read="${n.is_read}"
-         onclick="dropItemClick(${n.id}, '${n.link}', this)">
-      <div class="notif-drop-icon ${COLOR_MAP[n.type] || 'nd-grey'}">
-        <i class="fas ${n.icon}"></i>
+  body.innerHTML = items.map(n => {
+    const safeTitle = escapeHtml(n.title);
+    const safeMsg = escapeHtml(n.message);
+    const safeTime = escapeHtml(n.created_at);
+    const safeLink = sanitizeUrl(n.link);
+    const safeIcon = escapeHtml(n.icon);
+    const iconColor = COLOR_MAP[n.type] || 'nd-grey';
+    return `
+      <div class="notif-drop-item ${n.is_read ? '' : 'unread'}"
+           data-id="${n.id}" data-read="${n.is_read}" data-link="${safeLink}"
+           onclick="handleDropItemClick(this)">
+        <div class="notif-drop-icon ${iconColor}">
+          <i class="fas ${safeIcon}"></i>
+        </div>
+        <div class="notif-drop-content">
+          <div class="notif-drop-title">${safeTitle}</div>
+          <div class="notif-drop-msg">${safeMsg}</div>
+          <div class="notif-drop-time">${safeTime}</div>
+        </div>
+        ${!n.is_read ? '<div class="notif-drop-unread-dot"></div>' : ''}
       </div>
-      <div class="notif-drop-content">
-        <div class="notif-drop-title">${n.title}</div>
-        <div class="notif-drop-msg">${n.message}</div>
-        <div class="notif-drop-time">${n.created_at}</div>
-      </div>
-      ${!n.is_read ? '<div class="notif-drop-unread-dot"></div>' : ''}
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-async function dropItemClick(id, link, el) {
+async function handleDropItemClick(el) {
+  const id = el.getAttribute('data-id');
+  const link = el.getAttribute('data-link');
   el.classList.remove('unread');
   const dot = el.querySelector('.notif-drop-unread-dot');
   if (dot) dot.remove();
   el.setAttribute('data-read', 'true');
 
-  await fetch('/notifications/mark-read/', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
-    body: JSON.stringify({id})
-  });
+  if (id) {
+    await fetch('/notifications/mark-read/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+      body: JSON.stringify({id: parseInt(id)})
+    });
+  }
   refreshBadge();
-  if (link) setTimeout(() => window.location.href = link, 200);
+  if (link && (link.startsWith('/') || link.startsWith('http://') || link.startsWith('https://'))) {
+    setTimeout(() => window.location.href = link, 200);
+  }
+}
+
+async function dropItemClick(id, link, el) {
+  return handleDropItemClick(el);
 }
 
 async function dropMarkAllRead() {

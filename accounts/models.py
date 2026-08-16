@@ -5,9 +5,28 @@ Custom User model with role-based access control.
 Student and Faculty profiles linked via OneToOneField.
 """
 
+import secrets
+import string
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+
+
+def generate_secure_temp_password(length=12):
+    """
+    Generates a cryptographically secure, random temporary password
+    satisfying uppercase, lowercase, digit, and special character requirements.
+    """
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    pwd = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%^&*"),
+    ]
+    pwd += [secrets.choice(chars) for _ in range(max(length - 4, 4))]
+    secrets.SystemRandom().shuffle(pwd)
+    return "".join(pwd)
 
 
 # ─────────────────────────────────────────────

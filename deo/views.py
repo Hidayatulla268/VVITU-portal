@@ -9,7 +9,7 @@ from functools import wraps
 
 logger = logging.getLogger(__name__)
 
-from accounts.models import User, Student, Faculty, DEOProfile, Achievement
+from accounts.models import User, Student, Faculty, DEOProfile, Achievement, generate_secure_temp_password
 from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification
 
 # ─────────────────────────────────────────────
@@ -102,9 +102,10 @@ def add_student(request):
         if not email:
             email = f"{username}@vvitu.net"
 
+        temp_pwd = p.get('password', '').strip() or generate_secure_temp_password()
         user = User.objects.create_user(
             username=username,
-            password=p.get('password', 'vvit@1234'),
+            password=temp_pwd,
             first_name=first_name,
             last_name=last_name,
             email=email,
@@ -141,7 +142,7 @@ def add_student(request):
             fees_pending=fees_pending_amount,
             fees_updated_at=timezone.now() if fees_pending_amount > 0 else None,
         )
-        messages.success(request, f"Student {username} created successfully.")
+        messages.success(request, f"Student {username} created successfully! (Initial Password: {temp_pwd})")
         return redirect('deo:manage_students')
         
     return render(request, 'deo/add_student.html', {

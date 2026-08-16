@@ -166,6 +166,9 @@ def _call_gemini(api_key: str, system_prompt: str, history: list, user_message: 
         raise RuntimeError(f"Gemini API error: {msg}")
 
 
+from django.core.cache import cache
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Django Chat View
 # ─────────────────────────────────────────────────────────────────────────────
@@ -176,19 +179,55 @@ def chat(request):
     POST body: {"message": "...", "history": [...]}
     Returns:   {"reply": "...", "error": null}
     """
+    # Rate Limiting: Max 15 requests per 60 seconds per user
+    rate_key = f"chat_rate_limit_{request.user.id}"
+    req_count = cache.get(rate_key, 0)
+    if req_count >= 15:
+        return JsonResponse({
+            'reply': None,
+            'error': 'Rate limit exceeded. Please wait a minute before sending more queries to VBot.'
+        }, status=429)
+
+    try:
+        if not cache.add(rate_key, 1, timeout=60):
+            cache.incr(rate_key)
+    except Exception:
+        cache.set(rate_key, req_count + 1, timeout=60)
+
     try:
         body = json.loads(request.body)
     except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({'reply': None, 'error': 'Invalid JSON body'}, status=400)
 
     user_message = (body.get('message') or '').strip()
-    history      = body.get('history') or []
+    raw_history  = body.get('history') or []
 
     if not user_message:
         return JsonResponse({'reply': None, 'error': 'Message is required'}, status=400)
 
     if len(user_message) > 2000:
         return JsonResponse({'reply': None, 'error': 'Message too long (max 2000 chars)'}, status=400)
+
+    # Sanitize and validate history payload (max 10 recent messages)
+    clean_history = []
+    if isinstance(raw_history, list):
+        for item in raw_history[-10:]:
+            if isinstance(item, dict):
+                role = item.get('role', '')
+                parts = item.get('parts', [])
+                content = item.get('content', '')
+                text = ''
+                if isinstance(parts, list) and parts and isinstance(parts[0], dict):
+                    text = str(parts[0].get('text', ''))
+                elif isinstance(content, str):
+                    text = content
+                
+                if role in ('user', 'model', 'assistant') and text:
+                    clean_history.append({
+                        'role': 'user' if role == 'user' else 'model',
+                        'parts': [{'text': text[:1000]}]
+                    })
+    history = clean_history
 
     api_key = getattr(settings, 'GEMINI_API_KEY', '') or ''
     if not api_key:

@@ -1349,7 +1349,7 @@ def upload_marks(request):
             sections = Section.objects.filter(branch=faculty.department, year=selected_subject.year).distinct()
         else:
             selected_subject = get_object_or_404(Subject, id=selected_subject_id, faculty=faculty)
-            sections = Section.objects.filter(timetable_entries__subject=selected_subject).distinct()
+            sections = Section.objects.filter(timetable_entries__faculty=faculty, timetable_entries__subject=selected_subject).distinct()
         
     if selected_exam_id:
         selected_exam = get_object_or_404(Exam, id=selected_exam_id)
@@ -1361,7 +1361,17 @@ def upload_marks(request):
         if request.user.role == 'hod':
             selected_section = get_object_or_404(Section, id=selected_section_id, branch=faculty.department)
         else:
+            can_access = Timetable.objects.filter(faculty=faculty, subject=selected_subject, section_id=selected_section_id).exists() or \
+                         ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__subject=selected_subject, timetable_entry__section_id=selected_section_id).exists()
+            if not can_access:
+                messages.error(request, "You are not assigned to teach this subject to the selected section.")
+                return redirect('faculty:upload_marks')
             selected_section = get_object_or_404(Section, id=selected_section_id)
+
+        if selected_exam.branch != selected_section.branch or selected_exam.year != selected_section.year or selected_exam.semester != selected_subject.semester:
+            messages.error(request, "Selected exam does not match the section's branch, year, or subject semester.")
+            return redirect('faculty:upload_marks')
+
         students = Student.objects.filter(section=selected_section, is_active=True, user__is_deleted=False).select_related('user').order_by('roll_number')
         
         # Load existing results for these students, exam, and subject
@@ -1383,11 +1393,20 @@ def upload_marks(request):
             sec = get_object_or_404(Section, id=sec_id, branch=faculty.department)
         else:
             subj = get_object_or_404(Subject, id=subj_id, faculty=faculty)
+            can_access = Timetable.objects.filter(faculty=faculty, subject=subj, section_id=sec_id).exists() or \
+                         ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__subject=subj, timetable_entry__section_id=sec_id).exists()
+            if not can_access:
+                messages.error(request, "You are not authorized to upload marks for this section and subject.")
+                return redirect('faculty:upload_marks')
             sec = get_object_or_404(Section, id=sec_id)
             
         ex = get_object_or_404(Exam, id=ex_id)
         if ex.exam_type == 'final':
             messages.error(request, "Only the Administrator is authorized to upload Semester Final exam results.")
+            return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+            
+        if ex.branch != sec.branch or ex.year != sec.year or ex.semester != subj.semester:
+            messages.error(request, "Exam does not match the selected section's branch, year, or subject semester.")
             return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
             
         sec_students = Student.objects.filter(section=sec, is_active=True, user__is_deleted=False)

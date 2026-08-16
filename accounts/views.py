@@ -162,10 +162,22 @@ def profile_view(request):
             elif pic.size > max_size:
                 messages.error(request, "Image file size exceeds maximum limit of 5MB.")
             else:
-                user.profile_picture = pic
-                user.save()
-                messages.success(request, "Profile picture updated successfully!")
-                return redirect('accounts:profile')
+                # Deep image header and integrity verification via Pillow
+                try:
+                    from PIL import Image
+                    img = Image.open(pic)
+                    img.verify()
+                    if (img.format or '').lower() not in ['jpeg', 'jpg', 'png', 'webp']:
+                        messages.error(request, "Uploaded file is not a supported image format.")
+                        return redirect('accounts:profile')
+                    pic.seek(0)
+                    user.profile_picture = pic
+                    user.save()
+                    messages.success(request, "Profile picture updated successfully!")
+                    return redirect('accounts:profile')
+                except Exception:
+                    messages.error(request, "Uploaded file is corrupted or not a valid image.")
+                    return redirect('accounts:profile')
         phone_val = request.POST.get('phone', '').strip()
         if phone_val:
             user.phone = phone_val

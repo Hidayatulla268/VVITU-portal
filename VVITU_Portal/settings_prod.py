@@ -21,12 +21,15 @@ if not SECRET_KEY:
     raise ValueError("SECRET_KEY environment variable is missing! Production deployment halted for security.")
 
 # Render / Railway set ALLOWED_HOSTS automatically via environment.
-# If it's not set we still add localhost so manage.py commands don't error.
 _hosts_env   = os.environ.get('ALLOWED_HOSTS', '')
-ALLOWED_HOSTS = [h.strip() for h in _hosts_env.split(',') if h.strip()] or ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [h.strip() for h in _hosts_env.split(',') if h.strip()] or ['localhost', '127.0.0.1', 'vvitu-portal-jrsk.onrender.com']
 
-# Allow all subdomains of onrender.com and up.railway.app automatically
-ALLOWED_HOSTS += ['.onrender.com', '.up.railway.app']
+# Strict CSRF Trusted Origins for Production
+_csrf_env = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '') or os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if _csrf_env:
+    CSRF_TRUSTED_ORIGINS = [h.strip() for h in _csrf_env.split(',') if h.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = ['https://vvitu-portal-jrsk.onrender.com']
 
 # ── Database (PostgreSQL from DATABASE_URL env var) ─────────────────────────
 # Render and Railway both inject DATABASE_URL automatically when you attach

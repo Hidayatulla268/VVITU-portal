@@ -202,9 +202,19 @@ class LoginRateLimitMiddleware:
             if user_attempts >= 10:
                 return self._lockout_response(f"username '{username}'", "2 minutes")
                 
-            cache.set(ip_key, ip_attempts + 1, timeout=60)
+            # Atomic multi-worker cache increment
+            try:
+                if not cache.add(ip_key, 1, timeout=60):
+                    cache.incr(ip_key)
+            except Exception:
+                cache.set(ip_key, ip_attempts + 1, timeout=60)
+
             if user_key:
-                cache.set(user_key, user_attempts + 1, timeout=120)
+                try:
+                    if not cache.add(user_key, 1, timeout=120):
+                        cache.incr(user_key)
+                except Exception:
+                    cache.set(user_key, user_attempts + 1, timeout=120)
                 
         return self.get_response(request)
 
@@ -239,7 +249,10 @@ class LoginRateLimitMiddleware:
     def _get_client_ip(request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0].strip()
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            parts = [p.strip() for p in x_forwarded_for.split(',') if p.strip()]
+            if parts:
+                ip = parts[0]
+                import re
+                if re.match(r'^[0-9a-fA-F:.]+$', ip):
+                    return ip
+        return request.META.get('REMOTE_ADDR') or '127.0.0.1'

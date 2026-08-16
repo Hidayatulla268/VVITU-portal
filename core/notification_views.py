@@ -159,6 +159,9 @@ def notification_centre(request):
     })
 
 
+from django.utils.html import escape
+
+
 # ─────────────────────────────────────────────
 # API: notification list (JSON for navbar dropdown)
 # ─────────────────────────────────────────────
@@ -170,15 +173,19 @@ def notifications_api(request):
 
     data = []
     for n in notifications:
+        safe_link = (n.link or '').strip()
+        if not (safe_link.startswith('/') or safe_link.startswith('http://') or safe_link.startswith('https://')):
+            safe_link = ''
+
         data.append({
             'id':        n.id,
-            'title':     n.title,
-            'message':   n.message[:120] + ('…' if len(n.message) > 120 else ''),
-            'type':      n.notif_type,
-            'icon':      n.icon,
-            'color':     n.color_class,
-            'priority':  n.priority,
-            'link':      n.link or '',
+            'title':     escape(n.title),
+            'message':   escape(n.message[:120]) + ('…' if len(n.message) > 120 else ''),
+            'type':      escape(n.notif_type),
+            'icon':      escape(n.icon),
+            'color':     escape(n.color_class),
+            'priority':  escape(n.priority),
+            'link':      safe_link,
             'is_read':   n.id in read_ids,
             'created_at': n.created_at.strftime('%d %b %Y, %I:%M %p'),
         })

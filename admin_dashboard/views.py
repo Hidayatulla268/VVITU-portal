@@ -29,7 +29,7 @@ from django.conf import settings
 from django.conf import settings as django_settings
 from django.views.decorators.http import require_POST
 
-from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequest
+from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequest, generate_secure_temp_password
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
     Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
@@ -166,9 +166,10 @@ def add_student(request):
         if not email:
             email = f"{username}@vvitu.net"
 
+        temp_pwd = p.get('password', '').strip() or generate_secure_temp_password()
         user = User.objects.create_user(
             username   = username,
-            password   = p.get('password', 'vvit@1234'),
+            password   = temp_pwd,
             first_name = first_name,
             last_name  = last_name,
             email      = email,
@@ -204,7 +205,7 @@ def add_student(request):
             fees_pending  = fees_pending_amount,
             fees_updated_at = timezone.now() if fees_pending_amount > 0 else None,
         )
-        messages.success(request, f"Student {username} created successfully.")
+        messages.success(request, f"Student {username} created successfully! (Initial Password: {temp_pwd})")
         return redirect('admin_dashboard:manage_students')
 
     context = {'branches': branches, 'years': years, 'sections': sections, 'faculties': faculties}
@@ -332,9 +333,10 @@ def add_faculty(request):
 
         role = p.get('role', 'faculty')
         email = p.get('email', '').strip()
+        temp_pwd = p.get('password', '').strip() or generate_secure_temp_password()
         user = User.objects.create_user(
             username   = emp,
-            password   = p.get('password', 'vvit@1234'),
+            password   = temp_pwd,
             first_name = first_name,
             last_name  = last_name,
             email      = email,
@@ -353,7 +355,7 @@ def add_faculty(request):
                 employee_id = emp,
                 branch_id   = p.get('department') or None,
             )
-        messages.success(request, f"Faculty/Staff {emp} created.")
+        messages.success(request, f"Faculty/Staff {emp} created successfully! (Initial Password: {temp_pwd})")
         return redirect('admin_dashboard:manage_faculty')
 
     return render(request, 'admin_dashboard/add_faculty.html', {'branches': branches})
@@ -1307,9 +1309,10 @@ def bulk_upload_students(request):
                     if not email:
                         email = f"{roll_number}@vvitu.net"
                         
+                    temp_pwd = generate_secure_temp_password()
                     user = User.objects.create_user(
                         username=roll_number,
-                        password='vvit@1234',
+                        password=temp_pwd,
                         first_name=first_name,
                         last_name=last_name,
                         email=email,
