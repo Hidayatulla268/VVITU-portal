@@ -835,9 +835,10 @@ def faculty_attendance_report(request):
         att.faculty_id: att for att in FacultyAttendance.objects.filter(date=selected_date)
     }
 
-    total_present = records.filter(status='P').count()
-    total_absent  = records.filter(status='A').count()
-    total_leave   = records.filter(status='L').count()
+    # Accurately compute initial present/absent/leave matching what is displayed in the mark form
+    total_present = sum(1 for fac in faculties if (fac.id in today_records and today_records[fac.id].status == 'P') or (fac.id not in today_records))
+    total_absent  = sum(1 for fac in faculties if fac.id in today_records and today_records[fac.id].status == 'A')
+    total_leave   = sum(1 for fac in faculties if fac.id in today_records and today_records[fac.id].status == 'L')
 
     context = {
         'branches':           branches,

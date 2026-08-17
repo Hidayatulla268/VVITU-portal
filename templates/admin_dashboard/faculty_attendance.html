@@ -23,7 +23,7 @@
     <div class="kpi-card kpi-neutral">
       <div class="kpi-icon"><i class="fas fa-chalkboard-teacher text-accent"></i></div>
       <div class="kpi-body">
-        <span class="kpi-value">{{ faculties.count }}</span>
+        <span class="kpi-value" id="kpiTotalFaculty">{{ faculties.count }}</span>
         <span class="kpi-label">Active Faculty</span>
       </div>
     </div>
@@ -32,7 +32,7 @@
     <div class="kpi-card kpi-success">
       <div class="kpi-icon"><i class="fas fa-user-check"></i></div>
       <div class="kpi-body">
-        <span class="kpi-value">{{ total_present }}</span>
+        <span class="kpi-value" id="kpiTotalPresent">{{ total_present }}</span>
         <span class="kpi-label">Records Present</span>
       </div>
     </div>
@@ -41,7 +41,7 @@
     <div class="kpi-card kpi-danger">
       <div class="kpi-icon"><i class="fas fa-user-times"></i></div>
       <div class="kpi-body">
-        <span class="kpi-value">{{ total_absent }}</span>
+        <span class="kpi-value" id="kpiTotalAbsent">{{ total_absent }}</span>
         <span class="kpi-label">Records Absent</span>
       </div>
     </div>
@@ -50,7 +50,7 @@
     <div class="kpi-card kpi-warning">
       <div class="kpi-icon"><i class="fas fa-plane-departure"></i></div>
       <div class="kpi-body">
-        <span class="kpi-value">{{ total_leave }}</span>
+        <span class="kpi-value" id="kpiTotalLeave">{{ total_leave }}</span>
         <span class="kpi-label">Records On Leave</span>
       </div>
     </div>
@@ -94,6 +94,21 @@
       <form method="POST">
         {% csrf_token %}
         <input type="hidden" name="date" value="{{ selected_date }}">
+
+        <!-- Quick Batch Actions Toolbar -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+          <div class="small text-muted">
+            <i class="fas fa-info-circle text-accent me-1"></i>Select attendance status for each staff member or apply batch actions:
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" onclick="markAllFaculty('P')">
+              <i class="fas fa-check-double me-1"></i>Mark All Present
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="markAllFaculty('A')">
+              <i class="fas fa-times-circle me-1"></i>Mark All Absent
+            </button>
+          </div>
+        </div>
 
         <div class="table-responsive">
           <table class="vvit-table">
@@ -254,4 +269,66 @@
     </div>
   </div>
 </div>
+
+<style>
+.kpi-bump {
+  transform: scale(1.22);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+}
+</style>
+
+<script>
+function updateLiveAttendanceKPIs() {
+  const form = document.querySelector('form[method="POST"]');
+  if (!form) return;
+  const checkedRadios = form.querySelectorAll('input[type="radio"].btn-check:checked');
+  let present = 0, absent = 0, leave = 0;
+  checkedRadios.forEach(radio => {
+    if (radio.value === 'P') present++;
+    else if (radio.value === 'A') absent++;
+    else if (radio.value === 'L') leave++;
+  });
+  
+  const pEl = document.getElementById('kpiTotalPresent');
+  const aEl = document.getElementById('kpiTotalAbsent');
+  const lEl = document.getElementById('kpiTotalLeave');
+  
+  if (pEl && pEl.textContent != present) {
+    pEl.textContent = present;
+    pEl.classList.add('kpi-bump');
+    setTimeout(() => pEl.classList.remove('kpi-bump'), 280);
+  }
+  if (aEl && aEl.textContent != absent) {
+    aEl.textContent = absent;
+    aEl.classList.add('kpi-bump');
+    setTimeout(() => aEl.classList.remove('kpi-bump'), 280);
+  }
+  if (lEl && lEl.textContent != leave) {
+    lEl.textContent = leave;
+    lEl.classList.add('kpi-bump');
+    setTimeout(() => lEl.classList.remove('kpi-bump'), 280);
+  }
+}
+
+function markAllFaculty(status) {
+  const form = document.querySelector('form[method="POST"]');
+  if (!form) return;
+  const radios = form.querySelectorAll(`input[type="radio"].btn-check[value="${status}"]`);
+  radios.forEach(r => {
+    r.checked = true;
+  });
+  updateLiveAttendanceKPIs();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form[method="POST"]');
+  if (form) {
+    form.querySelectorAll('input[type="radio"].btn-check').forEach(radio => {
+      radio.addEventListener('change', updateLiveAttendanceKPIs);
+    });
+  }
+  updateLiveAttendanceKPIs();
+});
+</script>
 {% endblock %}
