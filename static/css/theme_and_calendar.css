@@ -73,6 +73,10 @@ table th, table td, .table th, .table td {
 [data-theme="light"] .text-secondary { color: #334155 !important; }
 [data-theme="light"] .badge.bg-dark { background-color: #e2e8f0 !important; color: #0f172a !important; border-color: #cbd5e1 !important; }
 [data-theme="light"] .badge.bg-secondary { background-color: #cbd5e1 !important; color: #0f172a !important; }
+[data-theme="light"] .notif-badge { border-color: #ffffff !important; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45) !important; }
+[data-theme="light"] .notif-dropdown-panel { background: #ffffff !important; border: 1px solid rgba(15, 23, 42, 0.15) !important; box-shadow: 0 20px 48px rgba(15, 23, 42, 0.15) !important; }
+[data-theme="light"] .notif-panel-title,
+[data-theme="light"] .notif-drop-title { color: #0f172a !important; }
 
 /* ── Light mode navbar ───────────────────────────────────────────────── */
 [data-theme="light"] .vvit-navbar {
