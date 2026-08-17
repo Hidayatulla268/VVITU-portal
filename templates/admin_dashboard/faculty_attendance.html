@@ -138,13 +138,13 @@
                 <td><span class="badge-section small">{{ fac.department.code|default:"GEN" }}</span></td>
                 <td>
                   <div class="btn-group att-status-group" role="group">
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" autocomplete="off" {% if not rec or rec.status == 'P' %}checked{% endif %}>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if not rec or rec.status == 'P' %}checked{% endif %}>
                     <label class="btn btn-sm btn-att-pill btn-att-present" for="adm_p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
                     <label class="btn btn-sm btn-att-pill btn-att-absent" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" autocomplete="off" {% if rec and rec.status == 'L' %}checked{% endif %}>
+                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'L' %}checked{% endif %}>
                     <label class="btn btn-sm btn-att-pill btn-att-leave" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
                   </div>
                 </td>
@@ -280,55 +280,67 @@
 
 <script>
 function updateLiveAttendanceKPIs() {
-  const form = document.querySelector('form[method="POST"]');
-  if (!form) return;
-  const checkedRadios = form.querySelectorAll('input[type="radio"].btn-check:checked');
+  const checkedRadios = document.querySelectorAll('input[type="radio"][name^="status_"]:checked');
   let present = 0, absent = 0, leave = 0;
-  checkedRadios.forEach(radio => {
-    if (radio.value === 'P') present++;
-    else if (radio.value === 'A') absent++;
-    else if (radio.value === 'L') leave++;
-  });
   
+  checkedRadios.forEach(radio => {
+    const val = (radio.value || '').trim().toUpperCase();
+    if (val === 'P') present++;
+    else if (val === 'A') absent++;
+    else if (val === 'L') leave++;
+  });
+
   const pEl = document.getElementById('kpiTotalPresent');
   const aEl = document.getElementById('kpiTotalAbsent');
   const lEl = document.getElementById('kpiTotalLeave');
   
-  if (pEl && pEl.textContent != present) {
+  if (pEl) {
     pEl.textContent = present;
+    pEl.classList.remove('kpi-bump');
+    void pEl.offsetWidth;
     pEl.classList.add('kpi-bump');
-    setTimeout(() => pEl.classList.remove('kpi-bump'), 280);
   }
-  if (aEl && aEl.textContent != absent) {
+  if (aEl) {
     aEl.textContent = absent;
+    aEl.classList.remove('kpi-bump');
+    void aEl.offsetWidth;
     aEl.classList.add('kpi-bump');
-    setTimeout(() => aEl.classList.remove('kpi-bump'), 280);
   }
-  if (lEl && lEl.textContent != leave) {
+  if (lEl) {
     lEl.textContent = leave;
+    lEl.classList.remove('kpi-bump');
+    void lEl.offsetWidth;
     lEl.classList.add('kpi-bump');
-    setTimeout(() => lEl.classList.remove('kpi-bump'), 280);
   }
 }
 
 function markAllFaculty(status) {
-  const form = document.querySelector('form[method="POST"]');
-  if (!form) return;
-  const radios = form.querySelectorAll(`input[type="radio"].btn-check[value="${status}"]`);
+  const radios = document.querySelectorAll(`input[type="radio"][name^="status_"][value="${status}"]`);
   radios.forEach(r => {
     r.checked = true;
   });
   updateLiveAttendanceKPIs();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.querySelector('form[method="POST"]');
-  if (form) {
-    form.querySelectorAll('input[type="radio"].btn-check').forEach(radio => {
-      radio.addEventListener('change', updateLiveAttendanceKPIs);
-    });
+// Global Event Delegation so clicking any radio or label updates instantly
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.name && e.target.name.startsWith('status_')) {
+    updateLiveAttendanceKPIs();
   }
-  updateLiveAttendanceKPIs();
 });
+
+document.addEventListener('click', function(e) {
+  const label = e.target.closest('label.btn-att-pill');
+  if (label) {
+    setTimeout(updateLiveAttendanceKPIs, 20);
+  }
+});
+
+// Run immediately and on all ready states
+updateLiveAttendanceKPIs();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', updateLiveAttendanceKPIs);
+}
+window.addEventListener('load', updateLiveAttendanceKPIs);
 </script>
 {% endblock %}
