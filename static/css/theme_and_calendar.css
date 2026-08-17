@@ -6,6 +6,24 @@
 ══════════════════════════════════════════════════════════════════════ */
 
 /* ── DEFAULT: Dark theme (already set via :root in main.css) ───────── */
+:root {
+  --bs-body-bg: transparent;
+  --bs-body-color: var(--text-primary);
+}
+
+table, .table {
+  --bs-table-bg: transparent !important;
+  --bs-table-color: inherit !important;
+  --bs-table-striped-bg: transparent !important;
+  --bs-table-active-bg: transparent !important;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.04) !important;
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+table th, table td, .table th, .table td {
+  background-color: transparent !important;
+}
 
 /* ── LIGHT THEME OVERRIDES ──────────────────────────────────────────── */
 /* ── LIGHT THEME OVERRIDES (Darkened & High-Contrast) ────────────────── */

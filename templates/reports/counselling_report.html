@@ -67,7 +67,7 @@
   <div class="glass-card mb-4">
     <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
       <h4 class="card-title-custom mb-0" style="font-size: 1.05rem; font-weight: 700;"><i class="fas fa-user-circle me-2 text-accent"></i>1. Student Profile & Family Information</h4>
-      <span class="badge bg-dark text-white px-3 py-1" style="font-size: 0.82rem; font-weight: 600; background-color: #0f172a !important;">{{ dossier.roll_number }}</span>
+      <span class="badge dossier-pill-subject px-3 py-1" style="font-size: 0.82rem; font-weight: 600;">{{ dossier.roll_number }}</span>
     </div>
 
     <div class="row g-4 align-items-start">
@@ -77,15 +77,15 @@
           {% if dossier.profile_picture_url %}
             <img src="{{ dossier.profile_picture_url }}" alt="{{ dossier.full_name }}" class="dossier-student-photo" style="width: 125px; height: 150px; object-fit: cover; border-radius: 8px; border: 3px solid var(--accent, #991b1b); box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
           {% else %}
-            <div class="dossier-photo-placeholder d-flex flex-column align-items-center justify-content-center mx-auto" style="width: 125px; height: 150px; border-radius: 8px; background: linear-gradient(135deg, rgba(220,38,38,0.08), rgba(15,23,42,0.05)); border: 2px dashed #94a3b8; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-              <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent, #991b1b); font-family: var(--font-display, sans-serif);">
+            <div class="dossier-photo-placeholder d-flex flex-column align-items-center justify-content-center mx-auto" style="width: 125px; height: 150px; border-radius: 8px; background: rgba(220,38,38,0.08); border: 2px dashed rgba(255,255,255,0.25); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+              <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent, #dc2626); font-family: var(--font-display, sans-serif);">
                 {{ dossier.initials }}
               </div>
               <span class="badge dossier-pill-pending px-2 py-0.5 mt-2" style="font-size: 0.65rem; letter-spacing: 0.05em; font-weight: 700;">STUDENT PHOTO</span>
             </div>
           {% endif %}
         </div>
-        <span class="badge bg-dark text-white px-2.5 py-1 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.04em; background-color: #0f172a !important;">
+        <span class="badge dossier-pill-pending px-2.5 py-1 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.04em;">
           {{ dossier.roll_number }}
         </span>
       </div>
@@ -93,7 +93,7 @@
       <!-- Demographic Column 1 -->
       <div class="col-lg-5 col-md-9">
         <div class="table-responsive">
-          <table class="table table-sm table-borderless dossier-info-table mb-0">
+          <table class="dossier-info-table w-100 mb-0">
             <tbody>
               <tr>
                 <th style="width: 38%; color: var(--text-muted);">Full Name:</th>
@@ -131,7 +131,7 @@
       <!-- Family & Mentor Column 2 -->
       <div class="col-lg-5 col-md-12">
         <div class="table-responsive">
-          <table class="table table-sm table-borderless dossier-info-table mb-0">
+          <table class="dossier-info-table w-100 mb-0">
             <tbody>
               <tr>
                 <th style="width: 38%; color: var(--text-muted);">Parent / Guardian:</th>
@@ -234,10 +234,10 @@
     <div class="semester-report-block mb-4 p-3 rounded-3" style="background: var(--clr-surface-2, rgba(255,255,255,0.03)); border: 1px solid var(--clr-border, rgba(255,255,255,0.1));">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
         <div class="d-flex align-items-center gap-2">
-          <span class="badge fw-bold" style="background-color: #0f172a !important; color: #ffffff !important; font-size: 0.85rem; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.02em;">
+          <span class="badge dossier-pill-sgpa fw-bold" style="font-size: 0.85rem; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.02em;">
             Semester {{ sem.semester }}
           </span>
-          <span class="fw-bold" style="color: #0f172a !important; font-size: 1.02rem;">
+          <span class="fw-bold" style="color: var(--text-primary) !important; font-size: 1.02rem;">
             Academic Grade & Marks Sheet
           </span>
         </div>
@@ -265,7 +265,7 @@
       </div>
 
       <div class="table-responsive mb-3">
-        <table class="vvit-table">
+        <table class="vvit-table w-100">
           <thead>
             <tr>
               <th style="font-size: 0.82rem;">Subject Code</th>
@@ -316,7 +316,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="10" class="text-center py-3" style="color: #4b5563 !important; font-size: 0.88rem;">No exam records uploaded for <strong style="color: #000000 !important;">Semester {{ sem.semester }}</strong>.</td>
+              <td colspan="10" class="text-center py-3" style="color: var(--text-muted) !important; font-size: 0.88rem;">No exam records uploaded for <strong style="color: var(--text-primary) !important;">Semester {{ sem.semester }}</strong>.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -327,7 +327,7 @@
       {% if sem.attendance_rows %}
       <div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: #0f172a !important; letter-spacing: 0.04em; font-size: 0.85rem;">
+          <span class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: var(--text-primary) !important; letter-spacing: 0.04em; font-size: 0.85rem;">
             <i class="fas fa-calendar-check text-info me-1"></i>Semester {{ sem.semester }} Subject Attendance Details
           </span>
           <span class="badge dossier-pill-attendance px-2.5 py-1" style="font-size: 0.8rem;">
@@ -335,7 +335,7 @@
           </span>
         </div>
         <div class="table-responsive">
-          <table class="table table-sm table-borderless vvit-table mb-0">
+          <table class="vvit-table w-100 mb-0">
             <thead>
               <tr>
                 <th style="font-size: 0.8rem;">Subject</th>
@@ -381,7 +381,7 @@
 
     {% if dossier.achievements %}
     <div class="table-responsive">
-      <table class="vvit-table">
+      <table class="vvit-table w-100">
         <thead>
           <tr>
             <th style="font-size: 0.82rem;">Event / Certification Title</th>
@@ -455,98 +455,130 @@
 
 <!-- Styles for Screen and Print -->
 <style>
-.dossier-info-table th {
+/* Transparent, Theme-Aware Tables */
+.dossier-info-table {
+  width: 100%;
+  background: transparent !important;
+  border-collapse: collapse;
+}
+.dossier-info-table th,
+.dossier-info-table td {
+  background: transparent !important;
+  border: none !important;
   padding: 6px 8px;
+}
+.dossier-info-table th {
   font-size: 0.85rem;
   font-weight: 600;
+  color: var(--text-muted, #94a3b8) !important;
 }
 .dossier-info-table td {
-  padding: 6px 8px;
   font-size: 0.88rem;
+  color: var(--text-primary, #f1f5f9) !important;
 }
 
-.counselling-dossier-wrapper .vvit-table th {
+.counselling-dossier-wrapper .vvit-table {
+  width: 100%;
+  background: transparent !important;
+  border-collapse: collapse;
+}
+.counselling-dossier-wrapper .vvit-table th,
+.counselling-dossier-wrapper .vvit-table td {
+  background: transparent !important;
+}
+.counselling-dossier-wrapper .vvit-table thead tr {
+  background: rgba(220, 38, 38, 0.12) !important;
+}
+.counselling-dossier-wrapper .vvit-table thead th {
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.03em;
   padding: 8px 10px;
+  color: var(--text-primary, #f8fafc) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
-
+.counselling-dossier-wrapper .vvit-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+.counselling-dossier-wrapper .vvit-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
 .counselling-dossier-wrapper .vvit-table td {
   font-size: 0.88rem;
   padding: 8px 10px;
+  color: var(--text-primary, #f0f0f5);
 }
 
-/* High-Contrast Dossier Badge Styles */
+/* Dark Theme Badge Styles (Glowing, Sleek, Translucent) */
 .dossier-pill-sgpa {
-  background-color: #fee2e2 !important;
-  color: #991b1b !important;
-  border: 1px solid #fca5a5 !important;
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
   font-weight: 600 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-credits {
-  background-color: #e0f2fe !important;
-  color: #0369a1 !important;
-  border: 1px solid #7dd3fc !important;
+  background: rgba(14, 165, 233, 0.16) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(14, 165, 233, 0.35) !important;
   font-weight: 600 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-attendance {
-  background-color: #e0f2fe !important;
-  color: #0369a1 !important;
-  border: 1px solid #7dd3fc !important;
+  background: rgba(56, 189, 248, 0.16) !important;
+  color: #bae6fd !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
   font-weight: 600 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-pass {
-  background-color: #dcfce7 !important;
-  color: #15803d !important;
-  border: 1px solid #86efac !important;
+  background: rgba(34, 197, 94, 0.16) !important;
+  color: #86efac !important;
+  border: 1px solid rgba(34, 197, 94, 0.35) !important;
   font-weight: 700 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-fail {
-  background-color: #fee2e2 !important;
-  color: #b91c1c !important;
-  border: 1px solid #fca5a5 !important;
+  background: rgba(239, 68, 68, 0.20) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.40) !important;
   font-weight: 700 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-warning {
-  background-color: #fef3c7 !important;
-  color: #92400e !important;
-  border: 1px solid #fcd34d !important;
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fde047 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
   font-weight: 700 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-pending {
-  background-color: #f1f5f9 !important;
-  color: #334155 !important;
-  border: 1px solid #cbd5e1 !important;
+  background: rgba(148, 163, 184, 0.15) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
   font-weight: 600 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-subject {
-  background-color: #ede9fe !important;
-  color: #6d28d9 !important;
-  border: 1px solid #c4b5fd !important;
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #d8b4fe !important;
+  border: 1px solid rgba(168, 85, 247, 0.38) !important;
   font-weight: 700 !important;
   border-radius: 6px;
 }
 
 .dossier-pill-grade-s,
 .dossier-pill-grade-a {
-  background-color: #dcfce7 !important;
-  color: #166534 !important;
-  border: 1px solid #86efac !important;
+  background: rgba(34, 197, 94, 0.20) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.40) !important;
   font-weight: 700 !important;
   border-radius: 4px;
 }
@@ -554,28 +586,85 @@
 .dossier-pill-grade-b,
 .dossier-pill-grade-c,
 .dossier-pill-grade-d {
-  background-color: #e0f2fe !important;
-  color: #0369a1 !important;
-  border: 1px solid #7dd3fc !important;
+  background: rgba(14, 165, 233, 0.20) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(14, 165, 233, 0.40) !important;
   font-weight: 700 !important;
   border-radius: 4px;
 }
 
 .dossier-pill-grade-e {
-  background-color: #fef3c7 !important;
-  color: #92400e !important;
-  border: 1px solid #fcd34d !important;
+  background: rgba(245, 158, 11, 0.20) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.40) !important;
   font-weight: 700 !important;
   border-radius: 4px;
 }
 
 .dossier-pill-grade-f,
 .dossier-pill-grade-ab {
+  background: rgba(239, 68, 68, 0.22) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.40) !important;
+  font-weight: 700 !important;
+  border-radius: 4px;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .counselling-dossier-wrapper .vvit-table thead tr {
+  background: rgba(220, 38, 38, 0.10) !important;
+}
+[data-theme="light"] .counselling-dossier-wrapper .vvit-table thead th {
+  color: #0f172a !important;
+  border-bottom: 2px solid rgba(15, 23, 42, 0.15) !important;
+}
+[data-theme="light"] .counselling-dossier-wrapper .vvit-table tbody tr {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme="light"] .counselling-dossier-wrapper .vvit-table td {
+  color: #0f172a !important;
+}
+[data-theme="light"] .dossier-info-table th {
+  color: #475569 !important;
+}
+[data-theme="light"] .dossier-info-table td {
+  color: #0f172a !important;
+}
+[data-theme="light"] .dossier-pill-sgpa {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px solid #fca5a5 !important;
+}
+[data-theme="light"] .dossier-pill-credits,
+[data-theme="light"] .dossier-pill-attendance {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #7dd3fc !important;
+}
+[data-theme="light"] .dossier-pill-pass {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+}
+[data-theme="light"] .dossier-pill-fail {
   background-color: #fee2e2 !important;
   color: #b91c1c !important;
   border: 1px solid #fca5a5 !important;
-  font-weight: 700 !important;
-  border-radius: 4px;
+}
+[data-theme="light"] .dossier-pill-warning {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fcd34d !important;
+}
+[data-theme="light"] .dossier-pill-pending {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+[data-theme="light"] .dossier-pill-subject {
+  background-color: #ede9fe !important;
+  color: #6d28d9 !important;
+  border: 1px solid #c4b5fd !important;
 }
 
 @media print {
@@ -624,7 +713,7 @@
     page-break-inside: avoid;
   }
 
-  .vvit-table {
+  .vvit-table, .dossier-info-table {
     border: 1px solid #cbd5e1 !important;
     font-size: 8.5pt !important;
   }
@@ -634,7 +723,7 @@
     color: #0f172a !important;
   }
 
-  .vvit-table th, .vvit-table td {
+  .vvit-table th, .vvit-table td, .dossier-info-table th, .dossier-info-table td {
     border-bottom: 1px solid #cbd5e1 !important;
     padding: 4px 6px !important;
     color: #000000 !important;
