@@ -31,8 +31,24 @@
     <div class="kpi-card kpi-success">
       <div class="kpi-icon"><i class="fas fa-user-check"></i></div>
       <div class="kpi-body">
-        <span class="kpi-value">{{ faculty_present_days }} Days</span>
-        <span class="kpi-label">My Days Present ({{ faculty_att_pct }}%)</span>
+        <span class="kpi-value">{{ effective_present_days }} Days</span>
+        <span class="kpi-label">
+          Effective Present ({{ faculty_att_pct }}%)
+          {% if faculty_half_days > 0 %}
+          <small class="d-block text-accent" style="font-size:0.7rem; font-weight:600;">
+            <i class="fas fa-adjust me-1"></i>{{ faculty_half_days }} Half Day{{ faculty_half_days|pluralize }} (Eq: {{ faculty_half_days_eq }}D)
+          </small>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-icon"><i class="fas fa-adjust"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ faculty_half_days }} <small class="fs-6 text-muted">({{ faculty_half_days_eq }}D Eq)</small></span>
+        <span class="kpi-label">Half-Day Leaves <small class="d-block text-muted" style="font-size:0.68rem;">2 Half Days = 1 Full Day</small></span>
       </div>
     </div>
   </div>
@@ -41,7 +57,7 @@
       <div class="kpi-icon"><i class="fas fa-user-times"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ faculty_absent_days }} Days</span>
-        <span class="kpi-label">My Days Absent</span>
+        <span class="kpi-label">Days Absent / {{ faculty_leave_days }} Leave{{ faculty_leave_days|pluralize }}</span>
       </div>
     </div>
   </div>
@@ -50,16 +66,7 @@
       <div class="kpi-icon"><i class="fas fa-chalkboard-teacher"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ section_count }}</span>
-        <span class="kpi-label">Sections Handled</span>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="kpi-card kpi-neutral">
-      <div class="kpi-icon"><i class="fas fa-user-graduate"></i></div>
-      <div class="kpi-body">
-        <span class="kpi-value">{{ student_count }}</span>
-        <span class="kpi-label">Total Students</span>
+        <span class="kpi-label">{{ student_count }} Students in {{ section_count }} Section{{ section_count|pluralize }}</span>
       </div>
     </div>
   </div>

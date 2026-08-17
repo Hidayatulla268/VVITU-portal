@@ -75,12 +75,16 @@ def dashboard(request):
     day_name = today.strftime('%A')
 
     # Faculty Attendance statistics
+    # Faculty Attendance statistics with 2 Half Days = 1 Full Day equivalence
     fac_att_qs = FacultyAttendance.objects.filter(faculty=faculty)
     faculty_present_days = fac_att_qs.filter(status='P').count()
+    faculty_half_days    = fac_att_qs.filter(status='HD').count()
+    faculty_half_days_eq = round(faculty_half_days * 0.5, 1)
+    effective_present_days = round(faculty_present_days + (faculty_half_days * 0.5), 1)
     faculty_absent_days  = fac_att_qs.filter(status='A').count()
     faculty_leave_days   = fac_att_qs.filter(status='L').count()
     total_working_days   = fac_att_qs.count()
-    faculty_att_pct      = round(faculty_present_days / total_working_days * 100, 1) if total_working_days > 0 else 100.0
+    faculty_att_pct      = round(effective_present_days / total_working_days * 100, 1) if total_working_days > 0 else 100.0
 
     # Subjects and timetable entries for this faculty today (with room_number)
     timetable_today = (
@@ -137,6 +141,9 @@ def dashboard(request):
     context = {
         'faculty':              faculty,
         'faculty_present_days': faculty_present_days,
+        'faculty_half_days':    faculty_half_days,
+        'faculty_half_days_eq': faculty_half_days_eq,
+        'effective_present_days': effective_present_days,
         'faculty_absent_days':  faculty_absent_days,
         'faculty_leave_days':   faculty_leave_days,
         'total_working_days':   total_working_days,
@@ -819,23 +826,29 @@ def my_attendance(request):
 
     records = qs.order_by('-date')
 
-    present_count = records.filter(status='P').count()
-    absent_count  = records.filter(status='A').count()
-    leave_count   = records.filter(status='L').count()
-    total_days    = records.count()
-    percentage    = round(present_count / total_days * 100, 1) if total_days > 0 else 0.0
+    present_count  = records.filter(status='P').count()
+    half_day_count = records.filter(status='HD').count()
+    half_day_eq    = round(half_day_count * 0.5, 1)
+    effective_present = round(present_count + (half_day_count * 0.5), 1)
+    absent_count   = records.filter(status='A').count()
+    leave_count    = records.filter(status='L').count()
+    total_days     = records.count()
+    percentage     = round(effective_present / total_days * 100, 1) if total_days > 0 else 0.0
 
     context = {
-        'faculty':       faculty,
-        'records':       records,
-        'present_count': present_count,
-        'absent_count':  absent_count,
-        'leave_count':   leave_count,
-        'total_days':    total_days,
-        'percentage':    percentage,
-        'month_year':    month_year,
-        'date_from':     date_from,
-        'date_to':       date_to,
+        'faculty':           faculty,
+        'records':           records,
+        'present_count':     present_count,
+        'half_day_count':    half_day_count,
+        'half_day_eq':       half_day_eq,
+        'effective_present': effective_present,
+        'absent_count':      absent_count,
+        'leave_count':       leave_count,
+        'total_days':        total_days,
+        'percentage':        percentage,
+        'month_year':        month_year,
+        'date_from':         date_from,
+        'date_to':           date_to,
     }
     return render(request, 'faculty/my_attendance.html', context)
 
@@ -1596,10 +1609,19 @@ def leave_requests(request):
     faculty = request.faculty
     if request.method == 'POST':
         leave_type = request.POST.get('leave_type', 'casual').strip()
+        session = request.POST.get('session', 'full').strip()
         start_date_str = request.POST.get('start_date', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
         reason = request.POST.get('reason', '').strip()
         substitute_notes = request.POST.get('substitute_notes', '').strip()
+
+        if leave_type == 'half_day_an':
+            session = 'an'
+        elif leave_type == 'half_day_fn':
+            session = 'fn'
+
+        if not end_date_str and start_date_str and session in ('an', 'fn'):
+            end_date_str = start_date_str
 
         if not (start_date_str and end_date_str and reason):
             messages.error(request, "Please provide Start Date, End Date, and Reason for leave.")
@@ -1614,6 +1636,7 @@ def leave_requests(request):
                     leave_req = FacultyLeaveRequest.objects.create(
                         faculty=faculty,
                         leave_type=leave_type,
+                        session=session,
                         start_date=start_date,
                         end_date=end_date,
                         reason=reason,

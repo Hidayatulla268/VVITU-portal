@@ -836,7 +836,7 @@ def faculty_attendance_report(request):
             if not remarks and fac.id in post_approved_leaves and status == 'L':
                 remarks = f"Approved {post_approved_leaves[fac.id].get_leave_type_display()}"
 
-            if status not in ('P', 'A', 'L'):
+            if status not in ('P', 'A', 'L', 'HD'):
                 status = 'P'
 
             FacultyAttendance.objects.update_or_create(
@@ -897,7 +897,7 @@ def faculty_attendance_report(request):
                     'marked_at': rec.last_modified.astimezone(timezone.get_current_timezone()).strftime('%I:%M %p'),
                 }
 
-    # Accurately compute initial present/absent/leave matching what is displayed in the mark form
+    # Accurately compute initial present/absent/leave/half-day matching what is displayed in the mark form
     total_present = sum(
         1 for fac in faculties
         if (fac.id in today_records and today_records[fac.id].status == 'P')
@@ -910,8 +910,14 @@ def faculty_attendance_report(request):
     total_leave   = sum(
         1 for fac in faculties
         if (fac.id in today_records and today_records[fac.id].status == 'L')
-        or (fac.id not in today_records and fac.id in approved_leaves)
+        or (fac.id not in today_records and fac.id in approved_leaves and not approved_leaves[fac.id].is_half_day)
     )
+    total_half_day = sum(
+        1 for fac in faculties
+        if (fac.id in today_records and today_records[fac.id].status == 'HD')
+        or (fac.id not in today_records and fac.id in approved_leaves and approved_leaves[fac.id].is_half_day)
+    )
+    total_half_day_eq = round(total_half_day * 0.5, 1)
 
     context = {
         'branches':           branches,
@@ -928,6 +934,8 @@ def faculty_attendance_report(request):
         'total_present':      total_present,
         'total_absent':       total_absent,
         'total_leave':        total_leave,
+        'total_half_day':     total_half_day,
+        'total_half_day_eq':  total_half_day_eq,
     }
     return render(request, 'admin_dashboard/faculty_attendance.html', context)
 
@@ -2106,13 +2114,14 @@ def action_leave_request(request, pk, action):
 
     # Automatically create/sync FacultyAttendance records for each day of the approved leave
     if new_status == 'approved':
+        att_status = 'HD' if leave_req.is_half_day else 'L'
         curr_d = leave_req.start_date
         while curr_d <= leave_req.end_date:
             FacultyAttendance.objects.update_or_create(
                 faculty=leave_req.faculty,
                 date=curr_d,
                 defaults={
-                    'status': 'L',
+                    'status': att_status,
                     'remarks': f"Approved {leave_req.get_leave_type_display()}",
                     'marked_by': request.user,
                 }

@@ -189,11 +189,16 @@ class FacultyAttendance(models.Model):
     Daily attendance record for a faculty member.
     Marked by HOD or Admin.
     """
-    STATUS_CHOICES = [('P', 'Present'), ('A', 'Absent'), ('L', 'On Leave')]
+    STATUS_CHOICES = [
+        ('P', 'Present'),
+        ('A', 'Absent'),
+        ('L', 'On Leave'),
+        ('HD', 'Half Day (0.5D)'),
+    ]
 
     faculty       = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, db_index=True, related_name='faculty_attendance_records')
     date          = models.DateField(db_index=True)
-    status        = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    status        = models.CharField(max_length=5, choices=STATUS_CHOICES, default='P')
     remarks       = models.CharField(max_length=255, blank=True, null=True)
     marked_by     = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)

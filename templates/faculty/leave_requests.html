@@ -89,7 +89,13 @@
           <td>{{ leave.start_date|date:"d-M-Y" }}</td>
           <td>{{ leave.end_date|date:"d-M-Y" }}</td>
           <td>
-            <span class="status-pill status-neutral"><i class="fas fa-calendar-day me-1"></i>{{ leave.total_days }} Day(s)</span>
+            {% if leave.is_half_day %}
+              <span class="status-pill" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.4); font-size: 0.72rem; padding: 2px 8px;">
+                <i class="fas fa-adjust me-1"></i>0.5 Day (Half Day)
+              </span>
+            {% else %}
+              <span class="status-pill status-neutral"><i class="fas fa-calendar-day me-1"></i>{{ leave.total_days }} Day(s)</span>
+            {% endif %}
           </td>
           <td style="max-width: 250px;">
             <div class="text-truncate text-white-50" title="{{ leave.reason }}">

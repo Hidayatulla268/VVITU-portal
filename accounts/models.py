@@ -311,12 +311,20 @@ class FacultyLeaveRequest(models.Model):
     Either HOD or Admin can approve or reject the request.
     """
     LEAVE_TYPE_CHOICES = [
-        ('casual',    'Casual Leave (CL)'),
-        ('sick',      'Sick Leave (SL)'),
-        ('duty',      'On Duty (OD)'),
-        ('earned',    'Earned Leave (EL)'),
-        ('maternity', 'Maternity / Paternity Leave'),
-        ('other',     'Other Leave'),
+        ('casual',       'Casual Leave (CL)'),
+        ('sick',         'Sick Leave (SL)'),
+        ('half_day_an',  'Afternoon Half Day (AN) — 0.5 Day'),
+        ('half_day_fn',  'Morning Half Day (FN) — 0.5 Day'),
+        ('duty',         'On Duty (OD)'),
+        ('earned',       'Earned Leave (EL)'),
+        ('maternity',    'Maternity / Paternity Leave'),
+        ('other',        'Other Leave'),
+    ]
+
+    SESSION_CHOICES = [
+        ('full', 'Full Day'),
+        ('an',   'Afternoon Half Day (AN)'),
+        ('fn',   'Morning Half Day (FN)'),
     ]
 
     STATUS_CHOICES = [
@@ -327,6 +335,7 @@ class FacultyLeaveRequest(models.Model):
 
     faculty          = models.ForeignKey(Faculty, on_delete=models.CASCADE, related_name='leave_requests', db_index=True)
     leave_type       = models.CharField(max_length=20, choices=LEAVE_TYPE_CHOICES, default='casual', db_index=True)
+    session          = models.CharField(max_length=10, choices=SESSION_CHOICES, default='full', db_index=True)
     start_date       = models.DateField(db_index=True)
     end_date         = models.DateField(db_index=True)
     reason           = models.TextField()
@@ -349,8 +358,14 @@ class FacultyLeaveRequest(models.Model):
         return f"{self.faculty.full_name} — {self.get_leave_type_display()} ({self.start_date} to {self.end_date}) [{self.status.upper()}]"
 
     @property
+    def is_half_day(self):
+        return self.session in ('an', 'fn') or self.leave_type in ('half_day_an', 'half_day_fn')
+
+    @property
     def total_days(self):
         if self.start_date and self.end_date:
+            if self.is_half_day and self.start_date == self.end_date:
+                return 0.5
             return (self.end_date - self.start_date).days + 1
         return 0
 

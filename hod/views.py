@@ -367,7 +367,7 @@ def faculty_attendance(request):
             if not remarks and fac.id in post_approved_leaves and status == 'L':
                 remarks = f"Approved {post_approved_leaves[fac.id].get_leave_type_display()}"
 
-            if status not in ('P', 'A', 'L'):
+            if status not in ('P', 'A', 'L', 'HD'):
                 status = 'P'
 
             FacultyAttendance.objects.update_or_create(
@@ -427,7 +427,7 @@ def faculty_attendance(request):
                     'marked_at': rec.last_modified.astimezone(timezone.get_current_timezone()).strftime('%I:%M %p'),
                 }
 
-    # Accurately compute initial present/absent/leave matching what is displayed in the mark form
+    # Accurately compute initial present/absent/leave/half-day matching what is displayed in the mark form
     total_present = sum(
         1 for fac in department_faculty
         if (fac.id in today_records and today_records[fac.id].status == 'P')
@@ -440,8 +440,14 @@ def faculty_attendance(request):
     total_leave   = sum(
         1 for fac in department_faculty
         if (fac.id in today_records and today_records[fac.id].status == 'L')
-        or (fac.id not in today_records and fac.id in approved_leaves)
+        or (fac.id not in today_records and fac.id in approved_leaves and not approved_leaves[fac.id].is_half_day)
     )
+    total_half_day = sum(
+        1 for fac in department_faculty
+        if (fac.id in today_records and today_records[fac.id].status == 'HD')
+        or (fac.id not in today_records and fac.id in approved_leaves and approved_leaves[fac.id].is_half_day)
+    )
+    total_half_day_eq = round(total_half_day * 0.5, 1)
 
     context = {
         'department':         dept,
@@ -457,6 +463,8 @@ def faculty_attendance(request):
         'total_present':      total_present,
         'total_absent':       total_absent,
         'total_leave':        total_leave,
+        'total_half_day':     total_half_day,
+        'total_half_day_eq':  total_half_day_eq,
     }
     return render(request, 'hod/faculty_attendance.html', context)
 
@@ -1127,10 +1135,19 @@ def manage_leave_requests(request):
     
     if request.method == 'POST':
         leave_type = request.POST.get('leave_type')
+        session = request.POST.get('session', 'full').strip()
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
         reason = request.POST.get('reason', '').strip()
         substitute_notes = request.POST.get('substitute_notes', '').strip()
+
+        if leave_type == 'half_day_an':
+            session = 'an'
+        elif leave_type == 'half_day_fn':
+            session = 'fn'
+
+        if not end_date_str and start_date_str and session in ('an', 'fn'):
+            end_date_str = start_date_str
         
         if not leave_type or not start_date_str or not end_date_str or not reason:
             messages.error(request, "Please fill in all required leave application fields.")
@@ -1145,6 +1162,7 @@ def manage_leave_requests(request):
                     leave_req = FacultyLeaveRequest.objects.create(
                         faculty=request.faculty,
                         leave_type=leave_type,
+                        session=session,
                         start_date=start_date,
                         end_date=end_date,
                         reason=reason,
@@ -1231,13 +1249,14 @@ def action_leave_request(request, pk, action):
 
     # Automatically create/sync FacultyAttendance records for each day of the approved leave
     if new_status == 'approved':
+        att_status = 'HD' if leave_req.is_half_day else 'L'
         curr_d = leave_req.start_date
         while curr_d <= leave_req.end_date:
             FacultyAttendance.objects.update_or_create(
                 faculty=leave_req.faculty,
                 date=curr_d,
                 defaults={
-                    'status': 'L',
+                    'status': att_status,
                     'remarks': f"Approved {leave_req.get_leave_type_display()}",
                     'marked_by': request.user,
                 }
