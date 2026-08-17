@@ -200,8 +200,9 @@ class FacultyAttendance(models.Model):
     date          = models.DateField(db_index=True)
     status        = models.CharField(max_length=5, choices=STATUS_CHOICES, default='P')
     remarks       = models.CharField(max_length=255, blank=True, null=True)
-    marked_by     = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    marked_by           = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True)
+    absent_locked_until = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Timestamp until which this Absent status cannot be modified (3-hour lockout).")
+    last_modified       = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('faculty', 'date')
@@ -213,6 +214,20 @@ class FacultyAttendance(models.Model):
 
     def __str__(self):
         return f"{self.faculty.employee_id} | {self.date} | {self.get_status_display()}"
+
+    @property
+    def is_absent_locked(self):
+        if self.status == 'A' and self.absent_locked_until:
+            from django.utils import timezone
+            return timezone.now() < self.absent_locked_until
+        return False
+
+    @property
+    def absent_lock_remaining_seconds(self):
+        if self.is_absent_locked:
+            from django.utils import timezone
+            return max(0, int((self.absent_locked_until - timezone.now()).total_seconds()))
+        return 0
 
 
 # ─────────────────────────────────────────────

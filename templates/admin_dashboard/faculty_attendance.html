@@ -153,10 +153,12 @@
                 <td>
                   {% if lock_info %}
                     <div class="d-inline-flex align-items-center gap-2">
-                      <span class="status-pill status-rejected px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm" style="border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.15); color: #f87171;" title="Absent locked at {{ lock_info.marked_at }}. Editable after {{ lock_info.unlock_time }} ({{ lock_info.remaining_str }} left)">
+                      <span class="status-pill status-rejected px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm" style="border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.15); color: #f87171;" title="Absent locked. Auto-unlocks at {{ lock_info.unlock_time }}">
                         <i class="fas fa-lock text-danger"></i>
                         <span>Absent (Locked)</span>
-                        <span class="badge bg-dark bg-opacity-75 text-white-50 ms-1 fw-normal" style="font-size:0.72rem;">{{ lock_info.remaining_str }} left</span>
+                        <span class="badge bg-dark bg-opacity-75 text-white ms-1 fw-bold countdown-timer" data-unlock-ts="{{ lock_info.unlock_timestamp }}" style="font-size:0.74rem; font-family: monospace;">
+                          <i class="fas fa-stopwatch me-1 text-warning"></i><span class="countdown-text">{{ lock_info.remaining_str }} left</span>
+                        </span>
                       </span>
                       <input type="hidden" name="status_{{ fac.id }}" value="A">
                     </div>
@@ -169,7 +171,7 @@
                       <label class="btn btn-sm btn-att-pill btn-att-halfday" for="adm_hd_{{ fac.id }}"><i class="fas fa-adjust me-1"></i>Half Day</label>
 
                       <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
-                      <label class="btn btn-sm btn-att-pill btn-att-absent" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
+                      <label class="btn btn-sm btn-att-pill btn-att-absent" for="adm_a_{{ fac.id }}" title="Marking Absent will lock this record for 3 hours once saved"><i class="fas fa-times me-1"></i>Absent</label>
 
                       <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'L' %}{% elif not rec and app_leave and not app_leave.is_half_day %}checked{% endif %}>
                       <label class="btn btn-sm btn-att-pill btn-att-leave" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
@@ -327,6 +329,10 @@ function updateLiveAttendanceKPIs() {
     else if (val === 'L') leave++;
   });
 
+  // Also include locked absent hidden inputs
+  const lockedHidden = document.querySelectorAll('input[type="hidden"][name^="status_"][value="A"]');
+  absent += lockedHidden.length;
+
   const pEl = document.getElementById('kpiTotalPresent');
   const hdEl = document.getElementById('kpiTotalHalfDay');
   const aEl = document.getElementById('kpiTotalAbsent');
@@ -360,11 +366,48 @@ function updateLiveAttendanceKPIs() {
 }
 
 function markAllFaculty(status) {
+  if (status === 'A') {
+    if (!confirm("⚠️ Notice: Marking faculty as Absent will activate the 3-hour modification lockout once saved. Proceed?")) {
+      return;
+    }
+  }
   const radios = document.querySelectorAll(`input[type="radio"][name^="status_"][value="${status}"]`);
   radios.forEach(r => {
     r.checked = true;
   });
   updateLiveAttendanceKPIs();
+}
+
+function startLiveCountdownTimers() {
+  const timerBadges = document.querySelectorAll('.countdown-timer[data-unlock-ts]');
+  if (timerBadges.length === 0) return;
+
+  function tick() {
+    const now = Date.now();
+    timerBadges.forEach(badge => {
+      const unlockTs = parseInt(badge.getAttribute('data-unlock-ts'), 10);
+      if (isNaN(unlockTs)) return;
+      const textSpan = badge.querySelector('.countdown-text') || badge;
+      const diffSec = Math.max(0, Math.floor((unlockTs - now) / 1000));
+      
+      if (diffSec <= 0) {
+        textSpan.textContent = "Lock expired (Reload to edit)";
+        badge.classList.remove('bg-dark');
+        badge.classList.add('bg-success');
+      } else {
+        const h = Math.floor(diffSec / 3600);
+        const m = Math.floor((diffSec % 3600) / 60);
+        const s = diffSec % 60;
+        const hStr = h > 0 ? `${h}h ` : '';
+        const mStr = m < 10 ? `0${m}m ` : `${m}m `;
+        const sStr = s < 10 ? `0${s}s` : `${s}s`;
+        textSpan.textContent = `${hStr}${mStr}${sStr} left`;
+      }
+    });
+  }
+
+  tick();
+  setInterval(tick, 1000);
 }
 
 // Global Event Delegation so clicking any radio or label updates instantly
@@ -383,9 +426,16 @@ document.addEventListener('click', function(e) {
 
 // Run immediately and on all ready states
 updateLiveAttendanceKPIs();
+startLiveCountdownTimers();
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', updateLiveAttendanceKPIs);
+  document.addEventListener('DOMContentLoaded', () => {
+    updateLiveAttendanceKPIs();
+    startLiveCountdownTimers();
+  });
 }
-window.addEventListener('load', updateLiveAttendanceKPIs);
+window.addEventListener('load', () => {
+  updateLiveAttendanceKPIs();
+  startLiveCountdownTimers();
+});
 </script>
 {% endblock %}

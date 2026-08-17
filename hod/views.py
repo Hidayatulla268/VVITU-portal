@@ -350,18 +350,21 @@ def faculty_attendance(request):
             rec = existing_date_records.get(fac.id)
             # Enforce 3-hour Absent Lockout Policy
             is_locked = False
-            if rec and rec.status == 'A' and rec.last_modified:
-                elapsed = (now - rec.last_modified).total_seconds()
-                if elapsed < 3 * 3600:
-                    is_locked = True
-
-            if is_locked:
+            if rec and rec.is_absent_locked:
+                is_locked = True
                 status = 'A'
+                absent_locked_until = rec.absent_locked_until
                 locked_count += 1
             else:
                 status = request.POST.get(f'status_{fac.id}')
                 if not status:
                     status = 'L' if fac.id in post_approved_leaves else 'P'
+
+                # Set 3-hour lockout when status is marked Absent ('A')
+                if status == 'A':
+                    absent_locked_until = rec.absent_locked_until if (rec and rec.absent_locked_until and rec.absent_locked_until > now) else (now + dt.timedelta(hours=3))
+                else:
+                    absent_locked_until = None
 
             remarks = request.POST.get(f'remarks_{fac.id}', '').strip()
             if not remarks and fac.id in post_approved_leaves and status == 'L':
@@ -377,6 +380,7 @@ def faculty_attendance(request):
                     'status': status,
                     'remarks': remarks,
                     'marked_by': request.user,
+                    'absent_locked_until': absent_locked_until,
                 }
             )
             saved_count += 1
@@ -414,18 +418,18 @@ def faculty_attendance(request):
     now = timezone.now()
     locked_absent_map = {}
     for fac_id, rec in today_records.items():
-        if rec.status == 'A' and rec.last_modified:
-            elapsed = (now - rec.last_modified).total_seconds()
-            if elapsed < 3 * 3600:
-                remaining_secs = (3 * 3600) - elapsed
-                rem_hrs = int(remaining_secs // 3600)
-                rem_mins = int((remaining_secs % 3600) // 60)
-                unlock_time = (rec.last_modified + dt.timedelta(hours=3)).astimezone(timezone.get_current_timezone()).strftime('%I:%M %p')
-                locked_absent_map[fac_id] = {
-                    'remaining_str': f"{rem_hrs}h {rem_mins}m" if rem_hrs > 0 else f"{rem_mins}m",
-                    'unlock_time': unlock_time,
-                    'marked_at': rec.last_modified.astimezone(timezone.get_current_timezone()).strftime('%I:%M %p'),
-                }
+        if rec.is_absent_locked:
+            remaining_secs = rec.absent_lock_remaining_seconds
+            rem_hrs = int(remaining_secs // 3600)
+            rem_mins = int((remaining_secs % 3600) // 60)
+            rem_secs = int(remaining_secs % 60)
+            unlock_dt = rec.absent_locked_until.astimezone(timezone.get_current_timezone())
+            locked_absent_map[fac_id] = {
+                'remaining_seconds': remaining_secs,
+                'remaining_str': f"{rem_hrs}h {rem_mins}m {rem_secs}s" if rem_hrs > 0 else f"{rem_mins}m {rem_secs}s",
+                'unlock_time': unlock_dt.strftime('%I:%M:%S %p'),
+                'unlock_timestamp': int(rec.absent_locked_until.timestamp() * 1000),
+            }
 
     # Accurately compute initial present/absent/leave/half-day matching what is displayed in the mark form
     total_present = sum(
