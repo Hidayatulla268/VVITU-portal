@@ -93,7 +93,7 @@
 
       <form method="POST">
         {% csrf_token %}
-        <input type="hidden" name="date" value="{{ selected_date }}">
+        <input type="hidden" name="date" value="{{ selected_date }}" class="no-flatpickr" id="postDateHidden">
 
         <!-- Quick Batch Actions Toolbar -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
@@ -123,7 +123,7 @@
             </thead>
             <tbody>
               {% for fac in faculties %}
-              {% with rec=today_records|get_item:fac.id %}
+              {% with rec=today_records|get_item:fac.id app_leave=approved_leaves|get_item:fac.id lock_info=locked_absent_map|get_item:fac.id %}
               <tr>
                 <td>
                   <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-accent text-decoration-none fw-bold hover-bright" title="View Faculty Profile">
@@ -131,25 +131,41 @@
                   </a>
                 </td>
                 <td>
-                  <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-white text-decoration-none fw-bold hover-accent" title="View Faculty Profile">
+                  <a href="{% url 'accounts:faculty_detail' fac.id %}" class="text-white text-decoration-none fw-bold hover-accent d-block" title="View Faculty Profile">
                     {{ fac.user.get_full_name }}
                   </a>
+                  {% if app_leave %}
+                    <span class="badge bg-warning text-dark mt-1 px-2 py-0.5 d-inline-flex align-items-center gap-1" style="font-size:0.72rem; font-weight:700;">
+                      <i class="fas fa-plane-departure"></i>Approved Leave ({{ app_leave.get_leave_type_display }})
+                    </span>
+                  {% endif %}
                 </td>
                 <td><span class="badge-section small">{{ fac.department.code|default:"GEN" }}</span></td>
                 <td>
-                  <div class="btn-group att-status-group" role="group">
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if not rec or rec.status == 'P' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-att-pill btn-att-present" for="adm_p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
+                  {% if lock_info %}
+                    <div class="d-inline-flex align-items-center gap-2">
+                      <span class="status-pill status-rejected px-2.5 py-1 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm" style="border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.15); color: #f87171;" title="Absent locked at {{ lock_info.marked_at }}. Editable after {{ lock_info.unlock_time }} ({{ lock_info.remaining_str }} left)">
+                        <i class="fas fa-lock text-danger"></i>
+                        <span>Absent (Locked)</span>
+                        <span class="badge bg-dark bg-opacity-75 text-white-50 ms-1 fw-normal" style="font-size:0.72rem;">{{ lock_info.remaining_str }} left</span>
+                      </span>
+                      <input type="hidden" name="status_{{ fac.id }}" value="A">
+                    </div>
+                  {% else %}
+                    <div class="btn-group att-status-group" role="group">
+                      <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_p_{{ fac.id }}" value="P" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'P' %}{% elif not rec and not app_leave %}checked{% endif %}>
+                      <label class="btn btn-sm btn-att-pill btn-att-present" for="adm_p_{{ fac.id }}"><i class="fas fa-check me-1"></i>Present</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-att-pill btn-att-absent" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
+                      <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_a_{{ fac.id }}" value="A" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'A' %}checked{% endif %}>
+                      <label class="btn btn-sm btn-att-pill btn-att-absent" for="adm_a_{{ fac.id }}"><i class="fas fa-times me-1"></i>Absent</label>
 
-                    <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'L' %}checked{% endif %}>
-                    <label class="btn btn-sm btn-att-pill btn-att-leave" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
-                  </div>
+                      <input type="radio" class="btn-check" name="status_{{ fac.id }}" id="adm_l_{{ fac.id }}" value="L" onchange="updateLiveAttendanceKPIs()" autocomplete="off" {% if rec and rec.status == 'L' %}{% elif not rec and app_leave %}checked{% endif %}>
+                      <label class="btn btn-sm btn-att-pill btn-att-leave" for="adm_l_{{ fac.id }}"><i class="fas fa-plane-departure me-1"></i>Leave</label>
+                    </div>
+                  {% endif %}
                 </td>
                 <td>
-                  <input type="text" name="remarks_{{ fac.id }}" class="vvit-input py-1 fs-6" value="{{ rec.remarks|default:'' }}" placeholder="Remarks...">
+                  <input type="text" name="remarks_{{ fac.id }}" class="vvit-input py-1 fs-6" value="{% if rec.remarks %}{{ rec.remarks }}{% elif app_leave %}Approved {{ app_leave.get_leave_type_display }}{% endif %}" placeholder="Remarks...">
                 </td>
               </tr>
               {% endwith %}

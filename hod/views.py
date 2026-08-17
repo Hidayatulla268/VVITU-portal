@@ -310,6 +310,17 @@ def faculty_attendance(request):
 
     department_faculty = Faculty.objects.filter(department=dept, is_active=True, user__is_deleted=False).select_related('user').order_by('employee_id')
 
+    # Fetch approved leave applications for the selected mark date in this department
+    approved_leaves = {
+        lr.faculty_id: lr
+        for lr in FacultyLeaveRequest.objects.filter(
+            faculty__department=dept,
+            status='approved',
+            start_date__lte=selected_date,
+            end_date__gte=selected_date
+        ).select_related('faculty')
+    }
+
     # Save attendance POST
     if request.method == 'POST':
         date_param = request.POST.get('date', today.isoformat())
@@ -318,10 +329,44 @@ def faculty_attendance(request):
         except ValueError:
             post_date = today
 
+        existing_date_records = {
+            att.faculty_id: att for att in FacultyAttendance.objects.filter(faculty__department=dept, date=post_date)
+        }
+        post_approved_leaves = {
+            lr.faculty_id: lr
+            for lr in FacultyLeaveRequest.objects.filter(
+                faculty__department=dept,
+                status='approved',
+                start_date__lte=post_date,
+                end_date__gte=post_date
+            )
+        }
+
         saved_count = 0
+        locked_count = 0
+        now = timezone.now()
+
         for fac in department_faculty:
-            status = request.POST.get(f'status_{fac.id}', 'P')
+            rec = existing_date_records.get(fac.id)
+            # Enforce 3-hour Absent Lockout Policy
+            is_locked = False
+            if rec and rec.status == 'A' and rec.last_modified:
+                elapsed = (now - rec.last_modified).total_seconds()
+                if elapsed < 3 * 3600:
+                    is_locked = True
+
+            if is_locked:
+                status = 'A'
+                locked_count += 1
+            else:
+                status = request.POST.get(f'status_{fac.id}')
+                if not status:
+                    status = 'L' if fac.id in post_approved_leaves else 'P'
+
             remarks = request.POST.get(f'remarks_{fac.id}', '').strip()
+            if not remarks and fac.id in post_approved_leaves and status == 'L':
+                remarks = f"Approved {post_approved_leaves[fac.id].get_leave_type_display()}"
+
             if status not in ('P', 'A', 'L'):
                 status = 'P'
 
@@ -336,6 +381,8 @@ def faculty_attendance(request):
             )
             saved_count += 1
 
+        if locked_count > 0:
+            messages.info(request, f"{locked_count} department faculty record(s) marked Absent within the last 3 hours remain locked from modification.")
         messages.success(request, f"Faculty attendance updated for {saved_count} staff members for {post_date.strftime('%d %b %Y')}.")
         return redirect(f"{request.path}?date={post_date.isoformat()}&month_year={month_year}&date_from={date_from}&date_to={date_to}")
 
@@ -363,16 +410,46 @@ def faculty_attendance(request):
         att.faculty_id: att for att in FacultyAttendance.objects.filter(faculty__department=dept, date=selected_date)
     }
 
+    # Detect 3-hour lockout for Absent records
+    now = timezone.now()
+    locked_absent_map = {}
+    for fac_id, rec in today_records.items():
+        if rec.status == 'A' and rec.last_modified:
+            elapsed = (now - rec.last_modified).total_seconds()
+            if elapsed < 3 * 3600:
+                remaining_secs = (3 * 3600) - elapsed
+                rem_hrs = int(remaining_secs // 3600)
+                rem_mins = int((remaining_secs % 3600) // 60)
+                unlock_time = (rec.last_modified + dt.timedelta(hours=3)).astimezone(timezone.get_current_timezone()).strftime('%I:%M %p')
+                locked_absent_map[fac_id] = {
+                    'remaining_str': f"{rem_hrs}h {rem_mins}m" if rem_hrs > 0 else f"{rem_mins}m",
+                    'unlock_time': unlock_time,
+                    'marked_at': rec.last_modified.astimezone(timezone.get_current_timezone()).strftime('%I:%M %p'),
+                }
+
     # Accurately compute initial present/absent/leave matching what is displayed in the mark form
-    total_present = sum(1 for fac in department_faculty if (fac.id in today_records and today_records[fac.id].status == 'P') or (fac.id not in today_records))
-    total_absent  = sum(1 for fac in department_faculty if fac.id in today_records and today_records[fac.id].status == 'A')
-    total_leave   = sum(1 for fac in department_faculty if fac.id in today_records and today_records[fac.id].status == 'L')
+    total_present = sum(
+        1 for fac in department_faculty
+        if (fac.id in today_records and today_records[fac.id].status == 'P')
+        or (fac.id not in today_records and fac.id not in approved_leaves)
+    )
+    total_absent  = sum(
+        1 for fac in department_faculty
+        if fac.id in today_records and today_records[fac.id].status == 'A'
+    )
+    total_leave   = sum(
+        1 for fac in department_faculty
+        if (fac.id in today_records and today_records[fac.id].status == 'L')
+        or (fac.id not in today_records and fac.id in approved_leaves)
+    )
 
     context = {
         'department':         dept,
         'department_faculty': department_faculty,
         'selected_date':      selected_date.isoformat(),
         'today_records':      today_records,
+        'approved_leaves':    approved_leaves,
+        'locked_absent_map':  locked_absent_map,
         'records':            records,
         'month_year':         month_year,
         'date_from':          date_from,
@@ -1151,6 +1228,21 @@ def action_leave_request(request, pk, action):
     if remarks:
         leave_req.admin_remarks = remarks
     leave_req.save()
+
+    # Automatically create/sync FacultyAttendance records for each day of the approved leave
+    if new_status == 'approved':
+        curr_d = leave_req.start_date
+        while curr_d <= leave_req.end_date:
+            FacultyAttendance.objects.update_or_create(
+                faculty=leave_req.faculty,
+                date=curr_d,
+                defaults={
+                    'status': 'L',
+                    'remarks': f"Approved {leave_req.get_leave_type_display()}",
+                    'marked_by': request.user,
+                }
+            )
+            curr_d += dt.timedelta(days=1)
     
     try:
         status_text = "Approved" if new_status == 'approved' else "Rejected"

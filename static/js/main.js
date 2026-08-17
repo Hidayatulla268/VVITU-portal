@@ -135,19 +135,28 @@ function initDatePickers() {
 
   /* Report date_from / date_to */
   ['date_from','date_to'].forEach(name => {
-    document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
+    document.querySelectorAll(`input[name="${name}"]:not([type="hidden"])`).forEach(el => {
       _pickers.push(flatpickr(el, { ...base, maxDate:'today', defaultDate: el.value||undefined }));
     });
   });
 
-  /* Admin attendance filter date */
-  document.querySelectorAll('input[name="date"]').forEach(el => {
-    if (el.id === 'dateInput') return;
-    _pickers.push(flatpickr(el, { ...base, defaultDate: el.value||undefined }));
+  /* Admin / HOD attendance filter date */
+  document.querySelectorAll('input[name="date"]:not([type="hidden"])').forEach(el => {
+    if (el.id === 'dateInput' || el._flatpickr) return;
+    const fp = flatpickr(el, {
+      ...base,
+      defaultDate: el.value || undefined,
+      onChange(dates, dateStr) {
+        if (el.form && el.form.method && el.form.method.toUpperCase() === 'GET') {
+          el.form.submit();
+        }
+      }
+    });
+    _pickers.push(fp);
   });
 
-  /* Any other date inputs */
-  document.querySelectorAll('input[type="date"]:not([id="dateInput"])').forEach(el => {
+  /* Any other visible date inputs */
+  document.querySelectorAll('input[type="date"]:not([id="dateInput"]):not([type="hidden"])').forEach(el => {
     if (el._flatpickr) return;
     _pickers.push(flatpickr(el, { ...base, defaultDate: el.value||undefined }));
   });
