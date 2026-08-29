@@ -25,10 +25,12 @@ def deo_required(view_func):
             request.deo_profile = request.user.deo_profile
             request.branch = request.deo_profile.branch
             if not request.branch:
-                messages.error(request, "Access denied. DEO has no branch assigned. Please contact the administrator.")
-                return redirect('accounts:login')
+                messages.error(request, "DEO has no branch assigned. Please contact the administrator.")
+                return redirect('accounts:profile')
         except DEOProfile.DoesNotExist:
-            messages.error(request, "DEO Profile not found. Contact administrator.")
+            from django.contrib.auth import logout
+            logout(request)
+            messages.error(request, "DEO Profile not found. Please contact administrator.")
             return redirect('accounts:login')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -356,16 +358,24 @@ def upload_marks(request):
             try:
                 data_set = csv_file.read().decode('utf-8-sig')
                 io_string = io.StringIO(data_set)
-                next(io_string, None)
                 
                 reader = csv.reader(io_string, delimiter=',', quotechar='"')
                 success_count = 0
                 errors = []
+                is_first_row = True
                 
                 with transaction.atomic():
-                    for row_idx, row in enumerate(reader, start=2):
-                        if not row or not row[0].strip():
+                    for row_idx, row in enumerate(reader, start=1):
+                        if not row or not any(cell.strip() for cell in row):
                             continue
+
+                        # Dynamic header check on first non-empty row
+                        if is_first_row:
+                            is_first_row = False
+                            first_cell = row[0].strip().lower()
+                            if 'roll' in first_cell or 'student' in first_cell or 'name' in first_cell:
+                                continue  # Skip actual header row
+
                         if len(row) < 2:
                             errors.append(f"Row {row_idx}: Missing columns.")
                             continue
@@ -409,7 +419,11 @@ def upload_marks(request):
         elif action == 'manual':
             try:
                 success_count = 0
-                max_marks_default = float(request.POST.get('max_marks_default', '100'))
+                max_marks_str = (request.POST.get('max_marks_default') or '100').strip()
+                try:
+                    max_marks_default = float(max_marks_str) if max_marks_str else 100.0
+                except ValueError:
+                    max_marks_default = 100.0
                 
                 with transaction.atomic():
                     for stu in sec_students:

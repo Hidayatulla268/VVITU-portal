@@ -8,11 +8,27 @@ A production-grade college ERP web application built with Django, featuring a gl
 ## 🚀 Key Features
 
 *   **Role-Based Access Control**: Highly secure dashboard routing for **Students, Faculty, HODs, DEOs, and Admin** — each with tailored sidebar navigation, scoped permissions, and dedicated action portals.
-*   **Multi-Role Leave Management System**:
-    *   **Faculty Leave Applications**: Faculty members can apply for leave (Casual, Medical, Duty, Loss of Pay) with custom date ranges, reasons, and proxy substitution notes.
-    *   **Dual Approval Workflow**: Leave requests are submitted simultaneously to the Department HOD and College Administration (Admin). Either authority can approve or reject the request.
-    *   **HOD Leave Applications**: HODs can also apply for leave directly from their portal, routed exclusively to College Administration (Admin) for approval.
-    *   **Multi-Channel Notifications**: Real-time dispatch of In-App notifications (with bell badge counter), HTML Emails, and Fast2SMS alerts to HODs and Admins upon leave submission.
+*   **Faculty Monthly Leave Quotas & Emergency Over-Limit System**:
+    *   **Customizable Leave Limits**: Administrators can set individual monthly leave quotas per faculty member (default: 2 days/month).
+    *   **Live Balance Tracker**: Faculty can see their current month's total limit, days used, and remaining balance directly when applying.
+    *   **Emergency Leave Processing**: Applications exceeding the monthly limit are automatically tagged as `EMERGENCY LEAVE`, notifying HOD and Admin with high-priority alerts.
+    *   **Red Emergency Approval Cards**: Applications exceeding limits are visually highlighted with bright red cards and warning badges across HOD and Admin review dashboards.
+*   **Subject Syllabus Topic Timetable & Exam Milestones System**:
+    *   **Topic Schedule Plan Editor (HOD & Admin)**: Unit-by-unit (Units 1 to 5) curriculum scheduler with target completion dates, sequence ordering, and milestone tags (`mid1`, `mid2`, `final`).
+    *   **Exam Milestones & Target Unit Requirements**: Configurable exam timetables (Mid-1, Mid-2, Semester Final) with mandatory syllabus completion targets (e.g. **2.5 units before Mid-1**, 5.0 units before Mid-2) and faculty completion deadlines.
+    *   **Auto-Matching with Attendance & Class Diary**: When faculty mark daily attendance and log taught topics in the Class Diary, the system fuzzy-matches the topic name against the planned syllabus and automatically marks it completed with timestamp and teacher credentials.
+    *   **Faculty Syllabus Tracker (`/faculty/syllabus-tracker/`)**: Interactive unit-by-unit checklist with progress bar, Mid-1 milestone compliance box, and live AJAX complete/undo toggle.
+    *   **Student Syllabus Coverage Tracker (`/student/syllabus/`)**: Enables students to transparently monitor which topics have been covered in class, remaining units, and upcoming topics before Mid-1/Mid-2 exams.
+    *   **Strict Targeted Notifications**: Incomplete/overdue topics or delayed Mid-1 milestones trigger In-App, Email, and SMS reminders **strictly to the respective Faculty and Department HOD** (Admin receives zero routine topic delay notifications).
+*   **HOD Dual Role & Admin-Only Leave Approvals**:
+    *   **Full Teaching Access for HODs**: HODs who teach subjects have direct access to all regular faculty features: Mark Attendance, Class Diary, My Syllabus Tracker, Attendance Reports, Class Transfers (Proxy), and Counselled Students.
+    *   **HOD Dashboard "My Teaching" Hub**: Displays today's teaching schedule with classroom locations, quick Mark buttons, and faculty action shortcuts directly on the HOD dashboard.
+    *   **Admin-Only HOD Leave Approvals**: When an HOD applies for leave, the application is strictly routed to **College Administration (Admin)** for approval. HODs are blocked from self-approving their own leave.
+    *   **Admin HOD Leave Queue**: Admin dashboard features dedicated filter tabs (`All`, `👑 HOD Leaves Only`, `⚠️ Emergency Leaves Only`, `Regular Faculty`) with prominent HOD badges and 1-click approvals.
+*   **Official ReportLab PDF Generation Engine**:
+    *   **Student Counselling Dossier PDF (`/student/counselling-report/pdf/`)**: Generates official multi-page A4 PDF documents with university seal, demographic cards, semester marks sheets, attendance records, and signature blocks.
+    *   **Consolidated Database Audit Report PDF (`/admin-portal/export/database-pdf/`)**: Comprehensive institutional snapshot including student registry, faculty staff, curriculum, student CGPA summaries, active exam milestone schedules, and faculty monthly leave quotas.
+    *   **Student Results & Attendance PDF Exports**: Exportable on-demand for academic audits and record keeping.
 *   **Student Active Backlogs Tracking**:
     *   **Dynamic Backlog Engine**: Evaluates released semester final results to identify active backlogs (failing grades `F`, `Ab`, `AB`, `FAIL` or marks < 40) that have not been cleared in subsequent attempts.
     *   **Conditional High-Visibility Card**: Rendered ONLY for students with active backlogs across Student Profile (`/accounts/profile/`), Student Results (`/student/results/`), and Admin/HOD/Faculty Detail Views (`/accounts/student/<id>/detail/`).

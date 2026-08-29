@@ -18,7 +18,7 @@
   <div class="table-responsive">
     <table class="vvit-table">
       <thead>
-        <tr><th>#</th><th>Employee ID</th><th>Name</th><th>Role</th><th>Dept</th><th>Phone</th><th>Actions</th></tr>
+        <tr><th>#</th><th>Employee ID</th><th>Name</th><th>Role</th><th>Dept</th><th>Leave Quota</th><th>Phone</th><th>Actions</th></tr>
       </thead>
       <tbody>
         {% for f in faculties %}
@@ -28,6 +28,11 @@
           <td>{{ f.user.get_full_name }}</td>
           <td><span class="badge-section small">{{ f.user.get_role_display }}</span></td>
           <td>{{ f.department.code|default:"—" }}</td>
+          <td>
+            <span class="status-pill status-neutral" style="font-size: 0.75rem; padding: 2px 8px;">
+              <i class="fas fa-calendar-check me-1 text-accent"></i>{{ f.monthly_leave_limit }} d/mo
+            </span>
+          </td>
           <td>{{ f.user.phone|default:"—" }}</td>
           <td>
             <a href="{% url 'admin_dashboard:edit_faculty' f.pk %}" class="btn-sm-edit me-1">

@@ -139,10 +139,16 @@ class RoleBasedAccessMiddleware:
             if path.startswith(prefix):
                 return self.get_response(request)
 
-        # Force student password setup on first login
+        # Force student password setup on first login (cached to avoid DB query per request)
         if request.user.is_authenticated and request.user.role == 'student':
             try:
-                if getattr(request.user, 'student_profile', None) and request.user.student_profile.is_first_login:
+                cache_key = f"user_is_first_login_{request.user.id}"
+                is_first_login = cache.get(cache_key)
+                if is_first_login is None:
+                    profile = getattr(request.user, 'student_profile', None)
+                    is_first_login = profile.is_first_login if profile else False
+                    cache.set(cache_key, is_first_login, timeout=300)
+                if is_first_login and not path.startswith('/accounts/set-password') and not path.startswith('/accounts/logout'):
                     return redirect('accounts:set_password')
             except Exception as e:
                 import logging
@@ -150,7 +156,9 @@ class RoleBasedAccessMiddleware:
 
         if path == '/':
             if request.user.is_authenticated:
-                return redirect(self._dashboard_url(request.user))
+                dash_url = self._dashboard_url(request.user)
+                if dash_url and dash_url != '/':
+                    return redirect(dash_url)
             return redirect('accounts:login')
 
         if request.user.is_authenticated:
@@ -158,7 +166,10 @@ class RoleBasedAccessMiddleware:
                 if path.startswith(prefix):
                     if request.user.role not in allowed_roles:
                         messages.warning(request, "You are not authorised to access that section.")
-                        return redirect(self._dashboard_url(request.user))
+                        dash_url = self._dashboard_url(request.user)
+                        if dash_url and dash_url.rstrip('/') != path.rstrip('/'):
+                            return redirect(dash_url)
+                        return redirect('accounts:login')
 
         return self.get_response(request)
 
@@ -256,3 +267,43 @@ class LoginRateLimitMiddleware:
                 if re.match(r'^[0-9a-fA-F:.]+$', ip):
                     return ip
         return request.META.get('REMOTE_ADDR') or '127.0.0.1'
+
+
+# ─────────────────────────────────────────────
+# 5. GLOBAL UNHANDLED EXCEPTION AUTO-REDIRECT MIDDLEWARE
+# ─────────────────────────────────────────────
+class GlobalExceptionRedirectMiddleware:
+    """
+    Catches any unhandled view exceptions during request processing.
+    Instead of showing a 500 error page or raw stack trace, it logs the exception,
+    notifies the user, and automatically redirects them to their main dashboard.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        import logging
+        logging.getLogger('django.request').error(f"Unhandled exception on {request.path_info}: {exception}", exc_info=True)
+        
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.path_info.startswith('/chat/'):
+            return None  # Allow standard JSON 500 response for AJAX/API endpoints
+
+        try:
+            messages.error(request, "An unexpected error occurred. You have been automatically redirected to your dashboard.")
+        except Exception:
+            pass
+        
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            try:
+                dashboard_url = request.user.get_dashboard_url()
+                # AVOID REDIRECT LOOP: If already on dashboard_url or login, let standard 500 handler render!
+                if request.path_info.rstrip('/') == dashboard_url.rstrip('/') or request.path_info.startswith('/accounts/login'):
+                    return None
+                return redirect(dashboard_url)
+            except Exception:
+                return None
+        return None
+

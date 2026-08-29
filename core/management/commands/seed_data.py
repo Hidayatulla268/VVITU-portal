@@ -308,6 +308,9 @@ class Command(BaseCommand):
             ('Friday',    1, 2),
             ('Friday',    2, 0),
             ('Friday',    3, 4), # lab
+            ('Saturday',  1, 0),
+            ('Saturday',  2, 2),
+            ('Saturday',  3, 1),
         ]
         
         for bcode, s_list in subject_objs.items():

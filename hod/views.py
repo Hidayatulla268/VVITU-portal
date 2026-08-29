@@ -18,11 +18,12 @@ logger = logging.getLogger(__name__)
 from accounts.models import User, Student, Faculty, Achievement, FacultyLeaveRequest, generate_secure_temp_password
 from core.models import (
     Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result,
-    Notification, ResultRelease, FacultyAttendance, ClassTransfer,
-    ensure_sections_for_all_branches
+    Notification, ResultRelease, FacultyAttendance, ClassTransfer, ClassDiary,
+    SubjectTopicPlan, ExamSchedule, ensure_sections_for_all_branches
 )
 from admin_dashboard.views import _send_result_emails
 from core.sms_utils import send_result_notifications, send_result_sms_to_parent
+from core.syllabus_utils import get_subject_syllabus_progress, check_and_dispatch_syllabus_reminders
 
 # ─────────────────────────────────────────────
 # DECORATOR
@@ -37,10 +38,12 @@ def hod_required(view_func):
             request.faculty = request.user.faculty_profile
             request.department = request.faculty.department
             if not request.department:
-                messages.error(request, "Access denied. HOD has no department assigned. Please contact the administrator.")
-                return redirect('accounts:login')
+                messages.error(request, "HOD has no department assigned. Please contact the administrator.")
+                return redirect('accounts:profile')
         except Faculty.DoesNotExist:
-            messages.error(request, "HOD Faculty Profile not found.")
+            from django.contrib.auth import logout
+            logout(request)
+            messages.error(request, "HOD Faculty Profile not found. Please contact administrator.")
             return redirect('accounts:login')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -75,11 +78,55 @@ def dashboard(request):
     ).filter(
         Q(user__student_profile__branch=dept) | Q(user__faculty_profile__department=dept)
     ).select_related('user').order_by('-created_at')
-    
-    # Pending leave requests in department
+
+    # Pending leave requests in department (excluding HOD's own leave)
     pending_leave_count = FacultyLeaveRequest.objects.filter(
         faculty__department=dept, status='pending'
     ).exclude(faculty=request.faculty).count()
+    
+    # HOD's personal teaching schedule & faculty data
+    day_name = today.strftime('%A')
+    from django.db.models import Case, When, Value, IntegerField
+    day_order = Case(
+        When(day__iexact='Monday', then=Value(1)),
+        When(day__iexact='Tuesday', then=Value(2)),
+        When(day__iexact='Wednesday', then=Value(3)),
+        When(day__iexact='Thursday', then=Value(4)),
+        When(day__iexact='Friday', then=Value(5)),
+        When(day__iexact='Saturday', then=Value(6)),
+        When(day__iexact='Sunday', then=Value(7)),
+        default=Value(8),
+        output_field=IntegerField()
+    )
+
+    my_timetable_today = (
+        Timetable.objects
+        .filter(faculty=request.faculty, day__iexact=day_name.strip())
+        .select_related('section', 'subject')
+        .order_by('period')
+    )
+    my_weekly_timetable = (
+        Timetable.objects
+        .filter(faculty=request.faculty)
+        .select_related('section', 'subject')
+        .annotate(day_sort=day_order)
+        .order_by('day_sort', 'period')
+    )
+    my_subjects = (
+        Subject.objects
+        .filter(faculty=request.faculty, is_deleted=False)
+        .select_related('branch', 'year')
+    )
+    my_transferred_today = (
+        ClassTransfer.objects
+        .filter(substitute_faculty=request.faculty, date=today)
+        .select_related('timetable_entry__section', 'timetable_entry__subject', 'original_faculty__user')
+    )
+    my_counselled_count = Student.objects.filter(counsellor=request.faculty, user__is_deleted=False).count()
+    my_leaves_taken = request.faculty.get_monthly_leaves_taken(today.year, today.month)
+    my_leaves_remaining = request.faculty.get_monthly_leaves_remaining(today.year, today.month)
+    my_monthly_limit = float(request.faculty.monthly_leave_limit or 2.0)
+    my_leave_limit_reached = request.faculty.is_leave_limit_reached(today.year, today.month)
     
     context = {
         'student_count': student_count,
@@ -92,6 +139,18 @@ def dashboard(request):
         'pending_achievements': pending_achievements,
         'pending_leave_count': pending_leave_count,
         'department': dept,
+        # HOD as Faculty variables
+        'my_timetable_today': my_timetable_today,
+        'my_weekly_timetable': my_weekly_timetable,
+        'my_subjects': my_subjects,
+        'my_transferred_today': my_transferred_today,
+        'my_counselled_count': my_counselled_count,
+        'my_leaves_taken': my_leaves_taken,
+        'my_leaves_remaining': my_leaves_remaining,
+        'my_monthly_limit': my_monthly_limit,
+        'my_leave_limit_reached': my_leave_limit_reached,
+        'today': today,
+        'day_name': day_name,
     }
     return render(request, 'hod/dashboard.html', context)
 
@@ -240,7 +299,7 @@ def edit_timetable(request, section_id):
             grid[e.day][e.period] = e
             
     if request.method == 'POST':
-        day = request.POST.get('day')
+        day = request.POST.get('day', '').strip().capitalize()
         period = request.POST.get('period')
         subject_id = request.POST.get('subject')
         faculty_id = request.POST.get('faculty')
@@ -1163,6 +1222,13 @@ def manage_leave_requests(request):
                 if end_date < start_date:
                     messages.error(request, "End date cannot be earlier than start date.")
                 else:
+                    is_half = (session in ('an', 'fn')) or (leave_type in ('half_day_an', 'half_day_fn'))
+                    req_days = 0.5 if is_half else float((end_date - start_date).days + 1)
+                    
+                    already_taken = request.faculty.get_monthly_leaves_taken(start_date.year, start_date.month)
+                    monthly_limit = float(request.faculty.monthly_leave_limit or 2.0)
+                    is_limit_exceeded = (already_taken + req_days) > monthly_limit
+
                     leave_req = FacultyLeaveRequest.objects.create(
                         faculty=request.faculty,
                         leave_type=leave_type,
@@ -1171,15 +1237,17 @@ def manage_leave_requests(request):
                         end_date=end_date,
                         reason=reason,
                         substitute_notes=substitute_notes,
+                        is_limit_exceeded=is_limit_exceeded,
                         status='pending'
                     )
                     
                     # Notify Admin about HOD leave request
                     try:
+                        emergency_prefix = "⚠️ [EMERGENCY LEAVE - LIMIT EXCEEDED] " if is_limit_exceeded else ""
                         Notification.objects.create(
-                            title=f"HOD Leave Application — {request.faculty.full_name}",
+                            title=f"{emergency_prefix}HOD Leave Application — {request.faculty.full_name}",
                             message=(
-                                f"HOD {request.faculty.full_name} ({dept.code}) applied for {leave_req.get_leave_type_display()} "
+                                f"{'⚠️ EMERGENCY LEAVE ' if is_limit_exceeded else ''}HOD {request.faculty.full_name} ({dept.code}) applied for {leave_req.get_leave_type_display()} "
                                 f"from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}. "
                                 f"Admin approval is required."
                             ),
@@ -1192,7 +1260,10 @@ def manage_leave_requests(request):
                     except Exception as notif_err:
                         logger.warning(f"Failed to create HOD leave notification for admin: {notif_err}")
                         
-                    messages.success(request, "Your leave application has been submitted to College Administration for approval.")
+                    if is_limit_exceeded:
+                        messages.warning(request, f"Your leave application has been submitted as an EMERGENCY LEAVE request (exceeds monthly limit of {monthly_limit} days). Pending Admin approval.")
+                    else:
+                        messages.success(request, "Your leave application has been submitted to College Administration for approval.")
                     return redirect('hod:manage_leave_requests')
             except ValueError:
                 messages.error(request, "Invalid date format submitted.")
@@ -1216,6 +1287,12 @@ def manage_leave_requests(request):
         faculty__department=dept, 
         status='pending'
     ).exclude(faculty=request.faculty).count()
+
+    now = timezone.now()
+    hod_monthly_limit = float(request.faculty.monthly_leave_limit or 2.0)
+    hod_leaves_used = request.faculty.get_monthly_leaves_taken(now.year, now.month)
+    hod_leaves_remaining = request.faculty.get_monthly_leaves_remaining(now.year, now.month)
+    hod_is_limit_reached = request.faculty.is_leave_limit_reached(now.year, now.month)
     
     return render(request, 'hod/leave_requests.html', {
         'department': dept,
@@ -1223,6 +1300,11 @@ def manage_leave_requests(request):
         'my_leaves': my_leaves,
         'status_filter': status_filter,
         'pending_count': pending_count,
+        'hod_monthly_limit': hod_monthly_limit,
+        'hod_leaves_used': hod_leaves_used,
+        'hod_leaves_remaining': hod_leaves_remaining,
+        'hod_is_limit_reached': hod_is_limit_reached,
+        'current_month_name': now.strftime('%B %Y'),
         'leave_type_choices': FacultyLeaveRequest.LEAVE_TYPE_CHOICES,
     })
 
@@ -1745,24 +1827,43 @@ def class_diary_coverage(request):
 
         latest_log = logs.order_by('-date', '-period').first()
 
+        # Detailed planned topic schedule analysis
+        syllabus_data = get_subject_syllabus_progress(subj, faculty=fac, section=sec)
+
         coverage_stats.append({
             'faculty': fac,
             'subject': subj,
             'section': sec,
             'total_logs': total_logs,
             'covered_units': covered_units,
-            'units_done_count': unit_count,
-            'progress_pct': progress_pct,
+            'units_done_count': syllabus_data['units_completed_count'] or unit_count,
+            'progress_pct': syllabus_data['completion_pct'] if syllabus_data['total_topics'] > 0 else progress_pct,
+            'total_planned_topics': syllabus_data['total_topics'],
+            'completed_planned_topics': syllabus_data['completed_topics'],
+            'overdue_topics_count': syllabus_data['overdue_count'],
+            'is_mid1_target_met': syllabus_data['is_mid1_target_met'],
+            'mid1_deadline': syllabus_data['mid1_deadline'],
+            'mid1_target_units': syllabus_data['mid1_target_units'],
+            'status_label': syllabus_data['status_label'],
+            'status_color': syllabus_data['status_color'],
             'latest_log': latest_log,
         })
 
     coverage_stats.sort(key=lambda x: (x['subject'].code, str(x['section'])))
+
+    # Handle audit & dispatch reminders trigger
+    if request.method == 'POST' and request.POST.get('action') == 'dispatch_reminders':
+        sent = check_and_dispatch_syllabus_reminders(branch_id=dept.id, triggered_by=request.user)
+        messages.success(request, f"Syllabus audit completed: {sent} reminder notification(s) sent to faculty with overdue topics.")
+        return redirect('hod:class_diary_coverage')
 
     # Department KPIs
     total_dept_logs = base_qs.count()
     active_faculty_count = base_qs.values('faculty').distinct().count()
     active_subjects_count = base_qs.values('subject').distinct().count()
     avg_progress = int(sum(c['progress_pct'] for c in coverage_stats) / len(coverage_stats)) if coverage_stats else 0
+    total_overdue_count = sum(c['overdue_topics_count'] for c in coverage_stats)
+    delayed_mid1_count = sum(1 for c in coverage_stats if not c['is_mid1_target_met'] and c['mid1_deadline'] and timezone.localdate() > c['mid1_deadline'])
 
     context = {
         'entries': entries,
@@ -1775,6 +1876,8 @@ def class_diary_coverage(request):
         'active_faculty_count': active_faculty_count,
         'active_subjects_count': active_subjects_count,
         'avg_progress': avg_progress,
+        'total_overdue_count': total_overdue_count,
+        'delayed_mid1_count': delayed_mid1_count,
         'search_query': search_query,
         'faculty_id': int(faculty_id) if faculty_id and faculty_id.isdigit() else '',
         'subject_id': int(subject_id) if subject_id and subject_id.isdigit() else '',
@@ -1834,6 +1937,251 @@ def download_student_counselling_report_pdf(request, student_id):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ─────────────────────────────────────────────
+# SUBJECT SYLLABUS & TOPIC SCHEDULE MANAGER (HOD)
+# ─────────────────────────────────────────────
+@hod_required
+def manage_subject_syllabus(request, subject_id=None):
+    """
+    Allows HOD to view, create, edit, and manage the planned topic timetable for every subject
+    in their department, set target completion dates, and audit milestone readiness.
+    """
+    dept = request.department
+    today = timezone.localdate()
+    from core.transfer_utils import parse_flexible_date
+
+    subjects = Subject.objects.filter(branch=dept, is_deleted=False).select_related('year', 'faculty').order_by('year__year', 'semester', 'code')
+    
+    selected_subject = None
+    if subject_id:
+        selected_subject = Subject.objects.filter(id=subject_id, branch=dept, is_deleted=False).first()
+        if not selected_subject:
+            selected_subject = subjects.first()
+    elif subjects.exists():
+        selected_subject = subjects.first()
+
+    if request.method == 'POST' and selected_subject:
+        action = request.POST.get('action')
+
+        if action == 'add_topic':
+            unit_val = request.POST.get('unit_number', '1')
+            unit_number = int(unit_val) if unit_val.isdigit() else 1
+            topic_name = request.POST.get('topic_name', '').strip()
+            target_date_str = request.POST.get('target_date', '').strip()
+            target_milestone = request.POST.get('target_milestone', 'mid1')
+            description = request.POST.get('description', '').strip()
+            order_val = request.POST.get('order', '1')
+            order = int(order_val) if order_val.isdigit() else 1
+
+            target_date = parse_flexible_date(target_date_str) or today
+
+            if not topic_name:
+                messages.error(request, "Topic name is required.")
+            else:
+                SubjectTopicPlan.objects.create(
+                    subject=selected_subject,
+                    unit_number=unit_number,
+                    topic_name=topic_name,
+                    description=description,
+                    target_date=target_date,
+                    target_milestone=target_milestone,
+                    order=order
+                )
+                messages.success(request, f"Topic '{topic_name}' added to Unit {unit_number} schedule.")
+            return redirect('hod:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'edit_topic':
+            topic_id = request.POST.get('topic_id')
+            topic = get_object_or_404(SubjectTopicPlan, id=topic_id, subject=selected_subject)
+            unit_val = request.POST.get('unit_number', str(topic.unit_number))
+            topic.unit_number = int(unit_val) if unit_val.isdigit() else topic.unit_number
+            topic.topic_name = request.POST.get('topic_name', topic.topic_name).strip()
+            target_date_str = request.POST.get('target_date', '').strip()
+            if target_date_str:
+                topic.target_date = parse_flexible_date(target_date_str) or topic.target_date
+            topic.target_milestone = request.POST.get('target_milestone', topic.target_milestone)
+            topic.description = request.POST.get('description', '').strip()
+            order_val = request.POST.get('order', str(topic.order))
+            topic.order = int(order_val) if order_val.isdigit() else topic.order
+            
+            # Allow HOD to set completion if desired
+            is_comp = (request.POST.get('is_completed') == '1')
+            topic.is_completed = is_comp
+            if is_comp and not topic.completed_date:
+                topic.completed_date = today
+            elif not is_comp:
+                topic.completed_date = None
+
+            topic.save()
+            messages.success(request, f"Topic '{topic.topic_name}' updated successfully.")
+            return redirect('hod:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'delete_topic':
+            topic_id = request.POST.get('topic_id')
+            topic = get_object_or_404(SubjectTopicPlan, id=topic_id, subject=selected_subject)
+            t_name = topic.topic_name
+            topic.delete()
+            messages.success(request, f"Topic '{t_name}' deleted.")
+            return redirect('hod:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'bulk_add_topics':
+            bulk_text = request.POST.get('bulk_topics', '').strip()
+            unit_val = request.POST.get('bulk_unit_number', '1')
+            unit_number = int(unit_val) if unit_val.isdigit() else 1
+            target_date_str = request.POST.get('bulk_target_date', '').strip()
+            target_milestone = request.POST.get('bulk_target_milestone', 'mid1')
+            target_date = parse_flexible_date(target_date_str) or today
+
+            created_count = 0
+            if bulk_text:
+                lines = [line.strip() for line in bulk_text.splitlines() if line.strip()]
+                for idx, line in enumerate(lines, 1):
+                    SubjectTopicPlan.objects.create(
+                        subject=selected_subject,
+                        unit_number=unit_number,
+                        topic_name=line,
+                        target_date=target_date,
+                        target_milestone=target_milestone,
+                        order=idx
+                    )
+                    created_count += 1
+                messages.success(request, f"Successfully created {created_count} topics for Unit {unit_number}.")
+            return redirect('hod:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'send_reminders':
+            sent = check_and_dispatch_syllabus_reminders(subject_id=selected_subject.id, branch_id=dept.id, triggered_by=request.user)
+            messages.success(request, f"Syllabus reminders evaluated: {sent} notification(s) sent to faculty and HOD.")
+            return redirect('hod:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+    # Progress & Topics by unit
+    progress_data = None
+    topics_by_unit = {}
+    if selected_subject:
+        progress_data = get_subject_syllabus_progress(selected_subject)
+        all_topics = SubjectTopicPlan.objects.filter(subject=selected_subject).order_by('unit_number', 'order', 'target_date')
+        for u in [1, 2, 3, 4, 5]:
+            topics_by_unit[u] = [t for t in all_topics if t.unit_number == u]
+
+    context = {
+        'dept': dept,
+        'subjects': subjects,
+        'selected_subject': selected_subject,
+        'progress_data': progress_data,
+        'topics_by_unit': topics_by_unit,
+        'unit_choices': ClassDiary.UNIT_CHOICES,
+        'milestone_choices': SubjectTopicPlan.MILESTONE_CHOICES,
+        'today': today,
+    }
+    return render(request, 'hod/manage_subject_syllabus.html', context)
+
+
+# ─────────────────────────────────────────────
+# EXAM TIMETABLE & SYLLABUS MILESTONE SCHEDULES (HOD)
+# ─────────────────────────────────────────────
+@hod_required
+def manage_exam_schedules(request):
+    """
+    Allows HOD to view and set Exam Timetables and Syllabus Milestone targets
+    (e.g., 2.5 units target before Mid-1 date) for their department.
+    """
+    dept = request.department
+    today = timezone.localdate()
+    from core.transfer_utils import parse_flexible_date
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'save_exam_schedule':
+            schedule_id = request.POST.get('schedule_id')
+            year_val = request.POST.get('year')
+            semester = int(request.POST.get('semester', '1'))
+            exam_type = request.POST.get('exam_type', 'mid1')
+            title = request.POST.get('title', '').strip()
+            start_date_str = request.POST.get('start_date', '').strip()
+            end_date_str = request.POST.get('end_date', '').strip()
+            target_units_val = request.POST.get('target_units', '2.5')
+            target_comp_date_str = request.POST.get('target_completion_date', '').strip()
+
+            start_date = parse_flexible_date(start_date_str) or today
+            end_date = parse_flexible_date(end_date_str)
+            target_completion_date = parse_flexible_date(target_comp_date_str) or start_date
+            year_obj = None
+            if year_val and year_val.isdigit():
+                year_obj = Year.objects.filter(Q(year=int(year_val)) | Q(id=int(year_val))).first()
+            if not year_obj:
+                year_obj = Year.objects.first()
+
+            target_units = float(target_units_val) if target_units_val else 2.5
+
+            if not title:
+                title = f"{dept.code} Y{year_obj.year} Sem-{semester} {dict(ExamSchedule.EXAM_TYPE_CHOICES).get(exam_type, 'Exam')}"
+
+            if schedule_id and schedule_id.isdigit():
+                sched = ExamSchedule.objects.filter(id=int(schedule_id)).filter(Q(branch=dept) | Q(branch__isnull=True)).first()
+                if sched:
+                    if sched.branch is None and request.user.role != 'admin':
+                        sched.branch = dept
+                    sched.year = year_obj
+                    sched.semester = semester
+                    sched.exam_type = exam_type
+                    sched.title = title
+                    sched.start_date = start_date
+                    sched.end_date = end_date
+                    sched.target_units = target_units
+                    sched.target_completion_date = target_completion_date
+                    sched.save()
+                    messages.success(request, f"Exam Schedule '{title}' updated successfully.")
+                else:
+                    messages.error(request, "Exam schedule not found.")
+            else:
+                ExamSchedule.objects.create(
+                    branch=dept,
+                    year=year_obj,
+                    semester=semester,
+                    exam_type=exam_type,
+                    title=title,
+                    start_date=start_date,
+                    end_date=end_date,
+                    target_units=target_units,
+                    target_completion_date=target_completion_date,
+                    created_by=request.user
+                )
+                messages.success(request, f"Exam Schedule '{title}' created successfully.")
+            return redirect('hod:manage_exam_schedules')
+
+        elif action == 'delete_exam_schedule':
+            schedule_id = request.POST.get('schedule_id')
+            if schedule_id and schedule_id.isdigit():
+                sched = ExamSchedule.objects.filter(id=int(schedule_id)).filter(Q(branch=dept) | Q(branch__isnull=True)).first()
+                if sched:
+                    if sched.branch is None:
+                        messages.warning(request, "University-wide exam schedules created by College Administration can only be removed by Admin.")
+                    else:
+                        t = sched.title
+                        sched.delete()
+                        messages.success(request, f"Exam Schedule '{t}' deleted.")
+                else:
+                    messages.error(request, "Exam schedule not found.")
+            return redirect('hod:manage_exam_schedules')
+
+    schedules = ExamSchedule.objects.filter(
+        Q(branch=dept) | Q(branch__isnull=True)
+    ).select_related('branch', 'year').order_by('-start_date')
+
+    years = Year.objects.all().order_by('year')
+
+    context = {
+        'dept': dept,
+        'schedules': schedules,
+        'years': years,
+        'exam_types': ExamSchedule.EXAM_TYPE_CHOICES,
+        'semester_choices': Subject.SEMESTER_CHOICES,
+        'today': today,
+    }
+    return render(request, 'hod/manage_exam_schedules.html', context)
+
 
 
 

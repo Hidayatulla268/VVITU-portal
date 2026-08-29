@@ -1,0 +1,224 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Manage Exam Timetables & Syllabus Milestones | HOD Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-file-invoice me-2 text-accent"></i>Exam Timetables & Syllabus Milestones</h1>
+    <p class="ph-sub">Define Mid-1 (2.5 units target), Mid-2, and Semester Final schedules & syllabus deadlines for <strong>{{ dept.name }} ({{ dept.code }})</strong></p>
+  </div>
+  <div class="ph-actions d-flex gap-2">
+    <a href="{% url 'hod:manage_subject_syllabus' %}" class="btn-vvit-secondary">
+      <i class="fas fa-calendar-alt me-1"></i>Subject Syllabus Topic Plan
+    </a>
+    <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#examScheduleModal">
+      <i class="fas fa-plus me-1"></i>+ Add Exam Schedule
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-4">
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-calendar-days me-2 text-accent"></i>Scheduled Examinations & Syllabus Requirements
+    </h3>
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ schedules.count }} Schedule(s)</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Exam Title</th>
+          <th>Year & Sem</th>
+          <th>Exam Type</th>
+          <th>Exam Dates</th>
+          <th>Required Syllabus Target</th>
+          <th>Faculty Deadline</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sched in schedules %}
+        <tr>
+          <td>
+            <strong class="text-white d-block">{{ sched.title }}</strong>
+            <small class="text-muted">{{ sched.branch.code|default:"All Branches" }} Department</small>
+          </td>
+          <td>
+            <span class="badge bg-primary bg-opacity-50 text-light">{{ sched.year }}</span>
+            <span class="badge bg-secondary bg-opacity-50 text-light ms-1">Sem {{ sched.semester }}</span>
+          </td>
+          <td>
+            {% if sched.exam_type == 'mid1' %}
+              <span class="badge bg-primary text-white px-2 py-1">Mid Term 1 (Mid-1)</span>
+            {% elif sched.exam_type == 'mid2' %}
+              <span class="badge bg-warning text-dark fw-bold px-2 py-1">Mid Term 2 (Mid-2)</span>
+            {% else %}
+              <span class="badge bg-info text-dark fw-bold px-2 py-1">{{ sched.get_exam_type_display }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="text-light fw-semibold">
+              <i class="far fa-calendar-alt me-1 text-accent"></i>{{ sched.start_date|date:"d M Y" }}
+              {% if sched.end_date %} to {{ sched.end_date|date:"d M Y" }}{% endif %}
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-dark border border-secondary text-accent fw-bold px-2 py-1" style="font-size: 0.82rem;">
+              {{ sched.target_units }} Units
+            </span>
+          </td>
+          <td>
+            <div class="small {% if sched.is_deadline_passed %}text-danger fw-bold{% else %}text-success{% endif %}">
+              <i class="far fa-clock me-1"></i>{{ sched.target_completion_date|date:"d M Y" }}
+            </div>
+            {% if sched.is_deadline_passed %}
+              <small class="text-danger" style="font-size: 0.68rem;">Deadline Passed</small>
+            {% else %}
+              <small class="text-muted" style="font-size: 0.68rem;">Upcoming</small>
+            {% endif %}
+          </td>
+          <td>
+            {% if sched.is_active %}
+              <span class="badge bg-success bg-opacity-75 text-white px-2 py-1">Active</span>
+            {% else %}
+              <span class="badge bg-secondary text-muted px-2 py-1">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="d-inline-flex gap-1">
+              <button type="button" class="btn btn-sm btn-outline-info p-1 px-2"
+                      onclick="editSchedule({{ sched.id }}, {{ sched.year.year }}, {{ sched.semester }}, '{{ sched.exam_type }}', '{{ sched.title|escapejs }}', '{{ sched.start_date|date:'Y-m-d' }}', '{{ sched.end_date|date:'Y-m-d'|default:'' }}', '{{ sched.target_units }}', '{{ sched.target_completion_date|date:'Y-m-d' }}')">
+                <i class="fas fa-edit"></i>
+              </button>
+              <form method="POST" onsubmit="return confirm('Delete this exam schedule?');" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_exam_schedule">
+                <input type="hidden" name="schedule_id" value="{{ sched.id }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger p-1 px-2" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">
+            <i class="fas fa-calendar-plus fa-3x mb-3 opacity-50 d-block"></i>
+            <p class="mb-0">No exam schedules created yet for this semester. Click <strong>+ Add Exam Schedule</strong> above to set Mid-1 / Mid-2 dates and target units.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add / Edit Exam Schedule Modal -->
+<div class="modal fade" id="examScheduleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom text-white" id="modalTitleText">
+          <i class="fas fa-calendar-plus me-2 text-accent"></i>Add Exam Schedule & Milestone
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_exam_schedule">
+        <input type="hidden" name="schedule_id" id="modalScheduleId">
+        <div class="modal-body py-3">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Exam Title / Description</label>
+              <input type="text" name="title" id="modalScheduleTitle" class="vvit-input" placeholder="e.g. B.Tech CSE II Year Sem-1 Mid-1 Examinations" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Academic Year</label>
+              <select name="year" id="modalScheduleYear" class="vvit-select" required>
+                {% for y in years %}
+                  <option value="{{ y.year }}">{{ y }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Semester</label>
+              <select name="semester" id="modalScheduleSem" class="vvit-select" required>
+                {% for s_val, s_name in semester_choices %}
+                  <option value="{{ s_val }}">{{ s_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Exam Type</label>
+              <select name="exam_type" id="modalScheduleType" class="vvit-select" onchange="onExamTypeChanged()" required>
+                {% for e_val, e_name in exam_types %}
+                  <option value="{{ e_val }}">{{ e_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Required Target Units</label>
+              <input type="number" name="target_units" id="modalTargetUnits" class="vvit-input" step="0.5" min="0.5" max="5.0" value="2.5" required>
+              <small class="text-muted" style="font-size: 0.7rem;">Default: 2.5 for Mid-1, 5.0 for Mid-2</small>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Exam Start Date</label>
+              <input type="date" name="start_date" id="modalStartDate" class="vvit-input" value="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Exam End Date (Optional)</label>
+              <input type="date" name="end_date" id="modalEndDate" class="vvit-input">
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Faculty Syllabus Completion Deadline</label>
+              <input type="date" name="target_completion_date" id="modalCompDate" class="vvit-input" value="{{ today|date:'Y-m-d' }}" required>
+              <small class="text-muted" style="font-size: 0.7rem;">Faculty must complete target units on or before this date.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
+            <i class="fas fa-save me-1"></i>Save Exam Schedule
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function onExamTypeChanged() {
+  let type = document.getElementById('modalScheduleType').value;
+  let targetUnits = document.getElementById('modalTargetUnits');
+  if (type === 'mid1') {
+    targetUnits.value = "2.5";
+  } else if (type === 'mid2' || type === 'final') {
+    targetUnits.value = "5.0";
+  }
+}
+
+function editSchedule(id, year, sem, type, title, start, end, units, compDate) {
+  document.getElementById('modalScheduleId').value = id;
+  document.getElementById('modalTitleText').innerHTML = '<i class="fas fa-edit me-2 text-accent"></i>Edit Exam Schedule';
+  document.getElementById('modalScheduleTitle').value = title;
+  document.getElementById('modalScheduleYear').value = year;
+  document.getElementById('modalScheduleSem').value = sem;
+  document.getElementById('modalScheduleType').value = type;
+  document.getElementById('modalTargetUnits').value = units;
+  document.getElementById('modalStartDate').value = start;
+  document.getElementById('modalEndDate').value = end;
+  document.getElementById('modalCompDate').value = compDate;
+  new bootstrap.Modal(document.getElementById('examScheduleModal')).show();
+}
+</script>
+{% endblock %}

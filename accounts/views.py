@@ -26,22 +26,45 @@ def login_view(request):
     Supports the VVIT username format (e.g., 24BQ1A4942) or email.
     """
     if request.user.is_authenticated:
-        return redirect(request.user.get_dashboard_url())
+        role = getattr(request.user, 'role', None)
+        has_valid_profile = True
+        if role == 'student':
+            has_valid_profile = Student.objects.filter(user=request.user).exists()
+        elif role in {'faculty', 'hod', 'lab_technician'}:
+            has_valid_profile = Faculty.objects.filter(user=request.user).exists()
+        elif role == 'deo':
+            from accounts.models import DEOProfile
+            has_valid_profile = DEOProfile.objects.filter(user=request.user).exists()
+
+        if has_valid_profile:
+            dash_url = request.user.get_dashboard_url()
+            if dash_url and dash_url != request.path_info:
+                return redirect(dash_url)
+        else:
+            logout(request)
+            messages.warning(request, "Your account does not have an active profile. Please contact the administrator.")
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
 
-        # Resolve username case-insensitively, also supporting email-based login
         from django.contrib.auth import get_user_model
         from django.db.models import Q
         User = get_user_model()
+        
+        # Fast direct lookup with select_related for instant profile access
         db_user = User.objects.filter(
             Q(username__iexact=username) | Q(email__iexact=username)
-        ).first()
-        resolved_username = db_user.username if db_user else username
+        ).select_related('student_profile').first()
 
-        user = authenticate(request, username=resolved_username, password=password)
+        user = None
+        if db_user and db_user.is_active and db_user.check_password(password):
+            user = db_user
+        else:
+            # Fallback to standard backend authentication
+            resolved_username = db_user.username if db_user else username
+            user = authenticate(request, username=resolved_username, password=password)
+
         if user is not None:
             # Clear login attempts on success to reset brute-force counters
             from django.core.cache import cache
@@ -51,7 +74,7 @@ def login_view(request):
             else:
                 ip = request.META.get('REMOTE_ADDR')
             cache.delete(f"login_attempts_{ip}")
-            cache.delete(f"login_attempts_user_{resolved_username.lower()}")
+            cache.delete(f"login_attempts_user_{username.lower()}")
 
             login(request, user)
             messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")

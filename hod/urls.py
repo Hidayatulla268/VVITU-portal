@@ -49,5 +49,8 @@ urlpatterns = [
     path('ajax/branch-timetable/',   views.ajax_get_branch_timetable_slots,  name='ajax_branch_timetable'),
     # Class Diary & Syllabus Coverage
     path('class-diary/',             views.class_diary_coverage,              name='class_diary_coverage'),
+    path('syllabus/',                views.manage_subject_syllabus,           name='manage_subject_syllabus'),
+    path('syllabus/<int:subject_id>/', views.manage_subject_syllabus,         name='manage_subject_syllabus_subject'),
+    path('exam-schedules/',          views.manage_exam_schedules,             name='manage_exam_schedules'),
 ]
 

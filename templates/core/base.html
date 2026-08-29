@@ -170,6 +170,9 @@
       <a href="{% url 'student:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' %}active{% endif %}">
         <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
       </a>
+      <a href="{% url 'student:syllabus_coverage' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'student' %}active{% endif %}">
+        <i class="fas fa-book-bookmark nav-icon"></i><span>Syllabus Tracker</span>
+      </a>
       <a href="{% url 'student:results' %}" class="nav-link {% if request.resolver_match.url_name == 'results' %}active{% endif %}">
         <i class="fas fa-chart-bar nav-icon"></i><span>Results</span>
       </a>
@@ -201,6 +204,9 @@
       </a>
       <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
+      </a>
+      <a href="{% url 'faculty:my_syllabus_tracker' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Syllabus Tracker</span>
       </a>
       <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-file-chart-line nav-icon"></i><span>Reports</span>
@@ -246,6 +252,12 @@
       <a href="{% url 'hod:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
       </a>
+      <a href="{% url 'hod:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Topic Schedule Plan</span>
+      </a>
+      <a href="{% url 'hod:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-file-invoice nav-icon"></i><span>Exam Milestones</span>
+      </a>
       <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
         <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
       </a>
@@ -278,15 +290,21 @@
       </a>
 
       <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title px-3 py-2 text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em; font-weight: 700; opacity: 0.75;">My Teaching</div>
+      <div class="sidebar-section-title px-3 py-2 text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em; font-weight: 700; opacity: 0.75;">My Teaching (Faculty Tools)</div>
       <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Dashboard</span>
       </a>
       <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
       </a>
+      <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
+      </a>
+      <a href="{% url 'faculty:my_syllabus_tracker' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>My Syllabus Tracker</span>
+      </a>
       <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-file-chart-line nav-icon"></i><span>Reports</span>
+        <i class="fas fa-file-chart-line nav-icon"></i><span>Attendance Reports</span>
       </a>
       <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-user-graduate nav-icon"></i><span>My Students</span>
@@ -296,6 +314,9 @@
       </a>
       <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_marks' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
+      </a>
+      <a href="{% url 'faculty:my_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'my_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-user-clock nav-icon"></i><span>My Attendance Log</span>
       </a>
       <a href="{% url 'faculty:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
@@ -348,6 +369,12 @@
       </a>
       <a href="{% url 'admin_dashboard:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
         <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Topic Schedule Plan</span>
+      </a>
+      <a href="{% url 'admin_dashboard:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-file-invoice nav-icon"></i><span>Exam Milestones</span>
       </a>
       <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fas fa-cubes nav-icon"></i><span>Manage Sections</span>

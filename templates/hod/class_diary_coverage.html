@@ -34,24 +34,6 @@
   </div>
   <div class="col-sm-6 col-md-3">
     <div class="kpi-card kpi-success">
-      <div class="kpi-icon"><i class="fas fa-chalkboard-user"></i></div>
-      <div class="kpi-body">
-        <span class="kpi-value">{{ active_faculty_count }}</span>
-        <span class="kpi-label">Active Faculty</span>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-md-3">
-    <div class="kpi-card kpi-warning">
-      <div class="kpi-icon"><i class="fas fa-book-open"></i></div>
-      <div class="kpi-body">
-        <span class="kpi-value">{{ active_subjects_count }}</span>
-        <span class="kpi-label">Subjects Covered</span>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-md-3">
-    <div class="kpi-card kpi-accent">
       <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
       <div class="kpi-body">
         <span class="kpi-value">{{ avg_progress }}%</span>
@@ -59,15 +41,48 @@
       </div>
     </div>
   </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="kpi-card {% if delayed_mid1_count > 0 %}kpi-danger{% else %}kpi-warning{% endif %}">
+      <div class="kpi-icon"><i class="fas fa-file-signature"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ delayed_mid1_count }}</span>
+        <span class="kpi-label">Mid-1 Milestone Delayed</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="kpi-card {% if total_overdue_count > 0 %}kpi-danger{% else %}kpi-accent{% endif %}">
+      <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ total_overdue_count }}</span>
+        <span class="kpi-label">Overdue Topic(s)</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── SECTION 1: Syllabus & Unit Completion Progress Table ── -->
 <div class="glass-card mb-4">
-  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
-    <h3 class="card-title-custom mb-0">
-      <i class="fas fa-layer-group me-2 text-accent"></i>Faculty Syllabus & Unit Completion Overview
-    </h3>
-    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ coverage_stats|length }} Teaching Assignment(s)</span>
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-layer-group me-2 text-accent"></i>Faculty Syllabus, Planned Topics & Exam Milestone Tracking
+      </h3>
+      <small class="text-muted">Target: 2.5 Units before Mid-1 Exam. Incomplete topics trigger notifications to Faculty and HOD.</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <form method="POST" onsubmit="return confirm('Audit all department subjects and send notification reminders for delayed/overdue topics?');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="dispatch_reminders">
+        <button type="submit" class="btn-vvit-outline btn-sm text-warning" title="Send notification to faculty with pending/overdue topics">
+          <i class="fas fa-bell me-1"></i>Audit & Send Reminders
+        </button>
+      </form>
+      <a href="{% url 'hod:manage_subject_syllabus' %}" class="btn-vvit-primary btn-sm">
+        <i class="fas fa-calendar-alt me-1"></i>Manage Subject Topics
+      </a>
+      <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ coverage_stats|length }} Assignment(s)</span>
+    </div>
   </div>
 
   {% if coverage_stats %}
@@ -78,21 +93,24 @@
           <th>Faculty Member</th>
           <th>Subject</th>
           <th>Section</th>
-          <th>Units Covered</th>
+          <th>Units Done</th>
           <th style="min-width: 140px;">Syllabus Progress</th>
-          <th>Total Logs</th>
-          <th>Latest Topic & Date</th>
+          <th>Mid-1 Milestone (2.5u)</th>
+          <th>Schedule Status</th>
+          <th class="text-end">Manage</th>
         </tr>
       </thead>
       <tbody>
         {% for stat in coverage_stats %}
-        <tr>
+        <tr style="{% if stat.overdue_topics_count > 0 %}background: rgba(239, 68, 68, 0.06); border-left: 3px solid #ef4444;{% endif %}">
           <td>
             <div class="fw-bold text-white"><i class="fas fa-user-tie me-1 text-accent"></i>Prof. {{ stat.faculty.full_name }}</div>
             <small class="text-muted">{{ stat.faculty.employee_id }}</small>
           </td>
           <td>
-            <span class="badge bg-primary bg-opacity-75 text-light">{{ stat.subject.code }}</span>
+            <a href="{% url 'hod:manage_subject_syllabus_subject' stat.subject.id %}" class="badge bg-primary bg-opacity-75 text-light text-decoration-none" title="View/Edit Topic Plan">
+              {{ stat.subject.code }}
+            </a>
             <div class="text-light small mt-1">{{ stat.subject.name }}</div>
           </td>
           <td>
@@ -111,35 +129,56 @@
                   </span>
                 {% endif %}
               {% endfor %}
-              {% if 6 in stat.covered_units %}
-                <span class="badge bg-info bg-opacity-50 text-light" style="font-size: 0.7rem;" title="Revision / Lab / Other">Rev</span>
-              {% endif %}
             </div>
+            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">{{ stat.units_done_count }} / 5.0 Units</small>
           </td>
           <td>
             <div class="d-flex align-items-center gap-2">
               <div class="progress flex-grow-1 bg-dark bg-opacity-50 border border-secondary border-opacity-25" style="height: 8px;">
-                <div class="progress-bar {% if stat.progress_pct >= 80 %}bg-success{% elif stat.progress_pct >= 40 %}bg-warning{% else %}bg-danger{% endif %}"
-                     role="progressbar" style="width: {{ stat.progress_pct }}%;" aria-valuenow="{{ stat.progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress-bar {% if stat.progress_pct >= 80 %}bg-success{% elif stat.progress_pct >= 50 %}bg-info{% elif stat.progress_pct >= 30 %}bg-warning{% else %}bg-danger{% endif %}"
+                     role="progressbar" style="width: {{ stat.progress_pct }}%;"></div>
               </div>
               <span class="small fw-bold text-light">{{ stat.progress_pct }}%</span>
             </div>
-            <small class="text-muted" style="font-size: 0.72rem;">{{ stat.units_done_count }} / 5 Units</small>
-          </td>
-          <td>
-            <span class="badge bg-dark border border-secondary border-opacity-50 text-white fw-bold px-2 py-1">
-              {{ stat.total_logs }}
-            </span>
-          </td>
-          <td>
-            {% if stat.latest_log %}
-              <div class="text-light small fw-semibold" style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ stat.latest_log.topic_covered }}">
-                {{ stat.latest_log.topic_covered }}
-              </div>
-              <small class="text-muted"><i class="far fa-calendar-alt me-1 text-warning"></i>{{ stat.latest_log.date|date:"d M Y" }} (P{{ stat.latest_log.period }})</small>
+            {% if stat.total_planned_topics > 0 %}
+              <small class="text-muted" style="font-size: 0.72rem;">{{ stat.completed_planned_topics }}/{{ stat.total_planned_topics }} topics planned</small>
             {% else %}
-              <span class="text-muted small italic">No lectures logged</span>
+              <small class="text-muted" style="font-size: 0.72rem;">{{ stat.total_logs }} diary log(s)</small>
             {% endif %}
+          </td>
+          <td>
+            {% if stat.is_mid1_target_met %}
+              <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-check-circle me-1"></i>Achieved
+              </span>
+            {% elif stat.mid1_deadline and today > stat.mid1_deadline %}
+              <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-triangle-exclamation me-1"></i>Delayed
+              </span>
+            {% else %}
+              <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-clock me-1"></i>In Progress
+              </span>
+            {% endif %}
+            {% if stat.mid1_deadline %}
+              <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Target: {{ stat.mid1_deadline|date:"d M" }}</small>
+            {% endif %}
+          </td>
+          <td>
+            {% if stat.overdue_topics_count > 0 %}
+              <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-bell me-1"></i>{{ stat.overdue_topics_count }} Topic(s) Overdue
+              </span>
+            {% else %}
+              <span class="badge bg-success bg-opacity-50 text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-check me-1"></i>On Schedule
+              </span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{% url 'hod:manage_subject_syllabus_subject' stat.subject.id %}" class="btn btn-sm btn-outline-info p-1 px-2" title="View & Edit Subject Topic Schedule">
+              <i class="fas fa-calendar-alt me-1"></i>Plan
+            </a>
           </td>
         </tr>
         {% endfor %}

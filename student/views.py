@@ -19,11 +19,21 @@ from django.contrib import messages
 from accounts.models import Student, Achievement
 from core.models import (
     Timetable, Attendance, Result, Exam,
-    AcademicCalendar, QuestionPaper, Subject, ClassDiary
+    AcademicCalendar, QuestionPaper, Subject, ClassDiary,
+    SubjectTopicPlan, ExamSchedule
 )
+from core.syllabus_utils import get_subject_syllabus_progress
 
 import datetime
 from functools import wraps
+
+# Pre-load ML modules at server startup to prevent request-time import lag
+try:
+    import numpy as np
+    from sklearn.linear_model import LinearRegression
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
 
 
 # ── Decorator ────────────────────────────────────────────────────────────────
@@ -39,7 +49,9 @@ def student_required(view_func):
         try:
             request.student = request.user.student_profile
         except Student.DoesNotExist:
-            messages.error(request, "Student profile not found — please contact admin.")
+            from django.contrib.auth import logout
+            logout(request)
+            messages.error(request, "Student profile not found — please contact administrator.")
             return redirect('accounts:login')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -48,7 +60,12 @@ def student_required(view_func):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _attendance_stats(student):
-    """Return a per-subject list of {code, name, total, present, percentage}."""
+    """Return a per-subject list of {code, name, total, present, percentage} (60s cache)."""
+    cache_key = f"student_attn_stats_v2_{student.id}"
+    cached_stats = cache.get(cache_key)
+    if cached_stats is not None:
+        return cached_stats
+
     records = (
         Attendance.objects
         .filter(student=student)
@@ -66,7 +83,9 @@ def _attendance_stats(student):
     for s in stats.values():
         t = s['total']
         s['percentage'] = round(s['present'] / t * 100, 1) if t else 0
-    return list(stats.values())
+    res = list(stats.values())
+    cache.set(cache_key, res, timeout=60)
+    return res
 
 
 def _overall_attendance(stats):
@@ -77,14 +96,16 @@ def _overall_attendance(stats):
 
 def _predict_attendance(student):
     """
-    Linear regression prediction of semester-end attendance.
+    Linear regression prediction of semester-end attendance (60s cache).
     Returns None gracefully if scikit-learn is absent or data is sparse.
     """
-    try:
-        import numpy as np
-        from sklearn.linear_model import LinearRegression
-    except ImportError:
+    if not SKLEARN_AVAILABLE:
         return None
+
+    cache_key = f"student_ai_pred_v2_{student.id}"
+    cached_pred = cache.get(cache_key)
+    if cached_pred is not None:
+        return cached_pred if cached_pred != 'NONE' else None
 
     today  = timezone.localdate()
     start  = today - datetime.timedelta(days=60)
@@ -95,6 +116,7 @@ def _predict_attendance(student):
         .values('date', 'status')
     )
     if len(rows) < 5:
+        cache.set(cache_key, 'NONE', timeout=60)
         return None
 
     dates = sorted(set(r['date'] for r in rows))
@@ -116,6 +138,7 @@ def _predict_attendance(student):
             y.append(cp / ct * 100)
 
     if len(X) < 3:
+        cache.set(cache_key, 'NONE', timeout=60)
         return None
 
     np_X = np.array(X)
@@ -123,11 +146,13 @@ def _predict_attendance(student):
     m    = LinearRegression().fit(np_X, np_y)
     pred = float(m.predict([[120]])[0])
 
-    return {
+    res = {
         'predicted_pct': round(max(0.0, min(100.0, pred)), 1),
         'trend':         'rising' if m.coef_[0] > 0 else 'falling',
         'r2':            round(float(m.score(np_X, np_y)), 2),
     }
+    cache.set(cache_key, res, timeout=60)
+    return res
 
 
 # ── Views ─────────────────────────────────────────────────────────────────────
@@ -182,8 +207,8 @@ def dashboard(request):
 @student_required
 def class_diary(request):
     """
-    Displays daily class lesson & discussion logs for the student's section.
-    Allows filtering by subject, date range, and keyword search.
+    Displays daily class lesson & discussion logs for the student's section,
+    along with syllabus progress summary per subject.
     """
     student = request.student
     section = student.section
@@ -191,7 +216,7 @@ def class_diary(request):
     from core.transfer_utils import parse_flexible_date
 
     if not section:
-        return render(request, 'student/class_diary.html', {'no_section': True, 'entries': []})
+        return render(request, 'student/class_diary.html', {'no_section': True, 'entries': [], 'syllabus_summaries': []})
 
     search_query  = request.GET.get('search', '').strip()
     subject_id    = request.GET.get('subject_id', '').strip()
@@ -228,21 +253,79 @@ def class_diary(request):
 
     entries = diary_qs.order_by('-date', '-period')
 
-    # Get subjects taught in this section
+    # Get subjects taught in this section and their syllabus progress
     section_subj_ids = Timetable.objects.filter(section=section).values_list('subject_id', flat=True).distinct()
-    section_subjects = Subject.objects.filter(id__in=section_subj_ids, is_deleted=False)
+    section_subjects = Subject.objects.filter(id__in=section_subj_ids, is_deleted=False).order_by('code')
+
+    syllabus_summaries = []
+    for subj in section_subjects:
+        prog = get_subject_syllabus_progress(subj)
+        syllabus_summaries.append({
+            'subject': subj,
+            'completion_pct': prog['completion_pct'],
+            'units_completed_count': prog['units_completed_count'],
+            'total_topics': prog['total_topics'],
+            'completed_topics': prog['completed_topics'],
+            'is_mid1_target_met': prog['is_mid1_target_met'],
+            'mid1_deadline': prog['mid1_deadline'],
+            'status_label': prog['status_label'],
+            'status_color': prog['status_color'],
+        })
 
     return render(request, 'student/class_diary.html', {
         'student': student,
         'section': section,
         'entries': entries,
         'section_subjects': section_subjects,
+        'syllabus_summaries': syllabus_summaries,
         'search_query': search_query,
         'subject_id': int(subject_id) if subject_id and subject_id.isdigit() else '',
         'date_from': date_from_str,
         'date_to': date_to_str,
         'today': today,
     })
+
+
+@student_required
+def syllabus_coverage(request, subject_id=None):
+    """
+    Detailed view for students to see the full planned topic timetable,
+    how many topics were covered per unit, upcoming topics, and Mid-1 / Mid-2 exam readiness.
+    """
+    student = request.student
+    section = student.section
+    today   = timezone.localdate()
+
+    # Subjects for student's branch & year & current semester
+    semester = (student.year.year * 2) - 1 if student.year else 1
+    subjects = Subject.objects.filter(branch=student.branch, year=student.year, semester=semester, is_deleted=False).order_by('code')
+    if not subjects.exists():
+        subjects = Subject.objects.filter(branch=student.branch, year=student.year, is_deleted=False).order_by('code')
+
+    selected_subject = None
+    if subject_id:
+        selected_subject = get_object_or_404(Subject, id=subject_id, is_deleted=False)
+    elif subjects.exists():
+        selected_subject = subjects.first()
+
+    progress_data = None
+    topics_by_unit = {}
+    if selected_subject:
+        progress_data = get_subject_syllabus_progress(selected_subject)
+        all_topics = SubjectTopicPlan.objects.filter(subject=selected_subject).order_by('unit_number', 'order', 'target_date')
+        for u in [1, 2, 3, 4, 5]:
+            topics_by_unit[u] = [t for t in all_topics if t.unit_number == u]
+
+    context = {
+        'student': student,
+        'section': section,
+        'subjects': subjects,
+        'selected_subject': selected_subject,
+        'progress_data': progress_data,
+        'topics_by_unit': topics_by_unit,
+        'today': today,
+    }
+    return render(request, 'student/syllabus_coverage.html', context)
 
 
 @student_required

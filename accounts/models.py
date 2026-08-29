@@ -160,7 +160,13 @@ class Student(models.Model):
         return round(present / total * 100, 1)
 
     def calculate_cgpa(self):
-        """Calculate CGPA for the student across all released final results."""
+        """Calculate CGPA for the student across all released final results (60s cache)."""
+        from django.core.cache import cache
+        cache_key = f"student_cgpa_{self.id}"
+        cached_cgpa = cache.get(cache_key)
+        if cached_cgpa is not None:
+            return cached_cgpa
+
         from core.models import Result
         grade_points = {
             'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 5,
@@ -180,7 +186,9 @@ class Student(models.Model):
                 cgpa_points += points * r.subject.credits
                 cgpa_credits += r.subject.credits
                 
-        return round(cgpa_points / cgpa_credits, 2) if cgpa_credits > 0 else 0.0
+        res = round(cgpa_points / cgpa_credits, 2) if cgpa_credits > 0 else 0.0
+        cache.set(cache_key, res, timeout=60)
+        return res
 
     def get_backlogs(self):
         """
@@ -227,6 +235,7 @@ class Faculty(models.Model):
     department  = models.ForeignKey('core.Branch', on_delete=models.SET_NULL, null=True, db_index=True)
     designation = models.CharField(max_length=100, blank=True)
     joining_date= models.DateField(null=True, blank=True)
+    monthly_leave_limit = models.DecimalField(max_digits=4, decimal_places=1, default=2.0, verbose_name="Monthly Leave Limit (Days)")
     is_active   = models.BooleanField(default=True)
 
     class Meta:
@@ -247,6 +256,57 @@ class Faculty(models.Model):
     @property
     def phone(self):
         return self.user.phone
+
+    def get_monthly_leaves_taken(self, year=None, month=None, exclude_request_id=None):
+        """
+        Calculate total approved leave days taken by faculty in the given month and year.
+        If year/month not provided, defaults to current month/year.
+        Handles full day spans and 0.5 half days.
+        """
+        import datetime
+        import calendar
+        from django.utils import timezone
+        if not year or not month:
+            now = timezone.now()
+            year = now.year
+            month = now.month
+
+        _, last_day = calendar.monthrange(year, month)
+        m_start = datetime.date(year, month, 1)
+        m_end = datetime.date(year, month, last_day)
+
+        qs = self.leave_requests.filter(
+            status='approved',
+            start_date__lte=m_end,
+            end_date__gte=m_start
+        )
+        if exclude_request_id:
+            qs = qs.exclude(id=exclude_request_id)
+
+        total_days = 0.0
+        for lr in qs:
+            if lr.is_half_day:
+                if m_start <= lr.start_date <= m_end:
+                    total_days += 0.5
+            else:
+                c_start = max(lr.start_date, m_start)
+                c_end = min(lr.end_date, m_end)
+                if c_end >= c_start:
+                    total_days += (c_end - c_start).days + 1
+
+        return round(float(total_days), 1)
+
+    def get_monthly_leaves_remaining(self, year=None, month=None):
+        """Return remaining leave balance in days for this month (clamped >= 0)."""
+        taken = self.get_monthly_leaves_taken(year, month)
+        limit = float(self.monthly_leave_limit or 2.0)
+        return max(0.0, round(limit - taken, 1))
+
+    def is_leave_limit_reached(self, year=None, month=None):
+        """Return True if faculty has used or exceeded their monthly limit."""
+        taken = self.get_monthly_leaves_taken(year, month)
+        limit = float(self.monthly_leave_limit or 2.0)
+        return taken >= limit
 
 
 # ─────────────────────────────────────────────
@@ -341,6 +401,10 @@ class FacultyLeaveRequest(models.Model):
     reason           = models.TextField()
     substitute_notes = models.TextField(blank=True, null=True, help_text="Class substitution or arrangement notes")
     
+    is_limit_exceeded = models.BooleanField(
+        default=False, 
+        help_text="True if this leave request exceeds faculty's monthly limit (Emergency Leave)"
+    )
     status           = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending', db_index=True)
     action_by        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='actioned_leaves')
     action_at        = models.DateTimeField(null=True, blank=True)
@@ -368,6 +432,41 @@ class FacultyLeaveRequest(models.Model):
                 return 0.5
             return (self.end_date - self.start_date).days + 1
         return 0
+
+    def calculate_days_in_month(self, year, month):
+        """Calculate number of leave days in this specific month."""
+        import datetime
+        import calendar
+        if not self.start_date or not self.end_date:
+            return 0.0
+        _, last_day = calendar.monthrange(year, month)
+        m_start = datetime.date(year, month, 1)
+        m_end = datetime.date(year, month, last_day)
+
+        if self.is_half_day:
+            return 0.5 if (m_start <= self.start_date <= m_end) else 0.0
+        c_start = max(self.start_date, m_start)
+        c_end = min(self.end_date, m_end)
+        if c_end >= c_start:
+            return float((c_end - c_start).days + 1)
+        return 0.0
+
+    @property
+    def is_emergency_leave(self):
+        """
+        True if marked as limit exceeded or dynamically exceeds the monthly leave quota.
+        """
+        if self.is_limit_exceeded:
+            return True
+        if self.start_date and self.faculty:
+            y = self.start_date.year
+            m = self.start_date.month
+            already_taken = self.faculty.get_monthly_leaves_taken(y, m, exclude_request_id=self.id)
+            limit = float(self.faculty.monthly_leave_limit or 2.0)
+            req_days = self.calculate_days_in_month(y, m)
+            if (already_taken + req_days) > limit:
+                return True
+        return False
 
 
 # ─────────────────────────────────────────────

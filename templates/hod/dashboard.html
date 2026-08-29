@@ -137,6 +137,157 @@
   </div>
 </div>
 
+<!-- HOD Teaching & Personal Faculty Hub -->
+<div class="glass-card mb-4" style="border-top: 3px solid var(--accent);">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+    <div>
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-chalkboard-user me-2 text-accent"></i>My Teaching & Class Schedule <span class="badge bg-accent text-dark fw-bold ms-2" style="font-size:0.72rem;">Faculty Mode</span>
+      </h3>
+      <small class="text-muted">Manage your own assigned subjects, daily class diary, attendance, and leave requests</small>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="badge bg-dark border border-secondary text-light px-2.5 py-1.5" style="font-size:0.75rem;">
+        <i class="fas fa-calendar-day me-1 text-accent"></i>{{ today|date:"l, d M Y" }}
+      </span>
+      <a href="{% url 'faculty:dashboard' %}" class="btn-sm-accent text-decoration-none" style="padding: 4px 12px; font-size:0.8rem;">
+        <i class="fas fa-external-link-alt me-1"></i>Full Teaching Panel
+      </a>
+    </div>
+  </div>
+
+  <!-- Teaching Quick KPI Row -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+        <span class="text-muted d-block small" style="font-size:0.72rem;">Classes Today</span>
+        <strong class="text-white fs-5">{{ my_timetable_today|length }}</strong>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+        <span class="text-muted d-block small" style="font-size:0.72rem;">Taught Subjects</span>
+        <strong class="text-accent fs-5">{{ my_subjects|length }}</strong>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+        <span class="text-muted d-block small" style="font-size:0.72rem;">Mentee Students</span>
+        <strong class="text-info fs-5">{{ my_counselled_count }}</strong>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+        <span class="text-muted d-block small" style="font-size:0.72rem;">Leave Quota Left</span>
+        <strong class="{% if my_leave_limit_reached %}text-danger{% else %}text-success{% endif %} fs-5">{{ my_leaves_remaining }}d <small class="text-muted" style="font-size:0.68rem;">/ {{ my_monthly_limit }}d</small></strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Today's Schedule Table -->
+    <div class="col-lg-7">
+      <div class="card-header-custom p-0 mb-2 border-0">
+        <h5 class="text-white fw-bold mb-0" style="font-size:0.92rem;"><i class="fas fa-clock me-1 text-accent"></i>Today's Class Schedule</h5>
+      </div>
+      {% if my_timetable_today %}
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr><th>Period</th><th>Subject</th><th>Section</th><th>Classroom</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for slot in my_timetable_today %}
+            <tr>
+              <td><span class="period-badge">P{{ slot.period }}</span></td>
+              <td>
+                <div class="fw-bold text-accent" style="font-size:0.88rem;">
+                  <span class="badge bg-accent text-dark fw-bold px-1.5 py-0 me-1" style="font-size:0.72rem;">{{ slot.subject.code }}</span>
+                  {{ slot.subject.short_name }}
+                </div>
+                <small class="text-muted" style="font-size:0.75rem;">{{ slot.subject.name|truncatechars:24 }}</small>
+              </td>
+              <td><span class="badge-section small">{{ slot.section }}</span></td>
+              <td><i class="fas fa-door-open text-accent me-1"></i><small class="text-light">{{ slot.room_number|default:"Room 101" }}</small></td>
+              <td>
+                <a href="{% url 'faculty:mark_attendance' %}" class="btn-sm-accent" style="padding: 2px 8px; font-size:0.75rem;">
+                  <i class="fas fa-check me-1"></i>Mark
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-3 text-center text-muted rounded" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08);">
+        <i class="fas fa-coffee fa-2x mb-1 opacity-50"></i>
+        <p class="small mb-0">No teaching classes scheduled for you today ({{ day_name }}).</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick Faculty Actions -->
+    <div class="col-lg-5">
+      <div class="card-header-custom p-0 mb-2 border-0">
+        <h5 class="text-white fw-bold mb-0" style="font-size:0.92rem;"><i class="fas fa-bolt me-1 text-accent"></i>My Faculty Actions</h5>
+      </div>
+      <div class="row g-2">
+        <div class="col-6">
+          <a href="{% url 'faculty:mark_attendance' %}" class="hod-command-tile p-2.5">
+            <div class="tile-icon text-success" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-user-check"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.82rem;">Mark Attendance</div>
+              <small class="text-muted" style="font-size:0.7rem;">Period attendance</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-6">
+          <a href="{% url 'faculty:class_diary' %}" class="hod-command-tile p-2.5">
+            <div class="tile-icon text-info" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-book-reader"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.82rem;">Class Diary</div>
+              <small class="text-muted" style="font-size:0.7rem;">Daily topic logs</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-6">
+          <a href="{% url 'faculty:my_syllabus_tracker' %}" class="hod-command-tile p-2.5">
+            <div class="tile-icon text-accent" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-calendar-alt"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.82rem;">My Syllabus</div>
+              <small class="text-muted" style="font-size:0.7rem;">Topic milestones</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-6">
+          <a href="{% url 'faculty:counselled_students' %}" class="hod-command-tile p-2.5">
+            <div class="tile-icon text-warning" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-user-graduate"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.82rem;">My Students</div>
+              <small class="text-muted" style="font-size:0.7rem;">Mentoring notes</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-12">
+          <a href="{% url 'hod:manage_leave_requests' %}#my-leaves" class="hod-command-tile p-2.5" style="border-left: 3px solid {% if my_leave_limit_reached %}#ef4444{% else %}#06b6d4{% endif %};">
+            <div class="tile-icon text-danger" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-calendar-minus"></i></div>
+            <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold" style="font-size:0.82rem;">Apply for Leave (Admin Approval)</div>
+                <small class="text-muted" style="font-size:0.7rem;">Remaining: {{ my_leaves_remaining }} / {{ my_monthly_limit }} days</small>
+              </div>
+              <span class="badge {% if my_leave_limit_reached %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-2 py-1" style="font-size:0.7rem;">
+                {% if my_leave_limit_reached %}Emergency{% else %}Active{% endif %}
+              </span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 4 Categorized Command Hubs -->
 <div class="row g-4 mb-4">
   <!-- Hub 1: Academic & Curriculum -->
@@ -270,6 +421,24 @@
             <div>
               <div class="fw-bold" style="font-size:0.88rem;">Class Diary & Syllabus</div>
               <small class="text-muted" style="font-size:0.75rem;">Track topics taught & unit completion</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_subject_syllabus' %}" class="hod-command-tile">
+            <div class="tile-icon text-accent"><i class="fas fa-calendar-alt"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Topic Schedule Plan</div>
+              <small class="text-muted" style="font-size:0.75rem;">Update subject topics & target dates</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'hod:manage_exam_schedules' %}" class="hod-command-tile">
+            <div class="tile-icon text-warning"><i class="fas fa-file-invoice"></i></div>
+            <div>
+              <div class="fw-bold" style="font-size:0.88rem;">Exam Milestones</div>
+              <small class="text-muted" style="font-size:0.75rem;">Mid-1 (2.5u) & Mid-2 faculty deadlines</small>
             </div>
           </a>
         </div>

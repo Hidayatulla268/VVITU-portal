@@ -33,9 +33,11 @@ from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequ
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
     Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
-    FacultyAttendance, ClassTransfer, Notification, ensure_sections_for_all_branches
+    FacultyAttendance, ClassTransfer, ClassDiary, Notification,
+    SubjectTopicPlan, ExamSchedule, ensure_sections_for_all_branches
 )
 from core.sms_utils import send_result_notifications, send_result_sms_to_parent
+from core.syllabus_utils import get_subject_syllabus_progress, check_and_dispatch_syllabus_reminders
 
 
 # ─────────────────────────────────────────────
@@ -343,11 +345,18 @@ def add_faculty(request):
             role       = role,
             phone      = p.get('phone', ''),
         )
+        leave_limit_raw = p.get('monthly_leave_limit', '2.0').strip()
+        try:
+            monthly_leave_limit = max(0.0, float(leave_limit_raw))
+        except (ValueError, TypeError):
+            monthly_leave_limit = 2.0
+
         Faculty.objects.create(
             user        = user,
             employee_id = emp,
             department_id = p.get('department') or None,
             designation = p.get('designation', '') or ('Data Entry Operator' if role == 'deo' else 'Associate Professor'),
+            monthly_leave_limit = monthly_leave_limit,
         )
         if role == 'deo':
             DEOProfile.objects.create(
@@ -379,7 +388,7 @@ def delete_faculty(request, pk):
 
 @admin_required
 def edit_faculty(request, pk):
-    """Edit an existing faculty member's name, phone, department, and designation."""
+    """Edit an existing faculty member's name, phone, department, designation, and monthly leave limit."""
     fac      = get_object_or_404(Faculty, pk=pk)
     branches = Branch.objects.all()
 
@@ -415,6 +424,12 @@ def edit_faculty(request, pk):
 
         fac.department_id = p.get('department') or fac.department_id
         fac.designation   = p.get('designation', fac.designation)
+        leave_limit_raw   = p.get('monthly_leave_limit', '').strip()
+        if leave_limit_raw:
+            try:
+                fac.monthly_leave_limit = max(0.0, float(leave_limit_raw))
+            except (ValueError, TypeError):
+                pass
         
         if role == 'deo':
             if not fac.designation:
@@ -433,7 +448,7 @@ def edit_faculty(request, pk):
             DEOProfile.objects.filter(user=u).delete()
             
         fac.save()
-        messages.success(request, f"Faculty/Staff {fac.employee_id} updated.")
+        messages.success(request, f"Faculty/Staff {fac.employee_id} updated successfully.")
         return redirect('admin_dashboard:manage_faculty')
 
     context = {
@@ -508,9 +523,10 @@ def manage_timetable(request):
         start_time  = p.get('start_time') or None
         end_time    = p.get('end_time') or None
         room_number = p.get('room_number', '').strip() or 'Room 101'
+        day_val     = p.get('day', '').strip().capitalize()
         Timetable.objects.update_or_create(
             section_id = p.get('section'),
-            day        = p.get('day'),
+            day        = day_val,
             period     = p.get('period'),
             defaults   = {
                 'subject_id': p.get('subject'),
@@ -520,10 +536,27 @@ def manage_timetable(request):
                 'end_time':   end_time,
             }
         )
-        messages.success(request, f"Timetable entry saved ({room_number}).")
+        messages.success(request, f"Timetable entry saved for {day_val} Period {p.get('period')} ({room_number}).")
         return redirect('admin_dashboard:manage_timetable')
 
-    entries = Timetable.objects.select_related('section__branch','section__year','subject','faculty__user').order_by('section','day','period')
+    from django.db.models import Case, When, Value, IntegerField
+    day_order = Case(
+        When(day__iexact='Monday', then=Value(1)),
+        When(day__iexact='Tuesday', then=Value(2)),
+        When(day__iexact='Wednesday', then=Value(3)),
+        When(day__iexact='Thursday', then=Value(4)),
+        When(day__iexact='Friday', then=Value(5)),
+        When(day__iexact='Saturday', then=Value(6)),
+        When(day__iexact='Sunday', then=Value(7)),
+        default=Value(8),
+        output_field=IntegerField()
+    )
+    entries = (
+        Timetable.objects
+        .select_related('section__branch','section__year','subject','faculty__user')
+        .annotate(day_sort=day_order)
+        .order_by('section', 'day_sort', 'period')
+    )
     day_choices = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
     context = {
         'sections':    sections,
@@ -1231,16 +1264,21 @@ def bulk_upload_results(request):
             data_set = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(data_set)
             
-            # Read first line to check if it's a header
-            header = next(io_string, None)
-            
             success_count = 0
             errors = []
             
             reader = csv.reader(io_string, delimiter=',', quotechar='"')
-            for row_idx, row in enumerate(reader, start=2):
-                if not row or not row[0].strip():
+            is_first_row = True
+            for row_idx, row in enumerate(reader, start=1):
+                if not row or not any(cell.strip() for cell in row):
                     continue  # Skip empty rows
+                
+                # Dynamic header check on first non-empty row
+                if is_first_row:
+                    is_first_row = False
+                    first_cell = row[0].strip().lower()
+                    if 'roll' in first_cell or 'student' in first_cell or 'name' in first_cell:
+                        continue  # Skip actual header row
                     
                 if len(row) < 2:
                     errors.append(f"Row {row_idx}: Missing columns. Expected at least Roll Number and Marks.")
@@ -1342,17 +1380,23 @@ def bulk_upload_students(request):
             data_set = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(data_set)
             
-            header = next(io_string, None)
-            
             success_count = 0
             errors = []
             
             reader = csv.reader(io_string, delimiter=',', quotechar='"')
+            is_first_row = True
             
             with transaction.atomic():
-                for row_idx, row in enumerate(reader, start=2):
-                    if not row or not row[0].strip():
+                for row_idx, row in enumerate(reader, start=1):
+                    if not row or not any(cell.strip() for cell in row):
                         continue
+
+                    # Dynamic header check on first non-empty row
+                    if is_first_row:
+                        is_first_row = False
+                        first_cell = row[0].strip().lower()
+                        if 'roll' in first_cell or 'student' in first_cell or 'name' in first_cell:
+                            continue  # Skip actual header row
                         
                     if len(row) < 9:
                         errors.append(f"Row {row_idx}: Missing columns. Expected 9, got {len(row)}.")
@@ -1921,6 +1965,73 @@ def export_database_pdf(request):
         ('BOTTOMPADDING', (0,0), (-1,-1), 5),
     ]))
     story.append(t_res)
+    story.append(PageBreak())
+
+    # 6. Examination Schedules & Syllabus Milestone Targets
+    from core.models import ExamSchedule, SubjectTopicPlan
+    story.append(Paragraph("6. Examination Timetables & Syllabus Milestones", section_heading))
+    exam_schedules = ExamSchedule.objects.all().select_related('branch', 'year').order_by('start_date')
+    exam_headers = [
+        Paragraph("<b>Exam Title</b>", header_cell_style),
+        Paragraph("<b>Branch & Year</b>", header_cell_style),
+        Paragraph("<b>Exam Type</b>", header_cell_style),
+        Paragraph("<b>Required Units</b>", header_cell_style),
+        Paragraph("<b>Faculty Deadline</b>", header_cell_style),
+    ]
+    exam_table_data = [exam_headers]
+    for es in exam_schedules:
+        b_name = es.branch.code if es.branch else "All Branches"
+        exam_table_data.append([
+            Paragraph(es.title, body_style),
+            Paragraph(f"{b_name} Y{es.year.year} S{es.semester}", body_style),
+            Paragraph(es.get_exam_type_display(), body_style),
+            Paragraph(f"{es.target_units} Units", body_style),
+            Paragraph(es.target_completion_date.strftime("%d-%b-%Y"), body_style),
+        ])
+    if len(exam_table_data) > 1:
+        t_exam = Table(exam_table_data, colWidths=[140, 90, 100, 80, 90])
+        t_exam.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f2937')),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+            ('TOPPADDING', (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ]))
+        story.append(t_exam)
+    else:
+        story.append(Paragraph("<i>No active examination milestones scheduled.</i>", body_style))
+    story.append(Spacer(1, 15))
+
+    # 7. Faculty Leave Quotas & Limits
+    story.append(Paragraph("7. Faculty Monthly Leave Allocations", section_heading))
+    cur_today = timezone.localdate()
+    leave_headers = [
+        Paragraph("<b>Emp ID</b>", header_cell_style),
+        Paragraph("<b>Faculty Name</b>", header_cell_style),
+        Paragraph("<b>Department</b>", header_cell_style),
+        Paragraph("<b>Monthly Quota</b>", header_cell_style),
+        Paragraph("<b>Taken This Month</b>", header_cell_style),
+    ]
+    leave_table_data = [leave_headers]
+    for f in active_faculty:
+        taken = f.get_monthly_leaves_taken(cur_today.year, cur_today.month)
+        quota = float(f.monthly_leave_limit or 2.0)
+        leave_table_data.append([
+            Paragraph(f.employee_id, body_style),
+            Paragraph(f.full_name, body_style),
+            Paragraph(f.department.code if f.department else "General", body_style),
+            Paragraph(f"{quota} Days", body_style),
+            Paragraph(f"{taken} Days", body_style),
+        ])
+    t_leave = Table(leave_table_data, colWidths=[80, 150, 90, 90, 90])
+    t_leave.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1f2937')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    story.append(t_leave)
 
     doc.build(story)
     response = HttpResponse(buf.getvalue(), content_type='application/pdf')
@@ -2077,6 +2188,7 @@ def export_student_results_pdf(request):
 def manage_leave_requests(request):
     status_filter = request.GET.get('status', '')
     dept_filter   = request.GET.get('department', '')
+    role_filter   = request.GET.get('role', '')  # 'hod', 'faculty', 'emergency'
     
     leaves_qs = FacultyLeaveRequest.objects.select_related('faculty__user', 'faculty__department', 'action_by').order_by('-created_at')
     
@@ -2085,16 +2197,28 @@ def manage_leave_requests(request):
         
     if dept_filter.isdigit():
         leaves_qs = leaves_qs.filter(faculty__department_id=int(dept_filter))
+
+    if role_filter == 'hod':
+        leaves_qs = leaves_qs.filter(faculty__user__role='hod')
+    elif role_filter == 'faculty':
+        leaves_qs = leaves_qs.filter(faculty__user__role='faculty')
+    elif role_filter == 'emergency':
+        leaves_qs = leaves_qs.filter(is_limit_exceeded=True)
         
     branches = Branch.objects.all()
     pending_count = FacultyLeaveRequest.objects.filter(status='pending').count()
+    hod_pending_count = FacultyLeaveRequest.objects.filter(status='pending', faculty__user__role='hod').count()
+    emergency_pending_count = FacultyLeaveRequest.objects.filter(status='pending', is_limit_exceeded=True).count()
     
     return render(request, 'admin_dashboard/leave_requests.html', {
         'leaves': leaves_qs,
         'status_filter': status_filter,
         'dept_filter': dept_filter,
+        'role_filter': role_filter,
         'branches': branches,
         'pending_count': pending_count,
+        'hod_pending_count': hod_pending_count,
+        'emergency_pending_count': emergency_pending_count,
     })
 
 
@@ -2794,6 +2918,9 @@ def class_diary_coverage(request):
 
         latest_log = logs.order_by('-date', '-period').first()
 
+        # Detailed planned topic schedule analysis
+        syllabus_data = get_subject_syllabus_progress(subj, faculty=fac, section=sec)
+
         coverage_stats.append({
             'faculty': fac,
             'subject': subj,
@@ -2801,18 +2928,35 @@ def class_diary_coverage(request):
             'branch': sec.branch if sec else (subj.branch if subj else fac.department),
             'total_logs': total_logs,
             'covered_units': covered_units,
-            'units_done_count': unit_count,
-            'progress_pct': progress_pct,
+            'units_done_count': syllabus_data['units_completed_count'] or unit_count,
+            'progress_pct': syllabus_data['completion_pct'] if syllabus_data['total_topics'] > 0 else progress_pct,
+            'total_planned_topics': syllabus_data['total_topics'],
+            'completed_planned_topics': syllabus_data['completed_topics'],
+            'overdue_topics_count': syllabus_data['overdue_count'],
+            'is_mid1_target_met': syllabus_data['is_mid1_target_met'],
+            'mid1_deadline': syllabus_data['mid1_deadline'],
+            'mid1_target_units': syllabus_data['mid1_target_units'],
+            'status_label': syllabus_data['status_label'],
+            'status_color': syllabus_data['status_color'],
             'latest_log': latest_log,
         })
 
     coverage_stats.sort(key=lambda x: (getattr(x['branch'], 'code', ''), x['subject'].code, str(x['section'])))
+
+    # Handle audit & dispatch reminders trigger
+    if request.method == 'POST' and request.POST.get('action') == 'dispatch_reminders':
+        b_id = int(branch_id) if branch_id and branch_id.isdigit() else None
+        sent = check_and_dispatch_syllabus_reminders(branch_id=b_id, triggered_by=request.user)
+        messages.success(request, f"University syllabus audit completed: {sent} reminder notification(s) dispatched to respective faculty and HODs.")
+        return redirect('admin_dashboard:class_diary_coverage')
 
     # University-wide KPIs
     total_logs_count = base_qs.count()
     active_faculty_count = base_qs.values('faculty').distinct().count()
     active_subjects_count = base_qs.values('subject').distinct().count()
     avg_progress = int(sum(c['progress_pct'] for c in coverage_stats) / len(coverage_stats)) if coverage_stats else 0
+    total_overdue_count = sum(c['overdue_topics_count'] for c in coverage_stats)
+    delayed_mid1_count = sum(1 for c in coverage_stats if not c['is_mid1_target_met'] and c['mid1_deadline'] and timezone.localdate() > c['mid1_deadline'])
 
     context = {
         'entries': entries,
@@ -2826,6 +2970,8 @@ def class_diary_coverage(request):
         'active_faculty_count': active_faculty_count,
         'active_subjects_count': active_subjects_count,
         'avg_progress': avg_progress,
+        'total_overdue_count': total_overdue_count,
+        'delayed_mid1_count': delayed_mid1_count,
         'search_query': search_query,
         'branch_id': int(branch_id) if branch_id and branch_id.isdigit() else '',
         'year_id': int(year_id) if year_id and year_id.isdigit() else '',
@@ -2877,6 +3023,258 @@ def download_student_counselling_report_pdf(request, student_id):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ─────────────────────────────────────────────
+# SUBJECT SYLLABUS & TOPIC SCHEDULE MANAGER (ADMIN - ALL BRANCHES)
+# ─────────────────────────────────────────────
+@admin_required
+def manage_subject_syllabus(request, subject_id=None):
+    """
+    Allows Admin to view, create, edit, and schedule the topic timetable for any subject
+    across all branches & departments, set target dates, and monitor milestone readiness.
+    """
+    today = timezone.localdate()
+    from core.transfer_utils import parse_flexible_date
+
+    branches = Branch.objects.all().order_by('code')
+    branch_id = request.GET.get('branch_id', '').strip()
+    year_id = request.GET.get('year_id', '').strip()
+
+    subjects_qs = Subject.objects.filter(is_deleted=False).select_related('branch', 'year', 'faculty').order_by('branch__code', 'year__year', 'semester', 'code')
+    if branch_id and branch_id.isdigit():
+        subjects_qs = subjects_qs.filter(branch_id=int(branch_id))
+    if year_id and year_id.isdigit():
+        subjects_qs = subjects_qs.filter(year_id=int(year_id))
+
+    selected_subject = None
+    if subject_id:
+        selected_subject = get_object_or_404(Subject, id=subject_id, is_deleted=False)
+    elif subjects_qs.exists():
+        selected_subject = subjects_qs.first()
+
+    if request.method == 'POST' and selected_subject:
+        action = request.POST.get('action')
+
+        if action == 'add_topic':
+            unit_val = request.POST.get('unit_number', '1')
+            unit_number = int(unit_val) if unit_val.isdigit() else 1
+            topic_name = request.POST.get('topic_name', '').strip()
+            target_date_str = request.POST.get('target_date', '').strip()
+            target_milestone = request.POST.get('target_milestone', 'mid1')
+            description = request.POST.get('description', '').strip()
+            order_val = request.POST.get('order', '1')
+            order = int(order_val) if order_val.isdigit() else 1
+
+            target_date = parse_flexible_date(target_date_str) or today
+
+            if not topic_name:
+                messages.error(request, "Topic name is required.")
+            else:
+                SubjectTopicPlan.objects.create(
+                    subject=selected_subject,
+                    unit_number=unit_number,
+                    topic_name=topic_name,
+                    description=description,
+                    target_date=target_date,
+                    target_milestone=target_milestone,
+                    order=order
+                )
+                messages.success(request, f"Topic '{topic_name}' added to Unit {unit_number} schedule.")
+            return redirect('admin_dashboard:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'edit_topic':
+            topic_id = request.POST.get('topic_id')
+            topic = get_object_or_404(SubjectTopicPlan, id=topic_id, subject=selected_subject)
+            unit_val = request.POST.get('unit_number', str(topic.unit_number))
+            topic.unit_number = int(unit_val) if unit_val.isdigit() else topic.unit_number
+            topic.topic_name = request.POST.get('topic_name', topic.topic_name).strip()
+            target_date_str = request.POST.get('target_date', '').strip()
+            if target_date_str:
+                topic.target_date = parse_flexible_date(target_date_str) or topic.target_date
+            topic.target_milestone = request.POST.get('target_milestone', topic.target_milestone)
+            topic.description = request.POST.get('description', '').strip()
+            order_val = request.POST.get('order', str(topic.order))
+            topic.order = int(order_val) if order_val.isdigit() else topic.order
+            
+            is_comp = (request.POST.get('is_completed') == '1')
+            topic.is_completed = is_comp
+            if is_comp and not topic.completed_date:
+                topic.completed_date = today
+            elif not is_comp:
+                topic.completed_date = None
+
+            topic.save()
+            messages.success(request, f"Topic '{topic.topic_name}' updated successfully.")
+            return redirect('admin_dashboard:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'delete_topic':
+            topic_id = request.POST.get('topic_id')
+            topic = get_object_or_404(SubjectTopicPlan, id=topic_id, subject=selected_subject)
+            t_name = topic.topic_name
+            topic.delete()
+            messages.success(request, f"Topic '{t_name}' deleted.")
+            return redirect('admin_dashboard:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'bulk_add_topics':
+            bulk_text = request.POST.get('bulk_topics', '').strip()
+            unit_val = request.POST.get('bulk_unit_number', '1')
+            unit_number = int(unit_val) if unit_val.isdigit() else 1
+            target_date_str = request.POST.get('bulk_target_date', '').strip()
+            target_milestone = request.POST.get('bulk_target_milestone', 'mid1')
+            target_date = parse_flexible_date(target_date_str) or today
+
+            created_count = 0
+            if bulk_text:
+                lines = [line.strip() for line in bulk_text.splitlines() if line.strip()]
+                for idx, line in enumerate(lines, 1):
+                    SubjectTopicPlan.objects.create(
+                        subject=selected_subject,
+                        unit_number=unit_number,
+                        topic_name=line,
+                        target_date=target_date,
+                        target_milestone=target_milestone,
+                        order=idx
+                    )
+                    created_count += 1
+                messages.success(request, f"Successfully created {created_count} topics for Unit {unit_number}.")
+            return redirect('admin_dashboard:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+        elif action == 'send_reminders':
+            sent = check_and_dispatch_syllabus_reminders(subject_id=selected_subject.id, branch_id=selected_subject.branch_id, triggered_by=request.user)
+            messages.success(request, f"Syllabus reminders evaluated: {sent} notification(s) sent to faculty and HOD.")
+            return redirect('admin_dashboard:manage_subject_syllabus_subject', subject_id=selected_subject.id)
+
+    progress_data = None
+    topics_by_unit = {}
+    if selected_subject:
+        progress_data = get_subject_syllabus_progress(selected_subject)
+        all_topics = SubjectTopicPlan.objects.filter(subject=selected_subject).order_by('unit_number', 'order', 'target_date')
+        for u in [1, 2, 3, 4, 5]:
+            topics_by_unit[u] = [t for t in all_topics if t.unit_number == u]
+
+    years = Year.objects.all().order_by('year')
+
+    context = {
+        'branches': branches,
+        'years': years,
+        'branch_id': int(branch_id) if branch_id and branch_id.isdigit() else '',
+        'year_id': int(year_id) if year_id and year_id.isdigit() else '',
+        'subjects': subjects_qs,
+        'selected_subject': selected_subject,
+        'progress_data': progress_data,
+        'topics_by_unit': topics_by_unit,
+        'unit_choices': ClassDiary.UNIT_CHOICES,
+        'milestone_choices': SubjectTopicPlan.MILESTONE_CHOICES,
+        'today': today,
+    }
+    return render(request, 'admin_dashboard/manage_subject_syllabus.html', context)
+
+
+# ─────────────────────────────────────────────
+# EXAM TIMETABLE & SYLLABUS MILESTONE SCHEDULES (ADMIN - ALL BRANCHES)
+# ─────────────────────────────────────────────
+@admin_required
+def manage_exam_schedules(request):
+    """
+    Allows Admin to view, create, edit, reschedule, and customize Exam Timetables
+    and Syllabus Milestones (e.g. 2.5 units target before Mid-1 date) across all branches.
+    """
+    today = timezone.localdate()
+    from core.transfer_utils import parse_flexible_date
+
+    branches = Branch.objects.all().order_by('code')
+    years = Year.objects.all().order_by('year')
+
+    branch_id = request.GET.get('branch_id', '').strip()
+    year_id = request.GET.get('year_id', '').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'save_exam_schedule':
+            schedule_id = request.POST.get('schedule_id')
+            branch_val = request.POST.get('branch')
+            year_val = request.POST.get('year')
+            semester = int(request.POST.get('semester', '1'))
+            exam_type = request.POST.get('exam_type', 'mid1')
+            title = request.POST.get('title', '').strip()
+            start_date_str = request.POST.get('start_date', '').strip()
+            end_date_str = request.POST.get('end_date', '').strip()
+            target_units_val = request.POST.get('target_units', '2.5')
+            target_comp_date_str = request.POST.get('target_completion_date', '').strip()
+
+            start_date = parse_flexible_date(start_date_str) or today
+            end_date = parse_flexible_date(end_date_str)
+            target_completion_date = parse_flexible_date(target_comp_date_str) or start_date
+            year_obj = None
+            if year_val and year_val.isdigit():
+                year_obj = Year.objects.filter(Q(year=int(year_val)) | Q(id=int(year_val))).first()
+            if not year_obj:
+                year_obj = Year.objects.first()
+            branch_obj = Branch.objects.filter(id=int(branch_val)).first() if branch_val and branch_val.isdigit() else None
+            target_units = float(target_units_val) if target_units_val else 2.5
+
+            b_code = branch_obj.code if branch_obj else "All Branches"
+            if not title:
+                title = f"{b_code} Y{year_obj.year} Sem-{semester} {dict(ExamSchedule.EXAM_TYPE_CHOICES).get(exam_type, 'Exam')}"
+
+            if schedule_id and schedule_id.isdigit():
+                sched = get_object_or_404(ExamSchedule, id=int(schedule_id))
+                sched.branch = branch_obj
+                sched.year = year_obj
+                sched.semester = semester
+                sched.exam_type = exam_type
+                sched.title = title
+                sched.start_date = start_date
+                sched.end_date = end_date
+                sched.target_units = target_units
+                sched.target_completion_date = target_completion_date
+                sched.save()
+                messages.success(request, f"Exam Schedule '{title}' updated successfully.")
+            else:
+                ExamSchedule.objects.create(
+                    branch=branch_obj,
+                    year=year_obj,
+                    semester=semester,
+                    exam_type=exam_type,
+                    title=title,
+                    start_date=start_date,
+                    end_date=end_date,
+                    target_units=target_units,
+                    target_completion_date=target_completion_date,
+                    created_by=request.user
+                )
+                messages.success(request, f"Exam Schedule '{title}' created successfully.")
+            return redirect('admin_dashboard:manage_exam_schedules')
+
+        elif action == 'delete_exam_schedule':
+            schedule_id = request.POST.get('schedule_id')
+            if schedule_id and schedule_id.isdigit():
+                sched = get_object_or_404(ExamSchedule, id=int(schedule_id))
+                t = sched.title
+                sched.delete()
+                messages.success(request, f"Exam Schedule '{t}' deleted.")
+            return redirect('admin_dashboard:manage_exam_schedules')
+
+    schedules_qs = ExamSchedule.objects.all().select_related('branch', 'year').order_by('-start_date')
+    if branch_id and branch_id.isdigit():
+        schedules_qs = schedules_qs.filter(Q(branch_id=int(branch_id)) | Q(branch__isnull=True))
+    if year_id and year_id.isdigit():
+        schedules_qs = schedules_qs.filter(year_id=int(year_id))
+
+    context = {
+        'branches': branches,
+        'years': years,
+        'branch_id': int(branch_id) if branch_id and branch_id.isdigit() else '',
+        'year_id': int(year_id) if year_id and year_id.isdigit() else '',
+        'schedules': schedules_qs,
+        'exam_types': ExamSchedule.EXAM_TYPE_CHOICES,
+        'semester_choices': Subject.SEMESTER_CHOICES,
+        'today': today,
+    }
+    return render(request, 'admin_dashboard/manage_exam_schedules.html', context)
+
 
 
 

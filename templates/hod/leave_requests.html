@@ -83,12 +83,22 @@
           </thead>
           <tbody>
             {% for leave in leaves %}
-            <tr>
+            <tr {% if leave.is_emergency_leave %}style="background: rgba(239, 68, 68, 0.14) !important; border-left: 5px solid #ef4444 !important;"{% endif %}>
               <td>
                 <strong class="text-white d-block">{{ leave.faculty.full_name }}</strong>
                 <small class="text-muted d-block" style="font-size: 0.75rem;">
                   Emp ID: <span class="text-accent fw-semibold">{{ leave.faculty.employee_id }}</span> | Ph: {{ leave.faculty.phone|default:"N/A" }}
                 </small>
+                {% if leave.is_emergency_leave %}
+                  <div class="mt-1">
+                    <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.72rem;">
+                      <i class="fas fa-exclamation-triangle me-1"></i>LIMIT REACHED (EMERGENCY)
+                    </span>
+                  </div>
+                  <small class="text-danger d-block mt-1" style="font-size: 0.72rem;">
+                    <i class="fas fa-chart-pie me-1"></i>Monthly Limit: <strong>{{ leave.faculty.monthly_leave_limit }}d</strong> | Taken: <strong>{{ leave.faculty.get_monthly_leaves_taken }}d</strong>
+                  </small>
+                {% endif %}
               </td>
               <td>
                 <span class="fw-bold text-white d-block">{{ leave.get_leave_type_display }}</span>
@@ -123,7 +133,11 @@
               </td>
               <td>
                 {% if leave.status == 'pending' %}
-                  <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending Approval</span>
+                  {% if leave.is_emergency_leave %}
+                    <span class="status-pill status-rejected"><i class="fas fa-exclamation-triangle me-1"></i>Pending (Emergency)</span>
+                  {% else %}
+                    <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending Approval</span>
+                  {% endif %}
                 {% elif leave.status == 'approved' %}
                   <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Approved</span>
                   <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
@@ -146,7 +160,7 @@
                     <a href="{% url 'hod:action_leave_request' leave.id 'approve' %}" 
                        class="btn-leave-approve"
                        title="Quick Approve leave request"
-                       onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
+                       onclick="return confirm('{% if leave.is_emergency_leave %}WARNING: This faculty member has exceeded their monthly leave quota. Are you sure you want to approve this EMERGENCY LEAVE?{% else %}Approve leave for {{ leave.faculty.full_name }}?{% endif %}');">
                       <i class="fas fa-check me-1"></i>Approve
                     </a>
                     <!-- Direct One-Click Reject -->
@@ -186,6 +200,23 @@
 
   <!-- TAB 2: HOD's Own Leave Applications -->
   <div class="tab-pane fade" id="my-leaves" role="tabpanel">
+    <!-- HOD Quota Banner -->
+    <div class="glass-card mb-4 p-3" style="background: rgba(255,255,255,0.03); border-left: 4px solid {% if hod_is_limit_reached %}#ef4444{% else %}#06b6d4{% endif %};">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="small text-white">
+          <i class="fas fa-info-circle text-accent me-1"></i>
+          Your Monthly Quota ({{ current_month_name }}): <strong class="text-accent">{{ hod_monthly_limit }} Days</strong> | 
+          Used: <strong class="text-warning">{{ hod_leaves_used }} Days</strong> | 
+          Remaining: <strong class="{% if hod_is_limit_reached %}text-danger{% else %}text-success{% endif %}">{{ hod_leaves_remaining }} Days</strong>
+        </div>
+        {% if hod_is_limit_reached %}
+          <span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i>Quota Exhausted (Emergency Only)</span>
+        {% else %}
+          <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Quota Active</span>
+        {% endif %}
+      </div>
+    </div>
+
     <div class="glass-card">
       <div class="card-header-custom d-flex justify-content-between align-items-center">
         <h3 class="card-title-custom"><i class="fas fa-user-clock me-2 text-accent"></i>My Leave Applications (HOD)</h3>
@@ -210,9 +241,16 @@
           </thead>
           <tbody>
             {% for leave in my_leaves %}
-            <tr>
+            <tr {% if leave.is_emergency_leave %}style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444;"{% endif %}>
               <td>
-                <strong class="text-white d-block">{{ leave.get_leave_type_display }}</strong>
+                <div class="d-flex align-items-center flex-wrap gap-1">
+                  <strong class="text-white">{{ leave.get_leave_type_display }}</strong>
+                  {% if leave.is_emergency_leave %}
+                    <span class="badge bg-danger text-white px-2" style="font-size: 0.68rem;">
+                      <i class="fas fa-exclamation-triangle me-1"></i>Emergency Leave
+                    </span>
+                  {% endif %}
+                </div>
                 <small class="text-muted" style="font-size: 0.75rem;">Applied: {{ leave.created_at|date:"d-M-Y H:i" }}</small>
               </td>
               <td>{{ leave.start_date|date:"d-M-Y" }}</td>
@@ -294,7 +332,7 @@
 {% if leave.status == 'pending' %}
 <div class="modal fade text-start" id="actionModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid {% if leave.is_emergency_leave %}rgba(239,68,68,0.5){% else %}rgba(255,255,255,0.15){% endif %} !important;">
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title card-title-custom text-white">
           <i class="fas fa-user-check me-2 text-accent"></i>Review Leave — {{ leave.faculty.full_name }}
@@ -304,15 +342,28 @@
       <form method="POST">
         {% csrf_token %}
         <div class="modal-body py-4">
-          <div class="p-3 mb-3 rounded-3" style="background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.2);">
+          {% if leave.is_emergency_leave %}
+            <div class="alert alert-danger border-0 rounded-3 mb-3 small" style="background: rgba(239,68,68,0.2); color: #fca5a5; border-left: 4px solid #ef4444 !important;">
+              <div class="d-flex align-items-start gap-2">
+                <i class="fas fa-exclamation-triangle fs-5 text-danger mt-1"></i>
+                <div>
+                  <strong class="text-white d-block">⚠️ MONTHLY LEAVE LIMIT REACHED / EXCEEDED</strong>
+                  <span>This faculty member has exceeded their monthly leave quota of <strong>{{ leave.faculty.monthly_leave_limit }} Day(s)</strong> (Already taken: <strong>{{ leave.faculty.get_monthly_leaves_taken }} days</strong> this month).</span>
+                  <div class="mt-1 text-white fw-semibold">Please approve ONLY in genuine emergencies.</div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="p-3 mb-3 rounded-3" style="background: {% if leave.is_emergency_leave %}rgba(239,68,68,0.08){% else %}rgba(255,255,255,0.05){% endif %}; border: 1px solid {% if leave.is_emergency_leave %}rgba(239,68,68,0.25){% else %}rgba(255,255,255,0.1){% endif %};">
             <div class="text-white fw-bold mb-1 fs-6">{{ leave.faculty.full_name }} <span class="badge bg-accent ms-1" style="font-size:0.7rem;">ID: {{ leave.faculty.employee_id }}</span></div>
             <div class="text-muted small mb-1">Leave Type: <span class="text-accent fw-semibold">{{ leave.get_leave_type_display }}</span></div>
             <div class="text-muted small mb-1">Dates: <span class="text-white">{{ leave.start_date|date:"d-M-Y" }} to {{ leave.end_date|date:"d-M-Y" }} ({{ leave.total_days }} Days)</span></div>
             <div class="text-muted small">Reason: <span class="text-white">{{ leave.reason }}</span></div>
           </div>
           <div class="mb-3">
-            <label class="form-label text-white small fw-bold">HOD Remarks / Instructions (Optional)</label>
-            <textarea name="remarks" class="vvit-input" rows="3" placeholder="Enter remarks or approval notes..."></textarea>
+            <label class="form-label text-white small fw-bold">HOD Remarks / Emergency Approval Notes (Optional)</label>
+            <textarea name="remarks" class="vvit-input" rows="3" placeholder="Enter remarks or emergency approval justification..."></textarea>
           </div>
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
@@ -347,6 +398,16 @@
           <div class="alert border-0 rounded-3 mb-4 small" style="background: rgba(220,38,38,0.12); color: #f87171; border: 1px solid rgba(220,38,38,0.3) !important;">
             <i class="fas fa-shield-alt me-1"></i>
             As Head of Department (HOD), your leave request will be submitted directly to <strong class="text-white">College Administration (Admin)</strong> for review and approval.
+          </div>
+
+          <!-- HOD Quota status in modal -->
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);">
+            <div class="small text-white">
+              <i class="fas fa-info-circle text-accent me-1"></i>
+              Monthly Limit: <strong class="text-accent">{{ hod_monthly_limit }} Days</strong> | 
+              Used: <strong class="text-warning">{{ hod_leaves_used }} Days</strong> | 
+              Remaining: <strong class="{% if hod_is_limit_reached %}text-danger{% else %}text-success{% endif %}">{{ hod_leaves_remaining }} Days</strong>
+            </div>
           </div>
 
           <div class="row g-3">

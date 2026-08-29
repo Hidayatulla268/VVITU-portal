@@ -90,6 +90,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'VVITU_Portal.middleware.RoleBasedAccessMiddleware',        # Scoped RBAC Middleware
+    'VVITU_Portal.middleware.GlobalExceptionRedirectMiddleware', # Global Unhandled Exception Auto-Redirect
 ]
 
 ROOT_URLCONF = 'VVITU_Portal.urls'

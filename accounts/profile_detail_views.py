@@ -128,7 +128,7 @@ def faculty_detail_view(request, pk):
     achievements = Achievement.objects.filter(user=faculty.user)
 
     # 2. Fetch Subjects taught
-    subjects = Subject.objects.filter(faculty=faculty).select_related('branch', 'year')
+    subjects = Subject.objects.filter(faculty=faculty, is_deleted=False).select_related('branch', 'year')
 
     # 3. Timetable details
     timetable_slots = Timetable.objects.filter(faculty=faculty).select_related('section', 'subject')

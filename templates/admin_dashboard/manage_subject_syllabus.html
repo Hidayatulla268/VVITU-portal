@@ -1,0 +1,533 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Manage Subject Syllabus & Topic Plan | Admin Dashboard{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-alt me-2 text-accent"></i>University Subject Syllabus & Topic Timetable</h1>
+    <p class="ph-sub">Schedule topics, target completion dates, and track Mid-1 (2.5 units target) & Mid-2 milestone readiness across all branches</p>
+  </div>
+  <div class="ph-actions d-flex gap-2">
+    <a href="{% url 'admin_dashboard:manage_exam_schedules' %}" class="btn-vvit-outline">
+      <i class="fas fa-file-invoice me-1"></i>Exam Milestones
+    </a>
+    <a href="{% url 'admin_dashboard:class_diary_coverage' %}" class="btn-vvit-secondary">
+      <i class="fas fa-book-reader me-1"></i>Class Diary & Coverage
+    </a>
+    {% if selected_subject %}
+      <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#addTopicModal">
+        <i class="fas fa-plus me-1"></i>+ Add Topic
+      </button>
+      <button type="button" class="btn-vvit-outline text-info" data-bs-toggle="modal" data-bs-target="#bulkAddModal">
+        <i class="fas fa-layer-group me-1"></i>Bulk Add
+      </button>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="glass-card mb-4 p-3">
+  <form method="get" action="{% url 'admin_dashboard:manage_subject_syllabus' %}" class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-building-columns me-1 text-accent"></i>Branch</label>
+      <select name="branch_id" class="vvit-select" onchange="this.form.submit()">
+        <option value="">All Branches</option>
+        {% for b in branches %}
+          <option value="{{ b.id }}" {% if branch_id == b.id %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-graduation-cap me-1 text-accent"></i>Year</label>
+      <select name="year_id" class="vvit-select" onchange="this.form.submit()">
+        <option value="">All Years</option>
+        {% for y in years %}
+          <option value="{{ y.id }}" {% if year_id == y.id %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label text-muted small fw-bold"><i class="fas fa-book me-1 text-accent"></i>Subject</label>
+      <select name="subject_id" class="vvit-select" onchange="location.href='{% url 'admin_dashboard:manage_subject_syllabus' %}' + this.value + '/?branch_id={{ branch_id }}&year_id={{ year_id }}'">
+        {% for s in subjects %}
+          <option value="{{ s.id }}" {% if selected_subject and selected_subject.id == s.id %}selected{% endif %}>
+            [{{ s.branch.code }} Y{{ s.year.year }} S{{ s.semester }}] {{ s.code }} - {{ s.short_name|default:s.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      {% if selected_subject %}
+        <button type="submit" form="auditRemindersForm" class="btn btn-sm btn-outline-warning flex-fill" title="Send notification to faculty with pending/overdue topics">
+          <i class="fas fa-bell me-1"></i>Audit & Remind
+        </button>
+      {% endif %}
+      <a href="{% url 'admin_dashboard:manage_subject_syllabus' %}" class="btn btn-sm btn-vvit-secondary">
+        <i class="fas fa-rotate-left"></i>
+      </a>
+    </div>
+  </form>
+  {% if selected_subject %}
+    <form id="auditRemindersForm" method="POST" onsubmit="return confirm('Dispatch overdue syllabus notifications to respective faculty and department HOD?');" style="display:none;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="send_reminders">
+    </form>
+  {% endif %}
+</div>
+
+{% if selected_subject and progress_data %}
+<!-- KPI / Milestone Overview Row -->
+<div class="row g-3 mb-4">
+  <!-- Overall Syllabus Progress -->
+  <div class="col-lg-4 col-md-6">
+    <div class="glass-card h-100 p-3" style="border-left: 4px solid var(--accent-color, #38bdf8) !important;">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <span class="text-muted small text-uppercase fw-bold">Overall Syllabus Progress</span>
+          <h3 class="text-white fw-bold mb-0 mt-1">{{ progress_data.completion_pct }}%</h3>
+        </div>
+        <span class="badge bg-dark border border-secondary text-white px-2 py-1" style="font-size: 0.78rem;">
+          {{ progress_data.units_completed_count }} / 5.0 Units
+        </span>
+      </div>
+      <div class="progress mb-2" style="height: 8px; background: rgba(255,255,255,0.1);">
+        <div class="progress-bar {% if progress_data.completion_pct >= 80 %}bg-success{% elif progress_data.completion_pct >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+             role="progressbar" style="width: {{ progress_data.completion_pct }}%;"></div>
+      </div>
+      <div class="d-flex justify-content-between text-muted small" style="font-size: 0.75rem;">
+        <span>{{ progress_data.completed_topics }} / {{ progress_data.total_topics }} topics covered</span>
+        <span>Faculty: <strong class="text-white">{{ selected_subject.faculty.full_name|default:"Unassigned" }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mid-1 Milestone Box -->
+  <div class="col-lg-4 col-md-6">
+    <div class="glass-card h-100 p-3" style="border-left: 4px solid {% if progress_data.is_mid1_target_met %}#22c55e{% elif progress_data.mid1_deadline and today > progress_data.mid1_deadline %}#ef4444{% else %}#f59e0b{% endif %} !important;">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <span class="text-muted small text-uppercase fw-bold">Mid-1 Exam Milestone</span>
+          <div class="mt-1 d-flex align-items-center gap-2">
+            {% if progress_data.is_mid1_target_met %}
+              <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-check-circle me-1"></i>Target Achieved ({{ progress_data.units_completed_count }} Units)
+              </span>
+            {% elif progress_data.mid1_deadline and today > progress_data.mid1_deadline %}
+              <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-exclamation-triangle me-1"></i>Milestone Delayed
+              </span>
+            {% else %}
+              <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-clock me-1"></i>In Progress ({{ progress_data.units_completed_count }}/{{ progress_data.mid1_target_units }} Units)
+              </span>
+            {% endif %}
+          </div>
+        </div>
+        <span class="badge bg-primary bg-opacity-25 border border-primary text-light px-2 py-1" style="font-size: 0.78rem;">
+          Required: {{ progress_data.mid1_target_units }} Units
+        </span>
+      </div>
+      <div class="small text-light mt-2" style="font-size: 0.78rem;">
+        <div><i class="far fa-calendar-check me-1 text-accent"></i>Target Deadline: <strong>{{ progress_data.mid1_deadline|date:"d M Y"|default:"Before Mid-1" }}</strong></div>
+        {% if progress_data.mid1_exam_date %}
+          <div class="text-muted mt-1"><i class="fas fa-file-pen me-1 text-warning"></i>Exam Date: {{ progress_data.mid1_exam_date|date:"d M Y" }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Delay / Compliance Box -->
+  <div class="col-lg-4 col-md-12">
+    <div class="glass-card h-100 p-3" style="border-left: 4px solid {% if progress_data.overdue_count > 0 %}#ef4444{% else %}#10b981{% endif %} !important;">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <span class="text-muted small text-uppercase fw-bold">Schedule Compliance</span>
+          <h4 class="text-white fw-bold mb-0 mt-1">
+            {% if progress_data.overdue_count > 0 %}
+              <span class="text-danger"><i class="fas fa-triangle-exclamation me-1"></i>{{ progress_data.overdue_count }} Overdue Topic(s)</span>
+            {% else %}
+              <span class="text-success"><i class="fas fa-check-double me-1"></i>All Topics On Time</span>
+            {% endif %}
+          </h4>
+        </div>
+        <span class="badge bg-secondary bg-opacity-50 text-light px-2 py-1" style="font-size: 0.78rem;">
+          Mid-2 Target: {{ progress_data.mid2_target_units }} Units
+        </span>
+      </div>
+      <small class="text-muted d-block mt-2" style="font-size: 0.75rem;">
+        Faculty updates daily lesson coverage in Class Diary which automatically syncs with this topic plan.
+      </small>
+    </div>
+  </div>
+</div>
+
+<!-- Unit-by-Unit Planned Topics Table -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-list-ol me-2 text-accent"></i>Syllabus Topic Plan & Target Dates — {{ selected_subject.code }}
+      </h3>
+      <small class="text-muted">Unit 1 to 5 structured timeline for {{ selected_subject.branch.code }} Department.</small>
+    </div>
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ progress_data.total_topics }} Planned Topic(s)</span>
+  </div>
+
+  <div class="accordion syllabus-accordion" id="adminSyllabusAccordion">
+    {% for u_num, u_topics in topics_by_unit.items %}
+      {% with u_stat=progress_data.unit_stats|get_item:u_num %}
+      <div class="accordion-item mb-3 rounded-3 overflow-hidden" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1) !important;">
+        <h2 class="accordion-header" id="adminHeadingUnit{{ u_num }}">
+          <button class="accordion-button {% if u_num > 1 and not u_stat.has_topics %}collapsed{% endif %} px-4 py-3 text-white" 
+                  type="button" data-bs-toggle="collapse" data-bs-target="#adminCollapseUnit{{ u_num }}" 
+                  aria-expanded="true" aria-controls="adminCollapseUnit{{ u_num }}"
+                  style="background: rgba(255,255,255,0.05); font-weight: 600;">
+            <div class="d-flex align-items-center justify-content-between w-100 me-3 flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge {% if u_stat.is_fully_done %}bg-success{% elif u_stat.completed_topics > 0 %}bg-info{% else %}bg-secondary bg-opacity-50{% endif %} px-2 py-1">
+                  Unit {{ u_num }}
+                </span>
+                <span class="text-white">
+                  {% if u_num <= 2 %}
+                    <span class="badge bg-primary bg-opacity-25 border border-primary text-light" style="font-size: 0.68rem;">Mid-1 Portion (Units 1 - 2.5)</span>
+                  {% elif u_num == 3 %}
+                    <span class="badge bg-warning bg-opacity-25 border border-warning text-warning" style="font-size: 0.68rem;">Mid-1 / Mid-2 Split</span>
+                  {% else %}
+                    <span class="badge bg-secondary bg-opacity-25 border border-secondary text-light" style="font-size: 0.68rem;">Mid-2 Portion (Units 2.5 - 5.0)</span>
+                  {% endif %}
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div class="d-none d-sm-block text-muted small" style="width: 140px;">
+                  <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1);">
+                    <div class="progress-bar {% if u_stat.is_fully_done %}bg-success{% elif u_stat.progress_pct >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+                         role="progressbar" style="width: {{ u_stat.progress_pct }}%;"></div>
+                  </div>
+                </div>
+                <span class="small {% if u_stat.is_fully_done %}text-success fw-bold{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
+                  {{ u_stat.completed_topics }} / {{ u_stat.total_topics }} Topics ({{ u_stat.progress_pct }}%)
+                </span>
+              </div>
+            </div>
+          </button>
+        </h2>
+        <div id="adminCollapseUnit{{ u_num }}" class="accordion-collapse collapse {% if u_num == 1 or u_stat.has_topics %}show{% endif %}" aria-labelledby="adminHeadingUnit{{ u_num }}">
+          <div class="accordion-body p-0">
+            {% if u_topics %}
+              <div class="table-responsive">
+                <table class="vvit-table mb-0">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px;">Order</th>
+                      <th>Topic Name & Subtopics</th>
+                      <th>Target Date</th>
+                      <th>Milestone</th>
+                      <th>Status & Completion Log</th>
+                      <th class="text-end" style="width: 140px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for topic in u_topics %}
+                    <tr class="{% if topic.is_completed %}topic-completed-row{% elif topic.is_overdue %}topic-overdue-row{% endif %}"
+                        style="{% if topic.is_completed %}background: rgba(34, 197, 94, 0.05);{% elif topic.is_overdue %}background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444;{% endif %}">
+                      <td class="text-muted fw-bold">#{{ topic.order }}</td>
+                      <td>
+                        <strong class="text-white d-block">{{ topic.topic_name }}</strong>
+                        {% if topic.description %}
+                          <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{{ topic.description }}</small>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="text-light small fw-bold">
+                          <i class="far fa-calendar-alt me-1 text-accent"></i>{{ topic.target_date|date:"d M Y" }}
+                        </div>
+                        {% if topic.is_overdue %}
+                          <span class="badge bg-danger text-white px-2 py-0 mt-1" style="font-size: 0.68rem;">
+                            <i class="fas fa-triangle-exclamation me-1"></i>{{ topic.days_overdue }}d Overdue
+                          </span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if topic.target_milestone == 'mid1' %}
+                          <span class="badge bg-primary bg-opacity-50 text-light" style="font-size: 0.72rem;">Mid-1 Target</span>
+                        {% elif topic.target_milestone == 'mid2' %}
+                          <span class="badge bg-warning bg-opacity-50 text-dark fw-bold" style="font-size: 0.72rem;">Mid-2 Target</span>
+                        {% else %}
+                          <span class="badge bg-secondary bg-opacity-50 text-light" style="font-size: 0.72rem;">Final Exam</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if topic.is_completed %}
+                          <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem;">
+                            <i class="fas fa-check-circle me-1"></i>Completed
+                          </span>
+                          {% if topic.completed_date %}
+                            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">
+                              On {{ topic.completed_date|date:"d-M-Y" }}
+                              {% if topic.completed_by %}by {{ topic.completed_by.full_name }}{% endif %}
+                            </small>
+                          {% endif %}
+                        {% else %}
+                          {% if topic.is_overdue %}
+                            <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.75rem;">
+                              <i class="fas fa-clock me-1"></i>Pending (Overdue)
+                            </span>
+                          {% else %}
+                            <span class="badge bg-secondary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.75rem;">
+                              <i class="fas fa-clock me-1"></i>Pending
+                            </span>
+                          {% endif %}
+                        {% endif %}
+                      </td>
+                      <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                          <button type="button" class="btn btn-sm btn-outline-info p-1 px-2" 
+                                  onclick="openEditModal({{ topic.id }}, {{ topic.unit_number }}, '{{ topic.topic_name|escapejs }}', '{{ topic.target_date|date:'Y-m-d' }}', '{{ topic.target_milestone }}', {{ topic.order }}, '{{ topic.description|default:''|escapejs }}', {{ topic.is_completed|yesno:'1,0' }})"
+                                  title="Edit Topic">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <form method="POST" onsubmit="return confirm('Delete topic \'{{ topic.topic_name|escapejs }}\'?');" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_topic">
+                            <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger p-1 px-2" title="Delete Topic">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-4 text-muted">
+                <i class="fas fa-calendar-xmark fa-2x mb-2 opacity-50 d-block"></i>
+                <small>No topics scheduled for Unit {{ u_num }} yet.</small>
+                <div class="mt-2">
+                  <button type="button" class="btn btn-sm btn-outline-primary" onclick="openAddModalForUnit({{ u_num }})">
+                    <i class="fas fa-plus me-1"></i>Add Topic for Unit {{ u_num }}
+                  </button>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+
+{% else %}
+<div class="glass-card text-center py-5 text-muted">
+  <i class="fas fa-book-open fa-3x mb-3 text-accent opacity-50 d-block"></i>
+  <h4 class="text-white">Select a Subject to Manage Syllabus</h4>
+  <p class="mb-0">Choose a branch and subject from the filters above to configure topic plans and target dates.</p>
+</div>
+{% endif %}
+
+<!-- Add Single Topic Modal -->
+<div class="modal fade" id="addTopicModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom text-white">
+          <i class="fas fa-plus-circle me-2 text-accent"></i>Add Syllabus Topic — {{ selected_subject.code }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_topic">
+        <div class="modal-body py-3">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Syllabus Unit</label>
+              <select name="unit_number" id="addTopicUnit" class="vvit-select" required>
+                {% for u_val, u_name in unit_choices %}
+                  <option value="{{ u_val }}">{{ u_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Target Milestone</label>
+              <select name="target_milestone" class="vvit-select" required>
+                {% for m_val, m_name in milestone_choices %}
+                  <option value="{{ m_val }}">{{ m_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Topic Name / Chapter</label>
+              <input type="text" name="topic_name" class="vvit-input" placeholder="e.g. Stacks & Queue implementations" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Target Completion Date</label>
+              <input type="date" name="target_date" class="vvit-input" value="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Sequence Order</label>
+              <input type="number" name="order" class="vvit-input" value="1" min="1" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Detailed Subtopics / Description (Optional)</label>
+              <textarea name="description" class="vvit-input" rows="2" placeholder="Key concepts, algorithms, or theorems..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
+            <i class="fas fa-save me-1"></i>Save Topic
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Add Topics Modal -->
+<div class="modal fade" id="bulkAddModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom text-white">
+          <i class="fas fa-layer-group me-2 text-accent"></i>Bulk Add Topics — {{ selected_subject.code }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="bulk_add_topics">
+        <div class="modal-body py-3">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Syllabus Unit</label>
+              <select name="bulk_unit_number" class="vvit-select" required>
+                {% for u_val, u_name in unit_choices %}
+                  <option value="{{ u_val }}">{{ u_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Target Milestone</label>
+              <select name="bulk_target_milestone" class="vvit-select" required>
+                {% for m_val, m_name in milestone_choices %}
+                  <option value="{{ m_val }}">{{ m_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Target Completion Date</label>
+              <input type="date" name="bulk_target_date" class="vvit-input" value="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Topic Names (One topic per line)</label>
+              <textarea name="bulk_topics" class="vvit-input" rows="6" placeholder="Introduction to Trees&#10;Binary Search Tree Operations&#10;AVL Tree Rotations&#10;B-Tree Properties" required></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
+            <i class="fas fa-plus me-1"></i>Create All Topics
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Topic Modal -->
+<div class="modal fade" id="editTopicModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title card-title-custom text-white">
+          <i class="fas fa-edit me-2 text-accent"></i>Edit Syllabus Topic
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit_topic">
+        <input type="hidden" name="topic_id" id="editTopicId">
+        <div class="modal-body py-3">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Syllabus Unit</label>
+              <select name="unit_number" id="editTopicUnit" class="vvit-select" required>
+                {% for u_val, u_name in unit_choices %}
+                  <option value="{{ u_val }}">{{ u_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Target Milestone</label>
+              <select name="target_milestone" id="editTopicMilestone" class="vvit-select" required>
+                {% for m_val, m_name in milestone_choices %}
+                  <option value="{{ m_val }}">{{ m_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Topic Name</label>
+              <input type="text" name="topic_name" id="editTopicName" class="vvit-input" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Target Completion Date</label>
+              <input type="date" name="target_date" id="editTopicDate" class="vvit-input" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-white small fw-bold">Sequence Order</label>
+              <input type="number" name="order" id="editTopicOrder" class="vvit-input" min="1" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white small fw-bold">Detailed Subtopics (Optional)</label>
+              <textarea name="description" id="editTopicDesc" class="vvit-input" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch mt-1">
+                <input class="form-check-input" type="checkbox" name="is_completed" value="1" id="editTopicCompleted">
+                <label class="form-check-label text-white small" for="editTopicCompleted">Mark as Completed</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+          <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-vvit-primary">
+            <i class="fas fa-save me-1"></i>Update Topic
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openAddModalForUnit(unitNum) {
+  document.getElementById('addTopicUnit').value = unitNum;
+  new bootstrap.Modal(document.getElementById('addTopicModal')).show();
+}
+
+function openEditModal(topicId, unitNum, topicName, targetDate, milestone, order, desc, isComp) {
+  document.getElementById('editTopicId').value = topicId;
+  document.getElementById('editTopicUnit').value = unitNum;
+  document.getElementById('editTopicName').value = topicName;
+  document.getElementById('editTopicDate').value = targetDate;
+  document.getElementById('editTopicMilestone').value = milestone;
+  document.getElementById('editTopicOrder').value = order;
+  document.getElementById('editTopicDesc').value = desc;
+  document.getElementById('editTopicCompleted').checked = (isComp === 1);
+  new bootstrap.Modal(document.getElementById('editTopicModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Syllabus & Planned Topics Coverage | Student Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-book-bookmark me-2 text-accent"></i>Syllabus & Topic Schedule Tracker</h1>
+    <p class="ph-sub">Track topics completed in class vs planned syllabus schedule, and Mid-1 / Mid-2 exam readiness</p>
+  </div>
+  <div class="ph-actions">
+    <a href="{% url 'student:class_diary' %}" class="btn-vvit-secondary">
+      <i class="fas fa-chalkboard-user me-1"></i>Class Discussion Diary
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Subject Selector Bar -->
+<div class="glass-card mb-4 p-3">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="text-muted small fw-bold text-uppercase"><i class="fas fa-book me-1 text-accent"></i>Select Subject:</span>
+      {% for subj in subjects %}
+        <a href="{% url 'student:syllabus_coverage_subject' subj.id %}" 
+           class="btn btn-sm {% if selected_subject and selected_subject.id == subj.id %}btn-accent text-dark fw-bold{% else %}btn-outline-secondary text-light{% endif %}"
+           style="border-radius: 20px; padding: 5px 14px; font-size: 0.85rem;">
+          {{ subj.code }} — {{ subj.short_name|default:subj.name }}
+        </a>
+      {% empty %}
+        <span class="text-muted small">No subjects assigned for current semester.</span>
+      {% endfor %}
+    </div>
+    {% if selected_subject %}
+      <span class="badge bg-primary bg-opacity-25 border border-primary text-light px-3 py-2">
+        {{ selected_subject.credits }} Credits • Sem {{ selected_subject.semester }}
+      </span>
+    {% endif %}
+  </div>
+</div>
+
+{% if selected_subject and progress_data %}
+<!-- KPI / Milestone Overview Row -->
+<div class="row g-3 mb-4">
+  <!-- Overall Progress -->
+  <div class="col-lg-4 col-md-6">
+    <div class="glass-card h-100 p-3" style="border-left: 4px solid var(--accent-color, #38bdf8) !important;">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <span class="text-muted small text-uppercase fw-bold">Syllabus Covered</span>
+          <h3 class="text-white fw-bold mb-0 mt-1">{{ progress_data.completion_pct }}%</h3>
+        </div>
+        <span class="badge bg-dark border border-secondary text-white px-2 py-1" style="font-size: 0.78rem;">
+          {{ progress_data.units_completed_count }} / 5.0 Units
+        </span>
+      </div>
+      <div class="progress mb-2" style="height: 8px; background: rgba(255,255,255,0.1);">
+        <div class="progress-bar {% if progress_data.completion_pct >= 80 %}bg-success{% elif progress_data.completion_pct >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+             role="progressbar" style="width: {{ progress_data.completion_pct }}%;"></div>
+      </div>
+      <small class="text-muted d-block" style="font-size: 0.75rem;">
+        {{ progress_data.completed_topics }} of {{ progress_data.total_topics }} planned topics covered in class
+      </small>
+    </div>
+  </div>
+
+  <!-- Mid-1 Milestone Box -->
+  <div class="col-lg-4 col-md-6">
+    <div class="glass-card h-100 p-3" style="border-left: 4px solid {% if progress_data.is_mid1_target_met %}#22c55e{% elif progress_data.mid1_deadline and today > progress_data.mid1_deadline %}#ef4444{% else %}#f59e0b{% endif %} !important;">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <span class="text-muted small text-uppercase fw-bold">Mid-1 Portion (Target: {{ progress_data.mid1_target_units }} Units)</span>
+          <div class="mt-1">
+            {% if progress_data.is_mid1_target_met %}
+              <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-check-circle me-1"></i>Covered Before Mid-1
+              </span>
+            {% else %}
+              <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.75rem;">
+                <i class="fas fa-clock me-1"></i>In Progress ({{ progress_data.units_completed_count }}/{{ progress_data.mid1_target_units }} Units)
+              </span>
+            {% endif %}
+          </div>
+        </div>
+        {% if progress_data.mid1_exam_date %}
+          <span class="badge bg-primary bg-opacity-25 border border-primary text-light px-2 py-1" style="font-size: 0.78rem;">
+            Exam: {{ progress_data.mid1_exam_date|date:"d M" }}
+          </span>
+        {% endif %}
+      </div>
+      <small class="text-muted d-block mt-2" style="font-size: 0.75rem;">
+        Units 1 to 2.5 comprise the Mid-1 examination syllabus.
+      </small>
+    </div>
+  </div>
+
+  <!-- Faculty Details -->
+  <div class="col-lg-4 col-md-12">
+    <div class="glass-card h-100 p-3" style="border-left: 4px solid #10b981 !important;">
+      <span class="text-muted small text-uppercase fw-bold">Course Instructor</span>
+      <div class="mt-2">
+        <strong class="text-white d-block fs-6"><i class="fas fa-user-tie me-1 text-accent"></i>Prof. {{ selected_subject.faculty.full_name|default:"Department Faculty" }}</strong>
+        <small class="text-muted">{{ selected_subject.faculty.employee_id|default:"Faculty" }} • {{ selected_subject.branch.code }}</small>
+      </div>
+      <div class="mt-2">
+        <a href="{% url 'student:class_diary' %}?subject_id={{ selected_subject.id }}" class="btn btn-sm btn-vvit-outline text-accent py-1 px-2" style="font-size: 0.75rem;">
+          <i class="fas fa-list-check me-1"></i>View Class Discussion Notes
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Unit-by-Unit Planned & Covered Topics -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-list-check me-2 text-accent"></i>Topic-by-Topic Syllabus Coverage — {{ selected_subject.code }}
+      </h3>
+      <small class="text-muted">Unit 1 to 5 topics planned and completed in class sessions</small>
+    </div>
+    <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-1">{{ progress_data.total_topics }} Topic(s) Planned</span>
+  </div>
+
+  <div class="accordion syllabus-accordion" id="studentSyllabusAccordion">
+    {% for u_num, u_topics in topics_by_unit.items %}
+      {% with u_stat=progress_data.unit_stats|get_item:u_num %}
+      <div class="accordion-item mb-3 rounded-3 overflow-hidden" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1) !important;">
+        <h2 class="accordion-header" id="studentHeadingUnit{{ u_num }}">
+          <button class="accordion-button {% if u_num > 1 and not u_stat.has_topics %}collapsed{% endif %} px-4 py-3 text-white" 
+                  type="button" data-bs-toggle="collapse" data-bs-target="#studentCollapseUnit{{ u_num }}" 
+                  aria-expanded="true" aria-controls="studentCollapseUnit{{ u_num }}"
+                  style="background: rgba(255,255,255,0.05); font-weight: 600;">
+            <div class="d-flex align-items-center justify-content-between w-100 me-3 flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge {% if u_stat.is_fully_done %}bg-success{% elif u_stat.completed_topics > 0 %}bg-info{% else %}bg-secondary bg-opacity-50{% endif %} px-2 py-1">
+                  Unit {{ u_num }}
+                </span>
+                <span class="text-white">
+                  {% if u_num <= 2 %}
+                    <span class="badge bg-primary bg-opacity-25 border border-primary text-light" style="font-size: 0.68rem;">Mid-1 Portion</span>
+                  {% elif u_num == 3 %}
+                    <span class="badge bg-warning bg-opacity-25 border border-warning text-warning" style="font-size: 0.68rem;">Mid-1 / Mid-2 Split</span>
+                  {% else %}
+                    <span class="badge bg-secondary bg-opacity-25 border border-secondary text-light" style="font-size: 0.68rem;">Mid-2 Portion</span>
+                  {% endif %}
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <div class="d-none d-sm-block text-muted small" style="width: 140px;">
+                  <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1);">
+                    <div class="progress-bar {% if u_stat.is_fully_done %}bg-success{% elif u_stat.progress_pct >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+                         role="progressbar" style="width: {{ u_stat.progress_pct }}%;"></div>
+                  </div>
+                </div>
+                <span class="small {% if u_stat.is_fully_done %}text-success fw-bold{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">
+                  {{ u_stat.completed_topics }} / {{ u_stat.total_topics }} Covered ({{ u_stat.progress_pct }}%)
+                </span>
+              </div>
+            </div>
+          </button>
+        </h2>
+        <div id="studentCollapseUnit{{ u_num }}" class="accordion-collapse collapse {% if u_num == 1 or u_stat.has_topics %}show{% endif %}" aria-labelledby="studentHeadingUnit{{ u_num }}">
+          <div class="accordion-body p-0">
+            {% if u_topics %}
+              <div class="table-responsive">
+                <table class="vvit-table mb-0">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px;">#</th>
+                      <th>Topic Name</th>
+                      <th>Target Milestone</th>
+                      <th>Status & Date Covered</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for topic in u_topics %}
+                    <tr style="{% if topic.is_completed %}background: rgba(34, 197, 94, 0.05);{% endif %}">
+                      <td class="text-muted">{{ forloop.counter }}</td>
+                      <td>
+                        <strong class="text-white d-block">{{ topic.topic_name }}</strong>
+                        {% if topic.description %}
+                          <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">{{ topic.description }}</small>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if topic.target_milestone == 'mid1' %}
+                          <span class="badge bg-primary bg-opacity-50 text-light" style="font-size: 0.72rem;">Mid-1 Target</span>
+                        {% elif topic.target_milestone == 'mid2' %}
+                          <span class="badge bg-warning bg-opacity-50 text-dark fw-bold" style="font-size: 0.72rem;">Mid-2 Target</span>
+                        {% else %}
+                          <span class="badge bg-secondary bg-opacity-50 text-light" style="font-size: 0.72rem;">Final Exam</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if topic.is_completed %}
+                          <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem;">
+                            <i class="fas fa-check-circle me-1"></i>Covered in Class
+                          </span>
+                          {% if topic.completed_date %}
+                            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">
+                              On {{ topic.completed_date|date:"d-M-Y" }}
+                            </small>
+                          {% endif %}
+                        {% else %}
+                          <span class="badge bg-secondary bg-opacity-75 text-light px-2 py-1" style="font-size: 0.75rem;">
+                            <i class="fas fa-hourglass-half me-1"></i>Upcoming
+                          </span>
+                          <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">
+                            Planned by {{ topic.target_date|date:"d-M-Y" }}
+                          </small>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-4 text-muted">
+                <i class="fas fa-book-open fa-2x mb-2 opacity-50 d-block"></i>
+                <small>No specific subtopics scheduled for Unit {{ u_num }} yet.</small>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+
+{% else %}
+<div class="glass-card text-center py-5 text-muted">
+  <i class="fas fa-book-open fa-3x mb-3 text-accent opacity-50 d-block"></i>
+  <h4 class="text-white">Select a Subject to View Syllabus Progress</h4>
+  <p class="mb-0">Choose any subject from the selector above to explore planned topics and completion status.</p>
+</div>
+{% endif %}
+{% endblock %}

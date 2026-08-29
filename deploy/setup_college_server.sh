@@ -45,8 +45,8 @@ sudo -u postgres psql -c "ALTER DATABASE vvitu_db OWNER TO vvitu_admin;" || true
 # 6. Django Database Migration & Static Files Collection
 echo "[6/7] Running database migrations & collecting static files..."
 export DJANGO_SETTINGS_MODULE=VVITU_Portal.settings_prod
-python /var/www/vvitu/manage.py migrate
-python /var/www/vvitu/manage.py collectstatic --no-input
+/var/www/vvitu/venv/bin/python /var/www/vvitu/manage.py migrate
+/var/www/vvitu/venv/bin/python /var/www/vvitu/manage.py collectstatic --no-input
 
 # 7. Configure Systemd & Nginx
 echo "[7/7] Installing Systemd service and Nginx configuration..."

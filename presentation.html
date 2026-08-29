@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VVITU Portal — Ultra-Premium Pitch Deck (Zero Paragraphs - Visual Component Models)</title>
+    <!-- Google Fonts: Space Grotesk, Rajdhani, Outfit, Inter, JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Rajdhani:wght@600;700&family=Outfit:wght@600;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #070a12;
+            --card-bg: rgba(15, 23, 42, 0.82);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --tata-red: #e11d48;
+            --neon-red-glow: rgba(225, 29, 72, 0.4);
+            --accent-blue: #0ea5e9;
+            --neon-blue-glow: rgba(14, 165, 233, 0.4);
+            --accent-green: #10b981;
+            --accent-gold: #f59e0b;
+            --accent-purple: #8b5cf6;
+
+            /* Distinct Font Typography System */
+            --font-title: 'Space Grotesk', sans-serif;
+            --font-tech: 'Rajdhani', sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            perspective: 1000px;
+        }
+
+        /* Top Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 6.66%;
+            background: linear-gradient(90deg, var(--tata-red), var(--accent-blue), var(--accent-purple), var(--tata-red));
+            background-size: 300% 100%;
+            animation: gradientShimmer 3s linear infinite;
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 15px var(--tata-red);
+        }
+
+        @keyframes gradientShimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        /* Slide Viewport */
+        .slide-viewport {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1150px;
+            height: calc(100vh - 120px);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 30px 45px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            position: relative;
+            overflow-y: auto;
+            transform-style: preserve-3d;
+        }
+
+        .slide.active {
+            display: flex;
+            animation: slideEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideEntrance {
+            0% { opacity: 0; transform: translateY(30px) scale(0.95) rotateX(8deg); }
+            100% { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
+        }
+
+        /* Header Styling */
+        .tata-header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .tata-title {
+            font-family: var(--font-title);
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .tata-red-line {
+            width: 220px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--tata-red), #f43f5e);
+            border-radius: 4px;
+            box-shadow: 0 0 15px var(--tata-red);
+        }
+
+        .slide-body {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 0px;
+        }
+
+        /* ----------------------------------------------------
+           MODEL 1: 4-STAT GRID METRIC CARDS (Slide 2 & 9)
+           ---------------------------------------------------- */
+        .grid-4-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            width: 100%;
+            max-width: 980px;
+        }
+        .metric-card {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 22px 15px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .metric-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 12px 30px rgba(14, 165, 233, 0.3);
+        }
+        .metric-icon {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .metric-val {
+            font-family: var(--font-title);
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .metric-label {
+            font-family: var(--font-heading);
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* ----------------------------------------------------
+           MODEL 2: SEPARATE DIALOGUE CALLOUT BOXES (Slide 3)
+           ---------------------------------------------------- */
+        .dialogue-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            width: 100%;
+            max-width: 950px;
+        }
+        .dialogue-box {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            text-align: left;
+            border-left: 4px solid var(--tata-red);
+            transition: all 0.3s ease;
+        }
+        .dialogue-box:hover {
+            box-shadow: 0 10px 25px var(--neon-red-glow);
+            transform: translateY(-4px);
+        }
+        .dialogue-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .dialogue-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(225, 29, 72, 0.2);
+            color: var(--tata-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            border: 1px solid var(--tata-red);
+        }
+        .dialogue-user-name {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+        .dialogue-bubble {
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-style: italic;
+        }
+
+        /* ----------------------------------------------------
+           MODEL 3: HIERARCHICAL PYRAMID MODEL (Slide 7)
+           ---------------------------------------------------- */
+        .pyramid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 850px;
+        }
+        .pyramid-tier {
+            border-radius: 12px;
+            padding: 16px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .pyramid-tier:hover { transform: scale(1.03); }
+        .pyramid-top { width: 58%; background: linear-gradient(135deg, rgba(225, 29, 72, 0.9), rgba(190, 18, 60, 0.9)); }
+        .pyramid-mid { width: 78%; background: linear-gradient(135deg, rgba(14, 165, 233, 0.9), rgba(3, 105, 161, 0.9)); }
+        .pyramid-base { width: 98%; background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9)); }
+
+        /* ----------------------------------------------------
+           MODEL 4: TIMELINE STEPPER PIPELINE (Slide 10)
+           ---------------------------------------------------- */
+        .timeline-stepper {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 950px;
+        }
+        .timeline-node {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 18px 14px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .timeline-node.active-node { border-top: 4px solid var(--accent-green); }
+        .timeline-node.future-node { border-top: 4px solid var(--accent-blue); }
+        .timeline-node:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); }
+        .node-step { font-family: var(--font-tech); font-weight: 700; font-size: 0.85rem; color: var(--accent-gold); text-transform: uppercase; margin-bottom: 4px; }
+        .node-title { font-family: var(--font-title); font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 6px; }
+        .node-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+
+        /* ----------------------------------------------------
+           MODEL 5: PROGRESS BAR BUDGET ALLOCATION (Slide 11)
+           ---------------------------------------------------- */
+        .budget-card-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 880px;
+        }
+        .budget-item {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-align: left;
+        }
+        .budget-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .budget-label { font-family: var(--font-heading); font-weight: 700; font-size: 1rem; color: var(--text-primary); }
+        .budget-amount { font-family: var(--font-tech); font-weight: 700; font-size: 1.1rem; color: var(--accent-green); }
+        .budget-progress-bg { height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; overflow: hidden; }
+        .budget-progress-fill { height: 100%; border-radius: 5px; }
+
+        /* ----------------------------------------------------
+           MODEL 6: AI VISION CALLOUT CARDS (Slide 13)
+           ---------------------------------------------------- */
+        .ai-vision-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 950px;
+        }
+        .ai-feature-card {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 22px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        .ai-feature-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px var(--neon-blue-glow); border-color: var(--accent-blue); }
+        .ai-icon-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(14, 165, 233, 0.2); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid var(--accent-blue); }
+
+        /* ----------------------------------------------------
+           MODEL 7: SOLO DEVELOPER SPOTLIGHT CARD (Slide 12)
+           ---------------------------------------------------- */
+        .solo-card-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            width: 100%;
+            max-width: 920px;
+        }
+        .solo-pillar-card {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 18px 20px;
+            text-align: left;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: all 0.3s ease;
+        }
+        .solo-pillar-card:hover { transform: translateY(-4px); border-color: var(--tata-red); box-shadow: 0 10px 25px var(--neon-red-glow); }
+        .solo-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(225, 29, 72, 0.2);
+            color: var(--tata-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 1px solid var(--tata-red);
+            flex-shrink: 0;
+        }
+
+        /* ----------------------------------------------------
+           MODEL 8: DUAL COMPARISON MATRIX CARDS (Slide 6 & 8)
+           ---------------------------------------------------- */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            width: 100%;
+            max-width: 950px;
+        }
+        .card-box {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 22px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        .card-box:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5); }
+        .card-box.red-border { border-top: 4px solid var(--tata-red); }
+        .card-box.blue-border { border-top: 4px solid var(--accent-blue); }
+        .card-box-title { font-family: var(--font-title); font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* Title Slide Special Styling */
+        .title-main {
+            font-family: var(--font-title);
+            font-size: 4.2rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-blue) 70%, var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+        .title-sub {
+            font-family: var(--font-tech);
+            font-size: 1.35rem;
+            color: var(--accent-blue);
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-top: 20px;
+            max-width: 850px;
+            text-transform: uppercase;
+        }
+        .title-tags-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        .tech-pill {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+
+        .tata-footer {
+            font-family: var(--font-tech);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding-top: 10px;
+            border-top: 1px solid var(--card-border);
+            width: 100%;
+        }
+
+        .controls-bar {
+            height: 68px;
+            background: rgba(7, 10, 18, 0.95);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 90;
+        }
+        .btn-group { display: flex; gap: 12px; align-items: center; }
+        .btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-primary);
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.18); border-color: var(--accent-blue); transform: translateY(-2px); }
+        .btn-primary { background: linear-gradient(135deg, var(--tata-red), #be123c); color: white; border-color: var(--tata-red); }
+        .slide-select { background: rgba(15, 23, 42, 0.95); color: var(--text-primary); border: 1px solid var(--card-border); padding: 8px 14px; border-radius: 8px; font-family: var(--font-heading); font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+
+        .notes-drawer {
+            position: fixed;
+            bottom: 68px;
+            left: 0;
+            width: 100%;
+            background: rgba(7, 10, 18, 0.98);
+            color: #f8fafc;
+            border-top: 3px solid var(--tata-red);
+            padding: 20px 40px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 80;
+        }
+        .notes-drawer.open { transform: translateY(0); }
+        .notes-header { font-family: var(--font-title); font-size: 0.95rem; font-weight: 700; color: var(--accent-gold); margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Progress Bar -->
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Slide Viewport -->
+    <div class="slide-viewport">
+
+        <!-- SLIDE 1: Title Slide (Hero Model) -->
+        <div class="slide active" id="slide1" data-notes="Welcome to the VVITU Portal pitch deck presented in the official Ratan Tata Office Pitch Deck format with zero plain text paragraphs. Built independently by a solo developer.">
+            <div></div>
+            <div class="slide-body">
+                <h1 class="title-main">VVITU PORTAL</h1>
+                <div class="tata-red-line" style="height: 5px;"></div>
+                <p class="title-sub">NEXT-GENERATION ERP & ACADEMIC INTELLIGENCE PLATFORM FOR UNIVERSITIES</p>
+                <div class="title-tags-row">
+                    <div class="tech-pill"><i class="fa-brands fa-python"></i> Django 4.2 LTS</div>
+                    <div class="tech-pill"><i class="fa-solid fa-gem"></i> Bootstrap 5 Glassmorphism</div>
+                    <div class="tech-pill"><i class="fa-solid fa-brain"></i> Scikit-Learn ML</div>
+                    <div class="tech-pill"><i class="fa-solid fa-shield-halved"></i> OWASP WAF Shield</div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 2: WHAT IS VVITU PORTAL? (MODEL 1: 4-METRIC GRID CARDS) -->
+        <div class="slide" id="slide2" data-notes="4-Metric Grid Card Model: 100% Solo Engineering, 5 Scoped Portals, Glassmorphism UI, WAF Security.">
+            <div class="tata-header">
+                <h2 class="tata-title">WHAT IS VVITU PORTAL?</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-4-metrics">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="color: var(--tata-red);"><i class="fa-solid fa-user-ninja"></i></div>
+                        <div class="metric-val" style="color: var(--text-primary);">100%</div>
+                        <div class="metric-label">Solo Engineering Project</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="color: var(--accent-blue);"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="metric-val" style="color: var(--text-primary);">5 Portals</div>
+                        <div class="metric-label">Scoped Control Panels</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="color: var(--accent-green);"><i class="fa-solid fa-gem"></i></div>
+                        <div class="metric-val" style="color: var(--text-primary);">Glassmorphic</div>
+                        <div class="metric-label">Dark & Light Engine</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="color: var(--accent-purple);"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="metric-val" style="color: var(--text-primary);">WAF Shield</div>
+                        <div class="metric-label">SQLi & XSS Hardened</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 3: PROBLEM (MODEL 2: SEPARATE DIALOGUE CALLOUT BOXES) -->
+        <div class="slide" id="slide3" data-notes="Dialogue Box Model: Real-life user complaints illustrating the exact flaws in current college websites.">
+            <div class="tata-header">
+                <h2 class="tata-title">PROBLEM</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="dialogue-grid">
+                    <div class="dialogue-box">
+                        <div class="dialogue-header">
+                            <div class="dialogue-avatar"><i class="fa-solid fa-paint-roller"></i></div>
+                            <div class="dialogue-user-name">Faculty Complaint: Poor Design & UI</div>
+                        </div>
+                        <div class="dialogue-bubble">"The existing website has an ugly, outdated layout. It breaks completely on mobile phones when we try to mark attendance."</div>
+                    </div>
+                    <div class="dialogue-box">
+                        <div class="dialogue-header">
+                            <div class="dialogue-avatar"><i class="fa-solid fa-bug"></i></div>
+                            <div class="dialogue-user-name">Student Complaint: Frequent Bugs</div>
+                        </div>
+                        <div class="dialogue-bubble">"Marks upload forms crash during results week. Data gets lost and server timeouts happen constantly during peak hours."</div>
+                    </div>
+                    <div class="dialogue-box">
+                        <div class="dialogue-header">
+                            <div class="dialogue-avatar"><i class="fa-solid fa-boxes-packing"></i></div>
+                            <div class="dialogue-user-name">HOD Complaint: Very Few Features</div>
+                        </div>
+                        <div class="dialogue-bubble">"No backlog warning alerts, zero proxy teacher transfer tools, and no unit-level syllabus progress tracking for accreditation."</div>
+                    </div>
+                    <div class="dialogue-box">
+                        <div class="dialogue-header">
+                            <div class="dialogue-avatar"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                            <div class="dialogue-user-name">Admin Complaint: Overpriced Vendors</div>
+                        </div>
+                        <div class="dialogue-bubble">"External software vendors charge over ₹250+ per student every year for legacy software that offers zero innovation."</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 4: SOLUTION (MODEL 8: DUAL COMPARISON MATRIX) -->
+        <div class="slide" id="slide4" data-notes="Solution Card Model: Cinematic UI, zero-bug architecture, 10x features, 50% price advantage.">
+            <div class="tata-header">
+                <h2 class="tata-title">SOLUTION</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card-box red-border">
+                        <div class="card-box-title" style="color: var(--tata-red);"><i class="fa-solid fa-gem"></i> Engineering Excellence</div>
+                        <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">
+                            • <strong>Cinematic Glassmorphism:</strong> Dark/Light theme engine<br>
+                            • <strong>Zero-Bug Architecture:</strong> 100% route health across 50+ routes<br>
+                            • <strong>0 Syntax Errors:</strong> Verified across 75 HTML templates
+                        </p>
+                    </div>
+                    <div class="card-box blue-border">
+                        <div class="card-box-title" style="color: var(--accent-blue);"><i class="fa-solid fa-wand-magic-sparkles"></i> Feature-Rich Platform</div>
+                        <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">
+                            • <strong>AI Predictor:</strong> Scikit-Learn attendance outcome forecast<br>
+                            • <strong>Backlog Engine:</strong> Real-time uncleared fail warnings<br>
+                            • <strong>50% Cost Disruptor:</strong> Enterprise ERP at half market price
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 5: UNIQUE SELLING PROPOSITION (MODEL 1: 4-METRIC GRID CARDS) -->
+        <div class="slide" id="slide5" data-notes="USP Feature Card Model: 50% price advantage, zero cloud server cost, WAF security, AI predictor, 1-day DEO lock.">
+            <div class="tata-header">
+                <h2 class="tata-title">UNIQUE SELLING PROPOSITION</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-4-metrics">
+                    <div class="metric-card" style="border-color: var(--accent-green);">
+                        <div class="metric-icon" style="color: var(--accent-green);"><i class="fa-solid fa-percent"></i></div>
+                        <div class="metric-val" style="color: var(--accent-green);">50% Off</div>
+                        <div class="metric-label">Price Advantage</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--accent-blue);">
+                        <div class="metric-icon" style="color: var(--accent-blue);"><i class="fa-solid fa-server"></i></div>
+                        <div class="metric-val" style="color: var(--accent-blue);">₹0 Cloud</div>
+                        <div class="metric-label">College Local Servers</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--tata-red);">
+                        <div class="metric-icon" style="color: var(--tata-red);"><i class="fa-solid fa-shield-cat"></i></div>
+                        <div class="metric-val" style="color: var(--tata-red);">WAF Shield</div>
+                        <div class="metric-label">SQLi & XSS Blocker</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--accent-gold);">
+                        <div class="metric-icon" style="color: var(--accent-gold);"><i class="fa-solid fa-brain"></i></div>
+                        <div class="metric-val" style="color: var(--accent-gold);">AI Predict</div>
+                        <div class="metric-label">Attendance Warning</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 6: YOUR PRODUCT / SERVICE (MODEL 8: DUAL COMPARISON MATRIX) -->
+        <div class="slide" id="slide6" data-notes="Architecture Card Model: On-premise PostgreSQL stack and operational value breakdown.">
+            <div class="tata-header">
+                <h2 class="tata-title">YOUR PRODUCT & ARCHITECTURE</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card-box red-border">
+                        <div class="card-box-title" style="color: var(--tata-red);">Core Technology Stack</div>
+                        <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">
+                            • Django 4.2 LTS & Python 3.11 Backend<br>
+                            • Bootstrap 5 Glassmorphism UI & Chart.js 4<br>
+                            • College On-Premise PostgreSQL DB & Redis Cache<br>
+                            • ReportLab PDF Engine & openpyxl Excel Export
+                        </p>
+                    </div>
+                    <div class="card-box blue-border">
+                        <div class="card-box-title" style="color: var(--accent-blue);">Key Operational Value</div>
+                        <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">
+                            • Eliminates paper registers & spreadsheet loss<br>
+                            • Reduces leave approval cycle from days to minutes<br>
+                            • Shields institutional data with OWASP WAF shield<br>
+                            • Empowers 300,000+ students with instant feeds
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 7: TARGET MARKET (MODEL 3: HIERARCHICAL PYRAMID MODEL) -->
+        <div class="slide" id="slide7" data-notes="Pyramid Model Layout: TAM, SAM, and SOM market sizing breakdown.">
+            <div class="tata-header">
+                <h2 class="tata-title">TARGET MARKET</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="pyramid-container">
+                    <div class="pyramid-tier pyramid-top">
+                        <div style="font-family: var(--font-title); font-weight: 800; font-size: 1.1rem;"><i class="fa-solid fa-flag"></i> SOM (Obtainable Market)</div>
+                        <div style="font-family: var(--font-tech); font-weight: 700; font-size: 1.15rem; background: rgba(0,0,0,0.25); padding: 4px 12px; border-radius: 20px;">₹1.2 Crores / Year</div>
+                    </div>
+                    <div class="pyramid-tier pyramid-mid">
+                        <div style="font-family: var(--font-title); font-weight: 800; font-size: 1.1rem;"><i class="fa-solid fa-bullseye"></i> SAM (Serviceable Market — 250 NAAC Colleges)</div>
+                        <div style="font-family: var(--font-tech); font-weight: 700; font-size: 1.15rem; background: rgba(0,0,0,0.25); padding: 4px 12px; border-radius: 20px;">₹30 Crores / Year</div>
+                    </div>
+                    <div class="pyramid-tier pyramid-base">
+                        <div style="font-family: var(--font-title); font-weight: 800; font-size: 1.1rem;"><i class="fa-solid fa-chart-pie"></i> TAM (Total Addressable Market — 1,000+ Indian Engineering Universities)</div>
+                        <div style="font-family: var(--font-tech); font-weight: 700; font-size: 1.15rem; background: rgba(0,0,0,0.25); padding: 4px 12px; border-radius: 20px;">₹120 Crores / Year</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 8: COMPETITION & MARKET SURVIVAL (MODEL 8: DUAL COMPARISON MATRIX) -->
+        <div class="slide" id="slide8" data-notes="Market Survival Strategy: How VVITU Portal beats existing legacy college websites with 50% price advantage, zero cloud server cost, 10x AI features, and WAF security.">
+            <div class="tata-header">
+                <h2 class="tata-title">MARKET SURVIVAL & COMPETITIVE MOAT</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card-box red-border">
+                        <div class="card-box-title" style="color: var(--tata-red);"><i class="fa-solid fa-triangle-exclamation"></i> Existing Incumbent Websites</div>
+                        <p style="font-size: 0.92rem; line-height: 1.5; color: var(--text-primary);">
+                            • <strong>Overpriced Contracts:</strong> Charge ₹250–₹350/student/year<br>
+                            • <strong>Ugly & Outdated UI:</strong> Non-responsive 2000s legacy design<br>
+                            • <strong>Frequent Bugs & Crashes:</strong> Database sync errors during results<br>
+                            • <strong>Zero Innovation:</strong> No AI predictors, no bunk detection, no WAF
+                        </p>
+                    </div>
+                    <div class="card-box blue-border">
+                        <div class="card-box-title" style="color: var(--accent-blue);"><i class="fa-solid fa-shield-halved"></i> VVITU Market Survival Strategy</div>
+                        <p style="font-size: 0.92rem; line-height: 1.5; color: var(--text-primary);">
+                            • <strong>50% Price Advantage:</strong> Only ₹120/student/year (Half Market Price)<br>
+                            • <strong>₹0 Cloud Server Cost:</strong> Deploys on college's existing local servers<br>
+                            • <strong>10x AI Features:</strong> Attendance predictor, Bunk alert, Photo search<br>
+                            • <strong>Zero Friction Migration:</strong> 30-day parallel trial run & free setup
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 9: REVENUE & FINANCIAL PROJECTIONS (MODEL 1: 4-METRIC GRID CARDS) -->
+        <div class="slide" id="slide9" data-notes="Revenue Growth Card Model: Pricing ₹120/student, Y1 ₹12L ARR, Y2 ₹60L ARR, Y3 ₹2.4 Cr ARR with ~80% profit margins.">
+            <div class="tata-header">
+                <h2 class="tata-title">REVENUE & FINANCIAL PROJECTIONS</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-4-metrics">
+                    <div class="metric-card" style="border-color: var(--accent-gold);">
+                        <div class="metric-icon" style="color: var(--accent-gold);"><i class="fa-solid fa-tag"></i></div>
+                        <div class="metric-val" style="color: var(--accent-gold);">₹120</div>
+                        <div class="metric-label">Per Student / Year (50% Off)</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--accent-blue);">
+                        <div class="metric-icon" style="color: var(--accent-blue);"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="metric-val" style="color: var(--accent-blue);">₹12 Lakhs</div>
+                        <div class="metric-label">Year 1 ARR (10,000 Students)</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--accent-purple);">
+                        <div class="metric-icon" style="color: var(--accent-purple);"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="metric-val" style="color: var(--accent-purple);">₹60 Lakhs</div>
+                        <div class="metric-label">Year 2 ARR (50,000 Students)</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--accent-green);">
+                        <div class="metric-icon" style="color: var(--accent-green);"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="metric-val" style="color: var(--accent-green);">₹2.4 Crores</div>
+                        <div class="metric-label">Year 3 ARR (~80% Profit Margin)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 10: MILESTONES (MODEL 4: TIMELINE STEPPER PIPELINE) -->
+        <div class="slide" id="slide10" data-notes="Timeline Stepper Model: 4 horizontal nodes showing project roadmap and milestones.">
+            <div class="tata-header">
+                <h2 class="tata-title">MILESTONES & ROADMAP</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="timeline-stepper">
+                    <div class="timeline-node active-node">
+                        <div class="node-step">Phase 1 (Complete)</div>
+                        <div class="node-title">5-Role ERP Core</div>
+                        <div class="node-desc">Full Django ERP platform built independently by single developer.</div>
+                    </div>
+                    <div class="timeline-node active-node">
+                        <div class="node-step">Phase 2 (Complete)</div>
+                        <div class="node-title">Security & WAF</div>
+                        <div class="node-desc">100% route health validation across 50+ routes & OWASP security shield.</div>
+                    </div>
+                    <div class="timeline-node future-node">
+                        <div class="node-step">Phase 3 (Next)</div>
+                        <div class="node-title">AI Camera Sync</div>
+                        <div class="node-desc">Classroom facial recognition cameras auto-logging attendance per timetable.</div>
+                    </div>
+                    <div class="timeline-node future-node">
+                        <div class="node-step">Phase 4 (Advanced)</div>
+                        <div class="node-title">Bunk Detection</div>
+                        <div class="node-desc">Escaped student detection alerts & Photo upload AI student profile search.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 11: FUNDING & BUDGET (MODEL 5: PROGRESS BAR BREAKDOWN) -->
+        <div class="slide" id="slide11" data-notes="Progress Bar Model: Visual percentage breakdown of the reduced ₹3.5 Lakhs budget.">
+            <div class="tata-header">
+                <h2 class="tata-title">FUNDING & BUDGET REQUIREMENTS</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="budget-card-grid">
+                    <div class="budget-item">
+                        <div class="budget-header-row">
+                            <span class="budget-label"><i class="fa-solid fa-video" style="color: var(--accent-blue);"></i> 50% — AI Smart Camera Hardware R&D</span>
+                            <span class="budget-amount">₹1,75,000</span>
+                        </div>
+                        <div class="budget-progress-bg">
+                            <div class="budget-progress-fill" style="width: 50%; background: var(--accent-blue);"></div>
+                        </div>
+                    </div>
+                    <div class="budget-item">
+                        <div class="budget-header-row">
+                            <span class="budget-label"><i class="fa-solid fa-comment-sms" style="color: var(--accent-gold);"></i> 30% — Fast2SMS Gateway Credits & API Integration</span>
+                            <span class="budget-amount">₹1,05,000</span>
+                        </div>
+                        <div class="budget-progress-bg">
+                            <div class="budget-progress-fill" style="width: 30%; background: var(--accent-gold);"></div>
+                        </div>
+                    </div>
+                    <div class="budget-item">
+                        <div class="budget-header-row">
+                            <span class="budget-label"><i class="fa-solid fa-key" style="color: var(--accent-green);"></i> 20% — Local Server Setup, SSL & Maintenance</span>
+                            <span class="budget-amount">₹70,000</span>
+                        </div>
+                        <div class="budget-progress-bg">
+                            <div class="budget-progress-fill" style="width: 20%; background: var(--accent-green);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 12: THE TEAM (MODEL 7: SOLO DEVELOPER SPOTLIGHT CARDS) -->
+        <div class="slide" id="slide12" data-notes="Solo Developer Pillar Model: 4 key execution pillars built single-handedly by the lead developer.">
+            <div class="tata-header">
+                <h2 class="tata-title">THE TEAM (SOLO DEVELOPER)</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="solo-card-container">
+                    <div class="solo-pillar-card">
+                        <div class="solo-icon-box"><i class="fa-solid fa-user-tie"></i></div>
+                        <div>
+                            <div class="card-box-title" style="color: var(--text-primary);">Solo Lead Architect</div>
+                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">Entire platform conceptualized, designed, and coded independently.</p>
+                        </div>
+                    </div>
+                    <div class="solo-pillar-card">
+                        <div class="solo-icon-box"><i class="fa-solid fa-laptop-code"></i></div>
+                        <div>
+                            <div class="card-box-title" style="color: var(--text-primary);">Full-Stack Engineering</div>
+                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">Backend Django 4.2, PostgreSQL, REST APIs & Glassmorphic CSS UI.</p>
+                        </div>
+                    </div>
+                    <div class="solo-pillar-card">
+                        <div class="solo-icon-box"><i class="fa-solid fa-brain"></i></div>
+                        <div>
+                            <div class="card-box-title" style="color: var(--text-primary);">AI & Data Science</div>
+                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">Scikit-learn linear regression model for early attendance risk warnings.</p>
+                        </div>
+                    </div>
+                    <div class="solo-pillar-card">
+                        <div class="solo-icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div>
+                            <div class="card-box-title" style="color: var(--text-primary);">Security & WAF Shield</div>
+                            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">Custom middleware blocking SQLi, XSS, Path Traversal & brute-force attacks.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 13: FUTURE EXTENSION (MODEL 6: AI VISION CALLOUT CARDS) -->
+        <div class="slide" id="slide13" data-notes="AI Vision Model: Dedicated feature cards for Bunked Student Alerts and Photo Upload Student Search.">
+            <div class="tata-header">
+                <h2 class="tata-title">FUTURE EXTENSION: AI VISION ENGINE</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="ai-vision-grid">
+                    <div class="ai-feature-card">
+                        <div class="ai-icon-badge"><i class="fa-solid fa-user-minus"></i></div>
+                        <div class="card-box-title" style="color: var(--tata-red);">Escaped / Bunked Student Alert Engine</div>
+                        <p style="font-size: 0.92rem; line-height: 1.5; color: var(--text-secondary);">
+                            Automatically cross-checks attendance between consecutive class periods. If a student was present in Period 1 but missing in Period 2, an instant alert with roll number & photo is dispatched to the class teacher & HOD.
+                        </p>
+                    </div>
+                    <div class="ai-feature-card">
+                        <div class="ai-icon-badge"><i class="fa-solid fa-id-card-clip"></i></div>
+                        <div class="card-box-title" style="color: var(--accent-blue);">Photo Upload AI Student Search</div>
+                        <p style="font-size: 0.92rem; line-height: 1.5; color: var(--text-secondary);">
+                            A separate dedicated portal interface where uploading any student photo (or camera frame capture) automatically performs AI facial recognition, instantly opening their full profile, backlogs, attendance & current room location.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 14: THIS DECK IS NOT EVERYTHING (MODEL 1: 3-ACTION GRID CARDS) -->
+        <div class="slide" id="slide14" data-notes="Action Trigger Model: Live Portal Demo, Open Repository, Continuous Innovation cards.">
+            <div class="tata-header">
+                <h2 class="tata-title">THIS DECK IS NOT EVERYTHING</h2>
+                <div class="tata-red-line"></div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-4-metrics" style="grid-template-columns: repeat(3, 1fr); max-width: 900px;">
+                    <div class="metric-card" style="border-color: var(--accent-blue);">
+                        <div class="metric-icon" style="color: var(--accent-blue);"><i class="fa-solid fa-desktop"></i></div>
+                        <div class="metric-val" style="font-size: 1.2rem; color: var(--text-primary);">Live Demo</div>
+                        <div class="metric-label">Experience all 5 role portals live</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--accent-green);">
+                        <div class="metric-icon" style="color: var(--accent-green);"><i class="fa-solid fa-code"></i></div>
+                        <div class="metric-val" style="font-size: 1.2rem; color: var(--text-primary);">Open Codebase</div>
+                        <div class="metric-label">Django repo & test suite ready</div>
+                    </div>
+                    <div class="metric-card" style="border-color: var(--tata-red);">
+                        <div class="metric-icon" style="color: var(--tata-red);"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="metric-val" style="font-size: 1.2rem; color: var(--text-primary);">AI Evolution</div>
+                        <div class="metric-label">Iterating towards smart cameras</div>
+                    </div>
+                </div>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+        <!-- SLIDE 15: BEST OF LUCK! (HERO BANNER MODEL) -->
+        <div class="slide" id="slide15" data-notes="Concluding slide of the Ratan Tata pitch deck template.">
+            <div></div>
+            <div class="slide-body">
+                <h1 class="title-main" style="font-size: 4rem;">BEST OF LUCK!</h1>
+                <div class="tata-red-line" style="width: 280px; height: 5px;"></div>
+                <p class="title-sub" style="font-size: 1.5rem; color: var(--tata-red); font-weight: 700; margin-top: 25px;">
+                    As long as there is that fire in your heart, you will find a way!
+                </p>
+            </div>
+            <div class="tata-footer">Vasireddy Venkatadri International Technological University  |  Developed by Solo Innovator</div>
+        </div>
+
+    </div>
+
+    <!-- Speaker Notes Drawer -->
+    <div class="notes-drawer" id="notesDrawer">
+        <div class="notes-header"><i class="fa-solid fa-clipboard"></i> SPEAKER NOTES (ZERO PARAGRAPHS - VISUAL COMPONENT MODELS)</div>
+        <div class="notes-content" id="notesContent">Loading speaker notes...</div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+        <div class="btn-group">
+            <button class="btn" id="prevBtn" onclick="prevSlide()"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextSlide()">Next <i class="fa-solid fa-arrow-right"></i></button>
+            <select class="slide-select" id="slideSelect" onchange="goToSlide(parseInt(this.value))">
+                <option value="1">Slide 1: PITCH DECK Title (Hero Tag Model)</option>
+                <option value="2">Slide 2: WHAT IS VVITU PORTAL? (4-Metric Grid Model)</option>
+                <option value="3">Slide 3: PROBLEM (Dialogue Box Model)</option>
+                <option value="4">Slide 4: SOLUTION (Matrix Card Model)</option>
+                <option value="5">Slide 5: UNIQUE SELLING PROPOSITION (4-Metric Grid Model)</option>
+                <option value="6">Slide 6: YOUR PRODUCT / SERVICE (Architecture Matrix Model)</option>
+                <option value="7">Slide 7: TARGET MARKET (Pyramid Model)</option>
+                <option value="8">Slide 8: COMPETITION & BARRIER TO ENTRY (Matrix Model)</option>
+                <option value="9">Slide 9: REVENUE & FINANCIAL PROJECTIONS (4-Metric Grid Model)</option>
+                <option value="10">Slide 10: MILESTONES (Timeline Stepper Model)</option>
+                <option value="11">Slide 11: FUNDING & BUDGET (Progress Bar Model)</option>
+                <option value="12">Slide 12: THE TEAM (Solo Developer Spotlight Model)</option>
+                <option value="13">Slide 13: FUTURE EXTENSION (AI Vision Callout Cards)</option>
+                <option value="14">Slide 14: THIS DECK IS NOT EVERYTHING (3-Action Grid Model)</option>
+                <option value="15">Slide 15: BEST OF LUCK! (Hero Tagline Banner Model)</option>
+            </select>
+        </div>
+
+        <div style="font-family: var(--font-tech); font-weight: 700; color: var(--text-secondary); font-size: 1rem; letter-spacing: 1px;">
+            <span id="currentSlideNum">1</span> / <span id="totalSlideNum">15</span>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="toggleNotes()"><i class="fa-solid fa-note-sticky"></i> Speaker Notes (N)</button>
+            <button class="btn" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i> Fullscreen (F)</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Controller -->
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            const activeSlide = document.getElementById(`slide${currentSlide}`);
+            if (activeSlide) {
+                void activeSlide.offsetWidth;
+                activeSlide.classList.add('active');
+                const notes = activeSlide.getAttribute('data-notes') || 'No speaker notes for this slide.';
+                document.getElementById('notesContent').innerText = notes;
+            }
+            const percentage = (currentSlide / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = `${percentage}%`;
+            document.getElementById('currentSlideNum').innerText = currentSlide;
+            document.getElementById('slideSelect').value = currentSlide;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(num) {
+            if (num >= 1 && num <= totalSlides) {
+                currentSlide = num;
+                updateSlide();
+            }
+        }
+
+        function toggleNotes() {
+            document.getElementById('notesDrawer').classList.toggle('open');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key.toLowerCase() === 'n') {
+                toggleNotes();
+            } else if (e.key.toLowerCase() === 'f') {
+                toggleFullscreen();
+            }
+        });
+
+        updateSlide();
+    </script>
+</body>
+</html>

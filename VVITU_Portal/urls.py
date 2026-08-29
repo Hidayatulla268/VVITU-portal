@@ -20,3 +20,10 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL,  document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Custom Error Handlers — Auto-Redirect to Main Dashboard
+handler404 = 'core.error_views.custom_404_view'
+handler500 = 'core.error_views.custom_500_view'
+handler403 = 'core.error_views.custom_403_view'
+handler400 = 'core.error_views.custom_400_view'
+

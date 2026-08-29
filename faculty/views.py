@@ -28,12 +28,13 @@ from django.db.models import Count, Q
 from django.conf import settings
 from django.views.decorators.http import require_POST
 
-from accounts.models import Faculty, Student, Achievement, FacultyLeaveRequest
+from accounts.models import User, Faculty, Student, FacultyLeaveRequest, Achievement
 from core.models import (
     Section, Timetable, Attendance, Subject, Result, Exam, Year,
-    FacultyAttendance, ClassTransfer, ClassDiary
+    FacultyAttendance, ClassTransfer, ClassDiary, SubjectTopicPlan, ExamSchedule
 )
 from core.sms_utils import send_absent_notifications, send_absent_sms_to_parent
+from core.syllabus_utils import get_subject_syllabus_progress, auto_match_and_complete_topic
 
 
 # ─────────────────────────────────────────────
@@ -52,7 +53,9 @@ def faculty_required(view_func):
         try:
             request.faculty = request.user.faculty_profile
         except Faculty.DoesNotExist:
-            messages.error(request, "Faculty profile not found. Contact admin.")
+            from django.contrib.auth import logout
+            logout(request)
+            messages.error(request, "Faculty profile not found. Please contact administrator.")
             return redirect('accounts:login')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -87,19 +90,33 @@ def dashboard(request):
     faculty_att_pct      = round(effective_present_days / total_working_days * 100, 1) if total_working_days > 0 else 100.0
 
     # Subjects and timetable entries for this faculty today (with room_number)
+    from django.db.models import Case, When, Value, IntegerField
+    day_order = Case(
+        When(day__iexact='Monday', then=Value(1)),
+        When(day__iexact='Tuesday', then=Value(2)),
+        When(day__iexact='Wednesday', then=Value(3)),
+        When(day__iexact='Thursday', then=Value(4)),
+        When(day__iexact='Friday', then=Value(5)),
+        When(day__iexact='Saturday', then=Value(6)),
+        When(day__iexact='Sunday', then=Value(7)),
+        default=Value(8),
+        output_field=IntegerField()
+    )
+
     timetable_today = (
         Timetable.objects
-        .filter(faculty=faculty, day=day_name)
+        .filter(faculty=faculty, day__iexact=day_name.strip())
         .select_related('section', 'subject', 'section__branch')
         .order_by('period')
     )
 
-    # Full weekly timetable with room numbers
+    # Full weekly timetable with room numbers sorted chronologically Mon->Sat
     weekly_timetable = (
         Timetable.objects
         .filter(faculty=faculty)
         .select_related('section', 'subject', 'section__branch')
-        .order_by('day', 'period')
+        .annotate(day_sort=day_order)
+        .order_by('day_sort', 'period')
     )
 
     subjects = (
@@ -294,7 +311,7 @@ def ajax_get_timetable(request):
 
     slots = (
         Timetable.objects
-        .filter(section_id=section_id, day=day)
+        .filter(section_id=section_id, day__iexact=day.strip())
         .select_related('subject', 'faculty__user')
         .order_by('period')
     )
@@ -527,6 +544,8 @@ def mark_attendance(request):
 
         # Optional Class Discussion / Lesson Log
         topic_covered = request.POST.get('topic_covered', '').strip()
+        matched_syllabus_topic = None
+        from core.syllabus_utils import auto_match_and_complete_topic
         if topic_covered:
             unit_val = request.POST.get('unit_number', '').strip()
             unit_number = int(unit_val) if unit_val.isdigit() and 1 <= int(unit_val) <= 6 else 1
@@ -540,7 +559,7 @@ def mark_attendance(request):
             discussion_summary = request.POST.get('discussion_summary', '').strip()
             homework_assignment = request.POST.get('homework_assignment', '').strip()
             for target_slot in target_slots:
-                ClassDiary.objects.update_or_create(
+                diary_obj, _ = ClassDiary.objects.update_or_create(
                     timetable_entry=target_slot,
                     date=att_date,
                     defaults={
@@ -554,6 +573,17 @@ def mark_attendance(request):
                         'homework_assignment': homework_assignment,
                     }
                 )
+                # Auto-match with Subject Topic Schedule and mark completed
+                match_res = auto_match_and_complete_topic(
+                    subject=target_slot.subject,
+                    topic_text=topic_covered,
+                    unit_number=unit_number,
+                    faculty=faculty,
+                    diary_entry=diary_obj,
+                    date=att_date
+                )
+                if match_res and not matched_syllabus_topic:
+                    matched_syllabus_topic = match_res
 
         if len(target_slots) > 1:
             periods_str = ", ".join(f"Period {s.period}" for s in sorted(target_slots, key=lambda x: x.period))
@@ -563,6 +593,8 @@ def mark_attendance(request):
 
         if topic_covered:
             msg_text += " Class discussion notes recorded."
+            if matched_syllabus_topic:
+                msg_text += f" (✓ Syllabus topic '{matched_syllabus_topic.topic_name}' marked as completed!)"
         if sms_count > 0:
             msg_text += f" ({sms_count} absence SMS notification(s) sent to parents)."
         messages.success(request, msg_text)
@@ -573,7 +605,7 @@ def mark_attendance(request):
         'today':       today.isoformat(),
         'min_date':    min_date.isoformat(),
         'faculty':     faculty,
-        'unit_choices': ClassDiary.UNIT_CHOICES,
+        'title':       'Mark Student Attendance',
     }
     return render(request, 'faculty/mark_attendance.html', context)
 
@@ -589,6 +621,7 @@ def class_diary(request):
     faculty = request.faculty
     today = timezone.localdate()
     from core.transfer_utils import parse_flexible_date
+    from core.syllabus_utils import auto_match_and_complete_topic
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -615,6 +648,15 @@ def class_diary(request):
                 entry.discussion_summary = discussion_summary
                 entry.homework_assignment = homework_assignment
                 entry.save()
+                
+                auto_match_and_complete_topic(
+                    subject=entry.subject,
+                    topic_text=topic_covered,
+                    unit_number=unit_number,
+                    faculty=faculty,
+                    diary_entry=entry,
+                    date=entry.date
+                )
                 messages.success(request, f"Class log for {entry.subject.code} on {entry.date.strftime('%d-%b-%Y')} updated successfully.")
             elif slot_id and slot_id.isdigit():
                 slot = get_object_or_404(Timetable, id=int(slot_id))
@@ -624,7 +666,7 @@ def class_diary(request):
                     messages.error(request, "You are not authorized to record class diary for this timetable slot.")
                     return redirect('faculty:class_diary')
 
-                ClassDiary.objects.update_or_create(
+                diary_obj, _ = ClassDiary.objects.update_or_create(
                     timetable_entry=slot,
                     date=entry_date,
                     defaults={
@@ -1440,16 +1482,24 @@ def upload_marks(request):
             try:
                 data_set = csv_file.read().decode('utf-8-sig')
                 io_string = io.StringIO(data_set)
-                next(io_string, None) # skip header
                 
                 reader = csv.reader(io_string, delimiter=',', quotechar='"')
                 success_count = 0
                 errors = []
+                is_first_row = True
                 
                 with transaction.atomic():
-                    for row_idx, row in enumerate(reader, start=2):
-                        if not row or not row[0].strip():
+                    for row_idx, row in enumerate(reader, start=1):
+                        if not row or not any(cell.strip() for cell in row):
                             continue
+
+                        # Dynamic header check on first non-empty row
+                        if is_first_row:
+                            is_first_row = False
+                            first_cell = row[0].strip().lower()
+                            if 'roll' in first_cell or 'student' in first_cell or 'name' in first_cell:
+                                continue  # Skip actual header row
+
                         if len(row) < 2:
                             errors.append(f"Row {row_idx}: Missing columns.")
                             continue
@@ -1497,7 +1547,11 @@ def upload_marks(request):
         elif action == 'manual':
             try:
                 success_count = 0
-                max_marks_default = float(request.POST.get('max_marks_default', '100'))
+                max_marks_str = (request.POST.get('max_marks_default') or '100').strip()
+                try:
+                    max_marks_default = float(max_marks_str) if max_marks_str else 100.0
+                except ValueError:
+                    max_marks_default = 100.0
                 
                 with transaction.atomic():
                     for stu in sec_students:
@@ -1633,6 +1687,17 @@ def leave_requests(request):
                 if end_date < start_date:
                     messages.error(request, "End date cannot be prior to start date.")
                 else:
+                    # Calculate if requested days exceed faculty's monthly limit
+                    is_half = (session in ('an', 'fn')) or (leave_type in ('half_day_an', 'half_day_fn'))
+                    if is_half:
+                        req_days = 0.5
+                    else:
+                        req_days = float((end_date - start_date).days + 1)
+
+                    already_taken = faculty.get_monthly_leaves_taken(start_date.year, start_date.month)
+                    monthly_limit = float(faculty.monthly_leave_limit or 2.0)
+                    is_limit_exceeded = (already_taken + req_days) > monthly_limit
+
                     leave_req = FacultyLeaveRequest.objects.create(
                         faculty=faculty,
                         leave_type=leave_type,
@@ -1641,6 +1706,7 @@ def leave_requests(request):
                         end_date=end_date,
                         reason=reason,
                         substitute_notes=substitute_notes,
+                        is_limit_exceeded=is_limit_exceeded,
                         status='pending'
                     )
 
@@ -1653,10 +1719,13 @@ def leave_requests(request):
                         from django.conf import settings
 
                         dept_name = faculty.department.code if faculty.department else "General"
-                        notif_title = f"Faculty Leave Request: {faculty.full_name}"
+                        emergency_prefix = "⚠️ [EMERGENCY LEAVE - LIMIT EXCEEDED] " if is_limit_exceeded else ""
+                        notif_title = f"{emergency_prefix}Faculty Leave Request: {faculty.full_name}"
+                        quota_note = f" (Monthly Limit: {monthly_limit}d | Already Used: {already_taken}d | Requested: {req_days}d)" if is_limit_exceeded else ""
                         notif_msg = (
+                            f"{'⚠️ EMERGENCY LEAVE (Monthly Quota Exceeded) ' if is_limit_exceeded else ''}"
                             f"Leave Application from {faculty.full_name} ({faculty.employee_id}, {dept_name}): "
-                            f"{leave_req.get_leave_type_display()} from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}. "
+                            f"{leave_req.get_leave_type_display()} from {start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')}{quota_note}. "
                             f"Reason: {reason}"
                         )
                         
@@ -1664,18 +1733,16 @@ def leave_requests(request):
                         if faculty.department:
                             hod_users = User.objects.filter(role='hod', faculty_profile__department=faculty.department)
                             for hod in hod_users:
-                                # In-App Notification
                                 Notification.objects.create(
                                     title=notif_title,
                                     message=notif_msg,
                                     notif_type=Notification.TYPE_ANNOUNCEMENT,
-                                    priority=Notification.PRIORITY_HIGH,
+                                    priority=Notification.PRIORITY_HIGH if is_limit_exceeded else Notification.PRIORITY_NORMAL,
                                     target_user=hod,
                                     target_role='hod',
                                     target_all=False,
                                     created_by=request.user
                                 )
-                                # Email Notification
                                 if hod.email:
                                     send_mail(
                                         subject=f"[VVITU] {notif_title}",
@@ -1684,25 +1751,23 @@ def leave_requests(request):
                                         recipient_list=[hod.email],
                                         fail_silently=True
                                     )
-                                # SMS Notification
                                 if hasattr(hod, 'faculty_profile') and hod.faculty_profile.phone:
-                                    send_sms(hod.faculty_profile.phone, f"VVITU: New leave request from {faculty.full_name} ({start_date.strftime('%d-%b')} to {end_date.strftime('%d-%b')}). Review on portal.")
+                                    sms_msg = f"VVITU ALERT: {'EMERGENCY ' if is_limit_exceeded else ''}Leave request from {faculty.full_name} ({start_date.strftime('%d-%b')} to {end_date.strftime('%d-%b')}). Review on portal."
+                                    send_sms(hod.faculty_profile.phone, sms_msg)
 
                         # 2. Notify College Administration (Admins)
                         admin_users = User.objects.filter(role='admin')
                         for adm in admin_users:
-                            # In-App Notification
                             Notification.objects.create(
                                 title=notif_title,
                                 message=notif_msg,
                                 notif_type=Notification.TYPE_ANNOUNCEMENT,
-                                priority=Notification.PRIORITY_HIGH,
+                                priority=Notification.PRIORITY_HIGH if is_limit_exceeded else Notification.PRIORITY_NORMAL,
                                 target_user=adm,
                                 target_role='admin',
                                 target_all=False,
                                 created_by=request.user
                             )
-                            # Email Notification
                             if adm.email:
                                 send_mail(
                                     subject=f"[VVITU] {notif_title}",
@@ -1714,7 +1779,13 @@ def leave_requests(request):
                     except Exception as e:
                         logger.warning(f"Failed to notify admins for leave request: {e}")
 
-                    messages.success(request, "Leave request submitted successfully! Pending approval from HOD or Admin.")
+                    if is_limit_exceeded:
+                        messages.warning(
+                            request, 
+                            f"Leave application submitted as an EMERGENCY LEAVE request! You have exceeded your monthly limit of {monthly_limit} day(s) (Used: {already_taken} days this month). It requires special HOD / Admin approval."
+                        )
+                    else:
+                        messages.success(request, "Leave request submitted successfully! Pending approval from HOD or Admin.")
                     return redirect('faculty:leave_requests')
             except ValueError:
                 messages.error(request, "Invalid date format.")
@@ -1728,6 +1799,13 @@ def leave_requests(request):
     pending_leaves = my_leaves.filter(status='pending').count()
     rejected_leaves = my_leaves.filter(status='rejected').count()
 
+    now = timezone.now()
+    monthly_limit = float(faculty.monthly_leave_limit or 2.0)
+    leaves_used_this_month = faculty.get_monthly_leaves_taken(now.year, now.month)
+    leaves_remaining_this_month = faculty.get_monthly_leaves_remaining(now.year, now.month)
+    is_limit_reached = faculty.is_leave_limit_reached(now.year, now.month)
+    current_month_name = now.strftime('%B %Y')
+
     context = {
         'faculty': faculty,
         'my_leaves': my_leaves,
@@ -1735,6 +1813,11 @@ def leave_requests(request):
         'approved_leaves': approved_leaves,
         'pending_leaves': pending_leaves,
         'rejected_leaves': rejected_leaves,
+        'monthly_limit': monthly_limit,
+        'leaves_used_this_month': leaves_used_this_month,
+        'leaves_remaining_this_month': leaves_remaining_this_month,
+        'is_limit_reached': is_limit_reached,
+        'current_month_name': current_month_name,
         'leave_type_choices': FacultyLeaveRequest.LEAVE_TYPE_CHOICES,
     }
     return render(request, 'faculty/leave_requests.html', context)
@@ -1816,5 +1899,123 @@ def download_student_counselling_report_pdf(request, student_id):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ─────────────────────────────────────────────
+# FACULTY SYLLABUS & TOPIC SCHEDULE TRACKER
+# ─────────────────────────────────────────────
+@faculty_required
+def my_syllabus_tracker(request, subject_id=None):
+    """
+    Dedicated view for faculty to view the topic-by-topic timetable set by HOD/Admin,
+    track target completion dates, Mid-1 milestone progress (2.5 units target),
+    and toggle / mark topics as completed.
+    """
+    faculty = request.faculty
+    today = timezone.localdate()
+    from core.syllabus_utils import get_subject_syllabus_progress
+
+    # Get subjects taught by this faculty (via Timetable or direct assignment)
+    taught_subject_ids = list(
+        Timetable.objects.filter(faculty=faculty).values_list('subject_id', flat=True).distinct()
+    )
+    direct_subject_ids = list(
+        Subject.objects.filter(faculty=faculty, is_deleted=False).values_list('id', flat=True)
+    )
+    all_subject_ids = list(set(taught_subject_ids + direct_subject_ids))
+    subjects = Subject.objects.filter(id__in=all_subject_ids, is_deleted=False).select_related('branch', 'year').order_by('code')
+
+    selected_subject = None
+    if subject_id:
+        selected_subject = get_object_or_404(Subject, id=subject_id, is_deleted=False)
+    elif subjects.exists():
+        selected_subject = subjects.first()
+
+    # Handle Topic Status Toggle via POST
+    if request.method == 'POST' and selected_subject:
+        action = request.POST.get('action')
+        topic_id = request.POST.get('topic_id')
+        
+        if action == 'mark_completed' and topic_id:
+            topic = get_object_or_404(SubjectTopicPlan, id=topic_id, subject=selected_subject)
+            comp_date_str = request.POST.get('completed_date', '').strip()
+            from core.transfer_utils import parse_flexible_date
+            comp_date = parse_flexible_date(comp_date_str) or today
+            topic.is_completed = True
+            topic.completed_date = comp_date
+            topic.completed_by = faculty
+            topic.remarks = request.POST.get('remarks', '').strip()
+            topic.save()
+            messages.success(request, f"Topic '{topic.topic_name}' marked as completed.")
+            return redirect('faculty:my_syllabus_tracker_subject', subject_id=selected_subject.id)
+
+        elif action == 'mark_pending' and topic_id:
+            topic = get_object_or_404(SubjectTopicPlan, id=topic_id, subject=selected_subject)
+            topic.is_completed = False
+            topic.completed_date = None
+            topic.save()
+            messages.info(request, f"Topic '{topic.topic_name}' marked as pending.")
+            return redirect('faculty:my_syllabus_tracker_subject', subject_id=selected_subject.id)
+
+    # Calculate Progress & Statistics
+    progress_data = None
+    topics_by_unit = {}
+    if selected_subject:
+        progress_data = get_subject_syllabus_progress(selected_subject, faculty=faculty)
+        all_topics = SubjectTopicPlan.objects.filter(subject=selected_subject).order_by('unit_number', 'order', 'target_date')
+        
+        for u in [1, 2, 3, 4, 5]:
+            topics_by_unit[u] = [t for t in all_topics if t.unit_number == u]
+
+    context = {
+        'subjects': subjects,
+        'selected_subject': selected_subject,
+        'progress_data': progress_data,
+        'topics_by_unit': topics_by_unit,
+        'today': today,
+        'faculty': faculty,
+    }
+    return render(request, 'faculty/my_syllabus_tracker.html', context)
+
+
+@faculty_required
+@require_POST
+def ajax_toggle_topic_complete(request):
+    """
+    AJAX endpoint to quickly toggle a topic's completion status.
+    """
+    faculty = request.faculty
+    topic_id = request.POST.get('topic_id')
+    if not topic_id:
+        return JsonResponse({'success': False, 'error': 'Missing topic_id'}, status=400)
+
+    topic = get_object_or_404(SubjectTopicPlan, id=topic_id)
+    # Check if faculty teaches this subject
+    teaches = Timetable.objects.filter(faculty=faculty, subject=topic.subject).exists() or (topic.subject.faculty == faculty)
+    if not (teaches or request.user.role in ['admin', 'hod']):
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+
+    topic.is_completed = not topic.is_completed
+    if topic.is_completed:
+        topic.completed_date = timezone.localdate()
+        topic.completed_by = faculty
+    else:
+        topic.completed_date = None
+    topic.save()
+
+    from core.syllabus_utils import get_subject_syllabus_progress
+    progress = get_subject_syllabus_progress(topic.subject, faculty=faculty)
+
+    return JsonResponse({
+        'success': True,
+        'is_completed': topic.is_completed,
+        'completed_date': topic.completed_date.strftime('%d-%b-%Y') if topic.completed_date else '',
+        'completion_pct': progress['completion_pct'],
+        'units_completed_count': progress['units_completed_count'],
+        'is_mid1_target_met': progress['is_mid1_target_met'],
+        'status_label': progress['status_label'],
+        'status_color': progress['status_color'],
+    })
+
 
 

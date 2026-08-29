@@ -18,9 +18,39 @@
 {% endblock %}
 
 {% block content %}
+<!-- Quick Role & Category Filter Tabs -->
+<div class="d-flex gap-2 mb-3 overflow-auto py-1 flex-wrap">
+  <a href="{% url 'admin_dashboard:manage_leave_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" 
+     class="btn-vvit-{% if not role_filter %}primary{% else %}secondary{% endif %}">
+    All Applications ({{ leaves|length }})
+  </a>
+  <a href="{% url 'admin_dashboard:manage_leave_requests' %}?role=hod{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+     class="btn-vvit-{% if role_filter == 'hod' %}primary{% else %}secondary{% endif %}"
+     style="{% if role_filter == 'hod' %}background: linear-gradient(135deg, #7c3aed, #9333ea); border-color: #a855f7;{% endif %}">
+    <i class="fas fa-crown text-warning me-1"></i>HOD Applications Only
+    {% if hod_pending_count > 0 %}
+      <span class="badge bg-danger ms-1">{{ hod_pending_count }} Pending</span>
+    {% endif %}
+  </a>
+  <a href="{% url 'admin_dashboard:manage_leave_requests' %}?role=emergency{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+     class="btn-vvit-{% if role_filter == 'emergency' %}primary{% else %}secondary{% endif %}">
+    <i class="fas fa-exclamation-triangle text-danger me-1"></i>Emergency Leaves Only
+    {% if emergency_pending_count > 0 %}
+      <span class="badge bg-danger ms-1">{{ emergency_pending_count }}</span>
+    {% endif %}
+  </a>
+  <a href="{% url 'admin_dashboard:manage_leave_requests' %}?role=faculty{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+     class="btn-vvit-{% if role_filter == 'faculty' %}primary{% else %}secondary{% endif %}">
+    <i class="fas fa-chalkboard-teacher me-1"></i>Regular Faculty
+  </a>
+</div>
+
 <!-- Filters Glass Card -->
 <div class="glass-card mb-4">
   <form method="GET" action="{% url 'admin_dashboard:manage_leave_requests' %}" class="row g-3 align-items-end">
+    {% if role_filter %}
+      <input type="hidden" name="role" value="{{ role_filter }}">
+    {% endif %}
     <div class="col-md-4">
       <label class="form-label text-muted small">Filter by Department</label>
       <select name="department" class="vvit-select" onchange="this.form.submit()">
@@ -57,7 +87,7 @@
 <!-- Leave Applications Table Card -->
 <div class="glass-card">
   <div class="card-header-custom d-flex justify-content-between align-items-center">
-    <h3 class="card-title-custom"><i class="fas fa-list me-2 text-accent"></i>Faculty Applications</h3>
+    <h3 class="card-title-custom"><i class="fas fa-list me-2 text-accent"></i>Staff Leave Applications</h3>
     <span class="badge-section">Showing {{ leaves|length }} Application(s)</span>
   </div>
 
@@ -65,24 +95,36 @@
     <table class="vvit-table">
       <thead>
         <tr>
-          <th>Faculty Member</th>
+          <th>Applicant</th>
           <th>Department</th>
           <th>Leave Details</th>
           <th>Duration</th>
           <th>Reason & Proxy</th>
           <th>Status</th>
-          <th class="text-end">Quick Actions</th>
+          <th class="text-end">Admin Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for leave in leaves %}
-        <tr>
+        <tr {% if leave.faculty.user.role == 'hod' %}style="background: rgba(147, 51, 234, 0.08) !important; border-left: 5px solid #a855f7 !important;"{% elif leave.is_emergency_leave %}style="background: rgba(239, 68, 68, 0.14) !important; border-left: 5px solid #ef4444 !important;"{% endif %}>
           <td>
-            <strong class="text-white d-block">{{ leave.faculty.full_name }}</strong>
-            {% if leave.faculty.user.role == 'hod' %}
-              <span class="status-pill status-warning" style="font-size: 0.68rem; padding: 2px 8px;">
-                <i class="fas fa-user-shield me-1"></i>HOD
-              </span>
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+              <strong class="text-white d-block">{{ leave.faculty.full_name }}</strong>
+              {% if leave.faculty.user.role == 'hod' %}
+                <span class="badge" style="background: linear-gradient(135deg, #7c3aed, #9333ea); color: #fff; font-size: 0.68rem; padding: 2px 8px; border: 1px solid #c084fc;">
+                  <i class="fas fa-crown text-warning me-1"></i>HOD (Head of Dept)
+                </span>
+              {% endif %}
+            </div>
+            {% if leave.is_emergency_leave %}
+              <div class="mt-1">
+                <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.72rem;">
+                  <i class="fas fa-exclamation-triangle me-1"></i>LIMIT REACHED (EMERGENCY)
+                </span>
+              </div>
+              <small class="text-danger d-block mt-1" style="font-size: 0.72rem;">
+                <i class="fas fa-chart-pie me-1"></i>Monthly Limit: <strong>{{ leave.faculty.monthly_leave_limit }}d</strong> | Taken: <strong>{{ leave.faculty.get_monthly_leaves_taken }}d</strong>
+              </small>
             {% endif %}
             <small class="text-muted d-block" style="font-size: 0.75rem;">
               Emp ID: {{ leave.faculty.employee_id }} | Ph: {{ leave.faculty.phone|default:"N/A" }}
@@ -117,7 +159,11 @@
           </td>
           <td>
             {% if leave.status == 'pending' %}
-              <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending Approval</span>
+              {% if leave.is_emergency_leave %}
+                <span class="status-pill status-rejected"><i class="fas fa-exclamation-triangle me-1"></i>Pending (Emergency)</span>
+              {% else %}
+                <span class="status-pill status-pending"><i class="fas fa-clock me-1"></i>Pending Approval</span>
+              {% endif %}
             {% elif leave.status == 'approved' %}
               <span class="status-pill status-approved"><i class="fas fa-check-circle me-1"></i>Approved</span>
               <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
@@ -140,7 +186,7 @@
                 <a href="{% url 'admin_dashboard:action_leave_request' leave.id 'approve' %}" 
                    class="btn-leave-approve"
                    title="Quick Approve leave request"
-                   onclick="return confirm('Approve leave for {{ leave.faculty.full_name }}?');">
+                   onclick="return confirm('{% if leave.is_emergency_leave %}WARNING: This faculty member has exceeded their monthly leave quota. Are you sure you want to approve this EMERGENCY LEAVE?{% else %}Approve leave for {{ leave.faculty.full_name }}?{% endif %}');">
                   <i class="fas fa-check me-1"></i>Approve
                 </a>
                 <!-- Direct One-Click Reject -->
@@ -182,7 +228,7 @@
 {% if leave.status == 'pending' %}
 <div class="modal fade text-start" id="adminActionModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid rgba(255,255,255,0.15) !important;">
+    <div class="modal-content glass-card border-0 shadow-lg" style="background: #18181b; border: 1px solid {% if leave.is_emergency_leave %}rgba(239,68,68,0.5){% else %}rgba(255,255,255,0.15){% endif %} !important;">
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title card-title-custom text-white">
           <i class="fas fa-user-check me-2 text-accent"></i>Review Leave — {{ leave.faculty.full_name }}
@@ -192,7 +238,20 @@
       <form method="POST">
         {% csrf_token %}
         <div class="modal-body py-4">
-          <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+          {% if leave.is_emergency_leave %}
+            <div class="alert alert-danger border-0 rounded-3 mb-3 small" style="background: rgba(239,68,68,0.2); color: #fca5a5; border-left: 4px solid #ef4444 !important;">
+              <div class="d-flex align-items-start gap-2">
+                <i class="fas fa-exclamation-triangle fs-5 text-danger mt-1"></i>
+                <div>
+                  <strong class="text-white d-block">⚠️ MONTHLY LEAVE LIMIT REACHED / EXCEEDED</strong>
+                  <span>This faculty member has exceeded their monthly leave quota of <strong>{{ leave.faculty.monthly_leave_limit }} Day(s)</strong> (Already taken: <strong>{{ leave.faculty.get_monthly_leaves_taken }} days</strong> this month).</span>
+                  <div class="mt-1 text-white fw-semibold">Please approve ONLY in genuine emergencies.</div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="p-3 mb-3 rounded-3" style="background: {% if leave.is_emergency_leave %}rgba(239,68,68,0.08){% else %}rgba(255,255,255,0.05){% endif %}; border: 1px solid {% if leave.is_emergency_leave %}rgba(239,68,68,0.25){% else %}rgba(255,255,255,0.1){% endif %};">
             <div class="text-white fw-bold mb-1">{{ leave.faculty.full_name }} ({{ leave.faculty.employee_id }})</div>
             <div class="text-muted small mb-2">Department: <span class="text-white">{{ leave.faculty.department.name|default:"General" }}</span></div>
             <div class="text-muted small mb-2">Leave Type: <span class="text-accent">{{ leave.get_leave_type_display }}</span></div>
@@ -200,8 +259,8 @@
             <div class="text-muted small">Reason: <span class="text-white">{{ leave.reason }}</span></div>
           </div>
           <div class="mb-3">
-            <label class="form-label text-white small fw-bold">Admin Remarks / Notes (Optional)</label>
-            <textarea name="remarks" class="vvit-input" rows="3" placeholder="Enter optional remarks for faculty..."></textarea>
+            <label class="form-label text-white small fw-bold">Admin Remarks / Emergency Approval Justification (Optional)</label>
+            <textarea name="remarks" class="vvit-input" rows="3" placeholder="Enter optional remarks or emergency authorization note..."></textarea>
           </div>
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">

@@ -60,6 +60,11 @@
             {% for b in branches %}<option value="{{ b.id }}">{{ b.code }} — {{ b.name }}</option>{% endfor %}
           </select>
         </div>
+        <div class="col-md-6">
+          <label class="form-label text-muted">Monthly Leave Limit (Days) *</label>
+          <input type="number" step="0.5" min="0" max="31" name="monthly_leave_limit" class="vvit-input" value="2.0" placeholder="e.g. 2.0" required/>
+          <small class="text-muted" style="font-size: 0.75rem;">Allowed leave days per month before emergency flag triggers.</small>
+        </div>
         <div class="col-12 d-flex gap-3">
           <button type="submit" class="btn-vvit-primary"><i class="fas fa-save me-2"></i>Create Faculty</button>
           <a href="{% url 'admin_dashboard:manage_faculty' %}" class="btn-vvit-outline">Cancel</a>

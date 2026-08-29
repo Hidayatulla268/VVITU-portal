@@ -721,4 +721,119 @@ class ClassDiary(models.Model):
         return "Other / Revision"
 
 
+# ─────────────────────────────────────────────
+# EXAM TIMETABLE & SYLLABUS MILESTONE SCHEDULE
+# ─────────────────────────────────────────────
+class ExamSchedule(models.Model):
+    """
+    Examination Schedule & Syllabus Milestone set before or during semester by Admin/HOD.
+    Defines when Mid-1, Mid-2, or Semester Finals will take place and the target units
+    (e.g., 2.5 units for Mid-1, 5.0 units for Mid-2) required to be completed beforehand.
+    """
+    EXAM_TYPE_CHOICES = [
+        ('mid1',  'Mid Term 1 (Mid-1)'),
+        ('mid2',  'Mid Term 2 (Mid-2)'),
+        ('final', 'Semester Final Examination'),
+        ('supply','Supplementary Examination'),
+    ]
+
+    branch                 = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True, db_index=True, help_text="Branch/Department (null for all branches)")
+    year                   = models.ForeignKey(Year, on_delete=models.CASCADE, db_index=True)
+    semester               = models.IntegerField(choices=Subject.SEMESTER_CHOICES, db_index=True)
+    exam_type              = models.CharField(max_length=15, choices=EXAM_TYPE_CHOICES, default='mid1', db_index=True)
+    title                  = models.CharField(max_length=150, help_text="e.g. B.Tech CSE II Year Sem-1 Mid-1 Examinations")
+    start_date             = models.DateField(db_index=True, help_text="Exam commencement date")
+    end_date               = models.DateField(null=True, blank=True, help_text="Exam conclusion date")
+    target_units           = models.DecimalField(max_digits=4, decimal_places=1, default=2.5, help_text="Required syllabus units to be completed before this exam (e.g. 2.5 for Mid-1, 5.0 for Mid-2)")
+    target_completion_date = models.DateField(db_index=True, help_text="Deadline date for faculty to complete the required syllabus units")
+    is_active              = models.BooleanField(default=True, db_index=True)
+    created_by             = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_exam_schedules')
+    created_at             = models.DateTimeField(auto_now_add=True)
+    updated_at             = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['start_date', 'year', 'semester']
+        indexes = [
+            models.Index(fields=['branch', 'year', 'semester', 'exam_type']),
+            models.Index(fields=['target_completion_date']),
+        ]
+
+    def __str__(self):
+        branch_code = self.branch.code if self.branch else "All Branches"
+        return f"{self.title} ({branch_code} Y{self.year.year} Sem{self.semester}) [Target: {self.target_units} Units by {self.target_completion_date}]"
+
+    @property
+    def is_upcoming(self):
+        return self.start_date >= timezone.localdate()
+
+    @property
+    def is_deadline_passed(self):
+        return timezone.localdate() > self.target_completion_date
+
+
+# ─────────────────────────────────────────────
+# SUBJECT SYLLABUS & TOPIC PLAN SCHEDULE
+# ─────────────────────────────────────────────
+class SubjectTopicPlan(models.Model):
+    """
+    Structured topic-by-topic syllabus schedule for a subject.
+    Configured by HOD (for department) or Admin (across all branches).
+    Tracks unit number, topic name, target completion date, milestone (Mid-1/Mid-2/Final),
+    and actual completion state.
+    """
+    MILESTONE_CHOICES = [
+        ('mid1',  'Before Mid-1 Exam (Units 1 – 2.5)'),
+        ('mid2',  'Before Mid-2 Exam (Units 2.5 – 5.0)'),
+        ('final', 'Before Semester Final Exam (Revision / Full Syllabus)'),
+    ]
+
+    subject             = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='topic_plans', db_index=True)
+    unit_number         = models.IntegerField(choices=ClassDiary.UNIT_CHOICES, default=1, db_index=True)
+    unit_title          = models.CharField(max_length=150, blank=True, null=True, help_text="e.g. Unit 1: Introduction to Data Structures")
+    topic_name          = models.CharField(max_length=255, help_text="Specific topic / chapter name to be covered")
+    description         = models.TextField(blank=True, null=True, help_text="Detailed concepts, subtopics, or learning outcomes")
+    target_date         = models.DateField(db_index=True, help_text="Target completion date for this topic")
+    target_milestone    = models.CharField(max_length=15, choices=MILESTONE_CHOICES, default='mid1', db_index=True)
+    order               = models.PositiveIntegerField(default=1, help_text="Sequence order within unit")
+    
+    is_completed        = models.BooleanField(default=False, db_index=True)
+    completed_date      = models.DateField(null=True, blank=True, db_index=True)
+    completed_by        = models.ForeignKey('accounts.Faculty', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_topics')
+    class_diary_entry   = models.ForeignKey(ClassDiary, on_delete=models.SET_NULL, null=True, blank=True, related_name='topic_plan_links')
+    remarks             = models.TextField(blank=True, null=True)
+    created_at          = models.DateTimeField(auto_now_add=True)
+    updated_at          = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['unit_number', 'order', 'target_date']
+        indexes = [
+            models.Index(fields=['subject', 'unit_number']),
+            models.Index(fields=['subject', 'is_completed']),
+            models.Index(fields=['target_date', 'is_completed']),
+        ]
+
+    def __str__(self):
+        status = "COMPLETED" if self.is_completed else "PENDING"
+        return f"{self.subject.code} [Unit {self.unit_number}] — {self.topic_name} (Target: {self.target_date}) [{status}]"
+
+    @property
+    def is_overdue(self):
+        if not self.is_completed and self.target_date:
+            return timezone.localdate() > self.target_date
+        return False
+
+    @property
+    def days_overdue(self):
+        if self.is_overdue:
+            return (timezone.localdate() - self.target_date).days
+        return 0
+
+    @property
+    def unit_display(self):
+        if self.unit_number in [1, 2, 3, 4, 5]:
+            return f"Unit {self.unit_number}"
+        return "Other / Revision"
+
+
+
 

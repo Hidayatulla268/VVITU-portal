@@ -18,6 +18,48 @@
 {% endblock %}
 
 {% block content %}
+<!-- Monthly Leave Quota Banner -->
+<div class="glass-card mb-4 p-4" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%); border-left: 4px solid {% if is_limit_reached %}#ef4444{% else %}#06b6d4{% endif %};">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div style="width: 48px; height: 48px; border-radius: 12px; background: {% if is_limit_reached %}rgba(239, 68, 68, 0.2){% else %}rgba(6, 182, 212, 0.2){% endif %}; display: flex; align-items: center; justify-content: center; color: {% if is_limit_reached %}#ef4444{% else %}#22d3ee{% endif %}; font-size: 1.4rem;">
+        <i class="fas {% if is_limit_reached %}fa-exclamation-triangle{% else %}fa-calendar-check{% endif %}"></i>
+      </div>
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <h4 class="text-white mb-0 fw-bold">Monthly Leave Quota ({{ current_month_name }})</h4>
+          {% if is_limit_reached %}
+            <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.72rem;">
+              <i class="fas fa-exclamation-circle me-1"></i>Limit Reached — Emergency Only
+            </span>
+          {% else %}
+            <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.72rem;">
+              <i class="fas fa-check-circle me-1"></i>Quota Available
+            </span>
+          {% endif %}
+        </div>
+        <p class="text-muted small mb-0 mt-1">
+          Admin set your monthly leave limit to <strong class="text-white">{{ monthly_limit }} Day(s)</strong> per month.
+        </p>
+      </div>
+    </div>
+    <div class="d-flex gap-4 align-items-center flex-wrap">
+      <div class="text-center px-3 py-2 rounded-3" style="background: rgba(255,255,255,0.04); min-width: 100px;">
+        <span class="text-muted d-block small">Monthly Quota</span>
+        <span class="text-white fw-bold fs-5">{{ monthly_limit }} <small class="text-muted fs-6">Days</small></span>
+      </div>
+      <div class="text-center px-3 py-2 rounded-3" style="background: rgba(255,255,255,0.04); min-width: 100px;">
+        <span class="text-muted d-block small">Used this Month</span>
+        <span class="{% if is_limit_reached %}text-danger{% else %}text-info{% endif %} fw-bold fs-5">{{ leaves_used_this_month }} <small class="text-muted fs-6">Days</small></span>
+      </div>
+      <div class="text-center px-3 py-2 rounded-3" style="background: rgba(255,255,255,0.04); min-width: 100px;">
+        <span class="text-muted d-block small">Remaining Balance</span>
+        <span class="{% if is_limit_reached %}text-danger{% else %}text-success{% endif %} fw-bold fs-5">{{ leaves_remaining_this_month }} <small class="text-muted fs-6">Days</small></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- KPI Summary Cards -->
 <div class="row g-4 mb-4">
   <div class="col-sm-6 col-xl-3">
@@ -81,9 +123,16 @@
       </thead>
       <tbody>
         {% for leave in my_leaves %}
-        <tr>
+        <tr {% if leave.is_emergency_leave %}style="background: rgba(239, 68, 68, 0.06); border-left: 3px solid #ef4444;"{% endif %}>
           <td>
-            <strong class="text-white d-block">{{ leave.get_leave_type_display }}</strong>
+            <div class="d-flex align-items-center flex-wrap gap-1">
+              <strong class="text-white">{{ leave.get_leave_type_display }}</strong>
+              {% if leave.is_emergency_leave %}
+                <span class="badge bg-danger text-white px-2" style="font-size: 0.68rem;">
+                  <i class="fas fa-exclamation-triangle me-1"></i>Emergency Leave
+                </span>
+              {% endif %}
+            </div>
             <small class="text-muted" style="font-size: 0.75rem;">Applied: {{ leave.created_at|date:"d-M-Y H:i" }}</small>
           </td>
           <td>{{ leave.start_date|date:"d-M-Y" }}</td>
@@ -168,18 +217,47 @@
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method="POST" action="{% url 'faculty:leave_requests' %}">
+      <form method="POST" action="{% url 'faculty:leave_requests' %}" id="facultyLeaveForm">
         {% csrf_token %}
         <div class="modal-body py-4">
-          <div class="alert alert-info border-0 rounded-3 mb-4 small" style="background: rgba(13,202,240,0.15); color: #0dcaf0;">
-            <i class="fas fa-info-circle me-1"></i>
-            Leave request will be submitted to your <strong>Department HOD</strong> and <strong>College Administration</strong>. Either authority can approve your request.
+          
+          <!-- Modal Leave Limit Status Info -->
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="small text-white">
+                <i class="fas fa-info-circle text-accent me-1"></i>
+                Monthly Leave Limit: <strong class="text-accent">{{ monthly_limit }} Days</strong> | 
+                Used This Month: <strong class="text-warning">{{ leaves_used_this_month }} Days</strong> | 
+                Remaining: <strong class="{% if is_limit_reached %}text-danger{% else %}text-success{% endif %}">{{ leaves_remaining_this_month }} Days</strong>
+              </div>
+              {% if is_limit_reached %}
+                <span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i>Limit Reached</span>
+              {% else %}
+                <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i>Quota Active</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Dynamic Live Warning Banner -->
+          <div id="quotaWarningAlert" class="alert alert-danger border-0 rounded-3 mb-3 small d-none" style="background: rgba(239,68,68,0.18); color: #fca5a5; border-left: 4px solid #ef4444 !important;">
+            <div class="d-flex align-items-start gap-2">
+              <i class="fas fa-exclamation-triangle fs-5 text-danger mt-1"></i>
+              <div>
+                <strong class="text-white d-block">⚠️ Monthly Leave Limit Exceeded (Emergency Leave)</strong>
+                <span id="quotaWarningText">Your selected duration exceeds your remaining monthly quota. This request will be submitted as an Emergency Leave and highlighted in RED for HOD / Admin emergency review.</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="quotaOkAlert" class="alert alert-success border-0 rounded-3 mb-3 small d-none" style="background: rgba(16,185,129,0.15); color: #6ee7b7; border-left: 4px solid #10b981 !important;">
+            <i class="fas fa-check-circle me-1"></i>
+            <span id="quotaOkText">Within monthly quota.</span>
           </div>
 
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label text-white small">Leave Type <span class="text-danger">*</span></label>
-              <select name="leave_type" class="vvit-select" required>
+              <select name="leave_type" id="modalLeaveType" class="vvit-select" required onchange="calculateLeaveDuration()">
                 {% for code, label in leave_type_choices %}
                   <option value="{{ code }}">{{ label }}</option>
                 {% endfor %}
@@ -188,17 +266,17 @@
 
             <div class="col-md-3">
               <label class="form-label text-white small">Start Date <span class="text-danger">*</span></label>
-              <input type="date" name="start_date" class="vvit-input" required>
+              <input type="date" name="start_date" id="modalStartDate" class="vvit-input" required onchange="calculateLeaveDuration()">
             </div>
 
             <div class="col-md-3">
               <label class="form-label text-white small">End Date <span class="text-danger">*</span></label>
-              <input type="date" name="end_date" class="vvit-input" required>
+              <input type="date" name="end_date" id="modalEndDate" class="vvit-input" required onchange="calculateLeaveDuration()">
             </div>
 
             <div class="col-12">
               <label class="form-label text-white small">Reason for Leave <span class="text-danger">*</span></label>
-              <textarea name="reason" class="vvit-input" rows="3" placeholder="Provide reason for leave..." required></textarea>
+              <textarea name="reason" class="vvit-input" rows="3" placeholder="Provide detailed reason for leave..." required></textarea>
             </div>
 
             <div class="col-12">
@@ -232,7 +310,7 @@
         </div>
         <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
           <button type="button" class="btn-vvit-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn-vvit-primary">
+          <button type="submit" class="btn-vvit-primary" id="btnSubmitLeave">
             <i class="fas fa-paper-plane me-1"></i>Submit Application
           </button>
         </div>
@@ -240,4 +318,63 @@
     </div>
   </div>
 </div>
+
+<script>
+  const FACULTY_MONTHLY_LIMIT = parseFloat("{{ monthly_limit }}") || 2.0;
+  const FACULTY_REMAINING_DAYS = parseFloat("{{ leaves_remaining_this_month }}") || 0.0;
+  const FACULTY_USED_DAYS = parseFloat("{{ leaves_used_this_month }}") || 0.0;
+
+  function calculateLeaveDuration() {
+    const leaveType = document.getElementById('modalLeaveType').value;
+    const startDateVal = document.getElementById('modalStartDate').value;
+    const endDateInput = document.getElementById('modalEndDate');
+    let endDateVal = endDateInput.value;
+
+    const warningAlert = document.getElementById('quotaWarningAlert');
+    const warningText = document.getElementById('quotaWarningText');
+    const okAlert = document.getElementById('quotaOkAlert');
+    const okText = document.getElementById('quotaOkText');
+
+    const isHalfDay = (leaveType === 'half_day_an' || leaveType === 'half_day_fn');
+    if (isHalfDay && startDateVal && !endDateVal) {
+      endDateInput.value = startDateVal;
+      endDateVal = startDateVal;
+    }
+
+    if (!startDateVal) {
+      warningAlert.classList.add('d-none');
+      okAlert.classList.add('d-none');
+      return;
+    }
+
+    const sDate = new Date(startDateVal);
+    const eDate = endDateVal ? new Date(endDateVal) : sDate;
+
+    if (eDate < sDate) {
+      warningAlert.classList.remove('d-none');
+      warningText.textContent = "End Date cannot be prior to Start Date.";
+      okAlert.classList.add('d-none');
+      return;
+    }
+
+    let reqDays = 0.0;
+    if (isHalfDay) {
+      reqDays = 0.5;
+    } else {
+      const diffTime = Math.abs(eDate - sDate);
+      reqDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    if (reqDays > FACULTY_REMAINING_DAYS) {
+      warningAlert.classList.remove('d-none');
+      okAlert.classList.add('d-none');
+      warningText.innerHTML = `You are applying for <strong>${reqDays} Day(s)</strong>, which exceeds your remaining monthly quota of <strong>${FACULTY_REMAINING_DAYS} Day(s)</strong> (${FACULTY_USED_DAYS} days already used). This request will be submitted as an <strong>EMERGENCY LEAVE</strong> and highlighted in <span class="text-danger fw-bold">RED</span> for HOD & Admin.`;
+    } else {
+      warningAlert.classList.add('d-none');
+      okAlert.classList.remove('d-none');
+      const remAfter = (FACULTY_REMAINING_DAYS - reqDays).toFixed(1);
+      okText.innerHTML = `✓ Within Monthly Quota: <strong>${reqDays} Day(s)</strong> requested. Remaining quota after approval will be <strong>${remAfter} Day(s)</strong>.`;
+    }
+  }
+</script>
 {% endblock %}

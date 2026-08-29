@@ -10,7 +10,10 @@
     <h1 class="ph-title"><i class="fas fa-book-reader me-2 text-accent"></i>Class Diary & Daily Lesson Notes</h1>
     <p class="ph-sub">Review topics discussed, lecture takeaways, and homework assigned in your class sessions</p>
   </div>
-  <div class="ph-actions">
+  <div class="ph-actions d-flex gap-2">
+    <a href="{% url 'student:syllabus_coverage' %}" class="btn-vvit-primary btn-sm">
+      <i class="fas fa-book-bookmark me-1"></i>Syllabus & Topic Tracker
+    </a>
     <span class="badge bg-secondary bg-opacity-50 text-light px-3 py-2 fs-6">
       <i class="fas fa-school text-accent me-1"></i>{{ section }}
     </span>
@@ -19,6 +22,43 @@
 {% endblock %}
 
 {% block content %}
+{% if syllabus_summaries %}
+<!-- Subject Syllabus Coverage Summary Strip -->
+<div class="row g-3 mb-4">
+  {% for s_sum in syllabus_summaries %}
+  <div class="col-lg-4 col-md-6">
+    <div class="glass-card p-3 h-100" style="border-left: 3px solid var(--accent-color, #38bdf8) !important;">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <a href="{% url 'student:syllabus_coverage_subject' s_sum.subject.id %}" class="badge bg-primary bg-opacity-75 text-light text-decoration-none fw-bold">
+            {{ s_sum.subject.code }}
+          </a>
+          <div class="text-white small fw-semibold mt-1 text-truncate" style="max-width: 180px;" title="{{ s_sum.subject.name }}">
+            {{ s_sum.subject.short_name|default:s_sum.subject.name }}
+          </div>
+        </div>
+        <div class="text-end">
+          <span class="small fw-bold text-white">{{ s_sum.completion_pct }}%</span>
+          <small class="text-muted d-block" style="font-size: 0.7rem;">{{ s_sum.units_completed_count }}/5 Units</small>
+        </div>
+      </div>
+      <div class="progress mb-2" style="height: 6px; background: rgba(255,255,255,0.1);">
+        <div class="progress-bar {% if s_sum.completion_pct >= 80 %}bg-success{% elif s_sum.completion_pct >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+             role="progressbar" style="width: {{ s_sum.completion_pct }}%;"></div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center" style="font-size: 0.72rem;">
+        <span class="text-muted">{{ s_sum.completed_topics }}/{{ s_sum.total_topics }} topics covered</span>
+        {% if s_sum.is_mid1_target_met %}
+          <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Mid-1 Done</span>
+        {% else %}
+          <span class="text-warning"><i class="fas fa-clock me-1"></i>Mid-1 Pending</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 <!-- Search & Filter Card -->
 <div class="glass-card mb-4">
   <form method="get" action="{% url 'student:class_diary' %}" class="row g-3 align-items-end">
