@@ -254,7 +254,7 @@
               </button>
             </form>
             {% else %}
-            <a href="{% url 'hod:class_attendance_detail' row.slot.id selected_date %}" class="btn-vvit-primary px-2.5 py-1 small text-decoration-none" style="font-size: 0.74rem;">
+            <a href="/hod/class-attendance/{{ row.slot.id }}/{{ selected_date }}/" class="btn-vvit-primary px-2.5 py-1 small text-decoration-none" style="font-size: 0.74rem;">
               <i class="fas fa-eye me-1"></i>View Action &amp; Register
             </a>
             {% endif %}

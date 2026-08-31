@@ -2685,6 +2685,16 @@ def faculty_class_history(request):
         date_to=date_to
     )
 
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    page = request.GET.get('page', 1)
+    paginator = Paginator(conducted_history, 50)
+    try:
+        history_page = paginator.page(page)
+    except PageNotAnInteger:
+        history_page = paginator.page(1)
+    except EmptyPage:
+        history_page = paginator.page(paginator.num_pages)
+
     branches = Branch.objects.all().order_by('code')
     
     # Filter faculty list based on selected branch or all faculty
@@ -2699,7 +2709,10 @@ def faculty_class_history(request):
     ).order_by('section__branch__code', 'period', 'section__name')
 
     context = {
-        'conducted_history': conducted_history,
+        'conducted_history': history_page,
+        'history_page': history_page,
+        'paginator': paginator,
+        'total_records_count': len(conducted_history),
         'branches': branches,
         'all_faculty': all_faculty,
         'day_slots': day_slots,
@@ -3418,16 +3431,26 @@ def get_institutional_class_attendance_audit_data(branch_filter=None, target_dat
     all_slots_list = slots_qs + extra_transferred_slots
 
     # 1. Fetch attendance records on target_date for ALL relevant slots
-    att_qs = Attendance.objects.filter(
+    att_rows = list(Attendance.objects.filter(
         timetable_entry__in=all_slots_list,
         date=target_date
-    ).select_related('marked_by__user', 'marked_by__department')
+    ).values(
+        'timetable_entry_id', 'status', 'marked_by_id',
+        'last_modified'
+    ))
+
+    marked_by_fac_ids = {a['marked_by_id'] for a in att_rows if a['marked_by_id']}
+    marked_by_fac_map = {
+        f.id: f
+        for f in Faculty.objects.filter(id__in=marked_by_fac_ids).select_related('user', 'department')
+    }
 
     att_by_slot = {}
-    for att in att_qs:
-        if att.timetable_entry_id not in att_by_slot:
-            att_by_slot[att.timetable_entry_id] = []
-        att_by_slot[att.timetable_entry_id].append(att)
+    for att in att_rows:
+        tid = att['timetable_entry_id']
+        if tid not in att_by_slot:
+            att_by_slot[tid] = []
+        att_by_slot[tid].append(att)
 
     # 2. Fetch Class Diary logs on target_date for ALL relevant slots
     diaries = {
@@ -3458,7 +3481,7 @@ def get_institutional_class_attendance_audit_data(branch_filter=None, target_dat
         att_records = att_by_slot.get(slot.id, [])
         is_marked = len(att_records) > 0
         first_rec = att_records[0] if att_records else None
-        marked_by_fac = first_rec.marked_by if (first_rec and first_rec.marked_by) else None
+        marked_by_fac = marked_by_fac_map.get(first_rec['marked_by_id']) if (first_rec and first_rec['marked_by_id']) else None
 
         transfer_obj = transfers.get(slot.id)
         orig_fac = transfer_obj.original_faculty if transfer_obj else slot.faculty
@@ -3508,9 +3531,9 @@ def get_institutional_class_attendance_audit_data(branch_filter=None, target_dat
         tot_scheduled += 1
         branch_stats[b_code]['scheduled'] += 1
 
-        p_count = sum(1 for a in att_records if a.status == 'P')
-        a_count = sum(1 for a in att_records if a.status == 'A')
-        l_count = sum(1 for a in att_records if a.status == 'L')
+        p_count = sum(1 for a in att_records if a['status'] == 'P')
+        a_count = sum(1 for a in att_records if a['status'] == 'A')
+        l_count = sum(1 for a in att_records if a['status'] == 'L')
         total_students = len(att_records)
         att_pct = round((p_count / total_students * 100), 1) if total_students > 0 else None
 
@@ -3542,9 +3565,9 @@ def get_institutional_class_attendance_audit_data(branch_filter=None, target_dat
         marked_by_name = None
         marked_at_time = None
         if is_marked and first_rec:
-            if first_rec.marked_by:
-                marked_by_name = first_rec.marked_by.user.get_full_name()
-            marked_at_time = first_rec.last_modified
+            if marked_by_fac:
+                marked_by_name = marked_by_fac.user.get_full_name()
+            marked_at_time = first_rec['last_modified']
 
         row = {
             'slot': slot,
@@ -3678,6 +3701,17 @@ def faculty_class_attendance_audit(request):
         status_filter=status_filter
     )
 
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    page = request.GET.get('page', 1)
+    all_audit_rows = audit_data['rows']
+    paginator = Paginator(all_audit_rows, 50)
+    try:
+        rows_page = paginator.page(page)
+    except PageNotAnInteger:
+        rows_page = paginator.page(1)
+    except EmptyPage:
+        rows_page = paginator.page(paginator.num_pages)
+
     sections_qs = Section.objects.all().select_related('branch', 'year').order_by('branch__code', 'year__year', 'name')
     if branch_id and branch_id.isdigit():
         sections_qs = sections_qs.filter(branch_id=int(branch_id))
@@ -3703,7 +3737,10 @@ def faculty_class_attendance_audit(request):
         'target_date_str': target_date.strftime('%Y-%m-%d'),
         'day_name': target_date.strftime('%A'),
         'audit': audit_data,
-        'rows': audit_data['rows'],
+        'rows': rows_page,
+        'rows_page': rows_page,
+        'paginator': paginator,
+        'total_rows_count': len(all_audit_rows),
     }
     return render(request, 'admin_dashboard/faculty_class_audit.html', context)
 

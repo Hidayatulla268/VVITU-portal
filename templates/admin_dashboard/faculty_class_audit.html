@@ -332,7 +332,7 @@
             <td class="text-center">
               <div class="d-flex flex-column gap-1 align-items-center">
                 <!-- Direct Inspector View Button -->
-                <a href="{% url 'admin_dashboard:class_attendance_detail' timetable_id=row.slot.id date=target_date_str %}" 
+                <a href="/admin-portal/class-attendance/{{ row.slot.id }}/{{ target_date_str }}/" 
                    class="btn-vvit-outline btn-sm text-decoration-none d-inline-flex align-items-center justify-content-center gap-1 w-100" 
                    style="font-size: 0.76rem; padding: 4px 8px;" title="View Class Details & Attendance Register">
                   <i class="fas fa-eye text-accent"></i>View Register
@@ -363,6 +363,39 @@
         {% endif %}
       </tbody>
     </table>
+  </div>
+
+    <!-- Pagination Controls -->
+    {% if rows_page.has_other_pages %}
+    <div class="p-3 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="small text-muted">
+        Showing {{ rows_page.start_index }}–{{ rows_page.end_index }} of {{ total_rows_count }} scheduled class sessions
+      </div>
+      <nav aria-label="Class audit pagination">
+        <ul class="pagination pagination-sm mb-0">
+          {% if rows_page.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}{% if target_date_str %}&date={{ target_date_str }}{% endif %}{% if selected_year_id %}&year={{ selected_year_id }}{% endif %}{% if selected_sec_id %}&section={{ selected_sec_id }}{% endif %}{% if selected_fac_id %}&faculty={{ selected_fac_id }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">&laquo; First</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ rows_page.previous_page_number }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}{% if target_date_str %}&date={{ target_date_str }}{% endif %}{% if selected_year_id %}&year={{ selected_year_id }}{% endif %}{% if selected_sec_id %}&section={{ selected_sec_id }}{% endif %}{% if selected_fac_id %}&faculty={{ selected_fac_id }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Prev</a>
+            </li>
+          {% endif %}
+          <li class="page-item active">
+            <span class="page-link">{{ rows_page.number }} of {{ paginator.num_pages }}</span>
+          </li>
+          {% if rows_page.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ rows_page.next_page_number }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}{% if target_date_str %}&date={{ target_date_str }}{% endif %}{% if selected_year_id %}&year={{ selected_year_id }}{% endif %}{% if selected_sec_id %}&section={{ selected_sec_id }}{% endif %}{% if selected_fac_id %}&faculty={{ selected_fac_id }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ paginator.num_pages }}{% if selected_branch_id %}&branch={{ selected_branch_id }}{% endif %}{% if target_date_str %}&date={{ target_date_str }}{% endif %}{% if selected_year_id %}&year={{ selected_year_id }}{% endif %}{% if selected_sec_id %}&section={{ selected_sec_id }}{% endif %}{% if selected_fac_id %}&faculty={{ selected_fac_id }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">Last &raquo;</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

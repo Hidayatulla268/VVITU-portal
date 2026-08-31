@@ -57,6 +57,10 @@ class SecuritySanitizerMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        path = request.path_info
+        if path.startswith('/static/') or path.startswith('/media/'):
+            return self.get_response(request)
+
         # Inspect query params and POST data
         inputs_to_check = []
         for k, v in request.GET.items():
