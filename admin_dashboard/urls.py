@@ -46,6 +46,8 @@ urlpatterns = [
     path('attendance/',              views.attendance_list,      name='attendance_list'),
     path('attendance/<int:pk>/edit/',views.edit_attendance,      name='edit_attendance'),
     path('attendance/report/',       views.admin_attendance_report, name='admin_attendance_report'),
+    path('faculty-class-audit/',     views.faculty_class_attendance_audit, name='faculty_class_audit'),
+    path('class-attendance/<int:timetable_id>/<str:date>/', views.class_session_audit_detail, name='class_attendance_detail'),
     path('faculty-class-history/',   views.faculty_class_history, name='faculty_class_history'),
     path('class-transfers/',         views.faculty_class_history, name='manage_class_transfers'),
     path('class-diary/',             views.class_diary_coverage,  name='class_diary_coverage'),
@@ -54,6 +56,7 @@ urlpatterns = [
     path('exam-schedules/',          views.manage_exam_schedules, name='manage_exam_schedules'),
     path('ajax/branch-timetable/',   views.ajax_get_all_timetable_slots, name='ajax_branch_timetable'),
     path('ajax/free-faculty/',       views.ajax_get_free_faculty, name='ajax_free_faculty'),
+
 
     # Subjects
     path('subjects/',                views.manage_subjects,      name='manage_subjects'),
@@ -80,5 +83,9 @@ urlpatterns = [
 
     # Student Fee Management
     path('fees/',                         views.manage_fees,           name='manage_fees'),
+
+    # Detention & Readmission Ratification
+    path('detention-readmissions/',       views.manage_detention_readmissions, name='manage_detention_readmissions'),
+    path('detention-readmissions/<int:pk>/<str:action>/', views.action_readmission_request, name='action_readmission_request'),
 ]
 

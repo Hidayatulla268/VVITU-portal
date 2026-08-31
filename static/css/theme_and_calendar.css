@@ -143,29 +143,50 @@ table th, table td, .table th, .table td {
   font-weight: 500;
 }
 
-/* ── Light mode form inputs ─────────────────────────────────────────── */
+/* ── Light mode form inputs & selects ───────────────────────────────── */
 [data-theme="light"] .vvit-input,
-[data-theme="light"] .vvit-select {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.25);
-  color: #0f172a;
+[data-theme="light"] .vvit-select,
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-select,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.25) !important;
+  color: #0f172a !important;
   font-weight: 500;
 }
 
-[data-theme="light"] .vvit-input::placeholder {
-  color: #64748b;
+[data-theme="light"] .vvit-input::placeholder,
+[data-theme="light"] .form-control::placeholder,
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #64748b !important;
 }
 
-[data-theme="light"] .vvit-select option {
-  background: #ffffff;
-  color: #0f172a;
+[data-theme="light"] .vvit-select,
+[data-theme="light"] .form-select,
+[data-theme="light"] select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23b91c1c' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+[data-theme="light"] select option,
+[data-theme="light"] .vvit-select option,
+[data-theme="light"] .form-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .vvit-input:focus,
-[data-theme="light"] .vvit-select:focus {
-  border-color: #b91c1c;
-  box-shadow: 0 0 0 3px rgba(220,38,38,0.18);
-  background: #ffffff;
+[data-theme="light"] .vvit-select:focus,
+[data-theme="light"] .form-control:focus,
+[data-theme="light"] .form-select:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.18) !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .search-input-wrapper .search-icon {
@@ -174,6 +195,44 @@ table th, table td, .table th, .table td {
 
 [data-theme="light"] .search-input-wrapper:focus-within .search-icon {
   color: #dc2626;
+}
+
+/* ── Light mode modals ──────────────────────────────────────────────── */
+[data-theme="light"] .modal-backdrop {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+[data-theme="light"] .modal-content,
+[data-theme="light"] .glass-modal {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.15) !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .modal-title,
+[data-theme="light"] .card-title-custom {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .modal-header {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-theme="light"] .modal-footer {
+  border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+[data-theme="light"] .btn-close,
+[data-theme="light"] .btn-close-white {
+  filter: none !important;
+  opacity: 0.6;
+}
+
+[data-theme="light"] .btn-close:hover,
+[data-theme="light"] .btn-close-white:hover {
+  opacity: 1;
 }
 
 

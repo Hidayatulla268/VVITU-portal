@@ -1,0 +1,395 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Institutional Class Conduction &amp; Faculty Attendance Audit — Central Admin{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-clipboard-check me-2 text-accent"></i>Institutional Class Conduction &amp; Attendance Audit</h1>
+    <p class="ph-sub">College-Wide Multi-Branch Live Monitoring &middot; Track class conduction, teacher presence, and student attendance submission across all departments.</p>
+  </div>
+  <div class="ph-right d-flex align-items-center gap-2 flex-wrap">
+    <a href="{% url 'admin_dashboard:dashboard' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-arrow-left me-1"></i>Admin Dashboard
+    </a>
+    <button type="button" onclick="window.print()" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-print me-1"></i>Print Audit Sheet
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ── 4-KPI SUMMARY STRIP ──────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-info h-100">
+      <div class="kpi-icon"><i class="fas fa-calendar-day"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit.tot_scheduled }}</span>
+        <span class="kpi-label">Scheduled Classes Today</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-success h-100">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit.tot_marked }}</span>
+        <span class="kpi-label">Attendance Marked ({{ audit.overall_compliance_pct }}%)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="kpi-card {% if audit.tot_unmarked > 0 %}kpi-danger{% else %}kpi-success{% endif %} h-100">
+      <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit.tot_unmarked }}</span>
+        <span class="kpi-label">Pending / Unmarked Classes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-warning h-100">
+      <div class="kpi-icon"><i class="fas fa-exchange-alt"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit.tot_transferred }}</span>
+        <span class="kpi-label">Substituted / Proxies</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BRANCH COMPLIANCE KPI GRID ───────────────────────────────────────── -->
+<div class="glass-card mb-4 p-3">
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <span class="text-light fw-bold small text-uppercase" style="letter-spacing: 0.05em;">
+      <i class="fas fa-sitemap me-2 text-accent"></i>Department-wise Class Conduction Compliance
+    </span>
+    <span class="badge bg-secondary text-light" style="font-size: 0.75rem;">{{ audit.day_name }}, {{ target_date_str }}</span>
+  </div>
+  <div class="row g-2">
+    {% for bs in audit.branch_summaries %}
+    <div class="col-6 col-sm-4 col-md-3 col-xl-1-5" style="flex: 0 0 auto; width: 12.5%; min-width: 130px;">
+      <a href="?branch={{ bs.branch.id }}&date={{ target_date_str }}" class="text-decoration-none">
+        <div class="p-2 rounded border" style="background: rgba(255,255,255,0.03); border-color: {% if selected_branch_id == bs.branch.id|stringformat:'i' %}var(--clr-accent, #6366f1){% else %}rgba(255,255,255,0.08){% endif %} !important; transition: all 0.2s;">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="fw-bold text-light" style="font-size: 0.85rem;">{{ bs.code }}</span>
+            <span class="badge {% if bs.pct >= 85 %}bg-success{% elif bs.pct >= 60 %}bg-warning text-dark{% else %}bg-danger{% endif %}" style="font-size: 0.68rem;">{{ bs.pct }}%</span>
+          </div>
+          <div class="progress" style="height: 4px; background: rgba(255,255,255,0.1);">
+            <div class="progress-bar {% if bs.pct >= 85 %}bg-success{% elif bs.pct >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ bs.pct }}%;"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.68rem;">
+            <span>{{ bs.marked }}/{{ bs.scheduled }} done</span>
+            {% if bs.unmarked > 0 %}<span class="text-danger fw-semibold">{{ bs.unmarked }} pend</span>{% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ── COMPACT FILTER STRIP ─────────────────────────────────────────────── -->
+<div class="glass-card mb-4 p-3">
+  <form method="get" class="row g-2 align-items-end" id="auditFilterForm">
+    <!-- Branch / Department -->
+    <div class="col-12 col-sm-6 col-md-3">
+      <label class="form-label text-muted small fw-semibold mb-1"><i class="fas fa-building me-1 text-accent"></i>Branch / Department</label>
+      <select name="branch" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Branches (Institutional View)</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {% if selected_branch_id == b.id|stringformat:"i" %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Target Date -->
+    <div class="col-6 col-sm-3 col-md-2">
+      <label class="form-label text-muted small fw-semibold mb-1"><i class="fas fa-calendar-alt me-1 text-accent"></i>Audit Date</label>
+      <input type="date" name="date" value="{{ target_date_str }}" class="vvit-input w-100" onchange="this.form.submit()" />
+    </div>
+
+    <!-- Academic Year -->
+    <div class="col-6 col-sm-3 col-md-2">
+      <label class="form-label text-muted small fw-semibold mb-1">Year</label>
+      <select name="year" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Years</option>
+        {% for y in years %}
+        <option value="{{ y.year }}" {% if selected_year_id == y.year|stringformat:"i" %}selected{% endif %}>Year {{ y.year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Section -->
+    <div class="col-6 col-sm-3 col-md-2">
+      <label class="form-label text-muted small fw-semibold mb-1">Section</label>
+      <select name="section" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Sections</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if selected_sec_id == sec.id|stringformat:"i" %}selected{% endif %}>{{ sec.branch.code }} Y{{ sec.year.year }}-{{ sec.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Faculty -->
+    <div class="col-6 col-sm-3 col-md-2">
+      <label class="form-label text-muted small fw-semibold mb-1">Faculty</label>
+      <select name="faculty" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Faculty</option>
+        {% for f in faculty_list %}
+        <option value="{{ f.id }}" {% if selected_fac_id == f.id|stringformat:"i" %}selected{% endif %}>{{ f.user.get_full_name }} ({{ f.department.code }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Reset / Clear -->
+    <div class="col-12 col-md-1 d-flex gap-1">
+      <a href="{% url 'admin_dashboard:faculty_class_audit' %}" class="btn-vvit-outline w-100 text-center text-decoration-none" title="Reset Filters" style="padding: 8px 10px; font-size: 0.8rem;">
+        <i class="fas fa-redo"></i>
+      </a>
+    </div>
+  </form>
+
+  <!-- Status Filter Tabs -->
+  <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top border-secondary border-opacity-25 flex-wrap">
+    <span class="text-muted small fw-semibold me-1"><i class="fas fa-filter me-1"></i>Status Filter:</span>
+    <a href="?branch={{ selected_branch_id }}&date={{ target_date_str }}&year={{ selected_year_id }}&section={{ selected_sec_id }}&faculty={{ selected_fac_id }}&status=all"
+       class="btn-vvit-pill {% if selected_status == 'all' or not selected_status %}active{% endif %}">
+      All ({{ audit.tot_scheduled }})
+    </a>
+    <a href="?branch={{ selected_branch_id }}&date={{ target_date_str }}&year={{ selected_year_id }}&section={{ selected_sec_id }}&faculty={{ selected_fac_id }}&status=marked"
+       class="btn-vvit-pill {% if selected_status == 'marked' %}active{% endif %}">
+      <i class="fas fa-check text-success me-1"></i>Marked ({{ audit.tot_marked }})
+    </a>
+    <a href="?branch={{ selected_branch_id }}&date={{ target_date_str }}&year={{ selected_year_id }}&section={{ selected_sec_id }}&faculty={{ selected_fac_id }}&status=unmarked"
+       class="btn-vvit-pill {% if selected_status == 'unmarked' %}active{% endif %}">
+      <i class="fas fa-clock text-danger me-1"></i>Unmarked / Pending ({{ audit.tot_unmarked }})
+    </a>
+    <a href="?branch={{ selected_branch_id }}&date={{ target_date_str }}&year={{ selected_year_id }}&section={{ selected_sec_id }}&faculty={{ selected_fac_id }}&status=proxy"
+       class="btn-vvit-pill {% if selected_status == 'proxy' %}active{% endif %}">
+      <i class="fas fa-user-shield text-warning me-1"></i>HOD/Admin Proxies ({{ audit.tot_proxies }})
+    </a>
+    <a href="?branch={{ selected_branch_id }}&date={{ target_date_str }}&year={{ selected_year_id }}&section={{ selected_sec_id }}&faculty={{ selected_fac_id }}&status=substitution"
+       class="btn-vvit-pill {% if selected_status == 'substitution' %}active{% endif %}">
+      <i class="fas fa-exchange-alt text-info me-1"></i>Substituted Sessions ({{ audit.tot_substitutions }})
+    </a>
+  </div>
+</div>
+
+
+<!-- ── MAIN INSTITUTIONAL AUDIT TABLE ──────────────────────────────────── -->
+<div class="glass-card p-0 overflow-hidden mb-4">
+  <div class="table-header-strip d-flex align-items-center justify-content-between p-3 border-bottom border-secondary border-opacity-25">
+    <div>
+      <h3 class="mb-0 text-light fw-bold" style="font-size: 1.05rem;">
+        <i class="fas fa-list-check me-2 text-accent"></i>Institutional Class Conduction &amp; Student Attendance Register
+      </h3>
+      <div class="text-muted small">Showing {{ rows|length }} scheduled sessions for {{ audit.day_name }}, {{ target_date_str }}</div>
+    </div>
+    {% if selected_branch %}
+    <span class="badge bg-primary text-light px-3 py-2" style="font-size: 0.82rem;">
+      <i class="fas fa-building me-1"></i>{{ selected_branch.name }} ({{ selected_branch.code }})
+    </span>
+    {% else %}
+    <span class="badge bg-secondary text-light px-3 py-2" style="font-size: 0.82rem;">
+      <i class="fas fa-globe me-1"></i>College-Wide (All Branches)
+    </span>
+    {% endif %}
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 custom-vvit-table">
+      <thead>
+        <tr style="background: rgba(0,0,0,0.3); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;">
+          <th style="width: 80px;" class="text-center">Branch</th>
+          <th style="width: 90px;" class="text-center">Period &amp; Room</th>
+          <th style="width: 130px;">Class / Section</th>
+          <th style="width: 220px;">Subject</th>
+          <th style="width: 180px;">Assigned Faculty</th>
+          <th style="width: 180px;">Teacher in Class</th>
+          <th style="width: 180px;" class="text-center">Student Attendance</th>
+          <th>Topic Taught (Class Diary)</th>
+          <th style="width: 130px;" class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if rows %}
+          {% for row in rows %}
+          <tr class="{% if not row.is_marked %}table-row-unmarked{% endif %}">
+            <!-- Branch Badge -->
+            <td class="text-center">
+              <span class="badge bg-dark border border-secondary text-light fw-bold" style="font-size: 0.76rem;">
+                {{ row.branch.code }}
+              </span>
+            </td>
+
+            <!-- Period & Room -->
+            <td class="text-center">
+              <span class="badge bg-primary text-light fw-bold" style="font-size: 0.8rem;">P{{ row.period }}</span>
+              <div class="text-muted small mt-1" style="font-size: 0.72rem;">{{ row.room }}</div>
+            </td>
+
+            <!-- Class & Section -->
+            <td>
+              <div class="fw-bold text-light" style="font-size: 0.88rem;">{{ row.branch.code }} Y{{ row.year.year }} &middot; Sec {{ row.section.name }}</div>
+              <div class="text-muted small" style="font-size: 0.75rem;">Batch {{ row.section.academic_year|default:"" }}</div>
+            </td>
+
+            <!-- Subject -->
+            <td>
+              <div class="fw-bold text-light" style="font-size: 0.88rem;">{{ row.subject.code }}</div>
+              <div class="text-muted small" style="font-size: 0.78rem;">{{ row.subject.name|truncatechars:35 }}</div>
+              {% if row.subject.is_lab %}
+                <span class="badge bg-info text-dark" style="font-size: 0.65rem;">Laboratory</span>
+              {% endif %}
+            </td>
+
+            <!-- Assigned Faculty -->
+            <td>
+              {% if row.assigned_faculty %}
+                <div class="fw-semibold text-light" style="font-size: 0.85rem;">{{ row.assigned_faculty.user.get_full_name }}</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">{{ row.assigned_faculty.employee_id }}</div>
+              {% else %}
+                <span class="text-muted fst-italic">Unassigned</span>
+              {% endif %}
+            </td>
+
+            <!-- Teacher In Class (Effective Faculty) -->
+            <td>
+              {% if row.is_transferred %}
+                {% if row.is_proxy %}
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.68rem;" title="Official Proxy assigned by HOD or Admin">
+                      <i class="fas fa-user-shield me-1"></i>Proxy (HOD/Admin)
+                    </span>
+                  </div>
+                  <div class="fw-bold text-warning mt-1" style="font-size: 0.84rem;">{{ row.effective_faculty.user.get_full_name }}</div>
+                  <div class="text-muted small" style="font-size: 0.7rem;">Proxy for {{ row.assigned_faculty.user.get_full_name }}</div>
+                {% else %}
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-info text-dark fw-bold" style="font-size: 0.68rem;" title="Mutual session substitution arranged between faculty peers">
+                      <i class="fas fa-exchange-alt me-1"></i>Substituted Session
+                    </span>
+                  </div>
+                  <div class="fw-bold text-info mt-1" style="font-size: 0.84rem;">{{ row.effective_faculty.user.get_full_name }}</div>
+                  <div class="text-muted small" style="font-size: 0.7rem;">Substituted for {{ row.assigned_faculty.user.get_full_name }}</div>
+                {% endif %}
+              {% else %}
+                {% if row.assigned_faculty %}
+                  <div class="text-light" style="font-size: 0.84rem;">{{ row.assigned_faculty.user.get_full_name }}</div>
+                  <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25" style="font-size: 0.65rem;">Direct Instructor</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              {% endif %}
+            </td>
+
+
+            <!-- Student Attendance Status -->
+            <td class="text-center">
+              {% if row.is_marked %}
+                <span class="badge bg-success text-light px-2 py-1 mb-1" style="font-size: 0.78rem;">
+                  <i class="fas fa-check-circle me-1"></i>Marked: {{ row.present_count }}/{{ row.total_students }}
+                </span>
+                <div class="progress" style="height: 5px; width: 110px; margin: 0 auto; background: rgba(255,255,255,0.1);">
+                  <div class="progress-bar {% if row.attendance_pct >= 75 %}bg-success{% elif row.attendance_pct >= 65 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ row.attendance_pct }}%;"></div>
+                </div>
+                <div class="text-muted small mt-1" style="font-size: 0.7rem;">
+                  {{ row.attendance_pct }}% Present &middot; {{ row.absent_count }} Absent
+                </div>
+              {% else %}
+                <span class="badge bg-danger text-light px-2 py-1" style="font-size: 0.78rem;">
+                  <i class="fas fa-times-circle me-1"></i>Not Marked / Pending
+                </span>
+                <div class="text-muted small mt-1" style="font-size: 0.7rem;">
+                  No student log posted yet
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- Class Diary / Topic Covered -->
+            <td>
+              {% if row.has_diary %}
+                <div class="text-light fw-semibold" style="font-size: 0.82rem;">
+                  <span class="badge bg-primary text-light me-1" style="font-size: 0.65rem;">Unit {{ row.diary_obj.unit_number }}</span>
+                  {{ row.diary_obj.topic_covered|truncatewords:8 }}
+                </div>
+                <div class="text-muted small" style="font-size: 0.72rem;">{{ row.diary_obj.discussion_summary|truncatewords:6|default:"Lecture notes recorded" }}</div>
+              {% else %}
+                <span class="text-muted small fst-italic" style="font-size: 0.75rem;">
+                  <i class="fas fa-pen-slash me-1"></i>Diary Not Submitted
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Action Controls -->
+            <td class="text-center">
+              <div class="d-flex flex-column gap-1 align-items-center">
+                <!-- Direct Inspector View Button -->
+                <a href="{% url 'admin_dashboard:class_attendance_detail' timetable_id=row.slot.id date=target_date_str %}" 
+                   class="btn-vvit-outline btn-sm text-decoration-none d-inline-flex align-items-center justify-content-center gap-1 w-100" 
+                   style="font-size: 0.76rem; padding: 4px 8px;" title="View Class Details & Attendance Register">
+                  <i class="fas fa-eye text-accent"></i>View Register
+                </a>
+
+                {% if not row.is_marked and row.assigned_faculty %}
+                <!-- Send Urgent Reminder to Faculty Button -->
+                <a href="?action=remind_faculty&faculty_id={{ row.assigned_faculty.id }}&period={{ row.period }}&subject={{ row.subject.code }}&branch_code={{ row.branch.code }}&date={{ target_date_str }}&branch={{ selected_branch_id }}&year={{ selected_year_id }}&status={{ selected_status }}"
+                   class="btn-vvit-primary btn-sm text-decoration-none d-inline-flex align-items-center justify-content-center gap-1 w-100"
+                   style="font-size: 0.72rem; padding: 3px 6px; background: rgba(220, 38, 38, 0.2); border-color: rgba(220, 38, 38, 0.4); color: #f87171;"
+                   onclick="return confirm('Send an urgent attendance reminder notification to {{ row.assigned_faculty.user.get_full_name }} for Period {{ row.period }}?');"
+                   title="Send Urgent Reminder Notification">
+                  <i class="fas fa-bell"></i>Remind
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="fas fa-inbox fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+              <h5 class="fw-semibold text-light">No Class Sessions Found</h5>
+              <p class="small text-muted mb-0">No timetable entries or attendance data matched your selected branch, date, or filter criteria.</p>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.table-row-unmarked {
+  background: rgba(239, 68, 68, 0.04) !important;
+}
+.btn-vvit-pill {
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 20px;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #9ca3af);
+  transition: all 0.2s ease;
+}
+.btn-vvit-pill:hover, .btn-vvit-pill.active {
+  background: var(--clr-accent, #6366f1);
+  border-color: var(--clr-accent, #6366f1);
+  color: #fff;
+}
+.custom-vvit-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+</style>
+{% endblock %}

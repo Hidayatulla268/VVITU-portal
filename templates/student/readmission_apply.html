@@ -1,0 +1,174 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Application for Year Readmission with Juniors — Student Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Academic Readmission Application</h1>
+    <p class="ph-sub">Formal application for detained students to repeat the academic year / semester with the junior batch.</p>
+  </div>
+  <div class="ph-right d-flex align-items-center gap-2">
+    <a href="{% url 'student:dashboard' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Academic Status Banner -->
+<div class="glass-card mb-4 p-4 border-start border-4 {% if student.is_detained %}border-danger{% else %}border-warning{% endif %}">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1 text-light">
+        <i class="fas fa-id-card-clip text-accent me-2"></i>{{ student.user.get_full_name }} ({{ student.roll_number }})
+      </h4>
+      <p class="text-muted mb-0">
+        Branch: <strong class="text-light">{{ student.branch.name }}</strong> &middot; Current Year: <strong class="text-light">{{ student.year }}</strong> &middot; Section: <strong class="text-light">{{ student.section.name }}</strong>
+      </p>
+    </div>
+    <div>
+      <span class="badge {% if student.academic_status == 'REGULAR' %}bg-success{% elif student.academic_status == 'READMITTED' %}bg-info text-dark{% else %}bg-danger{% endif %} px-3 py-2 fs-6">
+        Status: {{ student.get_academic_status_display }}
+      </span>
+    </div>
+  </div>
+  {% if student.detention_reason %}
+  <div class="mt-3 p-2 rounded" style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.25);">
+    <small class="text-danger fw-bold"><i class="fas fa-circle-exclamation me-1"></i>Detention Record Note:</small>
+    <small class="text-light ms-1">{{ student.detention_reason }}</small>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <!-- Application Form -->
+  <div class="col-12 col-lg-5">
+    <div class="glass-card p-4 h-100">
+      <div class="card-header-custom border-bottom pb-3 mb-3">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-file-pen text-accent me-2"></i>Submit Readmission Request
+        </h3>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Detention Cause -->
+        <div class="mb-3">
+          <label class="form-label text-light small fw-bold">Reason for Academic Detention <span class="text-danger">*</span></label>
+          <select name="detention_type" class="vvit-select w-100" required>
+            <option value="attendance">Attendance Shortage (&lt; 65% Attendance)</option>
+            <option value="credits">Credit Criteria Shortage (Failed Minimum Credits to Promote)</option>
+          </select>
+        </div>
+
+        <!-- Target Junior Year -->
+        <div class="mb-3">
+          <label class="form-label text-light small fw-bold">Target Year to Repeat with Juniors <span class="text-danger">*</span></label>
+          <select name="target_year" class="vvit-select w-100" required>
+            {% for y in available_years %}
+            <option value="{{ y.id }}">Year {{ y.year }} ({{ y.academic_year }})</option>
+            {% endfor %}
+          </select>
+          <small class="text-muted d-block mt-1">E.g., Select 2nd Year if repeating 2nd year to gain credits for 3rd Year promotion.</small>
+        </div>
+
+        <!-- Target Section -->
+        <div class="mb-3">
+          <label class="form-label text-light small fw-bold">Preferred Junior Section (Optional)</label>
+          <select name="target_section" class="vvit-select w-100">
+            <option value="">Auto-Assign by HOD</option>
+            {% for sec in available_sections %}
+            <option value="{{ sec.id }}">Section {{ sec.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Application Reason -->
+        <div class="mb-4">
+          <label class="form-label text-light small fw-bold">Statement of Undertaking &amp; Reason <span class="text-danger">*</span></label>
+          <textarea name="reason" class="vvit-input w-100" rows="4" placeholder="Explain your request to study again with the junior batch and undertake to satisfy attendance and credit regulations..." required></textarea>
+        </div>
+
+        <div class="alert alert-info py-2 small mb-4" style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3); color: #38bdf8;">
+          <i class="fas fa-info-circle me-1"></i><strong>Approval Workflow:</strong> Requires recommendation by HOD and final ratification by Dean/Admin. Once approved, your roll number will be placed on the junior roll and timetable rosters.
+        </div>
+
+        <button type="submit" class="btn-vvit-primary w-100 py-2 fw-bold">
+          <i class="fas fa-paper-plane me-1"></i>Submit for HOD &amp; Admin Approval
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Past Readmission Requests -->
+  <div class="col-12 col-lg-7">
+    <div class="glass-card p-4 h-100">
+      <div class="card-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-timeline text-accent me-2"></i>Application Status &amp; Approvals
+        </h3>
+        <span class="badge bg-secondary font-mono">{{ past_readmissions.count }} Records</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Detention Cause</th>
+              <th>Target Junior Year</th>
+              <th>HOD Recommendation</th>
+              <th>Admin Final Approval</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in past_readmissions %}
+            <tr>
+              <td class="small font-mono text-nowrap">{{ req.created_at|date:"d M Y" }}</td>
+              <td>
+                <span class="badge bg-danger">{{ req.get_detention_type_display }}</span>
+              </td>
+              <td class="fw-bold">
+                Year {{ req.target_junior_year.year }}
+                {% if req.target_junior_section %}
+                  (Sec {{ req.target_junior_section.name }})
+                {% endif %}
+              </td>
+              <td>
+                {% if req.hod_status == 'approved' %}
+                  <span class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i>Recommended</span>
+                {% elif req.hod_status == 'rejected' %}
+                  <span class="text-danger small fw-bold"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="text-warning small fw-bold"><i class="fas fa-clock me-1"></i>Pending HOD</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if req.admin_status == 'approved' %}
+                  <span class="status-badge status-present"><i class="fas fa-check-double me-1"></i>Approved &amp; Readmitted</span>
+                {% elif req.admin_status == 'rejected' %}
+                  <span class="status-badge status-absent"><i class="fas fa-times me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="status-badge status-warning"><i class="fas fa-hourglass-start me-1"></i>Pending Admin</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">
+                <i class="fas fa-folder-open fa-2x mb-2 text-muted" style="opacity: 0.4;"></i>
+                <p class="mb-0">No readmission requests on file.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

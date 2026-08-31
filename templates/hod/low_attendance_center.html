@@ -1,0 +1,192 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Low Attendance &amp; Detention Action Center — HOD Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-triangle-exclamation me-2 text-danger"></i>Low Attendance &amp; Detention Action Center</h1>
+    <p class="ph-sub">Department of {{ department.name }} &middot; Real-time screening for Condonation (&lt;75%) and Detention (&lt;65%) candidates.</p>
+  </div>
+  <div class="ph-right d-flex align-items-center gap-2">
+    <button type="button" onclick="window.print()" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-print me-1"></i>Print Report
+    </button>
+    <a href="{% url 'hod:manage_detention_readmissions' %}" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-user-graduate me-1"></i>Readmission Queue
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Quick KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="kpi-card kpi-danger h-100">
+      <div class="kpi-icon"><i class="fas fa-ban"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ detention_list|length }}</span>
+        <span class="kpi-label">Detention Candidates (&lt; 65%)</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="kpi-card kpi-warning h-100">
+      <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ condonation_list|length }}</span>
+        <span class="kpi-label">Condonation Risk (65% - 74.9%)</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="kpi-card kpi-success h-100">
+      <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ regular_list|length }}</span>
+        <span class="kpi-label">Regular Eligible (&ge; 75%)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="glass-card mb-4 p-3">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted small fw-semibold mb-1">Academic Year</label>
+      <select name="year" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Years</option>
+        {% for y in years %}
+        <option value="{{ y.year }}" {% if selected_year == y.year|stringformat:"i" %}selected{% endif %}>Year {{ y.year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted small fw-semibold mb-1">Section</label>
+      <select name="section" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Sections</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if selected_section == sec.id|stringformat:"i" %}selected{% endif %}>Section {{ sec.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-grow-1"><i class="fas fa-filter me-1"></i>Filter</button>
+      <a href="{% url 'hod:low_attendance_action_center' %}" class="btn-vvit-outline px-3"><i class="fas fa-rotate-left"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- 1. Detention Table (<65%) -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center" style="background: rgba(220, 38, 38, 0.1);">
+    <h3 class="card-title-custom mb-0 text-danger">
+      <i class="fas fa-ban me-2"></i>Attendance Detention Candidates (&lt; 65% Attendance)
+    </h3>
+    <span class="badge bg-danger font-mono">{{ detention_list|length }} Students</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Year &amp; Section</th>
+          <th>Parent Mobile</th>
+          <th>Attendance %</th>
+          <th>Academic Status</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in detention_list %}
+        <tr>
+          <td class="font-mono fw-bold">{{ item.student.roll_number }}</td>
+          <td>{{ item.student.user.get_full_name }}</td>
+          <td>Year {{ item.student.year }} &middot; Sec {{ item.student.section.name }}</td>
+          <td class="font-mono small">{{ item.student.parent_mobile|default:"—" }}</td>
+          <td>
+            <span class="status-badge status-absent fw-bold font-mono">{{ item.pct }}%</span>
+          </td>
+          <td>
+            <span class="badge {% if item.student.is_detained %}bg-danger{% else %}bg-secondary{% endif %}">
+              {{ item.student.get_academic_status_display }}
+            </span>
+          </td>
+          <td class="text-center">
+            {% if not item.student.is_detained %}
+            <form method="post" class="d-inline" onsubmit="return confirm('Officially flag {{ item.student.roll_number }} as Detained?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="mark_detention">
+              <input type="hidden" name="student_id" value="{{ item.student.id }}">
+              <button type="submit" class="btn-sm btn-danger py-1 px-2" style="font-size: 0.75rem;">
+                <i class="fas fa-flag me-1"></i>Flag Detention
+              </button>
+            </form>
+            {% else %}
+            <span class="text-muted small"><i class="fas fa-check-circle text-danger me-1"></i>Detained</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">
+            <i class="fas fa-circle-check text-success fa-2x mb-2"></i>
+            <p class="mb-0 text-success">Excellent! No students have attendance below 65% in this filter.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 2. Condonation Risk Table (65% - 74.9%) -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center" style="background: rgba(245, 158, 11, 0.1);">
+    <h3 class="card-title-custom mb-0 text-warning">
+      <i class="fas fa-triangle-exclamation me-2"></i>Condonation Category (65.0% - 74.9% Attendance)
+    </h3>
+    <span class="badge bg-warning text-dark font-mono">{{ condonation_list|length }} Students</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Year &amp; Section</th>
+          <th>Parent Mobile</th>
+          <th>Attendance %</th>
+          <th>Medical / OD Exemption Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in condonation_list %}
+        <tr>
+          <td class="font-mono fw-bold">{{ item.student.roll_number }}</td>
+          <td>{{ item.student.user.get_full_name }}</td>
+          <td>Year {{ item.student.year }} &middot; Sec {{ item.student.section.name }}</td>
+          <td class="font-mono small">{{ item.student.parent_mobile|default:"—" }}</td>
+          <td>
+            <span class="status-badge status-warning fw-bold font-mono">{{ item.pct }}%</span>
+          </td>
+          <td>
+            <span class="badge bg-secondary font-mono">Eligible on Condonation Fee &amp; Medical Grounds</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">No students in condonation risk category.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

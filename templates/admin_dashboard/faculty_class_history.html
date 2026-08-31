@@ -105,7 +105,8 @@
             <th>Original / Mapped Faculty</th>
             <th>Subject & Class Section</th>
             <th>Class Type</th>
-            <th class="pe-4">Attendance Log Status</th>
+            <th>Attendance Log Status</th>
+            <th class="pe-4 text-center">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -150,17 +151,24 @@
                   </small>
                 </td>
                 <td>
-                  {% if item.is_proxy %}
-                    <span class="status-pill status-pending" title="Proxy Class Conducted by Substitute">
-                      <i class="fas fa-exchange-alt me-1"></i>Proxy Substitute
-                    </span>
+                  {% if item.is_transferred %}
+                    {% if item.is_proxy %}
+                      <span class="status-pill status-pending" title="Official Proxy Assigned by HOD/Admin">
+                        <i class="fas fa-user-shield me-1"></i>Proxy (HOD/Admin)
+                      </span>
+                    {% else %}
+                      <span class="status-pill status-neutral text-info" style="border-color: rgba(56,189,248,0.4);" title="Faculty Peer Substituted Session">
+                        <i class="fas fa-exchange-alt me-1"></i>Substituted Session
+                      </span>
+                    {% endif %}
                   {% else %}
                     <span class="status-pill status-approved" title="Regular Scheduled Class">
                       <i class="fas fa-chalkboard-teacher me-1"></i>Regular Class
                     </span>
                   {% endif %}
                 </td>
-                <td class="pe-4">
+
+                <td>
                   {% if item.total_students > 0 %}
                     <span class="status-pill status-approved">
                       <i class="fas fa-check-double me-1"></i>Marked ({{ item.present_count }} Present / {{ item.absent_count }} Absent)
@@ -171,11 +179,26 @@
                     </span>
                   {% endif %}
                 </td>
+
+                <td class="pe-4 text-center">
+                  {% if item.transfer %}
+                    <form method="post" class="d-inline" onsubmit="return confirm('Cancel this class transfer / proxy assignment and revert to regular instructor?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="cancel_proxy">
+                      <input type="hidden" name="transfer_id" value="{{ item.transfer.id }}">
+                      <button type="submit" class="btn-sm btn-outline-danger py-1 px-2 text-decoration-none" style="font-size: 0.74rem;" title="Cancel Class Transfer">
+                        <i class="fas fa-trash-alt me-1"></i>Cancel Transfer
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small">—</span>
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           {% else %}
             <tr>
-              <td colspan="7" class="text-center py-5 text-muted">
+              <td colspan="8" class="text-center py-5 text-muted">
                 <i class="fas fa-history fa-3x mb-3 opacity-50 d-block"></i>
                 <p class="mb-0">No conducted class records found matching search filters.</p>
               </td>

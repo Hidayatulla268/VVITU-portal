@@ -124,6 +124,18 @@ class Student(models.Model):
     fees_pending = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Pending fees amount in INR")
     fees_updated_at   = models.DateTimeField(blank=True, null=True)
 
+    ACADEMIC_STATUS_CHOICES = [
+        ('REGULAR', 'Regular'),
+        ('DETAINED_ATTENDANCE', 'Detained - Attendance Shortage (<65%)'),
+        ('DETAINED_CREDITS', 'Detained - Insufficient Credits'),
+        ('READMITTED', 'Readmitted with Junior Batch'),
+    ]
+    academic_status   = models.CharField(max_length=25, choices=ACADEMIC_STATUS_CHOICES, default='REGULAR', db_index=True)
+    is_detained       = models.BooleanField(default=False, db_index=True)
+    detention_reason  = models.TextField(blank=True, null=True)
+    original_batch_year = models.IntegerField(default=2024, help_text="Original joining batch year")
+    readmitted_date   = models.DateField(blank=True, null=True)
+
 
     class Meta:
         verbose_name = 'Student'
@@ -555,3 +567,118 @@ class StudentFee(models.Model):
             self.status = 'pending'
 
         super().save(*args, **kwargs)
+
+
+# ─────────────────────────────────────────────
+# STUDENT ON-DUTY & MEDICAL LEAVE REQUEST
+# ─────────────────────────────────────────────
+class StudentLeaveRequest(models.Model):
+    """
+    On-Duty (OD) and Medical Exemption application by students.
+    Approved requests automatically mark class attendance as 'L' (Leave).
+    """
+    LEAVE_TYPE_CHOICES = [
+        ('medical', 'Medical Leave (Hospital / Doctor Certificate)'),
+        ('od',      'On Duty (OD) — Academic / Hackathon / Conference'),
+        ('sports',  'Sports / Cultural University Representation'),
+        ('personal','Personal / Emergency Leave'),
+    ]
+    STATUS_CHOICES = [
+        ('pending',  'Pending Review'),
+        ('approved', 'Approved & Exemption Granted'),
+        ('rejected', 'Rejected'),
+    ]
+
+    student       = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='leave_requests', db_index=True)
+    leave_type    = models.CharField(max_length=20, choices=LEAVE_TYPE_CHOICES, default='medical')
+    start_date    = models.DateField()
+    end_date      = models.DateField()
+    reason        = models.TextField(help_text="Detailed reason for absence")
+    document      = models.FileField(upload_to='student_leave_docs/', blank=True, null=True, help_text="Medical certificate or OD permission letter (PDF/Image)")
+    status        = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending', db_index=True)
+    
+    reviewed_by   = models.ForeignKey('Faculty', on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_student_leaves')
+    reviewed_at   = models.DateTimeField(blank=True, null=True)
+    review_remarks= models.TextField(blank=True, null=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Student Leave Request'
+        verbose_name_plural = 'Student Leave Requests'
+
+    def __str__(self):
+        return f"{self.student.roll_number} — {self.get_leave_type_display()} ({self.start_date} to {self.end_date}): {self.status}"
+
+
+# ─────────────────────────────────────────────
+# STUDENT DETENTION & READMISSION WITH JUNIORS
+# ─────────────────────────────────────────────
+class StudentReadmissionRequest(models.Model):
+    """
+    Handles readmission of detained students (due to attendance <65% or credit shortage).
+    Requires HOD recommendation and Admin final approval.
+    Upon approval, student is reassigned to the Junior batch/section.
+    """
+    DETENTION_TYPE_CHOICES = [
+        ('attendance', 'Attendance Shortage (<65% Detention)'),
+        ('credits',    'Credit Shortage (Failed minimum credit criteria)'),
+    ]
+    APPROVAL_STATUS_CHOICES = [
+        ('pending',  'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    student          = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='readmission_requests', db_index=True)
+    detention_type   = models.CharField(max_length=20, choices=DETENTION_TYPE_CHOICES, default='attendance')
+    previous_year    = models.ForeignKey('core.Year', on_delete=models.SET_NULL, null=True, blank=True, related_name='prev_readmissions')
+    previous_section = models.ForeignKey('core.Section', on_delete=models.SET_NULL, null=True, blank=True, related_name='prev_readmissions')
+    
+    target_junior_year    = models.ForeignKey('core.Year', on_delete=models.SET_NULL, null=True, blank=True, related_name='junior_readmissions')
+    target_junior_section = models.ForeignKey('core.Section', on_delete=models.SET_NULL, null=True, blank=True, related_name='junior_readmissions')
+    reason           = models.TextField(help_text="Student's application reason to repeat the year with juniors")
+    
+    # HOD Approval Step
+    hod_status       = models.CharField(max_length=15, choices=APPROVAL_STATUS_CHOICES, default='pending')
+    hod_reviewed_by  = models.ForeignKey('Faculty', on_delete=models.SET_NULL, null=True, blank=True, related_name='hod_readmission_approvals')
+    hod_reviewed_at  = models.DateTimeField(blank=True, null=True)
+    hod_remarks      = models.TextField(blank=True, null=True)
+
+    # Admin Approval Step (Final)
+    admin_status     = models.CharField(max_length=15, choices=APPROVAL_STATUS_CHOICES, default='pending')
+    admin_reviewed_by= models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='admin_readmission_approvals')
+    admin_reviewed_at= models.DateTimeField(blank=True, null=True)
+    admin_remarks    = models.TextField(blank=True, null=True)
+
+    is_completed     = models.BooleanField(default=False, help_text="True if student has been successfully moved to junior section")
+    created_at       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Student Readmission Request'
+        verbose_name_plural = 'Student Readmission Requests'
+
+    def __str__(self):
+        return f"{self.student.roll_number} Readmission -> {self.target_junior_year} ({self.target_junior_section}): HOD={self.hod_status}, Admin={self.admin_status}"
+
+    def execute_readmission(self):
+        """
+        Executes readmission: updates student's year, section, and sets academic_status to READMITTED.
+        """
+        if self.hod_status == 'approved' and self.admin_status == 'approved' and not self.is_completed:
+            student = self.student
+            if self.target_junior_year:
+                student.year = self.target_junior_year
+            if self.target_junior_section:
+                student.section = self.target_junior_section
+            student.academic_status = 'READMITTED'
+            student.is_detained = False
+            import datetime
+            student.readmitted_date = datetime.date.today()
+            student.save()
+            self.is_completed = True
+            self.save(update_fields=['is_completed'])
+            return True
+        return False
+

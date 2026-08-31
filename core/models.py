@@ -237,8 +237,12 @@ class ClassTransfer(models.Model):
     """
     Class period transfer from an absent faculty member to a substitute faculty member.
     Allows substitute faculty to mark student attendance for the transferred slot.
+    - If assigned/initiated by HOD or Admin -> labeled as 'Proxy'
+    - If initiated between faculty peers -> labeled as 'Substituted Session'
     """
     STATUS_CHOICES = [('accepted', 'Accepted'), ('pending', 'Pending'), ('completed', 'Completed')]
+    ROLE_CHOICES   = [('hod', 'HOD Proxy'), ('admin', 'Admin Proxy'), ('faculty', 'Faculty Substituted Session')]
+    TYPE_CHOICES   = [('proxy', 'Official Proxy (HOD / Admin)'), ('substitution', 'Substituted Session (Faculty)')]
 
     original_faculty   = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, related_name='transfers_given', db_index=True)
     substitute_faculty = models.ForeignKey('accounts.Faculty', on_delete=models.CASCADE, related_name='transfers_received', db_index=True)
@@ -246,6 +250,12 @@ class ClassTransfer(models.Model):
     date               = models.DateField(db_index=True)
     reason             = models.CharField(max_length=255, blank=True, null=True)
     status             = models.CharField(max_length=15, choices=STATUS_CHOICES, default='accepted')
+    
+    # Initiation & Designation (Proxy vs Substituted Session)
+    assigned_by_role   = models.CharField(max_length=20, choices=ROLE_CHOICES, default='faculty', db_index=True)
+    transfer_type      = models.CharField(max_length=25, choices=TYPE_CHOICES, default='substitution', db_index=True)
+    assigned_by        = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_class_transfers')
+    
     reminder_sent      = models.BooleanField(default=False, help_text='Set True once 15-min advance SMS/email reminder is sent')
     created_at         = models.DateTimeField(auto_now_add=True)
 
@@ -255,10 +265,38 @@ class ClassTransfer(models.Model):
         indexes = [
             models.Index(fields=['substitute_faculty', 'date']),
             models.Index(fields=['original_faculty', 'date']),
+            models.Index(fields=['assigned_by_role', 'date']),
         ]
 
     def __str__(self):
-        return f"Transfer: {self.original_faculty.employee_id} -> {self.substitute_faculty.employee_id} ({self.date} P{self.timetable_entry.period})"
+        return f"{self.type_label}: {self.original_faculty.employee_id} -> {self.substitute_faculty.employee_id} ({self.date} P{self.timetable_entry.period})"
+
+    @property
+    def is_proxy(self):
+        """
+        True only if transfer was done by HOD or Admin.
+        """
+        return self.assigned_by_role in ['hod', 'admin'] or self.transfer_type == 'proxy'
+
+    @property
+    def is_substitution(self):
+        """
+        True if transfer was done by faculty peers.
+        """
+        return not self.is_proxy
+
+    @property
+    def type_label(self):
+        if self.is_proxy:
+            return "Proxy"
+        return "Substituted Session"
+
+    @property
+    def badge_class(self):
+        if self.is_proxy:
+            return "badge bg-warning text-dark"
+        return "badge bg-info text-dark"
+
 
 
 # ─────────────────────────────────────────────
@@ -471,22 +509,26 @@ class AcademicCalendar(models.Model):
 class QuestionPaper(models.Model):
     """
     Past examination question papers stored as uploaded PDF files.
-    Students can filter by subject, year, semester and download.
+    Students can filter by subject, regulation, academic year, semester and download.
     """
-    title       = models.CharField(max_length=200)
-    subject     = models.ForeignKey(Subject, on_delete=models.CASCADE, db_index=True, related_name='question_papers')
-    year        = models.IntegerField(db_index=True, help_text="Academic year the paper was set, e.g. 2023")
-    semester    = models.IntegerField(db_index=True)
-    file        = models.FileField(upload_to='question_papers/')
-    upload_date = models.DateField(auto_now_add=True)
-    uploaded_by = models.ForeignKey('accounts.Faculty', on_delete=models.SET_NULL, null=True, blank=True)
+    title         = models.CharField(max_length=200)
+    subject       = models.ForeignKey(Subject, on_delete=models.CASCADE, db_index=True, related_name='question_papers')
+    regulation    = models.CharField(max_length=20, default='R23', db_index=True, help_text="e.g. R23, R20, R19, R16")
+    academic_year = models.CharField(max_length=20, default='25 - 26', db_index=True, help_text="Academic year e.g. 25 - 26, 24 - 25")
+    year          = models.IntegerField(db_index=True, null=True, blank=True, help_text="Calendar year the paper was set, e.g. 2025")
+    semester      = models.IntegerField(db_index=True)
+    file          = models.FileField(upload_to='question_papers/')
+    upload_date   = models.DateField(auto_now_add=True)
+    uploaded_by   = models.ForeignKey('accounts.Faculty', on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
-        ordering = ['-year', '-semester']
-        indexes  = [models.Index(fields=['subject', 'year', 'semester'])]
+        ordering = ['-academic_year', '-semester', 'regulation']
+        indexes  = [
+            models.Index(fields=['subject', 'regulation', 'academic_year', 'semester']),
+        ]
 
     def __str__(self):
-        return f"{self.title} ({self.subject.code} | {self.year} Sem-{self.semester})"
+        return f"{self.title} ({self.subject.code} | {self.regulation} {self.academic_year} Sem-{self.semester})"
 
 
 # ─────────────────────────────────────────────
@@ -719,6 +761,15 @@ class ClassDiary(models.Model):
         if self.unit_number in [1, 2, 3, 4, 5]:
             return f"Unit {self.unit_number}"
         return "Other / Revision"
+
+    @property
+    def topics_covered(self):
+        return self.topic_covered
+
+    @property
+    def unit(self):
+        return self.unit_number
+
 
 
 # ─────────────────────────────────────────────

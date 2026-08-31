@@ -10,8 +10,20 @@
     <h1 class="ph-title"><i class="fas fa-tachometer-alt me-2 text-accent"></i>Student Dashboard</h1>
     <p class="ph-sub">Welcome back, <strong>{{ student.user.first_name }}</strong> · {{ student.roll_number }}</p>
   </div>
-  <div class="ph-right d-flex align-items-center gap-2">
-    <a href="{% url 'student:counselling_report' %}" class="btn-vvit-primary" title="View complete academic and counselling record">
+  <div class="ph-right d-flex align-items-center gap-2 flex-wrap">
+    <!-- Semester Choice Filter -->
+    <form method="get" class="d-inline-flex align-items-center gap-1">
+      <select name="semester" class="vvit-select" onchange="this.form.submit()" style="padding: 5px 28px 5px 10px; font-size: 0.78rem; min-width: 140px; border-radius: 8px;">
+        <option value="">All Sems (Overall)</option>
+        {% for sem in available_sems %}
+        <option value="{{ sem }}" {% if selected_sem == sem %}selected{% endif %}>Semester {{ sem }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="{% url 'student:attendance' %}" class="btn-sm-accent text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 6px 12px; font-size: 0.8rem; background: var(--clr-surface-2); border: 1px solid var(--clr-border); color: var(--text-primary);">
+      <i class="fas fa-user-clock text-accent me-1"></i>My Attendance Log
+    </a>
+    <a href="{% url 'student:counselling_report' %}" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 6px 12px; font-size: 0.8rem;" title="View complete academic and counselling record">
       <i class="fas fa-id-card-clip me-1"></i>Counselling Report
     </a>
     <span class="badge-section">
@@ -168,9 +180,10 @@
 
   <!-- Daily Attendance (last 7 days) -->
   <div class="col-xl-6">
-    <div class="glass-card">
-      <div class="card-header-custom">
-        <h3 class="card-title-custom"><i class="fas fa-calendar-week me-2 text-accent"></i>Last 7 Days</h3>
+    <div class="glass-card h-100">
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-calendar-week me-2 text-accent"></i>Recent Attendance Logs</h3>
+        <span class="card-badge">Last 7 Active Days</span>
       </div>
       {% if daily %}
       <div class="table-responsive">
@@ -182,9 +195,12 @@
             {% for date, recs in daily.items %}
               {% for rec in recs %}
               <tr>
-                {% if forloop.first %}<td rowspan="{{ recs|length }}" class="date-cell">{{ date }}</td>{% endif %}
-                <td>{{ rec.timetable_entry.subject.code }}</td>
-                <td>P{{ rec.timetable_entry.period }}</td>
+                {% if forloop.first %}<td rowspan="{{ recs|length }}" class="date-cell fw-bold text-nowrap" style="vertical-align: middle; border-right: 1px solid var(--clr-border);">{{ date }}</td>{% endif %}
+                <td>
+                  <span class="badge bg-accent text-dark fw-bold px-2 py-0 me-1" style="font-size: 0.72rem;">{{ rec.timetable_entry.subject.code }}</span>
+                  <span class="fw-semibold">{{ rec.timetable_entry.subject.short_name }}</span>
+                </td>
+                <td><span class="period-badge">P{{ rec.timetable_entry.period }}</span></td>
                 <td>
                   <span class="status-badge {% if rec.status == 'P' %}status-present{% else %}status-absent{% endif %}">
                     {% if rec.status == 'P' %}<i class="fas fa-check me-1"></i>Present
@@ -198,9 +214,9 @@
         </table>
       </div>
       {% else %}
-      <div class="empty-state">
-        <i class="fas fa-calendar-times empty-icon"></i>
-        <p>No attendance records in the last 7 days.</p>
+      <div class="empty-state py-4 text-center">
+        <i class="fas fa-calendar-times empty-icon fa-2x text-muted mb-2"></i>
+        <p class="text-muted mb-0">No recent attendance records found.</p>
       </div>
       {% endif %}
     </div>

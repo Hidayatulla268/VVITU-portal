@@ -47,10 +47,19 @@ urlpatterns = [
     # Class Transfer Audit & Proxy Management
     path('class-transfers/',         views.manage_class_transfers,            name='manage_class_transfers'),
     path('ajax/branch-timetable/',   views.ajax_get_branch_timetable_slots,  name='ajax_branch_timetable'),
+    path('ajax/free-faculty/',       views.ajax_get_free_faculty,             name='ajax_free_faculty'),
     # Class Diary & Syllabus Coverage
     path('class-diary/',             views.class_diary_coverage,              name='class_diary_coverage'),
     path('syllabus/',                views.manage_subject_syllabus,           name='manage_subject_syllabus'),
-    path('syllabus/<int:subject_id>/', views.manage_subject_syllabus,         name='manage_subject_syllabus_subject'),
     path('exam-schedules/',          views.manage_exam_schedules,             name='manage_exam_schedules'),
+    # Detention, Readmission & Low Attendance
+    path('detention-readmissions/',  views.manage_detention_readmissions,     name='manage_detention_readmissions'),
+    path('detention-readmissions/<int:pk>/<str:action>/', views.action_readmission_request, name='action_readmission_request'),
+    path('student-leaves/',          views.manage_student_leaves,             name='manage_student_leaves'),
+    path('student-leaves/<int:pk>/<str:action>/', views.action_student_leave, name='action_student_leave'),
+    path('low-attendance-center/',   views.low_attendance_action_center,      name='low_attendance_action_center'),
+    # Faculty Class Attendance & Conduction Audit Table
+    path('faculty-class-audit/',     views.faculty_class_attendance_audit,     name='faculty_class_audit'),
+    path('class-attendance/<int:timetable_id>/<str:date>/', views.class_session_audit_detail, name='class_attendance_detail'),
 ]
 

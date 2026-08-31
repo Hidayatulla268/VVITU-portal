@@ -25,8 +25,25 @@ A production-grade college ERP web application built with Django, featuring a gl
     *   **HOD Dashboard "My Teaching" Hub**: Displays today's teaching schedule with classroom locations, quick Mark buttons, and faculty action shortcuts directly on the HOD dashboard.
     *   **Admin-Only HOD Leave Approvals**: When an HOD applies for leave, the application is strictly routed to **College Administration (Admin)** for approval. HODs are blocked from self-approving their own leave.
     *   **Admin HOD Leave Queue**: Admin dashboard features dedicated filter tabs (`All`, `👑 HOD Leaves Only`, `⚠️ Emergency Leaves Only`, `Regular Faculty`) with prominent HOD badges and 1-click approvals.
-*   **Official ReportLab PDF Generation Engine**:
-    *   **Student Counselling Dossier PDF (`/student/counselling-report/pdf/`)**: Generates official multi-page A4 PDF documents with university seal, demographic cards, semester marks sheets, attendance records, and signature blocks.
+*   **Real-Time Class Transfer, Proxy Conduction & Attendance Sync**:
+    *   **Peer Substitutions & Official Proxies**: Full support for both mutual faculty peer substitutions and official HOD/Admin proxy designations.
+    *   **Instant Substitute Attendance Authorization**: Substitute faculty can immediately mark attendance for assigned proxy slots. Attendance rows record `marked_by = substitute_faculty`, and `ClassTransfer` automatically transitions to `completed`.
+    *   **Instant Reversion / Cancellation**: HODs and Administrators can cancel any active transfer with 1 click (`cancel_proxy`), immediately restoring the regular instructor in all timetables and audits.
+*   **Department & Institutional Faculty Class Attendance Audit Consoles**:
+    *   **HOD Audit Console (`/hod/faculty-class-audit/`)**: Period-by-period class conduction matrix with live compliance %, attendance submitted counts, unmarked class alerts, proxy tags, and printable period registers.
+    *   **Admin Institutional Audit Console (`/admin-portal/faculty-class-audit/`)**: University-wide class conduction matrix across all 11 branches with branch filtering, biometric faculty presence cross-checks, and syllabus topic notes.
+    *   **Deep-Dive Class Session Audit (`class_attendance_detail`)**: Full student roster breakdown (Present/Absent/Leave), teacher-in-class identification, and lesson discussion summaries.
+*   **Student Academic Detention & Junior Readmission Resolution Workflow**:
+    *   **Automated Detention Tagging**: Detects and tracks students detained due to attendance shortage (<65%) or credit shortage.
+    *   **Junior Batch Readmission Portal**: Students apply for junior batch readmission (`StudentReadmissionRequest`) with previous & target junior year/section mappings.
+    *   **Two-Tier Approval & Execution**: Department HOD recommends approval, and University Administration executes reassignment, updating student year/section, clearing detention flags, and dispatching SMS alerts.
+*   **Student On-Duty (OD) & Medical Leave Attendance Exemption Engine**:
+    *   **Student Leave Portal (`/student/leaves/apply/`)**: Enables students to apply for Medical, OD (Hackathons/Sports/Conferences), and Personal leaves with document attachments.
+    *   **Automatic Historical Attendance Exemption**: Approved OD/Medical leaves automatically convert all historical attendance records within the date range from `Absent ('A')` to `Leave ('L')`, safeguarding examination eligibility.
+*   **Official ReportLab PDF Generation Engines (`core/pdf_utils.py` & `core/counselling_utils.py`)**:
+    *   **Student Monthly Attendance Report PDF (`/student/attendance/monthly-pdf/`)**: Official monthly attendance summary with subject-wise percentages, OD exemptions, and university seal.
+    *   **Semester Grade Card Marksheet PDF (`/student/results/grade-card-pdf/`)**: Official university grade card with course credits, internal/external scores, letter grades, SGPA, CGPA, and Registrar signatures.
+    *   **Student Counselling Dossier PDF (`/student/counselling-report/pdf/`)**: Multi-page A4 dossier with demographic cards, semester marks sheets, attendance records, and 4-tier signature blocks.
     *   **Consolidated Database Audit Report PDF (`/admin-portal/export/database-pdf/`)**: Comprehensive institutional snapshot including student registry, faculty staff, curriculum, student CGPA summaries, active exam milestone schedules, and faculty monthly leave quotas.
     *   **Student Results & Attendance PDF Exports**: Exportable on-demand for academic audits and record keeping.
 *   **Student Active Backlogs Tracking**:

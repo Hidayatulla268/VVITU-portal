@@ -17,7 +17,7 @@
 <!-- Filter Bar -->
 <div class="glass-card mb-4">
   <form method="get" class="row g-3 align-items-end">
-    <div class="col-md-3">
+    <div class="col-lg-3 col-md-6">
       <label class="form-label text-muted">Subject</label>
       <select name="subject" class="vvit-select">
         <option value="">— All Subjects —</option>
@@ -28,16 +28,25 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-2">
-      <label class="form-label text-muted">Year</label>
-      <select name="year" class="vvit-select">
-        <option value="">— All Years —</option>
-        {% for y in years %}
-        <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+    <div class="col-lg-2 col-md-3 col-sm-6">
+      <label class="form-label text-muted">Regulation</label>
+      <select name="regulation" class="vvit-select">
+        <option value="">— All Regulations —</option>
+        {% for reg in regulations %}
+        <option value="{{ reg }}" {% if selected_reg == reg %}selected{% endif %}>{{ reg }}</option>
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-2">
+    <div class="col-lg-2 col-md-3 col-sm-6">
+      <label class="form-label text-muted">Academic Year</label>
+      <select name="academic_year" class="vvit-select">
+        <option value="">— All Academic Years —</option>
+        {% for ay in academic_years %}
+        <option value="{{ ay }}" {% if selected_ay == ay %}selected{% endif %}>{{ ay }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2 col-md-3 col-sm-6">
       <label class="form-label text-muted">Semester</label>
       <select name="semester" class="vvit-select">
         <option value="">— All Sems —</option>
@@ -46,11 +55,9 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn-vvit-primary w-100"><i class="fas fa-filter me-2"></i>Filter</button>
-    </div>
-    <div class="col-md-2">
-      <a href="{% url 'student:question_papers' %}" class="btn-vvit-outline w-100"><i class="fas fa-times me-2"></i>Clear</a>
+    <div class="col-lg-3 col-md-9 col-sm-6 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-grow-1"><i class="fas fa-filter me-1"></i>Filter</button>
+      <a href="{% url 'student:question_papers' %}" class="btn-vvit-outline flex-grow-1 text-center"><i class="fas fa-times me-1"></i>Clear</a>
     </div>
   </form>
 </div>
@@ -66,16 +73,17 @@
       </div>
       <div class="paper-info">
         <h6 class="paper-title">{{ paper.title }}</h6>
-        <div class="paper-meta">
+        <div class="paper-meta flex-wrap gap-1">
           <span class="paper-tag"><i class="fas fa-book me-1"></i>{{ paper.subject.code }}</span>
-          <span class="paper-tag"><i class="fas fa-calendar me-1"></i>{{ paper.year }}</span>
+          <span class="paper-tag"><i class="fas fa-certificate me-1 text-accent"></i>{{ paper.regulation }}</span>
+          <span class="paper-tag"><i class="fas fa-calendar-alt me-1"></i>{{ paper.academic_year }}</span>
           <span class="paper-tag"><i class="fas fa-layer-group me-1"></i>Sem {{ paper.semester }}</span>
         </div>
         <div class="paper-uploaded text-muted small mt-2">
           Uploaded {{ paper.upload_date|date:"d M Y" }}
         </div>
       </div>
-      <a href="{{ paper.file.url }}" target="_blank" class="btn-download mt-3">
+      <a href="{% url 'student:download_question_paper' paper.id %}" target="_blank" class="btn-download mt-3">
         <i class="fas fa-download me-2"></i>Download PDF
       </a>
     </div>
@@ -87,13 +95,13 @@
 {% if papers_page.has_other_pages %}
 <div class="pagination-wrap">
   {% if papers_page.has_previous %}
-  <a href="?page={{ papers_page.previous_page_number }}&subject={{ selected_subj }}&year={{ selected_year }}&semester={{ selected_sem }}" class="page-btn">
+  <a href="?page={{ papers_page.previous_page_number }}&subject={{ selected_subj }}&regulation={{ selected_reg }}&academic_year={{ selected_ay }}&semester={{ selected_sem }}" class="page-btn">
     <i class="fas fa-chevron-left"></i>
   </a>
   {% endif %}
   <span class="page-info">Page {{ papers_page.number }} of {{ papers_page.paginator.num_pages }}</span>
   {% if papers_page.has_next %}
-  <a href="?page={{ papers_page.next_page_number }}&subject={{ selected_subj }}&year={{ selected_year }}&semester={{ selected_sem }}" class="page-btn">
+  <a href="?page={{ papers_page.next_page_number }}&subject={{ selected_subj }}&regulation={{ selected_reg }}&academic_year={{ selected_ay }}&semester={{ selected_sem }}" class="page-btn">
     <i class="fas fa-chevron-right"></i>
   </a>
   {% endif %}

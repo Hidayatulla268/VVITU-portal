@@ -49,8 +49,8 @@ class CalendarAdmin(admin.ModelAdmin):
 
 @admin.register(QuestionPaper)
 class QuestionPaperAdmin(admin.ModelAdmin):
-    list_display = ('title', 'subject', 'year', 'semester', 'upload_date')
-    list_filter  = ('subject__branch', 'year', 'semester')
+    list_display = ('title', 'subject', 'regulation', 'academic_year', 'semester', 'upload_date')
+    list_filter  = ('regulation', 'academic_year', 'semester', 'subject__branch')
 
 from .models import Notification, NotificationRead
 

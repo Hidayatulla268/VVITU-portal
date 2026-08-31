@@ -1,0 +1,530 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Monthly Attendance Log — Student Portal{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Essential Monthly Attendance Matrix Stylesheet (VVITU Glassmorphism) ── */
+  .monthly-matrix-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-md, 14px);
+    border: 1px solid var(--clr-border, rgba(255, 255, 255, 0.08));
+    background: var(--clr-surface-2, rgba(25, 25, 38, 0.85));
+    backdrop-filter: var(--blur, blur(18px));
+    -webkit-backdrop-filter: var(--blur, blur(18px));
+    box-shadow: var(--shadow-card, 0 8px 32px rgba(0, 0, 0, 0.45));
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .monthly-matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.92rem;
+    color: var(--text-primary, #f0f0f5);
+    margin-bottom: 0;
+  }
+
+  /* Table Header - VVITU Crimson & Dark Glassmorphism */
+  .monthly-matrix-table thead tr {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.22) 0%, rgba(20, 20, 32, 0.98) 100%) !important;
+    border-top: 3px solid var(--accent, #dc2626);
+  }
+
+  .monthly-matrix-table thead th {
+    padding: 15px 6px;
+    font-family: var(--font-display, 'Rajdhani', sans-serif);
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-align: center;
+    border-right: 1px solid var(--clr-border, rgba(255, 255, 255, 0.09));
+    border-bottom: 2px solid var(--clr-border-2, rgba(255, 255, 255, 0.18));
+    white-space: nowrap;
+    letter-spacing: 0.06em;
+    color: var(--text-primary, #f0f0f5);
+    text-transform: uppercase;
+  }
+
+  .monthly-matrix-table thead th.th-subject {
+    text-align: left;
+    min-width: 320px;
+    max-width: 440px;
+    padding-left: 20px;
+    padding-right: 18px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: rgba(18, 18, 28, 0.98) !important;
+    border-right: 2px solid var(--clr-border-2, rgba(255, 255, 255, 0.22));
+    color: var(--text-primary, #ffffff);
+    font-size: 0.96rem;
+  }
+
+  .monthly-matrix-table thead th.th-day {
+    width: 36px;
+    min-width: 36px;
+    max-width: 40px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--text-secondary, #9ca3af);
+  }
+
+  .monthly-matrix-table thead th.th-stat {
+    width: 48px;
+    min-width: 44px;
+    font-family: var(--font-display, 'Rajdhani', sans-serif);
+    font-size: 0.98rem;
+    font-weight: 800;
+    background: rgba(220, 38, 38, 0.14) !important;
+  }
+
+  .monthly-matrix-table thead th.th-pct {
+    width: 95px;
+    min-width: 90px;
+    font-family: var(--font-display, 'Rajdhani', sans-serif);
+    font-size: 0.98rem;
+    font-weight: 800;
+    background: rgba(220, 38, 38, 0.24) !important;
+  }
+
+  /* Table Body */
+  .monthly-matrix-table tbody tr {
+    border-bottom: 1px solid var(--clr-border, rgba(255, 255, 255, 0.07));
+    transition: background var(--t-fast, 150ms ease);
+  }
+
+  .monthly-matrix-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .monthly-matrix-table tbody tr:hover {
+    background: rgba(220, 38, 38, 0.06);
+  }
+
+  .monthly-matrix-table tbody td {
+    padding: 13px 4px;
+    text-align: center;
+    border-right: 1px solid var(--clr-border, rgba(255, 255, 255, 0.06));
+    vertical-align: middle;
+    font-size: 0.92rem;
+  }
+
+  .monthly-matrix-table tbody td.td-subject {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.94rem;
+    padding-left: 20px;
+    padding-right: 16px;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--clr-surface-2, rgba(25, 25, 38, 0.95));
+    color: var(--text-primary, #ffffff);
+    letter-spacing: 0.2px;
+    border-right: 2px solid var(--clr-border-2, rgba(255, 255, 255, 0.16));
+  }
+
+  .monthly-matrix-table tbody tr:hover td.td-subject {
+    background: rgba(32, 32, 48, 0.98);
+  }
+
+  /* Status Indicators matching VVITU theme */
+  .status-cell-p {
+    display: inline-block;
+    color: var(--clr-success, #10b981) !important;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  }
+
+  .status-cell-a {
+    display: inline-block;
+    color: var(--clr-danger, #ef4444) !important;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  }
+
+  .status-cell-l {
+    color: var(--clr-warning, #f59e0b) !important;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    font-size: 0.96rem;
+  }
+
+  .status-cell-h {
+    color: #a855f7 !important;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 800;
+    font-size: 0.96rem;
+  }
+
+  .status-cell-empty {
+    color: transparent;
+    user-select: none;
+  }
+
+  .stat-val {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 700;
+    font-size: 0.96rem;
+    color: var(--text-primary, #ffffff);
+  }
+
+  .pct-val {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 700;
+    font-size: 0.94rem;
+    color: var(--text-primary, #ffffff);
+    white-space: nowrap;
+  }
+
+  /* Light theme overrides matching theme_and_calendar.css */
+  [data-theme="light"] .monthly-matrix-wrapper {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  [data-theme="light"] .monthly-matrix-table thead tr {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.09) 0%, #f8fafc 100%) !important;
+    border-top: 3px solid var(--accent, #dc2626);
+  }
+
+  [data-theme="light"] .monthly-matrix-table thead th {
+    color: #1e293b !important;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 2px solid #cbd5e1;
+  }
+
+  [data-theme="light"] .monthly-matrix-table thead th.th-subject {
+    background: #f8fafc !important;
+    border-right: 2px solid #cbd5e1;
+    color: #0f172a !important;
+  }
+
+  [data-theme="light"] .monthly-matrix-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  [data-theme="light"] .monthly-matrix-table tbody tr:hover {
+    background: rgba(220, 38, 38, 0.04);
+  }
+
+  [data-theme="light"] .monthly-matrix-table tbody td {
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
+  }
+
+  [data-theme="light"] .monthly-matrix-table tbody td.td-subject {
+    background: #ffffff;
+    color: #0f172a;
+    border-right: 2px solid #e2e8f0;
+  }
+
+  [data-theme="light"] .monthly-matrix-table tbody tr:hover td.td-subject {
+    background: #f1f5f9;
+  }
+
+  [data-theme="light"] .status-cell-p {
+    color: #059669 !important;
+    text-shadow: none;
+  }
+
+  [data-theme="light"] .status-cell-a {
+    color: #dc2626 !important;
+    text-shadow: none;
+  }
+
+  [data-theme="light"] .stat-val, [data-theme="light"] .pct-val {
+    color: #0f172a;
+  }
+
+  /* Compact Legend Bar */
+  .legend-strip {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: var(--clr-surface-2, rgba(25, 25, 38, 0.85));
+    border: 1px solid var(--clr-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 14px);
+    font-size: 0.86rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  [data-theme="light"] .legend-strip {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  @media print {
+    .vvit-navbar, .vvit-sidebar, .page-header-strip, .glass-card, .legend-strip, .btn, .ph-right {
+      display: none !important;
+    }
+    .monthly-matrix-wrapper {
+      box-shadow: none !important;
+      border: 1px solid #000 !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-days me-2 text-accent"></i>Monthly Attendance Log</h1>
+    <p class="ph-sub">Subject-wise daily record for <strong>{{ selected_month_name }} {{ selected_cal_year }}</strong> &middot; {{ student.user.get_full_name }} ({{ student.roll_number }})</p>
+  </div>
+  <div class="ph-right d-flex align-items-center gap-2 flex-wrap">
+    <a href="{% url 'student:dashboard' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-arrow-left me-1"></i>Dashboard
+    </a>
+    <a href="{% url 'student:download_monthly_attendance_pdf' %}?month={{ selected_month }}&cal_year={{ selected_cal_year }}{% if selected_sem %}&semester={{ selected_sem }}{% endif %}" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-file-pdf me-1"></i>Download PDF
+    </a>
+    <button type="button" onclick="window.print()" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-print me-1"></i>Print
+    </button>
+    <a href="{% url 'student:apply_leave_od' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-file-signature me-1 text-accent"></i>Apply OD / Leave
+    </a>
+    <span class="badge-section">
+      {{ student.branch.code }} &middot; Year {{ student.year }} &middot; Sec {{ student.section.name }}
+    </span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ── COMPACT FILTER BAR ────────────────────────────────────────────────── -->
+<div class="glass-card mb-4 p-3">
+  <form method="get" class="row g-2 align-items-end" id="monthlyFilterForm">
+    <!-- Month Selector -->
+    <div class="col-6 col-md-3 col-lg-3">
+      <label class="form-label text-muted small fw-semibold mb-1"><i class="fas fa-calendar-alt me-1 text-accent"></i>Month</label>
+      <select name="month" class="vvit-select w-100" onchange="this.form.submit()">
+        {% for m_num, m_name in months_list %}
+        <option value="{{ m_num }}" {% if selected_month == m_num %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Calendar Year -->
+    <div class="col-6 col-md-3 col-lg-3">
+      <label class="form-label text-muted small fw-semibold mb-1"><i class="fas fa-calendar me-1 text-accent"></i>Calendar Year</label>
+      <select name="cal_year" class="vvit-select w-100" onchange="this.form.submit()">
+        {% for yr in years_list %}
+        <option value="{{ yr }}" {% if selected_cal_year == yr %}selected{% endif %}>{{ yr }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Semester Filter -->
+    <div class="col-6 col-md-3 col-lg-3">
+      <label class="form-label text-muted small fw-semibold mb-1"><i class="fas fa-layer-group me-1 text-accent"></i>Semester</label>
+      <select name="semester" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">Current & All Semesters</option>
+        {% for sem in available_sems %}
+        <option value="{{ sem }}" {% if selected_sem == sem %}selected{% endif %}>Semester {{ sem }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="col-6 col-md-3 col-lg-3 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-grow-1 text-center py-2" title="Apply Filters">
+        <i class="fas fa-sync-alt me-1"></i>Update
+      </button>
+      <a href="{% url 'student:attendance' %}" class="btn-vvit-outline text-center py-2 px-3" title="Reset Filters">
+        <i class="fas fa-rotate-left"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- ── FOCUSED 4-KPI SUMMARY STRIP ──────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <!-- Month's Attendance % -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card {% if overall_month_pct_str != '—' and overall >= 75 %}kpi-success{% elif overall >= 65 %}kpi-warning{% else %}kpi-danger{% endif %} h-100">
+      <div class="kpi-body">
+        <span class="kpi-value">{{ overall_month_pct_str }}</span>
+        <span class="kpi-label">{{ selected_month_name }} Rate</span>
+      </div>
+      <div class="kpi-donut">
+        <svg viewBox="0 0 36 36" class="donut-svg">
+          <circle class="donut-track" cx="18" cy="18" r="15.9"/>
+          <circle class="donut-fill" cx="18" cy="18" r="15.9"
+                  stroke-dasharray="{{ overall_month_pct|default:0 }} 100"
+                  stroke-dashoffset="25"/>
+        </svg>
+        <span class="donut-center-text" style="font-size: 0.65rem;">{{ overall_month_pct|default:0 }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month Classes Present (P) -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card kpi-success h-100">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ month_tot_p }}</span>
+        <span class="kpi-label">Attended Classes (P)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month Classes Absent (A) -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card {% if month_tot_a > 5 %}kpi-danger{% else %}kpi-warning{% endif %} h-100">
+      <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ month_tot_a }}</span>
+        <span class="kpi-label">Missed Classes (A)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overall Cumulative % -->
+  <div class="col-6 col-lg-3">
+    <div class="kpi-card {% if overall >= 75 %}kpi-success{% elif overall >= 65 %}kpi-warning{% else %}kpi-danger{% endif %} h-100">
+      <div class="kpi-icon"><i class="fas fa-shield-halved"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ overall }}%</span>
+        <span class="kpi-label">Cumulative Semester %</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CORE FEATURE: MONTHLY SUBJECT ATTENDANCE MATRIX TABLE ────────────── -->
+<div class="monthly-matrix-wrapper mb-4">
+  <div class="table-responsive">
+    <table class="monthly-matrix-table">
+      <thead>
+        <tr>
+          <th class="th-subject">Subject</th>
+          {% for d_str in day_headers %}
+          <th class="th-day">{{ d_str }}</th>
+          {% endfor %}
+          <th class="th-stat" title="Present">P</th>
+          <th class="th-stat" title="Absent">A</th>
+          <th class="th-stat" title="Leave">L</th>
+          <th class="th-stat" title="Holiday">H</th>
+          <th class="th-pct" title="Percentage">%</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if monthly_rows %}
+          {% for row in monthly_rows %}
+          <tr>
+            <!-- Subject Name -->
+            <td class="td-subject" title="{{ row.subject_name }}">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary font-mono" style="font-size: 0.72rem; padding: 3px 6px;">{{ row.subject_code }}</span>
+                <span class="text-uppercase fw-bold text-truncate" style="max-width: 260px;">{{ row.subject_name }}</span>
+              </div>
+            </td>
+
+            <!-- Days 01 through 31 -->
+            {% for cell in row.day_cells %}
+            <td>
+              {% if cell.status == 'P' %}
+                <span class="status-cell-p">P</span>
+              {% elif cell.status == 'A' %}
+                <span class="status-cell-a">A</span>
+              {% elif cell.status == 'L' %}
+                <span class="status-cell-l">L</span>
+              {% elif cell.status == 'H' %}
+                <span class="status-cell-h">H</span>
+              {% else %}
+                <span class="status-cell-empty">&nbsp;</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+
+            <!-- Statistics Columns -->
+            <td><span class="stat-val text-success">{{ row.p }}</span></td>
+            <td><span class="stat-val {% if row.a > 0 %}text-danger{% endif %}">{{ row.a }}</span></td>
+            <td><span class="stat-val text-muted">{{ row.l }}</span></td>
+            <td><span class="stat-val text-muted">{{ row.h }}</span></td>
+            <td>
+              <span class="status-badge {% if row.pct_val >= 75 %}status-present{% elif row.pct_val >= 65 %}status-warning{% else %}status-absent{% endif %}">
+                {{ row.pct }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+
+          <!-- Total Summary Row -->
+          <tr style="background: rgba(220, 38, 38, 0.08); font-weight: 700; border-top: 2px solid var(--accent, #dc2626);">
+            <td class="td-subject text-uppercase fw-bold" style="color: var(--accent-bright, #ef4444); letter-spacing: 0.05em;">
+              <i class="fas fa-calculator me-2"></i>TOTAL MONTHLY SUMMARY
+            </td>
+            {% for d_str in day_headers %}
+            <td class="text-muted" style="font-size: 0.75rem;">&nbsp;</td>
+            {% endfor %}
+            <td><span class="stat-val text-success fw-bold">{{ month_tot_p }}</span></td>
+            <td><span class="stat-val {% if month_tot_a > 0 %}text-danger{% endif %} fw-bold">{{ month_tot_a }}</span></td>
+            <td><span class="stat-val text-muted fw-bold">{{ month_tot_l }}</span></td>
+            <td><span class="stat-val text-muted fw-bold">{{ month_tot_h }}</span></td>
+            <td>
+              <span class="status-badge {% if overall_month_pct >= 75 %}status-present{% elif overall_month_pct >= 65 %}status-warning{% else %}status-absent{% endif %}">
+                {{ overall_month_pct_str }}
+              </span>
+            </td>
+          </tr>
+
+        {% else %}
+          <tr>
+            <td colspan="{{ day_headers|length|add:6 }}" class="text-center py-5 text-muted">
+              <i class="fas fa-calendar-times fa-3x mb-3 text-muted" style="opacity: 0.4;"></i>
+              <h5 class="text-light">No Attendance Records Found</h5>
+              <p class="mb-0 text-muted">There are no attendance logs recorded for {{ selected_month_name }} {{ selected_cal_year }}.</p>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── LEGEND STRIP ──────────────────────────────────────────────────────── -->
+<div class="legend-strip mb-4">
+  <span class="text-muted fw-bold small text-uppercase me-2"><i class="fas fa-info-circle me-1 text-accent"></i>Legend:</span>
+  <div class="legend-item">
+    <span class="status-cell-p">P</span>
+    <span class="text-muted small">Present</span>
+  </div>
+  <div class="legend-item">
+    <span class="status-cell-a">A</span>
+    <span class="text-muted small">Absent</span>
+  </div>
+  <div class="legend-item">
+    <span class="status-cell-l">L</span>
+    <span class="text-muted small">Leave / OD</span>
+  </div>
+  <div class="legend-item">
+    <span class="status-cell-h">H</span>
+    <span class="text-muted small">Holiday</span>
+  </div>
+  <div class="ms-auto text-muted small d-none d-md-inline">
+    <i class="fas fa-shield-halved text-accent me-1"></i>Min 75% Attendance required for Exam Eligibility
+  </div>
+</div>
+{% endblock %}

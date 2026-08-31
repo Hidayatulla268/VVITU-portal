@@ -1,35 +1,305 @@
 {% extends "core/base.html" %}
 {% load static %}
 
-{% block title %}HOD Dashboard — {{ department.code }}{% endblock %}
+{% block title %}HOD Command Center — Department of {{ department.name }} ({{ department.code }}){% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ══════════════════════════════════════════════════════════════════════
+     VVITU PORTAL — HOD EXECUTIVE COMMAND CENTER STYLESHEET
+     ══════════════════════════════════════════════════════════════════════ */
+  .hod-hero-banner {
+    position: relative;
+    border-radius: var(--radius-lg, 16px);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.16) 0%, rgba(20, 20, 32, 0.96) 100%);
+    border: 1px solid var(--clr-border, rgba(255, 255, 255, 0.09));
+    backdrop-filter: var(--blur, blur(18px));
+    -webkit-backdrop-filter: var(--blur, blur(18px));
+    padding: 24px 28px;
+    box-shadow: var(--shadow-card, 0 10px 32px rgba(0, 0, 0, 0.4));
+    overflow: hidden;
+  }
+
+  .hod-hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hod-hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Metric KPI Cards */
+  .hod-kpi-card {
+    background: var(--clr-surface-2, rgba(25, 25, 38, 0.85));
+    border: 1px solid var(--clr-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 14px);
+    padding: 18px 20px;
+    backdrop-filter: var(--blur, blur(14px));
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .hod-kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(220, 38, 38, 0.45);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 0 0 16px rgba(220, 38, 38, 0.2);
+  }
+
+  .hod-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3.5px;
+    height: 100%;
+    background: var(--accent, #dc2626);
+    opacity: 0.9;
+  }
+
+  .hod-kpi-card.kpi-accent::after { background: #dc2626; }
+  .hod-kpi-card.kpi-warning::after { background: #f59e0b; }
+  .hod-kpi-card.kpi-success::after { background: #10b981; }
+  .hod-kpi-card.kpi-purple::after { background: #a855f7; }
+  .hod-kpi-card.kpi-cyan::after { background: #06b6d4; }
+  .hod-kpi-card.kpi-danger::after { background: #ef4444; }
+
+  .hod-kpi-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .hod-kpi-label {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--text-secondary, #9ca3af);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .hod-kpi-value {
+    font-family: var(--font-display, 'Rajdhani', sans-serif);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary, #ffffff);
+    line-height: 1.1;
+  }
+
+  .hod-kpi-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hod-kpi-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    padding-top: 10px;
+    border-top: 1px solid var(--clr-border, rgba(255, 255, 255, 0.06));
+    color: var(--text-secondary, #9ca3af);
+  }
+
+  /* Command Hub Cards & Tiles */
+  .command-hub-card {
+    background: var(--clr-surface-2, rgba(25, 25, 38, 0.85));
+    border: 1px solid var(--clr-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 14px);
+    backdrop-filter: var(--blur, blur(16px));
+    padding: 22px;
+    height: 100%;
+  }
+
+  .command-hub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--clr-border, rgba(255, 255, 255, 0.08));
+  }
+
+  .command-hub-title {
+    font-family: var(--font-display, 'Rajdhani', sans-serif);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary, #ffffff);
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .command-tile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm, 10px);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--clr-border, rgba(255, 255, 255, 0.06));
+    text-decoration: none;
+    color: var(--text-primary, #f0f0f5);
+    transition: all 0.2s ease;
+  }
+
+  .command-tile:hover {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.35);
+    transform: translateX(4px);
+    color: #ffffff;
+  }
+
+  .command-tile-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    background: rgba(220, 38, 38, 0.12);
+    color: var(--accent-bright, #ef4444);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+  }
+
+  .command-tile-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .command-tile-sub {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #9ca3af);
+    line-height: 1.2;
+  }
+
+  .period-tag {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-weight: 700;
+    font-size: 0.76rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(220, 38, 38, 0.16);
+    color: var(--accent-bright, #ef4444);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  /* Year Breakdown Progress Bar */
+  .year-bar-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .year-bar-fill-regular {
+    background: #10b981;
+  }
+
+  .year-bar-fill-detained {
+    background: #ef4444;
+  }
+
+  /* Light Theme Compatibility */
+  [data-theme="light"] .hod-hero-banner {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, #ffffff 100%);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  [data-theme="light"] .hod-kpi-card,
+  [data-theme="light"] .command-hub-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+  [data-theme="light"] .hod-kpi-value,
+  [data-theme="light"] .command-hub-title {
+    color: #0f172a;
+  }
+  [data-theme="light"] .command-tile {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+  }
+  [data-theme="light"] .command-tile:hover {
+    background: #f1f5f9;
+    border-color: #dc2626;
+    color: #0f172a;
+  }
+</style>
+{% endblock %}
 
 {% block page_header %}
-<!-- Futuristic Hero Welcome Banner -->
-<div class="hod-hero-card mb-4">
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+<!-- ── EXECUTIVE HOD HERO BANNER ────────────────────────────────────────── -->
+<div class="hod-hero-banner mb-4">
+  <div class="hod-hero-content d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
     <div>
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <span class="badge bg-danger text-uppercase px-2.5 py-1" style="font-size: 0.68rem; letter-spacing: 0.05em; font-weight: 700;">
-          <i class="fas fa-shield-alt me-1"></i>HOD Control Center
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <span class="badge bg-danger text-uppercase px-2.5 py-1 fw-bold font-mono" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+          <i class="fas fa-shield-alt me-1"></i>HOD Command Center
         </span>
-        <span class="badge bg-dark border border-secondary text-muted px-2.5 py-1" style="font-size: 0.68rem;">
-          <i class="fas fa-circle text-success me-1" style="font-size: 0.5rem;"></i>Active Session
+        <span class="badge bg-dark text-light border border-secondary px-2.5 py-1 font-mono" style="font-size: 0.7rem;">
+          <i class="fas fa-circle text-success me-1" style="font-size: 0.5rem;"></i>Academic Session 2025 - 2026
+        </span>
+        <span class="badge bg-secondary text-light px-2 py-1 font-mono" style="font-size: 0.7rem;">
+          <i class="fas fa-calendar-day me-1 text-accent"></i>{{ today|date:"l, d M Y" }}
         </span>
       </div>
-      <h1 class="fw-bold text-white mb-1" style="font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; letter-spacing: 0.02em;">
+
+      <h1 class="fw-bold text-white mb-1" style="font-family: var(--font-display, 'Rajdhani', sans-serif); font-size: 1.95rem; letter-spacing: 0.02em;">
         Welcome, {{ request.user.get_full_name|default:request.user.username }}
       </h1>
-      <p class="text-muted small mb-0 d-flex align-items-center gap-2">
+      <p class="text-muted small mb-0 d-flex align-items-center gap-2 flex-wrap">
         <i class="fas fa-university text-accent"></i>
-        <span>Head of Department — <strong>{{ department.name }} ({{ department.code }})</strong></span>
+        <span>Head of Department &middot; <strong>{{ department.name }} ({{ department.code }})</strong></span>
       </p>
     </div>
+
+    <!-- Quick Action Launchers -->
     <div class="d-flex align-items-center gap-2 flex-wrap">
-      <a href="{% url 'faculty:dashboard' %}" class="btn-vvit-outline d-inline-flex align-items-center gap-2 py-2 px-3">
-        <i class="fas fa-chalkboard-teacher text-accent"></i>
-        <span>Switch to Teaching Panel</span>
+      <a href="{% url 'hod:faculty_class_audit' %}" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-2 py-2 px-3" style="font-size: 0.84rem;">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Faculty Class Audit</span>
       </a>
-      <a href="{% url 'notifications:manage' %}" class="btn-vvit-primary d-inline-flex align-items-center gap-2 py-2 px-3">
+      <a href="{% url 'hod:low_attendance_action_center' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-2 py-2 px-3" style="font-size: 0.84rem;">
+        <i class="fas fa-triangle-exclamation text-danger"></i>
+        <span>Low Attendance (&lt;75%)</span>
+      </a>
+      <a href="{% url 'faculty:dashboard' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-2 py-2 px-3" style="font-size: 0.84rem;">
+        <i class="fas fa-chalkboard-teacher text-accent"></i>
+        <span>Teaching Panel</span>
+      </a>
+      <a href="{% url 'notifications:manage' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-2 py-2 px-3" style="font-size: 0.84rem;">
         <i class="fas fa-bullhorn"></i>
         <span>Post Notice</span>
       </a>
@@ -39,159 +309,661 @@
 {% endblock %}
 
 {% block content %}
-<!-- 4 Dynamic KPI Stat Cards -->
+<!-- ── 6-CARD EXECUTIVE KPI METRIC STRIP ─────────────────────────────────── -->
 <div class="row g-3 mb-4">
-  <!-- Card 1: Students in Branch -->
-  <div class="col-12 col-sm-6 col-lg-3">
+  <!-- 1. Department Students -->
+  <div class="col-12 col-sm-6 col-lg-4 col-xl-2">
     <a href="{% url 'hod:manage_students' %}" class="text-decoration-none">
-      <div class="kpi-card h-100">
-        <div class="kpi-top">
+      <div class="hod-kpi-card kpi-accent">
+        <div class="hod-kpi-top">
           <div>
-            <span class="kpi-lbl">Branch Students</span>
-            <span class="kpi-val text-white d-block mt-1">{{ student_count }}</span>
+            <span class="hod-kpi-label">Students</span>
+            <span class="hod-kpi-value">{{ student_count }}</span>
           </div>
-          <div class="kpi-icon-clean text-accent"><i class="fas fa-graduation-cap"></i></div>
+          <div class="hod-kpi-icon text-accent"><i class="fas fa-user-graduate"></i></div>
         </div>
-        <div class="d-flex align-items-center justify-content-between text-muted pt-2 border-top border-secondary border-opacity-10 mt-2" style="font-size:0.75rem;">
-          <span><i class="fas fa-layer-group me-1 text-accent"></i>{{ section_count }} Sections</span>
-          <span class="text-accent fw-bold">Directory <i class="fas fa-arrow-right ms-1"></i></span>
+        <div class="hod-kpi-footer">
+          <span><i class="fas fa-layer-group me-1"></i>{{ section_count }} Sections</span>
+          <span class="text-accent fw-bold">View <i class="fas fa-arrow-right"></i></span>
         </div>
       </div>
     </a>
   </div>
 
-  <!-- Card 2: Branch Faculty -->
-  <div class="col-12 col-sm-6 col-lg-3">
+  <!-- 2. Faculty Strength -->
+  <div class="col-12 col-sm-6 col-lg-4 col-xl-2">
     <a href="{% url 'hod:manage_faculty' %}" class="text-decoration-none">
-      <div class="kpi-card h-100">
-        <div class="kpi-top">
+      <div class="hod-kpi-card kpi-warning">
+        <div class="hod-kpi-top">
           <div>
-            <span class="kpi-lbl">Branch Faculty</span>
-            <span class="kpi-val text-white d-block mt-1">{{ faculty_count }}</span>
+            <span class="hod-kpi-label">Faculty</span>
+            <span class="hod-kpi-value">{{ faculty_count }}</span>
           </div>
-          <div class="kpi-icon-clean text-warning"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div class="hod-kpi-icon text-warning"><i class="fas fa-chalkboard-user"></i></div>
         </div>
-        <div class="d-flex align-items-center justify-content-between text-muted pt-2 border-top border-secondary border-opacity-10 mt-2" style="font-size:0.75rem;">
-          <span><i class="fas fa-user-check me-1 text-warning"></i>Teaching Staff</span>
-          <span class="text-warning fw-bold">Faculty Logs <i class="fas fa-arrow-right ms-1"></i></span>
+        <div class="hod-kpi-footer">
+          <span>{{ faculty_present_count }} Present today</span>
+          <span class="text-warning fw-bold">Staff <i class="fas fa-arrow-right"></i></span>
         </div>
       </div>
     </a>
   </div>
 
-  <!-- Card 3: Active Subjects -->
-  <div class="col-12 col-sm-6 col-lg-3">
-    <a href="{% url 'hod:subject_mapping' %}" class="text-decoration-none">
-      <div class="kpi-card h-100">
-        <div class="kpi-top">
+  <!-- 3. Student Attendance Today -->
+  <div class="col-12 col-sm-6 col-lg-4 col-xl-2">
+    <a href="{% url 'hod:attendance_list' %}" class="text-decoration-none">
+      <div class="hod-kpi-card kpi-success">
+        <div class="hod-kpi-top">
           <div>
-            <span class="kpi-lbl">Active Subjects</span>
-            <span class="kpi-val text-white d-block mt-1">{{ subject_count }}</span>
+            <span class="hod-kpi-label">Att. Today</span>
+            <div class="d-flex align-items-baseline gap-1 mt-1">
+              <span class="text-success fw-bold font-mono" style="font-size: 1.3rem;">{{ present_today }}P</span>
+              <span class="text-muted">/</span>
+              <span class="text-danger fw-bold font-mono" style="font-size: 1.1rem;">{{ absent_today }}A</span>
+            </div>
           </div>
-          <div class="kpi-icon-clean" style="color:#c084fc;"><i class="fas fa-book-open"></i></div>
+          <div class="hod-kpi-icon text-success"><i class="fas fa-clipboard-check"></i></div>
         </div>
-        <div class="d-flex align-items-center justify-content-between text-muted pt-2 border-top border-secondary border-opacity-10 mt-2" style="font-size:0.75rem;">
-          <span><i class="fas fa-project-diagram me-1 text-purple"></i>Mapped Subjects</span>
-          <span class="text-purple fw-bold" style="color:#c084fc !important;">Map Faculty <i class="fas fa-arrow-right ms-1"></i></span>
+        <div class="hod-kpi-footer">
+          {% with total_att=present_today|add:absent_today %}
+            {% if total_att > 0 %}
+              {% widthratio present_today total_att 100 as att_rate %}
+              <span>{{ att_rate }}% Rate</span>
+            {% else %}
+              <span>No logs today</span>
+            {% endif %}
+          {% endwith %}
+          <span class="text-success fw-bold">Audit <i class="fas fa-arrow-right"></i></span>
         </div>
       </div>
     </a>
   </div>
 
-  <!-- Card 4: Attendance Today -->
-  <div class="col-12 col-sm-6 col-lg-3">
-    <a href="{% url 'hod:faculty_attendance' %}" class="text-decoration-none">
-      <div class="kpi-card h-100">
-        <div class="kpi-top">
+  <!-- 4. Detention & Readmissions -->
+  <div class="col-12 col-sm-6 col-lg-4 col-xl-2">
+    <a href="{% url 'hod:manage_detention_readmissions' %}" class="text-decoration-none">
+      <div class="hod-kpi-card kpi-danger">
+        <div class="hod-kpi-top">
           <div>
-            <span class="kpi-lbl">Attendance Today</span>
-            <span class="kpi-val text-white d-block mt-1" style="font-size:1.5rem;">
-              <span class="text-success">{{ present_today }}</span> <span class="text-muted" style="font-size:0.9rem;">P</span> / 
-              <span class="text-danger">{{ absent_today }}</span> <span class="text-muted" style="font-size:0.9rem;">A</span>
-            </span>
+            <span class="hod-kpi-label">Detained</span>
+            <span class="hod-kpi-value text-danger">{{ detained_count }}</span>
           </div>
-          <div class="kpi-icon-clean text-success"><i class="fas fa-clipboard-check"></i></div>
+          <div class="hod-kpi-icon text-danger"><i class="fas fa-user-slash"></i></div>
         </div>
-        {% with total_att=present_today|add:absent_today %}
-        {% if total_att > 0 %}
-          {% widthratio present_today total_att 100 as att_pct %}
-          <div class="hod-att-progress-track mt-2 mb-1">
-            <div class="hod-att-progress-fill" style="width: {{ att_pct }}%;"></div>
+        <div class="hod-kpi-footer">
+          {% if pending_readmission_count > 0 %}
+            <span class="badge bg-danger font-mono">{{ pending_readmission_count }} Readmit App</span>
+          {% else %}
+            <span>0 Readmit App</span>
+          {% endif %}
+          <span class="text-danger fw-bold">Review <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- 5. Student OD & Medical Leaves -->
+  <div class="col-12 col-sm-6 col-lg-4 col-xl-2">
+    <a href="{% url 'hod:manage_student_leaves' %}" class="text-decoration-none">
+      <div class="hod-kpi-card kpi-cyan">
+        <div class="hod-kpi-top">
+          <div>
+            <span class="hod-kpi-label">Student OD/Leaves</span>
+            <span class="hod-kpi-value text-info">{{ pending_student_leave_count }}</span>
           </div>
-          <div class="d-flex justify-content-between text-muted" style="font-size:0.7rem;">
-            <span>{{ att_pct }}% Present Rate</span>
-            <span class="text-success fw-bold">View Logs <i class="fas fa-arrow-right ms-1"></i></span>
+          <div class="hod-kpi-icon text-info"><i class="fas fa-file-signature"></i></div>
+        </div>
+        <div class="hod-kpi-footer">
+          <span>Pending review</span>
+          <span class="text-info fw-bold">Action <i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- 6. Faculty Leave Approvals -->
+  <div class="col-12 col-sm-6 col-lg-4 col-xl-2">
+    <a href="{% url 'hod:manage_leave_requests' %}" class="text-decoration-none">
+      <div class="hod-kpi-card kpi-purple">
+        <div class="hod-kpi-top">
+          <div>
+            <span class="hod-kpi-label">Staff Leaves</span>
+            <span class="hod-kpi-value" style="color: #c084fc;">{{ pending_leave_count }}</span>
           </div>
-        {% else %}
-          <div class="hod-att-progress-track mt-2 mb-1">
-            <div class="hod-att-progress-fill" style="width: 0%;"></div>
-          </div>
-          <div class="d-flex justify-content-between text-muted" style="font-size:0.7rem;">
-            <span>No logs today</span>
-            <span class="text-success fw-bold">View Logs <i class="fas fa-arrow-right ms-1"></i></span>
-          </div>
-        {% endif %}
-        {% endwith %}
+          <div class="hod-kpi-icon" style="color: #c084fc;"><i class="fas fa-calendar-minus"></i></div>
+        </div>
+        <div class="hod-kpi-footer">
+          <span>Department queue</span>
+          <span class="fw-bold" style="color: #c084fc;">Approvals <i class="fas fa-arrow-right"></i></span>
+        </div>
       </div>
     </a>
   </div>
 </div>
 
-<!-- HOD Teaching & Personal Faculty Hub -->
-<div class="glass-card mb-4" style="border-top: 3px solid var(--accent);">
+<!-- ── CORE TABLE: TODAY'S FACULTY CLASS ATTENDANCE & CONDUCTION AUDIT ─────── -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-clipboard-check text-accent me-2"></i>Faculty Class Conduction &amp; Attendance Audit (Today)
+      </h3>
+      <small class="text-muted">Real-time status of which faculty went to class and marked student attendance for {{ today|date:"l, d M Y" }}</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-dark border border-secondary text-light font-mono px-2 py-1">
+        {{ class_audit_data.tot_marked }}/{{ class_audit_data.tot_scheduled }} Marked
+      </span>
+      <a href="{% url 'hod:faculty_class_audit' %}" class="btn-vvit-outline text-decoration-none py-1 px-3" style="font-size: 0.8rem;">
+        <i class="fas fa-calendar-days me-1 text-accent"></i>Full Audit History
+      </a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Class &amp; Section</th>
+          <th>Subject</th>
+          <th>Assigned Faculty</th>
+          <th>Teacher in Class</th>
+          <th>Student Attendance Status</th>
+          <th>Topic Taught (Class Diary)</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in class_audit_data.rows %}
+        <tr>
+          <!-- Period -->
+          <td>
+            <span class="period-badge">P{{ row.period }}</span>
+            <small class="text-muted d-block font-mono" style="font-size: 0.68rem;"><i class="fas fa-door-open me-1"></i>{{ row.room }}</small>
+          </td>
+
+          <!-- Section -->
+          <td>
+            <span class="badge-section fw-bold">{{ row.section }}</span>
+            <small class="text-muted d-block" style="font-size: 0.7rem;">Year {{ row.year.year }}</small>
+          </td>
+
+          <!-- Subject -->
+          <td>
+            <div class="fw-bold text-accent" style="font-size: 0.88rem;">
+              <span class="badge bg-secondary font-mono px-1.5 py-0 me-1" style="font-size: 0.7rem;">{{ row.subject.code }}</span>
+              {{ row.subject.short_name }}
+            </div>
+            <small class="text-muted" style="font-size: 0.72rem;">{{ row.subject.name|truncatechars:24 }}</small>
+          </td>
+
+          <!-- Assigned Faculty -->
+          <td>
+            {% if row.assigned_faculty %}
+              <div class="fw-bold text-light" style="font-size: 0.86rem;">{{ row.assigned_faculty.user.get_full_name }}</div>
+              <small class="text-muted font-mono" style="font-size: 0.7rem;">{{ row.assigned_faculty.employee_id }}</small>
+            {% else %}
+              <span class="text-muted small">Not Assigned</span>
+            {% endif %}
+          </td>
+
+          <!-- Went to Class / Actual Faculty -->
+          <td>
+            {% if row.is_transferred %}
+              {% if row.is_proxy %}
+                <div class="p-1 rounded" style="background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.3);">
+                  <span class="badge bg-warning text-dark font-mono" style="font-size: 0.65rem;" title="Official Proxy assigned by HOD or Admin"><i class="fas fa-user-shield me-1"></i>Proxy (HOD/Admin)</span>
+                  <div class="fw-bold text-light small mt-0.5">{{ row.effective_faculty.user.get_full_name }}</div>
+                </div>
+              {% else %}
+                <div class="p-1 rounded" style="background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.3);">
+                  <span class="badge bg-info text-dark font-mono" style="font-size: 0.65rem;" title="Faculty Peer Substituted Session"><i class="fas fa-exchange-alt me-1"></i>Substituted Session</span>
+                  <div class="fw-bold text-light small mt-0.5">{{ row.effective_faculty.user.get_full_name }}</div>
+                </div>
+              {% endif %}
+            {% else %}
+              {% if row.assigned_faculty %}
+                <div class="text-light small fw-bold">
+                  <i class="fas fa-user-check text-success me-1"></i>{{ row.assigned_faculty.user.get_full_name }}
+                </div>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            {% endif %}
+          </td>
+
+
+          <!-- Student Attendance Marked Status -->
+          <td>
+            {% if row.is_marked %}
+              <div>
+                <span class="status-badge status-present mb-1 d-inline-block">
+                  <i class="fas fa-check-circle me-1"></i>Marked: {{ row.present_count }}/{{ row.total_students }} Present ({{ row.attendance_pct }}%)
+                </span>
+                {% if row.marked_by_name %}
+                <div class="text-muted" style="font-size: 0.7rem;">
+                  <i class="fas fa-user me-1 text-accent"></i>By: {{ row.marked_by_name }} &middot; {{ row.marked_at_time|date:"H:i" }}
+                </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div>
+                <span class="status-badge status-absent d-inline-block mb-1">
+                  <i class="fas fa-times-circle me-1"></i>Not Marked / Pending
+                </span>
+                <div class="text-muted" style="font-size: 0.7rem;">
+                  <i class="fas fa-clock text-danger me-1"></i>Awaiting faculty entry
+                </div>
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- Class Diary / Topic -->
+          <td>
+            {% if row.has_diary %}
+              <div class="text-light small fw-bold" style="font-size: 0.8rem;">
+                <i class="fas fa-book-open text-info me-1"></i>{{ row.diary_obj.topics_covered|truncatewords:6 }}
+              </div>
+              <small class="text-muted" style="font-size: 0.68rem;">Unit {{ row.diary_obj.unit }} &middot; {{ row.diary_obj.teaching_aid }}</small>
+            {% else %}
+              <span class="text-muted small" style="font-size: 0.74rem;">
+                <i class="fas fa-pen-to-square me-1 opacity-50"></i>Diary not logged
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td class="text-center">
+            {% if not row.is_marked %}
+            <a href="{% url 'hod:faculty_class_audit' %}?date={{ today|date:'Y-m-d' }}" class="btn-sm btn-danger py-1 px-2 text-decoration-none" style="font-size: 0.74rem;" title="Send Reminder">
+              <i class="fas fa-bell me-1"></i>Remind
+            </a>
+            {% else %}
+            <a href="{% url 'hod:class_attendance_detail' row.slot.id today|date:'Y-m-d' %}" class="btn-vvit-primary px-2.5 py-1 small text-decoration-none" style="font-size: 0.74rem;">
+              <i class="fas fa-eye me-1"></i>View Action &amp; Register
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-4 text-muted">
+            <i class="fas fa-calendar-day fa-2x mb-2 text-muted" style="opacity: 0.4;"></i>
+            <p class="mb-0">No classes scheduled in timetable for today ({{ day_name }}).</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── DEPARTMENT ACADEMIC ANALYTICS & ACTIVITY OVERVIEW ──────────────────── -->
+<div class="row g-4 mb-4">
+  <!-- Year-wise Enrollment & Academic Health -->
+  <div class="col-12 col-lg-7">
+    <div class="glass-card h-100 p-4">
+      <div class="card-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-chart-simple text-accent me-2"></i>Year-wise Student Health &amp; Distribution
+        </h3>
+        <span class="badge bg-secondary font-mono">B.Tech {{ department.code }}</span>
+      </div>
+
+      <div class="row g-3">
+        {% for ys in year_stats %}
+        <div class="col-12 col-sm-6">
+          <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold text-light" style="font-size: 0.92rem;">{{ ys.year_name }}</span>
+              <span class="badge bg-secondary font-mono">{{ ys.student_count }} Students</span>
+            </div>
+            <div class="year-bar-track mb-2">
+              <div class="year-bar-fill-regular" style="width: {% if ys.student_count > 0 %}{% widthratio ys.regular_count ys.student_count 100 %}{% else %}0{% endif %}%;"></div>
+              <div class="year-bar-fill-detained" style="width: {% if ys.student_count > 0 %}{% widthratio ys.detained_count ys.student_count 100 %}{% else %}0{% endif %}%;"></div>
+            </div>
+            <div class="d-flex justify-content-between text-muted small" style="font-size: 0.72rem;">
+              <span class="text-success"><i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>{{ ys.regular_count }} Regular</span>
+              {% if ys.detained_count > 0 %}
+              <span class="text-danger"><i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>{{ ys.detained_count }} Detained</span>
+              {% else %}
+              <span class="text-muted">0 Detained</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-3 text-muted">No year data available.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Academic Delivery & Staff Progress -->
+  <div class="col-12 col-lg-5">
+    <div class="glass-card h-100 p-4">
+      <div class="card-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-clock-rotate-left text-accent me-2"></i>Today's Academic Delivery
+        </h3>
+        <span class="badge bg-dark border border-secondary text-light font-mono">{{ today|date:"d M" }}</span>
+      </div>
+
+      <div class="d-flex flex-column gap-3">
+        <!-- Class Diary Logs Today -->
+        <div class="d-flex align-items-center justify-content-between p-2.5 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div class="d-flex align-items-center gap-3">
+            <div class="command-tile-icon text-info" style="width: 36px; height: 36px;"><i class="fas fa-book-reader"></i></div>
+            <div>
+              <div class="fw-bold text-light" style="font-size: 0.88rem;">Class Diary Logs</div>
+              <small class="text-muted" style="font-size: 0.72rem;">Daily topics posted by faculty</small>
+            </div>
+          </div>
+          <span class="fs-5 fw-bold font-mono text-info">{{ diary_today_count }}</span>
+        </div>
+
+        <!-- Faculty On-Duty / Attendance Today -->
+        <div class="d-flex align-items-center justify-content-between p-2.5 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div class="d-flex align-items-center gap-3">
+            <div class="command-tile-icon text-success" style="width: 36px; height: 36px;"><i class="fas fa-user-check"></i></div>
+            <div>
+              <div class="fw-bold text-light" style="font-size: 0.88rem;">Teaching Staff Present</div>
+              <small class="text-muted" style="font-size: 0.72rem;">Active in department</small>
+            </div>
+          </div>
+          <span class="fs-5 fw-bold font-mono text-success">{{ faculty_present_count }} / {{ faculty_count }}</span>
+        </div>
+
+        <!-- Staff on Leave -->
+        <div class="d-flex align-items-center justify-content-between p-2.5 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div class="d-flex align-items-center gap-3">
+            <div class="command-tile-icon text-warning" style="width: 36px; height: 36px;"><i class="fas fa-user-clock"></i></div>
+            <div>
+              <div class="fw-bold text-light" style="font-size: 0.88rem;">Faculty on Approved Leave / OD</div>
+              <small class="text-muted" style="font-size: 0.72rem;">Leave / Duty representation</small>
+            </div>
+          </div>
+          <span class="fs-5 fw-bold font-mono text-warning">{{ faculty_leave_count }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 3 CATEGORIZED COMMAND HUBS ────────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+  <!-- HUB 1: Academic & Curriculum Command -->
+  <div class="col-12 col-lg-4">
+    <div class="command-hub-card">
+      <div class="command-hub-header">
+        <h3 class="command-hub-title">
+          <i class="fas fa-graduation-cap text-accent"></i>Academic Operations
+        </h3>
+        <span class="badge bg-secondary font-mono small">Curriculum</span>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <a href="{% url 'hod:subject_mapping' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-project-diagram"></i></div>
+          <div>
+            <div class="command-tile-title">Subject-Faculty Mapping</div>
+            <div class="command-tile-sub">Assign subject in-charges &amp; sections</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_timetable' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-calendar-alt"></i></div>
+          <div>
+            <div class="command-tile-title">Class Timetables</div>
+            <div class="command-tile-sub">Schedule weekly period slots</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:upload_mid_marks' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-file-invoice"></i></div>
+          <div>
+            <div class="command-tile-title">Mid Marks Upload &amp; Edit</div>
+            <div class="command-tile-sub">Mid 1 &amp; Mid 2 branch marks entry</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:attendance_list' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-check-double"></i></div>
+          <div>
+            <div class="command-tile-title">Attendance Overrides &amp; Audit</div>
+            <div class="command-tile-sub">Inspect and rectify daily class logs</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:assign_teacher' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-user-plus"></i></div>
+          <div>
+            <div class="command-tile-title">Assign Counsellors &amp; Mentors</div>
+            <div class="command-tile-sub">Map student batches to mentors</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_fees' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-receipt"></i></div>
+          <div>
+            <div class="command-tile-title">Student Fee Structures &amp; Dues</div>
+            <div class="command-tile-sub">Monitor department fee clearance</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUB 2: Detention, Readmissions & Student Affairs -->
+  <div class="col-12 col-lg-4">
+    <div class="command-hub-card">
+      <div class="command-hub-header">
+        <h3 class="command-hub-title">
+          <i class="fas fa-user-shield text-danger"></i>Detention &amp; OD Center
+        </h3>
+        <span class="badge bg-danger font-mono small">Institutional</span>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <a href="{% url 'hod:faculty_class_audit' %}" class="command-tile">
+          <div class="command-tile-icon text-success" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); color: #10b981;"><i class="fas fa-clipboard-check"></i></div>
+          <div>
+            <div class="command-tile-title">Faculty Class Conduction Audit</div>
+            <div class="command-tile-sub">Period-by-period attendance marking table</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:low_attendance_action_center' %}" class="command-tile">
+          <div class="command-tile-icon text-danger" style="background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.25);"><i class="fas fa-triangle-exclamation"></i></div>
+          <div>
+            <div class="command-tile-title">Low Attendance Screening</div>
+            <div class="command-tile-sub">Condonation (&lt;75%) &amp; Detention (&lt;65%)</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_detention_readmissions' %}" class="command-tile">
+          <div class="command-tile-icon text-warning" style="background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.25);"><i class="fas fa-user-graduate"></i></div>
+          <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="command-tile-title">Junior Batch Readmissions</div>
+              <div class="command-tile-sub">Review repeat requests with juniors</div>
+            </div>
+            {% if pending_readmission_count > 0 %}
+            <span class="badge bg-danger font-mono">{{ pending_readmission_count }}</span>
+            {% endif %}
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_student_leaves' %}" class="command-tile">
+          <div class="command-tile-icon text-info" style="background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.25);"><i class="fas fa-file-signature"></i></div>
+          <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="command-tile-title">Student OD &amp; Medical Leaves</div>
+              <div class="command-tile-sub">Grant exemptions &amp; auto-mark 'L'</div>
+            </div>
+            {% if pending_student_leave_count > 0 %}
+            <span class="badge bg-info text-dark font-mono fw-bold">{{ pending_student_leave_count }}</span>
+            {% endif %}
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_students' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-address-book"></i></div>
+          <div>
+            <div class="command-tile-title">Student Directory &amp; Dossiers</div>
+            <div class="command-tile-sub">Branch student profiles &amp; reports</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:release_results' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-square-poll-vertical"></i></div>
+          <div>
+            <div class="command-tile-title">Result Publication Control</div>
+            <div class="command-tile-sub">Release semester exam grades</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUB 3: Faculty Administration & Academic Delivery -->
+  <div class="col-12 col-lg-4">
+    <div class="command-hub-card">
+      <div class="command-hub-header">
+        <h3 class="command-hub-title">
+          <i class="fas fa-chalkboard-user text-warning"></i>Faculty Administration
+        </h3>
+        <span class="badge bg-warning text-dark font-mono small fw-bold">Staff</span>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <a href="{% url 'hod:manage_faculty' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div>
+            <div class="command-tile-title">Faculty Directory &amp; Roles</div>
+            <div class="command-tile-sub">Department staff roster &amp; accounts</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:faculty_attendance' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-user-clock"></i></div>
+          <div>
+            <div class="command-tile-title">Faculty Attendance Logs</div>
+            <div class="command-tile-sub">Biometric &amp; daily staff attendance</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_class_transfers' %}" class="command-tile">
+          <div class="command-tile-icon text-info" style="background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.25);"><i class="fas fa-exchange-alt"></i></div>
+          <div>
+            <div class="command-tile-title">Class Transfer &amp; Substitution Audit</div>
+            <div class="command-tile-sub">Track who took whose class &amp; proxy logs</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:class_diary_coverage' %}" class="command-tile">
+          <div class="command-tile-icon text-success" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25);"><i class="fas fa-book-reader"></i></div>
+          <div>
+            <div class="command-tile-title">Class Diary &amp; Syllabus Coverage</div>
+            <div class="command-tile-sub">Audit daily topics taught by faculty</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_subject_syllabus' %}" class="command-tile">
+          <div class="command-tile-icon"><i class="fas fa-calendar-check"></i></div>
+          <div>
+            <div class="command-tile-title">Syllabus Topic Schedule Plan</div>
+            <div class="command-tile-sub">Target completion dates &amp; unit maps</div>
+          </div>
+        </a>
+
+        <a href="{% url 'hod:manage_leave_requests' %}" class="command-tile">
+          <div class="command-tile-icon text-danger" style="background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.25);"><i class="fas fa-calendar-minus"></i></div>
+          <div class="flex-grow-1 d-flex justify-content-between align-items-center">
+            <div>
+              <div class="command-tile-title">Faculty Leave Approvals</div>
+              <div class="command-tile-sub">Review departmental staff leave</div>
+            </div>
+            {% if pending_leave_count > 0 %}
+            <span class="badge bg-danger font-mono">{{ pending_leave_count }}</span>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── HOD PERSONAL TEACHING & SCHEDULE HUB ───────────────────────────────── -->
+<div class="glass-card mb-4" style="border-top: 3px solid var(--accent, #dc2626);">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
     <div>
       <h3 class="card-title-custom mb-0">
-        <i class="fas fa-chalkboard-user me-2 text-accent"></i>My Teaching & Class Schedule <span class="badge bg-accent text-dark fw-bold ms-2" style="font-size:0.72rem;">Faculty Mode</span>
+        <i class="fas fa-chalkboard-user me-2 text-accent"></i>HOD Personal Teaching &amp; Mentoring Schedule
+        <span class="badge bg-accent text-dark fw-bold ms-2" style="font-size:0.72rem;">Faculty Active</span>
       </h3>
-      <small class="text-muted">Manage your own assigned subjects, daily class diary, attendance, and leave requests</small>
+      <small class="text-muted">Manage your own assigned subjects, daily periods, attendance marking, and mentee students</small>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
-      <span class="badge bg-dark border border-secondary text-light px-2.5 py-1.5" style="font-size:0.75rem;">
+      <span class="badge bg-dark border border-secondary text-light px-2.5 py-1.5 font-mono" style="font-size:0.75rem;">
         <i class="fas fa-calendar-day me-1 text-accent"></i>{{ today|date:"l, d M Y" }}
       </span>
-      <a href="{% url 'faculty:dashboard' %}" class="btn-sm-accent text-decoration-none" style="padding: 4px 12px; font-size:0.8rem;">
+      <a href="{% url 'faculty:dashboard' %}" class="btn-vvit-outline text-decoration-none py-1 px-3" style="font-size:0.8rem;">
         <i class="fas fa-external-link-alt me-1"></i>Full Teaching Panel
       </a>
     </div>
   </div>
 
-  <!-- Teaching Quick KPI Row -->
+  <!-- Proxy / Transferred Classes Alert Banner if any -->
+  {% if my_transferred_today %}
+  <div class="alert alert-info d-flex align-items-center justify-content-between mb-3 shadow-sm" style="border-radius: 12px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.35);">
+    <div>
+      <i class="fas fa-exchange-alt fa-lg text-info me-2"></i>
+      <strong>Proxy Class Assigned Today:</strong> You have <strong>{{ my_transferred_today.count }}</strong> transferred class period(s) assigned to you today.
+    </div>
+    <a href="{% url 'faculty:mark_attendance' %}" class="btn-sm btn-info text-white text-decoration-none px-3 py-1 fw-bold rounded">
+      <i class="fas fa-check-circle me-1"></i>Mark Proxy Attendance
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Teaching KPI Row -->
   <div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
       <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
         <span class="text-muted d-block small" style="font-size:0.72rem;">Classes Today</span>
-        <strong class="text-white fs-5">{{ my_timetable_today|length }}</strong>
+        <strong class="text-white fs-5 font-mono">{{ my_timetable_today|length }}</strong>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
         <span class="text-muted d-block small" style="font-size:0.72rem;">Taught Subjects</span>
-        <strong class="text-accent fs-5">{{ my_subjects|length }}</strong>
+        <strong class="text-accent fs-5 font-mono">{{ my_subjects|length }}</strong>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
         <span class="text-muted d-block small" style="font-size:0.72rem;">Mentee Students</span>
-        <strong class="text-info fs-5">{{ my_counselled_count }}</strong>
+        <strong class="text-info fs-5 font-mono">{{ my_counselled_count }}</strong>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="p-2.5 rounded text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
         <span class="text-muted d-block small" style="font-size:0.72rem;">Leave Quota Left</span>
-        <strong class="{% if my_leave_limit_reached %}text-danger{% else %}text-success{% endif %} fs-5">{{ my_leaves_remaining }}d <small class="text-muted" style="font-size:0.68rem;">/ {{ my_monthly_limit }}d</small></strong>
+        <strong class="{% if my_leave_limit_reached %}text-danger{% else %}text-success{% endif %} fs-5 font-mono">{{ my_leaves_remaining }}d <small class="text-muted" style="font-size:0.68rem;">/ {{ my_monthly_limit }}d</small></strong>
       </div>
     </div>
   </div>
 
   <div class="row g-3">
     <!-- Today's Schedule Table -->
-    <div class="col-lg-7">
+    <div class="col-12 col-lg-7">
       <div class="card-header-custom p-0 mb-2 border-0">
         <h5 class="text-white fw-bold mb-0" style="font-size:0.92rem;"><i class="fas fa-clock me-1 text-accent"></i>Today's Class Schedule</h5>
       </div>
       {% if my_timetable_today %}
-      <div class="table-responsive">
+      <div class="table-responsive mb-3">
         <table class="vvit-table">
           <thead>
             <tr><th>Period</th><th>Subject</th><th>Section</th><th>Classroom</th><th>Action</th></tr>
@@ -199,18 +971,17 @@
           <tbody>
             {% for slot in my_timetable_today %}
             <tr>
-              <td><span class="period-badge">P{{ slot.period }}</span></td>
+              <td><span class="period-tag">Period {{ slot.period }}</span></td>
               <td>
                 <div class="fw-bold text-accent" style="font-size:0.88rem;">
-                  <span class="badge bg-accent text-dark fw-bold px-1.5 py-0 me-1" style="font-size:0.72rem;">{{ slot.subject.code }}</span>
-                  {{ slot.subject.short_name }}
+                  <span class="badge bg-secondary font-mono px-1.5 py-0 me-1" style="font-size:0.72rem;">{{ slot.subject.code }}</span>
+                  {{ slot.subject.name|truncatechars:26 }}
                 </div>
-                <small class="text-muted" style="font-size:0.75rem;">{{ slot.subject.name|truncatechars:24 }}</small>
               </td>
               <td><span class="badge-section small">{{ slot.section }}</span></td>
               <td><i class="fas fa-door-open text-accent me-1"></i><small class="text-light">{{ slot.room_number|default:"Room 101" }}</small></td>
               <td>
-                <a href="{% url 'faculty:mark_attendance' %}" class="btn-sm-accent" style="padding: 2px 8px; font-size:0.75rem;">
+                <a href="{% url 'faculty:mark_attendance' %}" class="btn-vvit-primary" style="padding: 2px 8px; font-size:0.75rem; text-decoration: none;">
                   <i class="fas fa-check me-1"></i>Mark
                 </a>
               </td>
@@ -220,64 +991,120 @@
         </table>
       </div>
       {% else %}
-      <div class="p-3 text-center text-muted rounded" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08);">
-        <i class="fas fa-coffee fa-2x mb-1 opacity-50"></i>
-        <p class="small mb-0">No teaching classes scheduled for you today ({{ day_name }}).</p>
+      <div class="p-4 text-center text-muted rounded mb-3" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08);">
+        <i class="fas fa-coffee fa-2x mb-2 opacity-50"></i>
+        <p class="small mb-0">No regular teaching classes scheduled for you today ({{ day_name }}).</p>
+      </div>
+      {% endif %}
+
+      <!-- Transferred / Proxy Classes Received Today -->
+      {% if my_transferred_today %}
+      <div class="p-3 mb-3 rounded" style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25);">
+        <h6 class="text-info fw-bold mb-2"><i class="fas fa-hand-holding-medical me-1"></i>Proxy Classes Assigned to You Today</h6>
+        <div class="table-responsive">
+          <table class="vvit-table">
+            <thead>
+              <tr><th>Period</th><th>Subject & Section</th><th>Classroom</th><th>Original Faculty</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {% for tr in my_transferred_today %}
+              <tr>
+                <td><span class="period-badge bg-info text-white">P{{ tr.timetable_entry.period }}</span></td>
+                <td>
+                  <div class="fw-bold text-accent" style="font-size:0.88rem;">{{ tr.timetable_entry.subject.short_name }} — {{ tr.timetable_entry.section }}</div>
+                  <small class="text-muted">{{ tr.timetable_entry.subject.name }}</small>
+                </td>
+                <td><span class="badge-section small"><i class="fas fa-door-open text-info me-1"></i>{{ tr.timetable_entry.room_number|default:"Room 101" }}</span></td>
+                <td>Prof. {{ tr.original_faculty.user.get_full_name }}</td>
+                <td>
+                  <a href="{% url 'faculty:mark_attendance' %}" class="btn-vvit-primary" style="padding: 2px 8px; font-size:0.75rem; text-decoration: none;">
+                    <i class="fas fa-user-check me-1"></i>Mark
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Classes Transferred Out by HOD Today -->
+      {% if my_transferred_given_today %}
+      <div class="p-3 mb-3 rounded" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25);">
+        <h6 class="text-warning fw-bold mb-2"><i class="fas fa-paper-plane me-1"></i>Classes Transferred Out Today</h6>
+        <div class="table-responsive">
+          <table class="vvit-table">
+            <thead>
+              <tr><th>Period</th><th>Subject & Section</th><th>Substitute Faculty</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% for tr in my_transferred_given_today %}
+              <tr>
+                <td><span class="period-badge bg-warning text-dark">P{{ tr.timetable_entry.period }}</span></td>
+                <td>{{ tr.timetable_entry.subject.short_name }} — {{ tr.timetable_entry.section }}</td>
+                <td><strong class="text-warning">Prof. {{ tr.substitute_faculty.user.get_full_name }}</strong></td>
+                <td><span class="badge bg-warning text-dark">Transferred</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
       {% endif %}
     </div>
 
     <!-- Quick Faculty Actions -->
-    <div class="col-lg-5">
+    <div class="col-12 col-lg-5">
       <div class="card-header-custom p-0 mb-2 border-0">
-        <h5 class="text-white fw-bold mb-0" style="font-size:0.92rem;"><i class="fas fa-bolt me-1 text-accent"></i>My Faculty Actions</h5>
+        <h5 class="text-white fw-bold mb-0" style="font-size:0.92rem;"><i class="fas fa-bolt me-1 text-accent"></i>Personal Faculty Actions</h5>
       </div>
       <div class="row g-2">
         <div class="col-6">
-          <a href="{% url 'faculty:mark_attendance' %}" class="hod-command-tile p-2.5">
-            <div class="tile-icon text-success" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-user-check"></i></div>
+          <a href="{% url 'faculty:mark_attendance' %}" class="command-tile p-2.5">
+            <div class="command-tile-icon text-success" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-user-check"></i></div>
             <div>
-              <div class="fw-bold" style="font-size:0.82rem;">Mark Attendance</div>
-              <small class="text-muted" style="font-size:0.7rem;">Period attendance</small>
+              <div class="command-tile-title" style="font-size:0.82rem;">Mark Attendance</div>
+              <small class="command-tile-sub">Daily class log</small>
             </div>
           </a>
         </div>
         <div class="col-6">
-          <a href="{% url 'faculty:class_diary' %}" class="hod-command-tile p-2.5">
-            <div class="tile-icon text-info" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-book-reader"></i></div>
+          <a href="{% url 'faculty:class_diary' %}" class="command-tile p-2.5">
+            <div class="command-tile-icon text-info" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-book-reader"></i></div>
             <div>
-              <div class="fw-bold" style="font-size:0.82rem;">Class Diary</div>
-              <small class="text-muted" style="font-size:0.7rem;">Daily topic logs</small>
+              <div class="command-tile-title" style="font-size:0.82rem;">Class Diary</div>
+              <small class="command-tile-sub">Topics taught</small>
             </div>
           </a>
         </div>
         <div class="col-6">
-          <a href="{% url 'faculty:my_syllabus_tracker' %}" class="hod-command-tile p-2.5">
-            <div class="tile-icon text-accent" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-calendar-alt"></i></div>
+          <a href="{% url 'faculty:my_syllabus_tracker' %}" class="command-tile p-2.5">
+            <div class="command-tile-icon text-accent" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-calendar-alt"></i></div>
             <div>
-              <div class="fw-bold" style="font-size:0.82rem;">My Syllabus</div>
-              <small class="text-muted" style="font-size:0.7rem;">Topic milestones</small>
+              <div class="command-tile-title" style="font-size:0.82rem;">My Syllabus</div>
+              <small class="command-tile-sub">Milestones</small>
             </div>
           </a>
         </div>
         <div class="col-6">
-          <a href="{% url 'faculty:counselled_students' %}" class="hod-command-tile p-2.5">
-            <div class="tile-icon text-warning" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-user-graduate"></i></div>
+          <a href="{% url 'faculty:counselled_students' %}" class="command-tile p-2.5">
+            <div class="command-tile-icon text-warning" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-user-graduate"></i></div>
             <div>
-              <div class="fw-bold" style="font-size:0.82rem;">My Students</div>
-              <small class="text-muted" style="font-size:0.7rem;">Mentoring notes</small>
+              <div class="command-tile-title" style="font-size:0.82rem;">My Mentees</div>
+              <small class="command-tile-sub">Dossiers &amp; notes</small>
             </div>
           </a>
         </div>
         <div class="col-12">
-          <a href="{% url 'hod:manage_leave_requests' %}#my-leaves" class="hod-command-tile p-2.5" style="border-left: 3px solid {% if my_leave_limit_reached %}#ef4444{% else %}#06b6d4{% endif %};">
-            <div class="tile-icon text-danger" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-calendar-minus"></i></div>
+          <a href="{% url 'hod:manage_leave_requests' %}#my-leaves" class="command-tile p-2.5" style="border-left: 3px solid {% if my_leave_limit_reached %}#ef4444{% else %}#06b6d4{% endif %};">
+            <div class="command-tile-icon text-danger" style="width:34px; height:34px; font-size:0.9rem;"><i class="fas fa-calendar-minus"></i></div>
             <div class="flex-grow-1 d-flex justify-content-between align-items-center">
               <div>
-                <div class="fw-bold" style="font-size:0.82rem;">Apply for Leave (Admin Approval)</div>
-                <small class="text-muted" style="font-size:0.7rem;">Remaining: {{ my_leaves_remaining }} / {{ my_monthly_limit }} days</small>
+                <div class="command-tile-title" style="font-size:0.82rem;">Apply for HOD Leave (Admin Approval)</div>
+                <small class="command-tile-sub">Remaining: {{ my_leaves_remaining }} / {{ my_monthly_limit }} days</small>
               </div>
-              <span class="badge {% if my_leave_limit_reached %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-2 py-1" style="font-size:0.7rem;">
+              <span class="badge {% if my_leave_limit_reached %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-2 py-1 font-mono" style="font-size:0.7rem;">
                 {% if my_leave_limit_reached %}Emergency{% else %}Active{% endif %}
               </span>
             </div>
@@ -288,187 +1115,14 @@
   </div>
 </div>
 
-<!-- 4 Categorized Command Hubs -->
-<div class="row g-4 mb-4">
-  <!-- Hub 1: Academic & Curriculum -->
-  <div class="col-lg-6">
-    <div class="glass-card h-100">
-      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
-        <h3 class="card-title-custom mb-0"><i class="fas fa-graduation-cap me-2 text-accent"></i>Academic & Curriculum Command</h3>
-        <span class="badge bg-dark border border-secondary text-muted">Core Modules</span>
-      </div>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <a href="{% url 'hod:add_subject' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-plus-circle"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Add New Subject</div>
-              <small class="text-muted" style="font-size:0.75rem;">Create branch subject</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_subjects' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-book-open"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Manage Subjects</div>
-              <small class="text-muted" style="font-size:0.75rem;">Branch subjects directory</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:upload_mid_marks' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-file-upload"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Mid Marks (Add & Edit)</div>
-              <small class="text-muted" style="font-size:0.75rem;">Branch Mid 1 & Mid 2 marks</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:subject_mapping' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-project-diagram"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Subject Mapping</div>
-              <small class="text-muted" style="font-size:0.75rem;">Link subjects to faculty</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_timetable' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-calendar-alt"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Manage Timetables</div>
-              <small class="text-muted" style="font-size:0.75rem;">Schedule class slots</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:attendance_list' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-check-double"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Attendance Overrides</div>
-              <small class="text-muted" style="font-size:0.75rem;">Audit & edit logs</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:assign_teacher' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-user-plus"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Assign Counsellors</div>
-              <small class="text-muted" style="font-size:0.75rem;">Map student mentors</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_fees' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-receipt"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Student Fees & Dues</div>
-              <small class="text-muted" style="font-size:0.75rem;">Branch fee structures</small>
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hub 2: Faculty Administration -->
-  <div class="col-lg-6">
-    <div class="glass-card h-100">
-      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
-        <h3 class="card-title-custom mb-0"><i class="fas fa-users-cog me-2 text-accent"></i>Faculty Administration</h3>
-        {% if pending_leave_count > 0 %}
-        <span class="badge bg-danger px-2.5 py-1" style="font-size:0.7rem; animation: pulse 2s infinite;">
-          {{ pending_leave_count }} Pending Leave
-        </span>
-        {% else %}
-        <span class="badge bg-dark border border-secondary text-muted">Staff Management</span>
-        {% endif %}
-      </div>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_faculty' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Faculty Directory</div>
-              <small class="text-muted" style="font-size:0.75rem;">Staff profiles & roles</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:faculty_attendance' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-user-clock"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Faculty Attendance</div>
-              <small class="text-muted" style="font-size:0.75rem;">Track staff logs</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_class_transfers' %}" class="hod-command-tile">
-            <div class="tile-icon text-primary"><i class="fas fa-exchange-alt"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Class Transfers & Audit</div>
-              <small class="text-muted" style="font-size:0.75rem;">Whose class taken by whom & when</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:class_diary_coverage' %}" class="hod-command-tile">
-            <div class="tile-icon text-info"><i class="fas fa-book-reader"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Class Diary & Syllabus</div>
-              <small class="text-muted" style="font-size:0.75rem;">Track topics taught & unit completion</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_subject_syllabus' %}" class="hod-command-tile">
-            <div class="tile-icon text-accent"><i class="fas fa-calendar-alt"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Topic Schedule Plan</div>
-              <small class="text-muted" style="font-size:0.75rem;">Update subject topics & target dates</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'hod:manage_exam_schedules' %}" class="hod-command-tile">
-            <div class="tile-icon text-warning"><i class="fas fa-file-invoice"></i></div>
-            <div>
-              <div class="fw-bold" style="font-size:0.88rem;">Exam Milestones</div>
-              <small class="text-muted" style="font-size:0.75rem;">Mid-1 (2.5u) & Mid-2 faculty deadlines</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-12">
-          <a href="{% url 'hod:manage_leave_requests' %}" class="hod-command-tile">
-            <div class="tile-icon"><i class="fas fa-calendar-minus"></i></div>
-            <div class="flex-grow-1 d-flex justify-content-between align-items-center">
-              <div>
-                <div class="fw-bold" style="font-size:0.88rem;">Leave Approvals</div>
-                <small class="text-muted" style="font-size:0.75rem;">Review & approve staff leave requests</small>
-              </div>
-              {% if pending_leave_count > 0 %}
-              <span class="badge bg-danger rounded-pill px-2.5 py-1">{{ pending_leave_count }}</span>
-              {% endif %}
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Bottom Section: Notice Board & Pending Achievements Verification Queue -->
+<!-- ── BOTTOM SECTION: NOTICE BOARD & LIVE QUEUES ────────────────────────── -->
 <div class="row g-4">
-  <!-- Notice Board Summary -->
-  <div class="col-lg-6">
+  <!-- Notice Board Feed -->
+  <div class="col-12 col-lg-6">
     <div class="glass-card h-100">
       <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
-        <h3 class="card-title-custom mb-0"><i class="fas fa-bell me-2 text-accent"></i>Notice Board Feed</h3>
-        <a href="{% url 'notifications:manage' %}" class="btn-sm-accent text-decoration-none" style="font-size:0.75rem; padding:4px 10px;">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-bullhorn me-2 text-accent"></i>Department Announcements</h3>
+        <a href="{% url 'notifications:manage' %}" class="btn-vvit-outline text-decoration-none" style="font-size:0.75rem; padding:4px 10px;">
           <i class="fas fa-plus me-1"></i>New Notice
         </a>
       </div>
@@ -477,10 +1131,10 @@
         <div class="list-group-item bg-transparent text-white border-bottom border-secondary border-opacity-10 px-0 py-2.5">
           <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
-              <h5 class="fw-bold mb-1" style="font-size:0.9rem; color:var(--accent-bright);">{{ notice.title }}</h5>
+              <h5 class="fw-bold mb-1" style="font-size:0.9rem; color:var(--accent-bright, #ef4444);">{{ notice.title }}</h5>
               <p class="text-muted small mb-0" style="line-height:1.4;">{{ notice.message|truncatewords:20 }}</p>
             </div>
-            <small class="text-muted flex-shrink-0" style="font-size:0.7rem;">{{ notice.created_at|date:"d M, H:i" }}</small>
+            <small class="text-muted flex-shrink-0 font-mono" style="font-size:0.7rem;">{{ notice.created_at|date:"d M, H:i" }}</small>
           </div>
         </div>
         {% empty %}
@@ -494,16 +1148,16 @@
   </div>
 
   <!-- Pending Achievements Review -->
-  <div class="col-lg-6">
+  <div class="col-12 col-lg-6">
     <div class="glass-card h-100">
       <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
         <h3 class="card-title-custom mb-0"><i class="fas fa-trophy me-2 text-accent"></i>Achievement Verifications</h3>
         {% if pending_achievements %}
-        <span class="badge bg-danger rounded-pill px-2.5 py-1" style="font-size:0.7rem;">
+        <span class="badge bg-danger rounded-pill px-2.5 py-1 font-mono" style="font-size:0.7rem;">
           {{ pending_achievements|length }} Pending
         </span>
         {% else %}
-        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2.5 py-1" style="font-size:0.7rem;">
+        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2.5 py-1 font-mono" style="font-size:0.7rem;">
           <i class="fas fa-check-circle me-1"></i>All Verified
         </span>
         {% endif %}
@@ -512,12 +1166,12 @@
       <div class="row g-3">
         {% for ach in pending_achievements %}
         <div class="col-12">
-          <div class="p-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md);">
+          <div class="p-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md, 14px);">
             <div class="d-flex justify-content-between align-items-start gap-2">
               <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 mb-1">
                   <h5 class="fw-bold text-white mb-0" style="font-size:0.92rem;">{{ ach.title }}</h5>
-                  <span class="badge {% if ach.category == 'curricular' %}bg-danger{% else %}bg-purple{% endif %} text-uppercase" style="font-size: 0.62rem;">
+                  <span class="badge bg-secondary text-uppercase" style="font-size: 0.62rem;">
                     {{ ach.get_category_display }}
                   </span>
                 </div>
@@ -526,17 +1180,17 @@
                   <i class="fas fa-user me-1 text-accent"></i>Submitted by: <strong>{{ ach.user.get_full_name }}</strong> ({{ ach.user.username }})
                 </div>
               </div>
-              <div class="d-flex gap-1.5 flex-shrink-0">
+              <div class="d-flex gap-1 flex-shrink-0">
                 <form method="POST" action="{% url 'hod:verify_achievement_action' ach.id 'approve' %}" class="d-inline">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-success py-1.5 px-2.5" style="font-size:0.75rem;" title="Approve">
-                    <i class="fas fa-check me-1"></i>Approve
+                  <button type="submit" class="btn btn-sm btn-success py-1 px-2" style="font-size:0.75rem;" title="Approve">
+                    <i class="fas fa-check"></i>
                   </button>
                 </form>
                 <form method="POST" action="{% url 'hod:verify_achievement_action' ach.id 'reject' %}" class="d-inline" onsubmit="return confirm('Reject this achievement?')">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-danger py-1.5 px-2.5" style="font-size:0.75rem;" title="Reject">
-                    <i class="fas fa-times me-1"></i>Reject
+                  <button type="submit" class="btn btn-sm btn-danger py-1 px-2" style="font-size:0.75rem;" title="Reject">
+                    <i class="fas fa-times"></i>
                   </button>
                 </form>
               </div>

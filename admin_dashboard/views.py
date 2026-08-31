@@ -59,7 +59,7 @@ def admin_required(view_func):
 # ─────────────────────────────────────────────
 @admin_required
 def dashboard(request):
-    """High-level statistics card view for the admin home page."""
+    """High-level statistics card view for the admin home page with institutional class audit."""
     stats = {
         'total_students': Student.objects.filter(is_active=True, user__is_deleted=False).count(),
         'total_faculty':  Faculty.objects.filter(is_active=True, user__is_deleted=False).count(),
@@ -81,11 +81,20 @@ def dashboard(request):
         .order_by('branch__code')
     )
 
+    # Institutional Class Conduction & Attendance Audit (Today)
+    class_audit_data = get_institutional_class_attendance_audit_data(target_date=today)
+    branches = Branch.objects.all().order_by('code')
+
     context = {
-        'stats':       stats,
-        'branch_data': json.dumps(branch_data),
+        'stats':            stats,
+        'branch_data':      json.dumps(branch_data),
+        'today':            today,
+        'day_name':         today.strftime('%A'),
+        'class_audit_data': class_audit_data,
+        'branches':         branches,
     }
     return render(request, 'admin_dashboard/dashboard.html', context)
+
 
 
 # ═══════════════════════════════════════════════
@@ -2625,16 +2634,32 @@ def faculty_class_history(request):
                     defaults={
                         'original_faculty': slot.faculty,
                         'substitute_faculty': substitute,
-                        'reason': reason or 'Admin Proxy Assignment',
+                        'reason': reason or 'Admin Official Proxy Assignment',
                         'status': 'accepted',
+                        'assigned_by_role': 'admin',
+                        'transfer_type': 'proxy',
+                        'assigned_by': request.user,
                     }
                 )
+
                 send_class_transfer_notification(transfer_obj)
                 branch_label = f"{slot.section.branch.code} " if (slot.section and slot.section.branch) else ""
                 messages.success(
                     request,
                     f"Assigned Period {slot.period} ({slot.subject.code} — {branch_label}{slot.section.name if slot.section else ''}) to Prof. {substitute.full_name} ({substitute.department.code if substitute.department else 'Faculty'}). SMS & Email notification dispatched."
                 )
+            return redirect('admin_dashboard:faculty_class_history')
+
+        elif action == 'cancel_proxy':
+            transfer_id = request.POST.get('transfer_id')
+            if transfer_id:
+                ct_to_cancel = ClassTransfer.objects.filter(id=transfer_id).first()
+                if ct_to_cancel:
+                    desc = f"Period {ct_to_cancel.timetable_entry.period} ({ct_to_cancel.timetable_entry.subject.code if ct_to_cancel.timetable_entry.subject else 'Class'}) on {ct_to_cancel.date.strftime('%d-%b-%Y')}"
+                    ct_to_cancel.delete()
+                    messages.success(request, f"Class transfer/proxy for {desc} was cancelled. Reverted to regular instructor.")
+                else:
+                    messages.error(request, "Class transfer record not found.")
             return redirect('admin_dashboard:faculty_class_history')
 
     # Search & Filter Parameters
@@ -3274,6 +3299,519 @@ def manage_exam_schedules(request):
         'today': today,
     }
     return render(request, 'admin_dashboard/manage_exam_schedules.html', context)
+
+
+# ─────────────────────────────────────────────
+# DETENTION & JUNIOR READMISSION RATIFICATION
+# ─────────────────────────────────────────────
+@admin_required
+def manage_detention_readmissions(request):
+    """
+    Dean / Admin final review and ratification of student readmissions.
+    """
+    from accounts.models import StudentReadmissionRequest
+
+    status_filter = request.GET.get('status', 'all')
+    reqs_qs = StudentReadmissionRequest.objects.all().select_related(
+        'student__user', 'student__branch', 'target_junior_year', 'target_junior_section', 'hod_reviewed_by__user'
+    ).order_by('-created_at')
+
+    if status_filter == 'pending':
+        reqs_qs = reqs_qs.filter(admin_status='pending', hod_status='approved')
+    elif status_filter in ['approved', 'rejected']:
+        reqs_qs = reqs_qs.filter(admin_status=status_filter)
+
+    # Detained students across all branches
+    detained_students = Student.objects.filter(
+        is_active=True
+    ).filter(
+        Q(academic_status__in=['DETAINED_ATTENDANCE', 'DETAINED_CREDITS']) | Q(is_detained=True)
+    ).select_related('user', 'branch', 'year', 'section')
+
+    return render(request, 'admin_dashboard/detention_readmissions.html', {
+        'readmission_requests': reqs_qs,
+        'detained_students': detained_students,
+        'status_filter': status_filter,
+    })
+
+
+@admin_required
+@require_POST
+def action_readmission_request(request, pk, action):
+    """
+    Dean / Admin final approval or rejection of student readmission.
+    If approved, executes readmission: moves student to target junior year/section.
+    """
+    from accounts.models import StudentReadmissionRequest
+
+    readmission_req = get_object_or_404(StudentReadmissionRequest, pk=pk)
+    remarks = request.POST.get('remarks', '').strip()
+
+    if action == 'approve':
+        readmission_req.admin_status = 'approved'
+        readmission_req.admin_reviewed_by = request.user
+        readmission_req.admin_reviewed_at = timezone.now()
+        readmission_req.admin_remarks = remarks
+        readmission_req.save()
+
+        # Execute transfer to junior batch
+        readmission_req.execute_readmission()
+        messages.success(request, f"Readmission APPROVED for {readmission_req.student.roll_number}. Student has been enrolled into Junior Year {readmission_req.target_junior_year.year} (Sec {readmission_req.target_junior_section.name if readmission_req.target_junior_section else 'A'}).")
+    elif action == 'reject':
+        readmission_req.admin_status = 'rejected'
+        readmission_req.admin_reviewed_by = request.user
+        readmission_req.admin_reviewed_at = timezone.now()
+        readmission_req.admin_remarks = remarks
+        readmission_req.save()
+        messages.warning(request, f"Readmission REJECTED for {readmission_req.student.roll_number}.")
+
+    return redirect('admin_dashboard:manage_detention_readmissions')
+
+
+# ═══════════════════════════════════════════════
+# INSTITUTIONAL CLASS CONDUCTION & ATTENDANCE AUDIT
+# ═══════════════════════════════════════════════
+
+def get_institutional_class_attendance_audit_data(branch_filter=None, target_date=None, year_filter=None, sec_filter=None, fac_filter=None, status_filter=None):
+    """
+    Core engine for auditing faculty class conduction & student attendance college-wide across all branches.
+    Accurately tracks peer class substitutions, HOD/Admin proxies, and direct faculty conduction.
+    """
+    if not target_date:
+        target_date = timezone.localdate()
+
+    day_name = target_date.strftime('%A').strip()
+    slots_qs = list(Timetable.objects.filter(
+        day__iexact=day_name
+    ).select_related(
+        'section', 'section__branch', 'section__year', 'subject', 'faculty__user'
+    ).order_by('section__branch__code', 'section__year__year', 'section__name', 'period'))
+
+    if branch_filter and str(branch_filter).isdigit():
+        slots_qs = [s for s in slots_qs if s.section and s.section.branch_id == int(branch_filter)]
+
+    slot_ids = {s.id for s in slots_qs}
+
+    # Fetch Class Transfers / Proxies on target_date (accepted, completed, or pending)
+    transfer_qs = ClassTransfer.objects.filter(
+        date=target_date,
+        status__in=['accepted', 'completed', 'pending']
+    ).select_related(
+        'substitute_faculty__user', 'substitute_faculty__department',
+        'original_faculty__user', 'original_faculty__department',
+        'timetable_entry__section__branch', 'timetable_entry__section__year',
+        'timetable_entry__section', 'timetable_entry__subject',
+        'timetable_entry__faculty__user'
+    )
+
+    if branch_filter and str(branch_filter).isdigit():
+        b_id = int(branch_filter)
+        transfer_qs = transfer_qs.filter(
+            Q(timetable_entry__section__branch_id=b_id) |
+            Q(original_faculty__department_id=b_id) |
+            Q(substitute_faculty__department_id=b_id)
+        )
+
+    transfer_objs = list(transfer_qs)
+    transfers = {ct.timetable_entry_id: ct for ct in transfer_objs}
+    extra_transferred_slots = [ct.timetable_entry for ct in transfer_objs if ct.timetable_entry and ct.timetable_entry_id not in slot_ids]
+    all_slots_list = slots_qs + extra_transferred_slots
+
+    # 1. Fetch attendance records on target_date for ALL relevant slots
+    att_qs = Attendance.objects.filter(
+        timetable_entry__in=all_slots_list,
+        date=target_date
+    ).select_related('marked_by__user', 'marked_by__department')
+
+    att_by_slot = {}
+    for att in att_qs:
+        if att.timetable_entry_id not in att_by_slot:
+            att_by_slot[att.timetable_entry_id] = []
+        att_by_slot[att.timetable_entry_id].append(att)
+
+    # 2. Fetch Class Diary logs on target_date for ALL relevant slots
+    diaries = {
+        cd.timetable_entry_id: cd
+        for cd in ClassDiary.objects.filter(
+            timetable_entry__in=all_slots_list,
+            date=target_date
+        )
+    }
+
+    # 3. Fetch Faculty Attendance (Biometric/Presence) on target_date
+    fac_att_map = {
+        fa.faculty_id: fa.status
+        for fa in FacultyAttendance.objects.filter(date=target_date)
+    }
+
+    rows = []
+    tot_scheduled = 0
+    tot_marked = 0
+    tot_unmarked = 0
+    tot_transferred = 0
+    tot_proxies = 0
+    tot_substitutions = 0
+
+    branch_stats = {}
+
+    for slot in all_slots_list:
+        att_records = att_by_slot.get(slot.id, [])
+        is_marked = len(att_records) > 0
+        first_rec = att_records[0] if att_records else None
+        marked_by_fac = first_rec.marked_by if (first_rec and first_rec.marked_by) else None
+
+        transfer_obj = transfers.get(slot.id)
+        orig_fac = transfer_obj.original_faculty if transfer_obj else slot.faculty
+        effective_faculty = (transfer_obj.substitute_faculty if transfer_obj else marked_by_fac) or orig_fac
+
+        is_transferred = (transfer_obj is not None) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id)
+        is_proxy = (transfer_obj.is_proxy if transfer_obj else False) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id and not transfer_obj)
+        is_substitution = (transfer_obj.is_substitution if transfer_obj else False) and not is_proxy
+
+        if is_proxy:
+            transfer_type_label = "Proxy"
+            transfer_badge_class = "badge bg-warning text-dark"
+        elif is_substitution:
+            transfer_type_label = "Substituted Session"
+            transfer_badge_class = "badge bg-info text-dark"
+        else:
+            transfer_type_label = ""
+            transfer_badge_class = ""
+
+        # Faculty filter handling
+        if fac_filter and str(fac_filter).isdigit():
+            target_fac_id = int(fac_filter)
+            fac_match_ids = {
+                getattr(orig_fac, 'id', None),
+                getattr(effective_faculty, 'id', None),
+                getattr(slot.faculty, 'id', None),
+                getattr(marked_by_fac, 'id', None)
+            }
+            if target_fac_id not in fac_match_ids:
+                continue
+
+        # Year filter handling
+        if year_filter and str(year_filter).isdigit():
+            sec_year = getattr(slot.section, 'year', None)
+            if not sec_year or sec_year.year != int(year_filter):
+                continue
+
+        # Section filter handling
+        if sec_filter and str(sec_filter).isdigit():
+            if slot.section_id != int(sec_filter):
+                continue
+
+        b_code = slot.section.branch.code if slot.section and slot.section.branch else 'GEN'
+        if b_code not in branch_stats:
+            branch_stats[b_code] = {'scheduled': 0, 'marked': 0, 'unmarked': 0, 'branch': slot.section.branch}
+
+        tot_scheduled += 1
+        branch_stats[b_code]['scheduled'] += 1
+
+        p_count = sum(1 for a in att_records if a.status == 'P')
+        a_count = sum(1 for a in att_records if a.status == 'A')
+        l_count = sum(1 for a in att_records if a.status == 'L')
+        total_students = len(att_records)
+        att_pct = round((p_count / total_students * 100), 1) if total_students > 0 else None
+
+        diary_obj = diaries.get(slot.id)
+        has_diary = diary_obj is not None
+
+        fac_day_status = fac_att_map.get(slot.faculty_id, 'P') if slot.faculty else 'P'
+
+        if is_marked:
+            tot_marked += 1
+            branch_stats[b_code]['marked'] += 1
+            class_status = 'conducted_marked'
+            status_label = 'Attendance Marked'
+            status_badge = 'status-present'
+        else:
+            tot_unmarked += 1
+            branch_stats[b_code]['unmarked'] += 1
+            class_status = 'unmarked'
+            status_label = 'Not Marked / Pending'
+            status_badge = 'status-absent'
+
+        if is_transferred:
+            tot_transferred += 1
+            if is_proxy:
+                tot_proxies += 1
+            else:
+                tot_substitutions += 1
+
+        marked_by_name = None
+        marked_at_time = None
+        if is_marked and first_rec:
+            if first_rec.marked_by:
+                marked_by_name = first_rec.marked_by.user.get_full_name()
+            marked_at_time = first_rec.last_modified
+
+        row = {
+            'slot': slot,
+            'branch': getattr(slot.section, 'branch', None),
+            'period': slot.period,
+            'room': slot.room_number or 'Room 101',
+            'section': slot.section,
+            'year': getattr(slot.section, 'year', None),
+            'subject': slot.subject,
+            'assigned_faculty': slot.faculty,
+            'effective_faculty': effective_faculty,
+            'is_transferred': is_transferred,
+            'is_proxy': is_proxy,
+            'is_substitution': is_substitution,
+            'transfer_type_label': transfer_type_label,
+            'transfer_badge_class': transfer_badge_class,
+            'transfer_obj': transfer_obj,
+            'is_marked': is_marked,
+            'marked_by_name': marked_by_name,
+            'marked_at_time': marked_at_time,
+            'present_count': p_count,
+            'absent_count': a_count,
+            'leave_count': l_count,
+            'total_students': total_students,
+            'attendance_pct': att_pct,
+            'has_diary': has_diary,
+            'diary_obj': diary_obj,
+            'fac_day_status': fac_day_status,
+            'class_status': class_status,
+            'status_label': status_label,
+            'status_badge': status_badge,
+        }
+
+        if status_filter == 'marked' and not is_marked:
+            continue
+        if status_filter == 'unmarked' and is_marked:
+            continue
+        if status_filter == 'transferred' and not is_transferred:
+            continue
+        if status_filter == 'proxy' and not is_proxy:
+            continue
+        if status_filter == 'substitution' and not is_substitution:
+            continue
+
+        rows.append(row)
+
+    branch_summaries = []
+    for b_code, bs in branch_stats.items():
+        sched = bs['scheduled']
+        m = bs['marked']
+        pct = round((m / sched * 100), 1) if sched > 0 else 0.0
+        branch_summaries.append({
+            'code': b_code,
+            'branch': bs['branch'],
+            'scheduled': sched,
+            'marked': m,
+            'unmarked': bs['unmarked'],
+            'pct': pct
+        })
+    branch_summaries.sort(key=lambda x: x['code'])
+
+    return {
+        'rows': rows,
+        'tot_scheduled': tot_scheduled,
+        'tot_marked': tot_marked,
+        'tot_unmarked': tot_unmarked,
+        'tot_transferred': tot_transferred,
+        'tot_proxies': tot_proxies,
+        'tot_substitutions': tot_substitutions,
+        'overall_compliance_pct': round((tot_marked / tot_scheduled * 100), 1) if tot_scheduled > 0 else 0.0,
+        'branch_summaries': branch_summaries,
+        'day_name': day_name,
+        'target_date': target_date,
+    }
+
+
+
+@admin_required
+def faculty_class_attendance_audit(request):
+    """
+    Institutional Multi-Branch Class Conduction & Attendance Audit View for Administrators.
+    Allows monitoring whether faculty members in ANY branch have entered classes and submitted attendance.
+    """
+    branches = Branch.objects.all().order_by('code')
+    years = Year.objects.all().order_by('year')
+
+    date_str = request.GET.get('date', '').strip()
+    branch_id = request.GET.get('branch', '').strip()
+    year_id = request.GET.get('year', '').strip()
+    section_id = request.GET.get('section', '').strip()
+    faculty_id = request.GET.get('faculty', '').strip()
+    status_filter = request.GET.get('status', 'all').strip()
+
+    if date_str:
+        try:
+            target_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            target_date = timezone.localdate()
+    else:
+        target_date = timezone.localdate()
+
+    # Handle Urgent Reminder action
+    action = request.GET.get('action')
+    if action == 'remind_faculty':
+        target_fac_id = request.GET.get('faculty_id')
+        period_num = request.GET.get('period')
+        subject_name = request.GET.get('subject')
+        branch_code = request.GET.get('branch_code', '')
+        if target_fac_id and period_num:
+            fac = Faculty.objects.filter(id=target_fac_id).first()
+            if fac:
+                Notification.objects.create(
+                    title=f"URGENT: Post Period {period_num} Attendance ({subject_name})",
+                    message=f"Dear {fac.user.get_full_name()}, you are requested by the Dean / Central Admin to immediately mark the student attendance for Period {period_num} ({subject_name}) conducted today.",
+                    notif_type=Notification.TYPE_ALERT,
+                    priority=Notification.PRIORITY_URGENT,
+                    target_role='faculty',
+                    target_user=fac.user,
+                    target_branch=fac.department,
+                    created_by=request.user
+                )
+                messages.success(request, f"Urgent reminder notification dispatched to {fac.user.get_full_name()} for Period {period_num}.")
+        return redirect(f"{request.path}?date={target_date}&branch={branch_id}&year={year_id}&status={status_filter}")
+
+    audit_data = get_institutional_class_attendance_audit_data(
+        branch_filter=branch_id,
+        target_date=target_date,
+        year_filter=year_id,
+        sec_filter=section_id,
+        fac_filter=faculty_id,
+        status_filter=status_filter
+    )
+
+    sections_qs = Section.objects.all().select_related('branch', 'year').order_by('branch__code', 'year__year', 'name')
+    if branch_id and branch_id.isdigit():
+        sections_qs = sections_qs.filter(branch_id=int(branch_id))
+
+    faculty_list = Faculty.objects.filter(is_active=True).select_related('user', 'department').order_by('department__code', 'user__first_name')
+    if branch_id and branch_id.isdigit():
+        faculty_list = faculty_list.filter(department_id=int(branch_id))
+
+    selected_branch = Branch.objects.filter(id=int(branch_id)).first() if branch_id and branch_id.isdigit() else None
+
+    context = {
+        'branches': branches,
+        'years': years,
+        'sections': sections_qs,
+        'faculty_list': faculty_list,
+        'selected_branch': selected_branch,
+        'selected_branch_id': branch_id,
+        'selected_year_id': year_id,
+        'selected_sec_id': section_id,
+        'selected_fac_id': faculty_id,
+        'selected_status': status_filter,
+        'target_date': target_date,
+        'target_date_str': target_date.strftime('%Y-%m-%d'),
+        'day_name': target_date.strftime('%A'),
+        'audit': audit_data,
+        'rows': audit_data['rows'],
+    }
+    return render(request, 'admin_dashboard/faculty_class_audit.html', context)
+
+
+@admin_required
+def class_session_audit_detail(request, timetable_id, date):
+    """
+    Period-level session audit & student register inspection view for Administrators across all branches.
+    Allows viewing who took the class, student-by-student attendance register, and making overrides.
+    """
+    try:
+        session_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        session_date = timezone.localdate()
+
+    timetable = get_object_or_404(
+        Timetable.objects.select_related(
+            'section', 'section__branch', 'section__year', 'subject', 'faculty__user'
+        ),
+        id=timetable_id
+    )
+
+    transfer = ClassTransfer.objects.filter(
+        timetable_entry=timetable,
+        date=session_date,
+        status__in=['accepted', 'completed', 'pending']
+    ).select_related('substitute_faculty__user', 'original_faculty__user').first()
+
+
+    effective_faculty = transfer.substitute_faculty if transfer else timetable.faculty
+
+    diary = ClassDiary.objects.filter(
+        timetable_entry=timetable,
+        date=session_date
+    ).first()
+
+    # Handle Admin Manual Attendance Overrides
+    if request.method == 'POST' and 'override_attendance' in request.POST:
+        student_id = request.POST.get('student_id')
+        new_status = request.POST.get('new_status')
+        if student_id and new_status in ['P', 'A', 'L']:
+            st = get_object_or_404(Student, id=student_id)
+            att_rec, created = Attendance.objects.get_or_create(
+                student=st,
+                timetable_entry=timetable,
+                date=session_date,
+                defaults={'status': new_status, 'marked_by': effective_faculty}
+            )
+            if not created:
+                att_rec.status = new_status
+                att_rec.save()
+            messages.success(request, f"Attendance status updated to '{new_status}' for {st.roll_number}.")
+        return redirect('admin_dashboard:class_attendance_detail', timetable_id=timetable_id, date=date)
+
+    students = Student.objects.filter(
+        section=timetable.section,
+        is_active=True,
+        user__is_deleted=False
+    ).select_related('user').order_by('roll_number')
+
+    att_records = {
+        a.student_id: a
+        for a in Attendance.objects.filter(
+            timetable_entry=timetable,
+            date=session_date
+        )
+    }
+
+    student_rows = []
+    p_cnt, a_cnt, l_cnt = 0, 0, 0
+    for st in students:
+        rec = att_records.get(st.id)
+        st_status = rec.status if rec else 'UNMARKED'
+        if st_status == 'P': p_cnt += 1
+        elif st_status == 'A': a_cnt += 1
+        elif st_status == 'L': l_cnt += 1
+
+        student_rows.append({
+            'student': st,
+            'record': rec,
+            'status': st_status,
+            'is_marked': rec is not None,
+        })
+
+    tot_students = len(students)
+    is_conducted = len(att_records) > 0
+    pct = round((p_cnt / tot_students * 100), 1) if tot_students > 0 else 0.0
+
+    context = {
+        'timetable': timetable,
+        'branch': timetable.section.branch,
+        'session_date': session_date,
+        'session_date_str': session_date.strftime('%Y-%m-%d'),
+        'day_name': session_date.strftime('%A'),
+        'transfer': transfer,
+        'effective_faculty': effective_faculty,
+        'diary': diary,
+        'student_rows': student_rows,
+        'tot_students': tot_students,
+        'present_count': p_cnt,
+        'absent_count': a_cnt,
+        'leave_count': l_cnt,
+        'attendance_pct': pct,
+        'is_conducted': is_conducted,
+    }
+    return render(request, 'admin_dashboard/class_attendance_detail.html', context)
+
+
 
 
 

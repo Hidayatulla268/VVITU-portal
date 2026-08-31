@@ -1,0 +1,143 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Apply On-Duty & Medical Leave — Student Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-file-signature me-2 text-accent"></i>On-Duty (OD) &amp; Medical Exemption Portal</h1>
+    <p class="ph-sub">Submit medical certificates or institutional OD approvals for attendance exemption.</p>
+  </div>
+  <div class="ph-right d-flex align-items-center gap-2">
+    <a href="{% url 'student:attendance' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-arrow-left me-1"></i>Back to Attendance Log
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Leave Application Form -->
+  <div class="col-12 col-lg-5">
+    <div class="glass-card p-4 h-100">
+      <div class="card-header-custom border-bottom pb-3 mb-3">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-paper-plane text-accent me-2"></i>New Leave / OD Application
+        </h3>
+      </div>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Leave Type -->
+        <div class="mb-3">
+          <label class="form-label text-light small fw-bold">Exemption / Leave Type <span class="text-danger">*</span></label>
+          <select name="leave_type" class="vvit-select w-100" required>
+            <option value="medical">Medical Leave (Doctor / Hospital Certificate)</option>
+            <option value="od">On-Duty (OD) — Hackathon / Tech Symposium / Academic Event</option>
+            <option value="sports">Sports / Cultural Representation</option>
+            <option value="personal">Emergency / Personal Leave</option>
+          </select>
+        </div>
+
+        <!-- Date Range -->
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label text-light small fw-bold">Start Date <span class="text-danger">*</span></label>
+            <input type="date" name="start_date" class="vvit-input w-100" required/>
+          </div>
+          <div class="col-6">
+            <label class="form-label text-light small fw-bold">End Date <span class="text-danger">*</span></label>
+            <input type="date" name="end_date" class="vvit-input w-100" required/>
+          </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="mb-3">
+          <label class="form-label text-light small fw-bold">Reason for Absence <span class="text-danger">*</span></label>
+          <textarea name="reason" class="vvit-input w-100" rows="3" placeholder="Provide detailed explanation for your leave..." required></textarea>
+        </div>
+
+        <!-- Document Proof -->
+        <div class="mb-4">
+          <label class="form-label text-light small fw-bold">Supporting Document / Certificate (PDF/Image)</label>
+          <input type="file" name="document" class="vvit-input w-100" accept=".pdf,.png,.jpg,.jpeg"/>
+          <small class="text-muted d-block mt-1">Upload doctor's prescription, hospital discharge, or OD invitation letter.</small>
+        </div>
+
+        <button type="submit" class="btn-vvit-primary w-100 py-2 fw-bold">
+          <i class="fas fa-check-circle me-1"></i>Submit Application for Review
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Past Applications Table -->
+  <div class="col-12 col-lg-7">
+    <div class="glass-card p-4 h-100">
+      <div class="card-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-clock-rotate-left text-accent me-2"></i>My Leave &amp; OD History
+        </h3>
+        <span class="badge bg-secondary font-mono">{{ past_requests.count }} Requests</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="vvit-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Dates</th>
+              <th>Reason</th>
+              <th>Proof</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in past_requests %}
+            <tr>
+              <td>
+                <span class="badge bg-accent text-dark fw-bold">{{ r.get_leave_type_display }}</span>
+              </td>
+              <td class="font-mono small text-nowrap">
+                {{ r.start_date|date:"d M" }} - {{ r.end_date|date:"d M Y" }}
+              </td>
+              <td class="small" title="{{ r.reason }}">
+                {{ r.reason|truncatewords:6 }}
+              </td>
+              <td>
+                {% if r.document %}
+                <a href="{{ r.document.url }}" target="_blank" class="btn-vvit-outline px-2 py-1 small" title="View Document">
+                  <i class="fas fa-file-pdf text-accent"></i>
+                </a>
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if r.status == 'approved' %}
+                  <span class="status-badge status-present"><i class="fas fa-check-circle me-1"></i>Approved (OD Marked)</span>
+                {% elif r.status == 'rejected' %}
+                  <span class="status-badge status-absent"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                {% else %}
+                  <span class="status-badge status-warning"><i class="fas fa-hourglass-half me-1"></i>Under Review</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">
+                <i class="fas fa-file-circle-check fa-2x mb-2 text-muted" style="opacity: 0.4;"></i>
+                <p class="mb-0">No leave or OD applications submitted yet.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

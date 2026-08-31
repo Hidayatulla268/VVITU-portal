@@ -1,0 +1,154 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Student Readmission Ratification — Admin Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-user-graduate me-2 text-accent"></i>Student Readmission &amp; Batch Reassignment Ratification</h1>
+    <p class="ph-sub">College Administration &middot; Final approval of HOD-recommended readmission requests for detained students repeating with junior batches.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Applications Ratification Queue -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-stamp text-accent me-2"></i>Readmission Applications
+    </h3>
+    <div class="d-flex gap-2">
+      <a href="?status=all" class="btn-sm {% if status_filter == 'all' or not status_filter %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-3 py-1">All</a>
+      <a href="?status=pending" class="btn-sm {% if status_filter == 'pending' %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-3 py-1">Pending Admin Approval</a>
+      <a href="?status=approved" class="btn-sm {% if status_filter == 'approved' %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-3 py-1">Approved</a>
+      <a href="?status=rejected" class="btn-sm {% if status_filter == 'rejected' %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-3 py-1">Rejected</a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Branch</th>
+          <th>Detention Reason</th>
+          <th>Target Junior Class</th>
+          <th>HOD Status</th>
+          <th>Admin Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in readmission_requests %}
+        <tr>
+          <td class="font-mono small text-nowrap">{{ req.created_at|date:"d M Y" }}</td>
+          <td class="font-mono fw-bold">{{ req.student.roll_number }}</td>
+          <td>{{ req.student.user.get_full_name }}</td>
+          <td><span class="badge bg-secondary font-mono">{{ req.student.branch.code }}</span></td>
+          <td>
+            <span class="badge bg-danger">{{ req.get_detention_type_display }}</span>
+          </td>
+          <td class="fw-bold">
+            Year {{ req.target_junior_year.year }}
+            {% if req.target_junior_section %}(Sec {{ req.target_junior_section.name }}){% endif %}
+          </td>
+          <td>
+            {% if req.hod_status == 'approved' %}
+              <span class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i>HOD Recommended</span>
+            {% elif req.hod_status == 'rejected' %}
+              <span class="text-danger small fw-bold"><i class="fas fa-times-circle me-1"></i>HOD Rejected</span>
+            {% else %}
+              <span class="text-warning small fw-bold"><i class="fas fa-clock me-1"></i>Pending HOD</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if req.admin_status == 'pending' %}
+              {% if req.hod_status == 'approved' %}
+              <div class="d-flex gap-1">
+                <form method="post" action="{% url 'admin_dashboard:action_readmission_request' req.id 'approve' %}" onsubmit="return confirm('Approve readmission and move student {{ req.student.roll_number }} to Junior Year {{ req.target_junior_year.year }}?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-sm btn-success py-1 px-2" style="font-size: 0.75rem;" title="Approve and Reassign to Junior Batch">
+                    <i class="fas fa-check-double me-1"></i>Approve &amp; Reassign
+                  </button>
+                </form>
+                <form method="post" action="{% url 'admin_dashboard:action_readmission_request' req.id 'reject' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-sm btn-danger py-1 px-2" style="font-size: 0.75rem;" title="Reject Request">
+                    <i class="fas fa-times me-1"></i>Reject
+                  </button>
+                </form>
+              </div>
+              {% else %}
+              <span class="text-muted small">Awaiting HOD recommendation</span>
+              {% endif %}
+            {% elif req.admin_status == 'approved' %}
+              <span class="status-badge status-present"><i class="fas fa-check-double me-1"></i>Approved &amp; Reassigned</span>
+            {% else %}
+              <span class="status-badge status-absent"><i class="fas fa-times me-1"></i>Rejected</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-4 text-muted">
+            <i class="fas fa-folder-open fa-2x mb-2 text-muted" style="opacity: 0.4;"></i>
+            <p class="mb-0">No readmission requests matching filter.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- All Detained Students Overview -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom mb-0 text-danger">
+      <i class="fas fa-user-slash me-2"></i>Institutional Detained Students Overview
+    </h3>
+    <span class="badge bg-danger font-mono">{{ detained_students.count }} Detained</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Branch</th>
+          <th>Current Class</th>
+          <th>Detention Category</th>
+          <th>Detention Cause</th>
+          <th>Attendance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for st in detained_students %}
+        <tr>
+          <td class="font-mono fw-bold">{{ st.roll_number }}</td>
+          <td>{{ st.user.get_full_name }}</td>
+          <td><span class="badge bg-secondary font-mono">{{ st.branch.code }}</span></td>
+          <td>Year {{ st.year }} &middot; Sec {{ st.section.name }}</td>
+          <td>
+            <span class="badge bg-danger">{{ st.get_academic_status_display }}</span>
+          </td>
+          <td class="small">{{ st.detention_reason|default:"Attendance shortage (<65%)" }}</td>
+          <td class="font-mono fw-bold text-danger">{{ st.calculate_attendance_pct }}%</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">
+            <i class="fas fa-circle-check text-success fa-2x mb-2"></i>
+            <p class="mb-0 text-success">No active detained students found across any department.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

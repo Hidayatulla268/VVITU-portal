@@ -1,0 +1,313 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Class Session Audit — Period {{ slot.period }} {{ slot.subject.code }} ({{ target_date|date:"d M Y" }}){% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+      <span class="period-badge">Period {{ slot.period }}</span>
+      <span class="badge-section fw-bold">{{ slot.section }}</span>
+      <span class="badge bg-dark border border-secondary text-light font-mono" style="font-size: 0.72rem;">
+        <i class="fas fa-calendar-day me-1 text-accent"></i>{{ target_date|date:"l, d F Y" }}
+      </span>
+      <span class="badge bg-secondary font-mono" style="font-size: 0.72rem;">
+        <i class="fas fa-door-open me-1"></i>{{ slot.room_number|default:"Room 101" }}
+      </span>
+    </div>
+    <h1 class="ph-title">{{ slot.subject.name }} ({{ slot.subject.code }})</h1>
+    <p class="ph-sub">Class Session Conduction, Faculty Teaching Activity &amp; Student Attendance Roster</p>
+  </div>
+
+  <div class="ph-right d-flex align-items-center gap-2 flex-wrap">
+    <a href="{% url 'hod:faculty_class_audit' %}?date={{ target_date|date:'Y-m-d' }}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-arrow-left me-1"></i>Class Audit Matrix
+    </a>
+    <button type="button" onclick="window.print()" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-print me-1"></i>Print Period Register
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ── TOP ROW: FACULTY ACTIONS & CLASS DIARY CARDS ─────────────────────── -->
+<div class="row g-4 mb-4">
+  <!-- Card 1: Faculty Action & Attendance Stats -->
+  <div class="col-12 col-lg-6">
+    <div class="glass-card h-100 p-4">
+      <div class="card-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-chalkboard-user text-accent me-2"></i>Faculty Teaching &amp; Attendance Log
+        </h3>
+        {% if is_marked %}
+          <span class="badge bg-success font-mono"><i class="fas fa-check-circle me-1"></i>Attendance Submitted</span>
+        {% else %}
+          <span class="badge bg-danger font-mono"><i class="fas fa-times-circle me-1"></i>Pending / Not Marked</span>
+        {% endif %}
+      </div>
+
+      <div class="row g-3 mb-3">
+        <!-- Assigned Faculty -->
+        <div class="col-6">
+          <label class="text-muted small fw-semibold d-block mb-1">Assigned Timetable Faculty</label>
+          {% if slot.faculty %}
+            <div class="fw-bold text-light" style="font-size: 0.95rem;">{{ slot.faculty.user.get_full_name }}</div>
+            <small class="text-muted font-mono">{{ slot.faculty.employee_id }}</small>
+          {% else %}
+            <span class="text-muted small">Not Assigned</span>
+          {% endif %}
+        </div>
+
+        <!-- Actual Faculty / Proxy / Substituted Session -->
+        <div class="col-6">
+          <label class="text-muted small fw-semibold d-block mb-1">Teacher in Class</label>
+          {% if transfer %}
+            {% if transfer.is_proxy %}
+              <div class="p-2 rounded" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3);">
+                <span class="badge bg-warning text-dark font-mono" style="font-size: 0.68rem;" title="Official Proxy assigned by HOD or Admin">
+                  <i class="fas fa-user-shield me-1"></i>Official Proxy (HOD/Admin)
+                </span>
+                <div class="fw-bold text-light small mt-1">{{ effective_faculty.user.get_full_name }} ({{ effective_faculty.employee_id }})</div>
+                <small class="text-muted d-block" style="font-size: 0.68rem;">Assigned by: {{ transfer.assigned_by_role|upper }} &middot; {{ transfer.reason|default:"HOD/Admin Proxy" }}</small>
+              </div>
+            {% else %}
+              <div class="p-2 rounded" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3);">
+                <span class="badge bg-info text-dark font-mono" style="font-size: 0.68rem;" title="Mutual substitution arranged between faculty peers">
+                  <i class="fas fa-exchange-alt me-1"></i>Substituted Session (Faculty)
+                </span>
+                <div class="fw-bold text-light small mt-1">{{ effective_faculty.user.get_full_name }} ({{ effective_faculty.employee_id }})</div>
+                <small class="text-muted d-block" style="font-size: 0.68rem;">Faculty Peer Substitution &middot; {{ transfer.reason|default:"Mutual Class Swap" }}</small>
+              </div>
+            {% endif %}
+          {% else %}
+            {% if slot.faculty %}
+              <div class="fw-bold text-success" style="font-size: 0.95rem;">
+                <i class="fas fa-user-check me-1"></i>{{ slot.faculty.user.get_full_name }}
+              </div>
+              <small class="text-muted font-mono">Regular Class</small>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Attendance Numbers -->
+      <div class="p-3 rounded mb-2" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06);">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small fw-semibold">Attendance Outcome</span>
+          <span class="badge bg-dark border border-secondary text-light font-mono">{{ att_pct }}% Present Rate</span>
+        </div>
+        <div class="d-flex justify-content-around text-center">
+          <div>
+            <span class="text-success fs-4 fw-bold font-mono d-block">{{ p_count }}</span>
+            <small class="text-muted" style="font-size: 0.72rem;">Present (P)</small>
+          </div>
+          <div>
+            <span class="text-danger fs-4 fw-bold font-mono d-block">{{ a_count }}</span>
+            <small class="text-muted" style="font-size: 0.72rem;">Absent (A)</small>
+          </div>
+          <div>
+            <span class="text-info fs-4 fw-bold font-mono d-block">{{ l_count }}</span>
+            <small class="text-muted" style="font-size: 0.72rem;">OD / Leave (L)</small>
+          </div>
+          <div>
+            <span class="text-light fs-4 fw-bold font-mono d-block">{{ total_students }}</span>
+            <small class="text-muted" style="font-size: 0.72rem;">Roster Total</small>
+          </div>
+        </div>
+      </div>
+
+      {% if is_marked and marked_by %}
+      <div class="text-muted small mt-2" style="font-size: 0.74rem;">
+        <i class="fas fa-clock text-accent me-1"></i>Submitted by <strong>{{ marked_by.user.get_full_name }}</strong> on {{ marked_at|date:"d M Y, h:i A" }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Card 2: Class Diary & Topics Taught -->
+  <div class="col-12 col-lg-6">
+    <div class="glass-card h-100 p-4">
+      <div class="card-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0">
+          <i class="fas fa-book-open text-info me-2"></i>Class Diary &amp; Lesson Record
+        </h3>
+        {% if diary %}
+          <span class="badge bg-info text-dark font-mono"><i class="fas fa-check me-1"></i>Diary Logged</span>
+        {% else %}
+          <span class="badge bg-secondary font-mono">Not Logged</span>
+        {% endif %}
+      </div>
+
+      {% if diary %}
+      <div class="d-flex flex-column gap-2">
+        <div class="p-3 rounded" style="background: rgba(6, 182, 212, 0.06); border: 1px solid rgba(6, 182, 212, 0.2);">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge bg-info text-dark font-mono fw-bold">Unit {{ diary.unit }}</span>
+            <span class="text-muted small font-mono">{{ diary.created_at|date:"d M Y, H:i" }}</span>
+          </div>
+          <h5 class="text-light fw-bold mb-2" style="font-size: 0.96rem;">{{ diary.topics_covered }}</h5>
+          <div class="text-muted small" style="font-size: 0.76rem;">
+            <i class="fas fa-screwdriver-wrench me-1 text-accent"></i>Teaching Aid / Mode: <strong>{{ diary.teaching_aid|default:"Standard Classroom Board" }}</strong>
+          </div>
+        </div>
+
+        <div class="text-muted small mt-2" style="font-size: 0.74rem;">
+          <i class="fas fa-user-pen text-info me-1"></i>Logged by: <strong>{{ diary.faculty.user.get_full_name }}</strong> ({{ diary.faculty.employee_id }})
+        </div>
+      </div>
+      {% else %}
+      <div class="p-4 text-center text-muted rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.08);">
+        <i class="fas fa-book-open-reader fa-3x mb-2 opacity-50 text-muted"></i>
+        <h5 class="text-light">Class Diary Pending</h5>
+        <p class="small text-muted mb-0">The instructor has not submitted a class diary log for this period yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── STUDENT ATTENDANCE REGISTER MATRIX ───────────────────────────────── -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h3 class="card-title-custom mb-0">
+        <i class="fas fa-users-viewfinder text-accent me-2"></i>Period Student Attendance Register
+      </h3>
+      <small class="text-muted">Detailed student-by-student attendance status for Section {{ slot.section }}</small>
+    </div>
+
+    <!-- Live Filter Input -->
+    <div class="d-flex align-items-center gap-2">
+      <input type="text" id="rosterSearch" class="vvit-input" placeholder="Search Roll No or Name..." style="padding: 4px 10px; font-size: 0.78rem; width: 220px;" onkeyup="filterRosterTable()">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table" id="rosterTable">
+      <thead>
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Academic Status</th>
+          <th>Period Status</th>
+          <th>Recorded / Modified</th>
+          <th class="text-center">HOD Override</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in student_roster %}
+        <tr>
+          <!-- Index -->
+          <td class="text-muted font-mono small">{{ forloop.counter }}</td>
+
+          <!-- Roll Number -->
+          <td>
+            <strong class="text-white font-mono" style="font-size: 0.88rem;">{{ row.student.roll_number }}</strong>
+          </td>
+
+          <!-- Student Name -->
+          <td>
+            <div class="fw-bold text-light" style="font-size: 0.86rem;">{{ row.student.user.get_full_name }}</div>
+          </td>
+
+          <!-- Academic Status -->
+          <td>
+            {% if row.student.academic_status == 'DETAINED_ATTENDANCE' %}
+              <span class="badge bg-danger text-uppercase font-mono" style="font-size: 0.65rem;">Detained (Att)</span>
+            {% elif row.student.academic_status == 'DETAINED_CREDITS' %}
+              <span class="badge bg-danger text-uppercase font-mono" style="font-size: 0.65rem;">Detained (Credits)</span>
+            {% elif row.student.academic_status == 'READMITTED' %}
+              <span class="badge bg-info text-uppercase font-mono" style="font-size: 0.65rem;">Readmitted</span>
+            {% else %}
+              <span class="badge bg-secondary font-mono" style="font-size: 0.65rem;">Regular</span>
+            {% endif %}
+          </td>
+
+          <!-- Period Status -->
+          <td>
+            {% if row.status == 'P' %}
+              <span class="status-badge status-present"><i class="fas fa-check me-1"></i>Present</span>
+            {% elif row.status == 'A' %}
+              <span class="status-badge status-absent"><i class="fas fa-times me-1"></i>Absent</span>
+            {% elif row.status == 'L' %}
+              <span class="badge bg-info text-dark font-mono px-2 py-1"><i class="fas fa-file-signature me-1"></i>Leave / OD</span>
+            {% else %}
+              <span class="badge bg-secondary font-mono px-2 py-1">Unmarked</span>
+            {% endif %}
+          </td>
+
+          <!-- Timestamp -->
+          <td>
+            {% if row.last_modified %}
+              <small class="text-muted font-mono" style="font-size: 0.72rem;">{{ row.last_modified|date:"d M, H:i" }}</small>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+
+          <!-- HOD Override Form -->
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="override_status">
+                <input type="hidden" name="student_id" value="{{ row.student.id }}">
+                <input type="hidden" name="status" value="P">
+                <button type="submit" class="btn btn-sm {% if row.status == 'P' %}btn-success active{% else %}btn-outline-success{% endif %} py-0 px-2" style="font-size: 0.72rem;" title="Mark Present">P</button>
+              </form>
+              <form method="post" class="d-inline ms-1">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="override_status">
+                <input type="hidden" name="student_id" value="{{ row.student.id }}">
+                <input type="hidden" name="status" value="A">
+                <button type="submit" class="btn btn-sm {% if row.status == 'A' %}btn-danger active{% else %}btn-outline-danger{% endif %} py-0 px-2" style="font-size: 0.72rem;" title="Mark Absent">A</button>
+              </form>
+              <form method="post" class="d-inline ms-1">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="override_status">
+                <input type="hidden" name="student_id" value="{{ row.student.id }}">
+                <input type="hidden" name="status" value="L">
+                <button type="submit" class="btn btn-sm {% if row.status == 'L' %}btn-info active{% else %}btn-outline-info{% endif %} py-0 px-2" style="font-size: 0.72rem;" title="Mark Leave / OD">L</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">No students registered in Section {{ slot.section }}.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterRosterTable() {
+  var input = document.getElementById("rosterSearch");
+  var filter = input.value.toUpperCase();
+  var table = document.getElementById("rosterTable");
+  var tr = table.getElementsByTagName("tr");
+
+  for (var i = 1; i < tr.length; i++) {
+    var rollTd = tr[i].getElementsByTagName("td")[1];
+    var nameTd = tr[i].getElementsByTagName("td")[2];
+    if (rollTd || nameTd) {
+      var rollVal = rollTd.textContent || rollTd.innerText;
+      var nameVal = nameTd.textContent || nameTd.innerText;
+      if (rollVal.toUpperCase().indexOf(filter) > -1 || nameVal.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

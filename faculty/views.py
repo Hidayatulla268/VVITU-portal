@@ -815,10 +815,14 @@ def transfer_class(request):
             defaults={
                 'original_faculty': faculty,
                 'substitute_faculty': substitute,
-                'reason': reason or 'Faculty absent / on leave',
+                'reason': reason or 'Faculty Peer Class Substitution',
                 'status': 'accepted',
+                'assigned_by_role': 'faculty',
+                'transfer_type': 'substitution',
+                'assigned_by': request.user,
             }
         )
+
 
         # Send instant SMS & Email notification to substitute faculty
         send_class_transfer_notification(transfer)

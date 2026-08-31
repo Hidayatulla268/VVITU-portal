@@ -799,33 +799,115 @@ a:hover { color: var(--text-primary); }
 }
 
 
-/* ── 13. FORM CONTROLS ────────────────────────────────────────────── */
+/* ── 13. FORM CONTROLS & SELECTS ─────────────────────────────────── */
 .vvit-input,
-.vvit-select {
+.vvit-select,
+.form-control,
+.form-select,
+select,
+textarea {
   width: 100%;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.45);
   border: 1px solid var(--clr-border-2);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   padding: 9px 14px;
   font-size: 0.85rem;
   font-family: var(--font-body);
-  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background-color var(--t-fast);
+}
+
+.vvit-select,
+.form-select,
+select {
   appearance: none;
   -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ef4444' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.85rem center !important;
+  background-size: 16px 12px !important;
+  padding-right: 2.5rem !important;
 }
+
 .vvit-input:focus,
-.vvit-select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(220,38,38,0.15);
-  background: rgba(0,0,0,0.55);
+.vvit-select:focus,
+.form-control:focus,
+.form-select:focus,
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--accent-bright) !important;
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.25) !important;
+  background: rgba(0,0,0,0.65) !important;
+  color: var(--text-primary) !important;
 }
-.vvit-input::placeholder { color: var(--text-muted); }
-.vvit-select option { background: #111; color: var(--text-primary); }
+
+.vvit-input::placeholder,
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Custom themed option items for native select dropdowns */
+select option,
+.vvit-select option,
+.form-select option {
+  background: #18181b !important;
+  color: #f0f0f5 !important;
+  padding: 8px 12px;
+}
 
 .form-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text-secondary); margin-bottom: 6px; display: block; }
 .input-hint { font-size: 0.71rem; color: var(--text-muted); margin-top: 4px; display: block; }
+
+/* ── 13b. UNIVERSAL MODALS ────────────────────────────────────────── */
+.modal-backdrop {
+  background-color: rgba(5, 5, 8, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.modal-content,
+.glass-modal {
+  background: rgba(18, 18, 28, 0.96) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8) !important;
+  color: var(--text-primary) !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--clr-border) !important;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--clr-border) !important;
+}
+
+.modal-title,
+.card-title-custom {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+  opacity: 0.75;
+  transition: opacity var(--t-fast);
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+.btn-close-white {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
 
 /* Search Input Wrapper with Integrated Icon */
 .search-input-wrapper {

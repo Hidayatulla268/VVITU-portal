@@ -1,0 +1,276 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Faculty Class Conduction &amp; Attendance Audit — HOD Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-clipboard-check me-2 text-accent"></i>Faculty Class Conduction &amp; Student Attendance Audit</h1>
+    <p class="ph-sub">Department of {{ department.name }} &middot; Real-time period-by-period tracking of faculty teaching and student attendance marking.</p>
+  </div>
+  <div class="ph-right d-flex align-items-center gap-2 flex-wrap">
+    <a href="{% url 'hod:dashboard' %}" class="btn-vvit-outline text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-arrow-left me-1"></i>HOD Dashboard
+    </a>
+    <button type="button" onclick="window.print()" class="btn-vvit-primary text-decoration-none d-inline-flex align-items-center gap-1" style="padding: 7px 14px; font-size: 0.82rem;">
+      <i class="fas fa-print me-1"></i>Print Audit Sheet
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ── 4-KPI SUMMARY STRIP ──────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-info h-100">
+      <div class="kpi-icon"><i class="fas fa-calendar-day"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit_data.tot_scheduled }}</span>
+        <span class="kpi-label">Scheduled Classes Today</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-success h-100">
+      <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit_data.tot_marked }}</span>
+        <span class="kpi-label">Attendance Marked</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="kpi-card {% if audit_data.tot_unmarked > 0 %}kpi-danger{% else %}kpi-success{% endif %} h-100">
+      <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit_data.tot_unmarked }}</span>
+        <span class="kpi-label">Pending / Not Marked</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-warning h-100">
+      <div class="kpi-icon"><i class="fas fa-exchange-alt"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ audit_data.tot_transferred }}</span>
+        <span class="kpi-label">Substituted / Proxies</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COMPACT FILTER STRIP ─────────────────────────────────────────────── -->
+<div class="glass-card mb-4 p-3">
+  <form method="get" class="row g-2 align-items-end" id="auditFilterForm">
+    <!-- Target Date -->
+    <div class="col-12 col-sm-6 col-md-3">
+      <label class="form-label text-muted small fw-semibold mb-1"><i class="fas fa-calendar-alt me-1 text-accent"></i>Audit Date</label>
+      <input type="date" name="date" value="{{ selected_date }}" class="vvit-input w-100" onchange="this.form.submit()" />
+    </div>
+
+    <!-- Academic Year -->
+    <div class="col-6 col-sm-3 col-md-2">
+      <label class="form-label text-muted small fw-semibold mb-1">Year</label>
+      <select name="year" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Years</option>
+        {% for y in years %}
+        <option value="{{ y.year }}" {% if selected_year == y.year|stringformat:"i" %}selected{% endif %}>Year {{ y.year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Section -->
+    <div class="col-6 col-sm-3 col-md-2">
+      <label class="form-label text-muted small fw-semibold mb-1">Section</label>
+      <select name="section" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Sections</option>
+        {% for sec in sections %}
+        <option value="{{ sec.id }}" {% if selected_section == sec.id|stringformat:"i" %}selected{% endif %}>Section {{ sec.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Faculty -->
+    <div class="col-12 col-sm-6 col-md-3">
+      <label class="form-label text-muted small fw-semibold mb-1">Faculty</label>
+      <select name="faculty" class="vvit-select w-100" onchange="this.form.submit()">
+        <option value="">All Faculty Staff</option>
+        {% for fac in faculty_list %}
+        <option value="{{ fac.id }}" {% if selected_faculty == fac.id|stringformat:"i" %}selected{% endif %}>{{ fac.user.get_full_name }} ({{ fac.employee_id }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="col-12 col-sm-6 col-md-2 d-flex gap-2">
+      <button type="submit" class="btn-vvit-primary flex-grow-1 py-2"><i class="fas fa-filter me-1"></i>Filter</button>
+      <a href="{% url 'hod:faculty_class_audit' %}" class="btn-vvit-outline py-2 px-3"><i class="fas fa-rotate-left"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- ── AUDIT TABLE ──────────────────────────────────────────────────────── -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-list-check text-accent me-2"></i>Class Schedule &amp; Attendance Log Matrix
+      <span class="badge bg-secondary font-mono ms-2">{{ target_date|date:"l, d M Y" }}</span>
+    </h3>
+    <div class="d-flex gap-1">
+      <a href="?date={{ selected_date }}&year={{ selected_year|default:'' }}&section={{ selected_section|default:'' }}&faculty={{ selected_faculty|default:'' }}&status=all" class="btn-sm {% if selected_status == 'all' or not selected_status %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-2.5 py-1" style="font-size: 0.75rem;">All</a>
+      <a href="?date={{ selected_date }}&year={{ selected_year|default:'' }}&section={{ selected_section|default:'' }}&faculty={{ selected_faculty|default:'' }}&status=marked" class="btn-sm {% if selected_status == 'marked' %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-2.5 py-1" style="font-size: 0.75rem;">Marked</a>
+      <a href="?date={{ selected_date }}&year={{ selected_year|default:'' }}&section={{ selected_section|default:'' }}&faculty={{ selected_faculty|default:'' }}&status=unmarked" class="btn-sm {% if selected_status == 'unmarked' %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-2.5 py-1" style="font-size: 0.75rem;">Not Marked</a>
+      <a href="?date={{ selected_date }}&year={{ selected_year|default:'' }}&section={{ selected_section|default:'' }}&faculty={{ selected_faculty|default:'' }}&status=transferred" class="btn-sm {% if selected_status == 'transferred' %}btn-vvit-primary{% else %}btn-vvit-outline{% endif %} text-decoration-none px-2.5 py-1" style="font-size: 0.75rem;">Substituted</a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Class &amp; Section</th>
+          <th>Subject</th>
+          <th>Assigned Faculty</th>
+          <th>Went to Class / Actual Teacher</th>
+          <th>Student Attendance Status</th>
+          <th>Topic Taught (Class Diary)</th>
+          <th class="text-center">Action / Alert</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in audit_data.rows %}
+        <tr>
+          <!-- Period -->
+          <td>
+            <span class="period-badge">P{{ row.period }}</span>
+            <small class="text-muted d-block" style="font-size: 0.68rem;"><i class="fas fa-door-open me-1"></i>{{ row.room }}</small>
+          </td>
+
+          <!-- Section -->
+          <td>
+            <span class="badge-section fw-bold">{{ row.section }}</span>
+            <small class="text-muted d-block" style="font-size: 0.7rem;">Year {{ row.year.year }}</small>
+          </td>
+
+          <!-- Subject -->
+          <td>
+            <div class="fw-bold text-accent" style="font-size: 0.88rem;">
+              <span class="badge bg-secondary font-mono px-1.5 py-0 me-1" style="font-size: 0.7rem;">{{ row.subject.code }}</span>
+              {{ row.subject.short_name }}
+            </div>
+            <small class="text-muted" style="font-size: 0.72rem;">{{ row.subject.name|truncatechars:26 }}</small>
+          </td>
+
+          <!-- Assigned Faculty -->
+          <td>
+            {% if row.assigned_faculty %}
+              <div class="fw-bold text-light" style="font-size: 0.86rem;">{{ row.assigned_faculty.user.get_full_name }}</div>
+              <small class="text-muted font-mono" style="font-size: 0.7rem;">{{ row.assigned_faculty.employee_id }}</small>
+            {% else %}
+              <span class="text-muted small">Not Assigned</span>
+            {% endif %}
+          </td>
+
+          <!-- Went to Class / Actual Faculty -->
+          <td>
+            {% if row.is_transferred %}
+              {% if row.is_proxy %}
+                <div class="p-1 rounded" style="background: rgba(245, 158, 11, 0.1); border: 1px dashed rgba(245, 158, 11, 0.3);">
+                  <span class="badge bg-warning text-dark font-mono" style="font-size: 0.65rem;" title="Official Proxy assigned by HOD or Admin"><i class="fas fa-user-shield me-1"></i>Proxy (HOD/Admin)</span>
+                  <div class="fw-bold text-light small mt-0.5">{{ row.effective_faculty.user.get_full_name }}</div>
+                </div>
+              {% else %}
+                <div class="p-1 rounded" style="background: rgba(56, 189, 248, 0.1); border: 1px dashed rgba(56, 189, 248, 0.3);">
+                  <span class="badge bg-info text-dark font-mono" style="font-size: 0.65rem;" title="Faculty Peer Substituted Session"><i class="fas fa-exchange-alt me-1"></i>Substituted Session</span>
+                  <div class="fw-bold text-light small mt-0.5">{{ row.effective_faculty.user.get_full_name }}</div>
+                </div>
+              {% endif %}
+            {% else %}
+              {% if row.assigned_faculty %}
+                <div class="text-light small fw-bold">
+                  <i class="fas fa-user-check text-success me-1"></i>{{ row.assigned_faculty.user.get_full_name }}
+                </div>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            {% endif %}
+          </td>
+
+
+          <!-- Attendance Marked Status -->
+          <td>
+            {% if row.is_marked %}
+              <div>
+                <span class="status-badge status-present mb-1 d-inline-block">
+                  <i class="fas fa-check-circle me-1"></i>Marked: {{ row.present_count }}/{{ row.total_students }} Present ({{ row.attendance_pct }}%)
+                </span>
+                {% if row.marked_by_name %}
+                <div class="text-muted" style="font-size: 0.7rem;">
+                  <i class="fas fa-user me-1 text-accent"></i>By: {{ row.marked_by_name }} &middot; {{ row.marked_at_time|date:"H:i" }}
+                </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div>
+                <span class="status-badge status-absent d-inline-block mb-1">
+                  <i class="fas fa-times-circle me-1"></i>Not Marked / Pending
+                </span>
+                <div class="text-muted" style="font-size: 0.7rem;">
+                  <i class="fas fa-clock text-danger me-1"></i>Awaiting faculty entry
+                </div>
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- Class Diary / Topic -->
+          <td>
+            {% if row.has_diary %}
+              <div class="text-light small fw-bold" style="font-size: 0.8rem;">
+                <i class="fas fa-book-open text-info me-1"></i>{{ row.diary_obj.topics_covered|truncatewords:8 }}
+              </div>
+              <small class="text-muted" style="font-size: 0.68rem;">Unit {{ row.diary_obj.unit }} &middot; {{ row.diary_obj.teaching_aid }}</small>
+            {% else %}
+              <span class="text-muted small" style="font-size: 0.74rem;">
+                <i class="fas fa-pen-to-square me-1 opacity-50"></i>Diary not logged
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td class="text-center">
+            {% if not row.is_marked %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="send_reminder">
+              <input type="hidden" name="slot_id" value="{{ row.slot.id }}">
+              <button type="submit" class="btn btn-sm btn-danger py-1 px-2 text-nowrap" style="font-size: 0.75rem;" title="Send Urgent Reminder to Faculty">
+                <i class="fas fa-bell me-1"></i>Remind
+              </button>
+            </form>
+            {% else %}
+            <a href="{% url 'hod:class_attendance_detail' row.slot.id selected_date %}" class="btn-vvit-primary px-2.5 py-1 small text-decoration-none" style="font-size: 0.74rem;">
+              <i class="fas fa-eye me-1"></i>View Action &amp; Register
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">
+            <i class="fas fa-calendar-xmark fa-3x mb-3 text-muted" style="opacity: 0.4;"></i>
+            <h5 class="text-light">No Scheduled Classes Found</h5>
+            <p class="mb-0 text-muted">No timetable slots scheduled for {{ target_date|date:"l, d M Y" }} matching the selected filters.</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

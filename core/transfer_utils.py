@@ -120,6 +120,9 @@ def get_free_faculty_for_period(date, period, department=None, exclude_faculty=N
 def get_conducted_class_history(branch=None, faculty=None, search_query=None, date_from=None, date_to=None):
     """
     Returns a unified, sorted list of class conduct records across attendance and class transfers.
+    Includes BOTH:
+    1. Conducted sessions where student attendance was marked.
+    2. Scheduled/transferred sessions (Proxies & Substituted Sessions) even before attendance is posted.
     Allows searching by faculty name, subject code, employee ID, section name, and date range.
     Can be filtered by branch (for HOD = specific branch, for Admin = all or specific branch).
     """
@@ -127,6 +130,48 @@ def get_conducted_class_history(branch=None, faculty=None, search_query=None, da
     from accounts.models import Faculty
     from django.db.models import Q, Count
 
+    # 1. Fetch Class Transfers matching filters
+    ct_qs = ClassTransfer.objects.select_related(
+        'timetable_entry__subject',
+        'timetable_entry__section__branch',
+        'timetable_entry__section__year',
+        'timetable_entry__section',
+        'timetable_entry__faculty__user',
+        'original_faculty__user',
+        'original_faculty__department',
+        'substitute_faculty__user',
+        'substitute_faculty__department',
+        'assigned_by',
+    )
+    if branch:
+        ct_qs = ct_qs.filter(timetable_entry__section__branch=branch)
+    if faculty:
+        if isinstance(faculty, Faculty):
+            ct_qs = ct_qs.filter(Q(original_faculty=faculty) | Q(substitute_faculty=faculty))
+        else:
+            ct_qs = ct_qs.filter(Q(original_faculty_id=faculty) | Q(substitute_faculty_id=faculty))
+    if date_from:
+        ct_qs = ct_qs.filter(date__gte=date_from)
+    if date_to:
+        ct_qs = ct_qs.filter(date__lte=date_to)
+    if search_query:
+        sq = search_query.strip()
+        ct_qs = ct_qs.filter(
+            Q(substitute_faculty__user__first_name__icontains=sq) |
+            Q(substitute_faculty__user__last_name__icontains=sq) |
+            Q(substitute_faculty__employee_id__icontains=sq) |
+            Q(original_faculty__user__first_name__icontains=sq) |
+            Q(original_faculty__user__last_name__icontains=sq) |
+            Q(original_faculty__employee_id__icontains=sq) |
+            Q(timetable_entry__subject__code__icontains=sq) |
+            Q(timetable_entry__subject__name__icontains=sq) |
+            Q(timetable_entry__section__name__icontains=sq)
+        )
+
+    transfers_list = list(ct_qs)
+    transfers_map = {(ct.timetable_entry_id, ct.date): ct for ct in transfers_list}
+
+    # 2. Fetch Attendance sessions matching filters
     att_qs = Attendance.objects.select_related(
         'timetable_entry__subject',
         'timetable_entry__section__branch',
@@ -165,40 +210,39 @@ def get_conducted_class_history(branch=None, faculty=None, search_query=None, da
     if date_to:
         att_qs = att_qs.filter(date__lte=date_to)
 
-    # Aggregate by (timetable_entry_id, date)
-    sessions = (
-        att_qs.values('timetable_entry_id', 'date', 'marked_by_id')
-        .annotate(
-            present_cnt=Count('id', filter=Q(status='P')),
-            absent_cnt=Count('id', filter=Q(status='A')),
-            total_cnt=Count('id')
-        )
-        .order_by('-date', 'timetable_entry__period')
-    )
+    # Accumulate Attendance records cleanly per (timetable_entry_id, date)
+    session_map = {}
+    for att in att_qs:
+        key = (att.timetable_entry_id, att.date)
+        if key not in session_map:
+            session_map[key] = {
+                'timetable_entry_id': att.timetable_entry_id,
+                'date': att.date,
+                'marked_by': att.marked_by,
+                'present_cnt': 0,
+                'absent_cnt': 0,
+                'total_cnt': 0,
+                'last_modified': att.last_modified,
+            }
+        s = session_map[key]
+        s['total_cnt'] += 1
+        if att.status == 'P':
+            s['present_cnt'] += 1
+        elif att.status == 'A':
+            s['absent_cnt'] += 1
+        if att.marked_by and not s['marked_by']:
+            s['marked_by'] = att.marked_by
+        if att.last_modified and (not s['last_modified'] or att.last_modified > s['last_modified']):
+            s['last_modified'] = att.last_modified
 
-    # Pre-fetch timetable entries and transfers for fast lookup
-    tt_ids = {s['timetable_entry_id'] for s in sessions}
+    all_keys = set(session_map.keys()) | set(transfers_map.keys())
+    all_tt_ids = {k[0] for k in all_keys}
+
     tt_map = {
         tt.id: tt
-        for tt in Timetable.objects.filter(id__in=tt_ids).select_related(
+        for tt in Timetable.objects.filter(id__in=all_tt_ids).select_related(
             'subject', 'section__branch', 'section__year', 'section', 'faculty__user'
         )
-    }
-
-    fac_ids = {s['marked_by_id'] for s in sessions if s['marked_by_id']}
-    for tt in tt_map.values():
-        if tt.faculty_id:
-            fac_ids.add(tt.faculty_id)
-
-    fac_map = {
-        f.id: f
-        for f in Faculty.objects.filter(id__in=fac_ids).select_related('user', 'department')
-    }
-
-    # Fetch relevant class transfers for proxy details
-    transfers_map = {
-        (ct.timetable_entry_id, ct.date): ct
-        for ct in ClassTransfer.objects.filter(timetable_entry_id__in=tt_ids).select_related('original_faculty__user', 'substitute_faculty__user')
     }
 
     period_timings = {
@@ -213,18 +257,23 @@ def get_conducted_class_history(branch=None, faculty=None, search_query=None, da
     }
 
     records = []
-    for s in sessions:
-        tt = tt_map.get(s['timetable_entry_id'])
+    for (tt_id, date_val) in all_keys:
+        tt = tt_map.get(tt_id)
         if not tt:
             continue
 
-        date_val = s['date']
-        marked_by_fac = fac_map.get(s['marked_by_id'])
-        orig_fac = tt.faculty
-        ct = transfers_map.get((tt.id, date_val))
+        s = session_map.get((tt_id, date_val))
+        ct = transfers_map.get((tt_id, date_val))
 
-        actual_conducted_fac = marked_by_fac or (ct.substitute_faculty if ct else orig_fac)
-        is_proxy = (ct is not None) or (actual_conducted_fac and orig_fac and actual_conducted_fac.id != orig_fac.id)
+        marked_by_fac = s['marked_by'] if s else None
+        orig_fac = ct.original_faculty if ct else tt.faculty
+
+        actual_conducted_fac = (ct.substitute_faculty if ct else marked_by_fac) or orig_fac
+        
+        is_transferred = (ct is not None) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id)
+        is_proxy = (ct.is_proxy if ct else False) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id and not ct)
+        is_substitution = (ct.is_substitution if ct else False) and not is_proxy
+        type_label = ct.type_label if ct else ("Proxy" if is_proxy else "Regular Class")
 
         start_t = tt.start_time.strftime("%I:%M %p") if getattr(tt, 'start_time', None) else None
         end_t   = tt.end_time.strftime("%I:%M %p") if getattr(tt, 'end_time', None) else None
@@ -240,12 +289,19 @@ def get_conducted_class_history(branch=None, faculty=None, search_query=None, da
             'year': tt.section.year if tt.section else None,
             'conducted_by': actual_conducted_fac,
             'original_faculty': orig_fac,
+            'is_transferred': is_transferred,
             'is_proxy': is_proxy,
+            'is_substitution': is_substitution,
+            'type_label': type_label,
             'transfer': ct,
-            'present_count': s['present_cnt'],
-            'absent_count': s['absent_cnt'],
-            'total_students': s['total_cnt'],
+            'present_count': s['present_cnt'] if s else 0,
+            'absent_count': s['absent_cnt'] if s else 0,
+            'total_students': s['total_cnt'] if s else 0,
+            'is_marked': s is not None and s['total_cnt'] > 0,
+            'marked_at_time': s['last_modified'] if s else None,
         })
 
+    records.sort(key=lambda r: (r['date'], r['period']), reverse=True)
     return records
+
 
