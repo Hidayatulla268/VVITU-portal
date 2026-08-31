@@ -145,7 +145,11 @@ def set_password(request):
                 
                 # Update student profile first login flag
                 profile.is_first_login = False
-                profile.save()
+                profile.save(update_fields=['is_first_login'])
+                
+                # Clear any user first login cache keys
+                from django.core.cache import cache
+                cache.delete(f"user_is_first_login_{request.user.id}")
                 
                 # Since password changed, we must update the session auth hash to prevent logout
                 from django.contrib.auth import update_session_auth_hash

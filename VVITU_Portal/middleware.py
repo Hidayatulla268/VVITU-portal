@@ -139,17 +139,13 @@ class RoleBasedAccessMiddleware:
             if path.startswith(prefix):
                 return self.get_response(request)
 
-        # Force student password setup on first login (cached to avoid DB query per request)
-        if request.user.is_authenticated and request.user.role == 'student':
+        # Force student password setup on first login
+        if request.user.is_authenticated and getattr(request.user, 'role', None) == 'student':
             try:
-                cache_key = f"user_is_first_login_{request.user.id}"
-                is_first_login = cache.get(cache_key)
-                if is_first_login is None:
-                    profile = getattr(request.user, 'student_profile', None)
-                    is_first_login = profile.is_first_login if profile else False
-                    cache.set(cache_key, is_first_login, timeout=300)
-                if is_first_login and not path.startswith('/accounts/set-password') and not path.startswith('/accounts/logout'):
-                    return redirect('accounts:set_password')
+                profile = getattr(request.user, 'student_profile', None)
+                if profile and profile.is_first_login:
+                    if not path.startswith('/accounts/set-password') and not path.startswith('/accounts/logout'):
+                        return redirect('accounts:set_password')
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).error(f"Student profile redirect check failed: {e}")
