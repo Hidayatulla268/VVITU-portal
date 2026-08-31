@@ -206,11 +206,12 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 | Role | Username / Portal ID | Password | Access Level |
 | :--- | :--- | :--- | :--- |
-| **System Admin** | `admin` | `admin123` | Full Global Access |
-| **HOD (CSE)** | `EMP001` | `vvit1234` | CSE Department Administration + Teaching |
-| **Faculty** | `EMP002` | `vvit1234` | Mark Attendance, Reports, Apply Leaves |
-| **DEO (CSE)** | `DEO001` | `vvit1234` | CSE Student Entries & Marks Upload |
-| **Student** | `24BQ1A4901` | `student123` | Student Dashboard, Results, Backlogs |
+| **System Admin** | `admin` | `admin123` | Full Global Institutional Control |
+| **HOD (CSE)** | `HOD001` / `hod001` | `vvit@1234` | CSE Department Administration + Teaching Panel |
+| **HOD (ECE)** | `HOD002` / `hod002` | `vvit@1234` | ECE Department Administration + Teaching Panel |
+| **Faculty** | `EMP001` / `emp001` | `vvit@1234` | Mark Attendance, Class Diary, Syllabus Tracker, Proxy |
+| **DEO (CSE)** | `DEO001` / `deo001` | `vvit@1234` | CSE Branch Student Management & Marks Entry |
+| **Student** | `24BQ1A4942` / `24bq1a4942` | `vvit@1234` | Student Dashboard, Results, Backlogs, OD Leaves |
 
 ---
 

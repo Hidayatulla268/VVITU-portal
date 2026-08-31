@@ -123,12 +123,12 @@
               {% csrf_token %}
               <input type="hidden" name="action" value="mark_detention">
               <input type="hidden" name="student_id" value="{{ item.student.id }}">
-              <button type="submit" class="btn-sm btn-danger py-1 px-2" style="font-size: 0.75rem;">
-                <i class="fas fa-flag me-1"></i>Flag Detention
+              <button type="submit" class="btn-vvit-danger py-1 px-2.5 text-decoration-none d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.76rem; border-radius: 6px;" title="Officially flag student as detained due to low attendance">
+                <i class="fas fa-flag me-1"></i>Flag Detained
               </button>
             </form>
             {% else %}
-            <span class="text-muted small"><i class="fas fa-check-circle text-danger me-1"></i>Detained</span>
+            <span class="status-badge status-absent"><i class="fas fa-user-slash me-1"></i>Detained</span>
             {% endif %}
           </td>
         </tr>

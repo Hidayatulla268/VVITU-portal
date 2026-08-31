@@ -70,13 +70,13 @@
               <div class="d-flex gap-1">
                 <form method="post" action="{% url 'admin_dashboard:action_readmission_request' req.id 'approve' %}" onsubmit="return confirm('Approve readmission and move student {{ req.student.roll_number }} to Junior Year {{ req.target_junior_year.year }}?');">
                   {% csrf_token %}
-                  <button type="submit" class="btn-sm btn-success py-1 px-2" style="font-size: 0.75rem;" title="Approve and Reassign to Junior Batch">
+                  <button type="submit" class="btn-vvit-success py-1 px-2.5 text-decoration-none d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.76rem; border-radius: 6px;" title="Approve and Reassign to Junior Batch">
                     <i class="fas fa-check-double me-1"></i>Approve &amp; Reassign
                   </button>
                 </form>
                 <form method="post" action="{% url 'admin_dashboard:action_readmission_request' req.id 'reject' %}">
                   {% csrf_token %}
-                  <button type="submit" class="btn-sm btn-danger py-1 px-2" style="font-size: 0.75rem;" title="Reject Request">
+                  <button type="submit" class="btn-vvit-danger py-1 px-2.5 text-decoration-none d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.76rem; border-radius: 6px;" title="Reject Request">
                     <i class="fas fa-times me-1"></i>Reject
                   </button>
                 </form>

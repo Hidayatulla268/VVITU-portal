@@ -732,5 +732,27 @@ def generate_semester_grade_card_pdf(student, year_obj, semester):
     return buffer.getvalue()
 ```
 
+### II. Standardized Institutional Identifiers & Unified Theme Button Styling
+*   **What it is:** Full institutional standardization of user login credentials, roll numbers, and employee IDs across all 5 user roles, paired with glassmorphism theme styling for detention actions.
+*   **Identifier Formats:**
+    1. **Students**: Standardized JNTU/VVIT roll number format (e.g. `24BQ1A4942`, `24BQ1A0501`, `24BQ1A0401`) where `24` = admission year, `BQ` = VVIT college code, `1A` = B.Tech regular, `05`/`42`/`04` = branch code, and `42`/`01` = roll sequence.
+    2. **HODs**: Standardized sequential HOD identifiers: `HOD001` (CSE), `HOD002` (ECE), `HOD003` (EEE), `HOD004` (IT), `HOD005` (CSM), `HOD006` (CSD), `HOD007` (CIVIL), `HOD008` (MECH).
+    3. **DEOs**: Standardized sequential DEO identifiers: `DEO001` (CSE), `DEO002` (ECE), `DEO003` (EEE), `DEO004` (IT), `DEO005` (CSM), `DEO006` (CSD), `DEO007` (CIVIL), `DEO008` (MECH), `DEO009` (Exam Cell).
+    4. **Faculty**: Standardized sequential Employee IDs: `EMP001`, `EMP002`, `EMP003`, ... `EMP070`.
+*   **Multi-Identifier Authentication Resolution (`accounts/views.py`)**:
+    The login authentication engine resolves user logins transparently across all fields:
+    ```python
+    db_user = User.objects.filter(
+        Q(username__iexact=username) |
+        Q(email__iexact=username) |
+        Q(student_profile__roll_number__iexact=username) |
+        Q(faculty_profile__employee_id__iexact=username) |
+        Q(deo_profile__employee_id__iexact=username)
+    ).select_related('student_profile').first()
+    ```
+*   **Unified Button Component Consistency**:
+    - Replaced unstyled Bootstrap `btn-sm btn-danger` buttons with portal-standard `btn-vvit-danger` and `btn-vvit-success` components across `templates/hod/low_attendance_center.html`, `templates/hod/detention_readmissions.html`, and `templates/admin_dashboard/detention_readmissions.html`.
+
+
 
 
