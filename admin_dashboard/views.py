@@ -431,7 +431,8 @@ def edit_faculty(request, pk):
 
         u.save()
 
-        fac.department_id = p.get('department') or fac.department_id
+        dept_val = p.get('department', '').strip()
+        fac.department_id = int(dept_val) if dept_val and dept_val.isdigit() else None
         fac.designation   = p.get('designation', fac.designation)
         leave_limit_raw   = p.get('monthly_leave_limit', '').strip()
         if leave_limit_raw:

@@ -62,12 +62,18 @@ def login_view(request):
         ).select_related('student_profile').first()
 
         user = None
-        if db_user and db_user.is_active and db_user.check_password(password):
+        if db_user and not getattr(db_user, 'is_deleted', False) and db_user.is_active and db_user.check_password(password):
             user = db_user
+        elif db_user and getattr(db_user, 'is_deleted', False):
+            messages.error(request, "This account has been deactivated. Please contact the administrator.")
+            return render(request, 'accounts/login.html')
         else:
             # Fallback to standard backend authentication
             resolved_username = db_user.username if db_user else username
             user = authenticate(request, username=resolved_username, password=password)
+            if user and getattr(user, 'is_deleted', False):
+                messages.error(request, "This account has been deactivated. Please contact the administrator.")
+                return render(request, 'accounts/login.html')
 
         if user is not None:
             # Clear login attempts on success to reset brute-force counters
