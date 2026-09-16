@@ -172,6 +172,8 @@ class Timetable(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time   = models.TimeField(null=True, blank=True)
 
+    co_faculty_display = models.CharField(max_length=255, blank=True, null=True, help_text="e.g. Dr. S. Krishna Prasad / Dr. I.L.J. Baktha Singh for multi-faculty labs")
+
     class Meta:
         unique_together = ('section', 'day', 'period')
         ordering = ['day', 'period']
@@ -179,6 +181,37 @@ class Timetable(models.Model):
 
     def __str__(self):
         return f"{self.section} | {self.day} P{self.period} — {self.subject.code} ({self.room_number or 'No Room'})"
+
+
+# ─────────────────────────────────────────────
+# SECTION TIMETABLE METADATA
+# ─────────────────────────────────────────────
+class SectionTimetableMetadata(models.Model):
+    """
+    Header, room, class teacher, and official footer metadata
+    for a section's timetable in official VVIT format.
+    """
+    section             = models.OneToOneField(Section, on_delete=models.CASCADE, related_name='timetable_metadata', db_index=True)
+    academic_year       = models.CharField(max_length=50, default='2026-27')
+    room_number         = models.CharField(max_length=50, default='C-402')
+    with_effect_from    = models.DateField(null=True, blank=True)
+    class_teacher       = models.ForeignKey('accounts.Faculty', on_delete=models.SET_NULL, null=True, blank=True, related_name='class_teacher_timetables')
+    class_teacher_name  = models.CharField(max_length=150, blank=True, null=True)
+    program_name        = models.CharField(max_length=255, blank=True, null=True, help_text="e.g. Computer Science and Engineering (Internet of Things) – CSO")
+    timetable_incharge  = models.CharField(max_length=150, blank=True, default='Timetable I/C')
+    hod_name            = models.CharField(max_length=150, blank=True, default='HOD')
+    dean_academics_name = models.CharField(max_length=150, blank=True, default='Dean, Academics')
+    principal_name      = models.CharField(max_length=150, blank=True, default='Principal')
+    legend_data         = models.JSONField(default=list, blank=True, help_text="List of subjects with code, full name, and faculty names")
+    created_at          = models.DateTimeField(auto_now_add=True)
+    updated_at          = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Section Timetable Metadata'
+        verbose_name_plural = 'Section Timetable Metadata'
+
+    def __str__(self):
+        return f"Metadata — {self.section} ({self.academic_year})"
 
 
 # ─────────────────────────────────────────────
@@ -236,11 +269,16 @@ class FacultyAttendance(models.Model):
 class ClassTransfer(models.Model):
     """
     Class period transfer from an absent faculty member to a substitute faculty member.
-    Allows substitute faculty to mark student attendance for the transferred slot.
+    Allows substitute faculty to mark student attendance for the transferred slot once accepted.
     - If assigned/initiated by HOD or Admin -> labeled as 'Proxy'
     - If initiated between faculty peers -> labeled as 'Substituted Session'
     """
-    STATUS_CHOICES = [('accepted', 'Accepted'), ('pending', 'Pending'), ('completed', 'Completed')]
+    STATUS_CHOICES = [
+        ('pending', 'Pending Acceptance'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Declined'),
+        ('completed', 'Completed'),
+    ]
     ROLE_CHOICES   = [('hod', 'HOD Proxy'), ('admin', 'Admin Proxy'), ('faculty', 'Faculty Substituted Session')]
     TYPE_CHOICES   = [('proxy', 'Official Proxy (HOD / Admin)'), ('substitution', 'Substituted Session (Faculty)')]
 
@@ -249,7 +287,9 @@ class ClassTransfer(models.Model):
     timetable_entry    = models.ForeignKey(Timetable, on_delete=models.CASCADE, db_index=True)
     date               = models.DateField(db_index=True)
     reason             = models.CharField(max_length=255, blank=True, null=True)
-    status             = models.CharField(max_length=15, choices=STATUS_CHOICES, default='accepted')
+    status             = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending', db_index=True)
+    rejection_reason   = models.CharField(max_length=255, blank=True, null=True)
+    responded_at       = models.DateTimeField(null=True, blank=True)
     
     # Initiation & Designation (Proxy vs Substituted Session)
     assigned_by_role   = models.CharField(max_length=20, choices=ROLE_CHOICES, default='faculty', db_index=True)
@@ -266,10 +306,11 @@ class ClassTransfer(models.Model):
             models.Index(fields=['substitute_faculty', 'date']),
             models.Index(fields=['original_faculty', 'date']),
             models.Index(fields=['assigned_by_role', 'date']),
+            models.Index(fields=['status', 'date']),
         ]
 
     def __str__(self):
-        return f"{self.type_label}: {self.original_faculty.employee_id} -> {self.substitute_faculty.employee_id} ({self.date} P{self.timetable_entry.period})"
+        return f"{self.type_label} [{self.status}]: {self.original_faculty.employee_id} -> {self.substitute_faculty.employee_id} ({self.date} P{self.timetable_entry.period})"
 
     @property
     def is_proxy(self):
@@ -292,10 +333,42 @@ class ClassTransfer(models.Model):
         return "Substituted Session"
 
     @property
+    def is_pending(self):
+        return self.status == 'pending'
+
+    @property
+    def is_accepted(self):
+        return self.status == 'accepted'
+
+    @property
+    def is_rejected(self):
+        return self.status == 'rejected'
+
+    @property
+    def is_completed(self):
+        return self.status == 'completed'
+
+    @property
+    def status_label(self):
+        return dict(self.STATUS_CHOICES).get(self.status, self.status.capitalize())
+
+    @property
     def badge_class(self):
         if self.is_proxy:
             return "badge bg-warning text-dark"
         return "badge bg-info text-dark"
+
+    @property
+    def status_badge_class(self):
+        if self.status == 'pending':
+            return 'badge bg-warning text-dark'
+        elif self.status == 'accepted':
+            return 'badge bg-info text-dark'
+        elif self.status == 'rejected':
+            return 'badge bg-danger text-white'
+        elif self.status == 'completed':
+            return 'badge bg-success text-white'
+        return 'badge bg-secondary'
 
 
 
@@ -576,6 +649,7 @@ class Notification(models.Model):
     TYPE_EXAM         = 'exam'
     TYPE_HOLIDAY      = 'holiday'
     TYPE_SYSTEM       = 'system'
+    TYPE_PROXY        = 'proxy'
 
     NOTIF_TYPES = [
         (TYPE_RESULT,       'Result Released'),
@@ -584,6 +658,7 @@ class Notification(models.Model):
         (TYPE_EXAM,         'Exam Notice'),
         (TYPE_HOLIDAY,      'Holiday Notice'),
         (TYPE_SYSTEM,       'System'),
+        (TYPE_PROXY,        'Proxy Request'),
     ]
 
     PRIORITY_LOW    = 'low'
@@ -645,6 +720,7 @@ class Notification(models.Model):
             self.TYPE_EXAM:         'fa-file-alt',
             self.TYPE_HOLIDAY:      'fa-umbrella-beach',
             self.TYPE_SYSTEM:       'fa-cog',
+            self.TYPE_PROXY:        'fa-exchange-alt',
         }.get(self.notif_type, 'fa-bell')
 
     @property
@@ -657,6 +733,7 @@ class Notification(models.Model):
             self.TYPE_EXAM:         'notif-purple',
             self.TYPE_HOLIDAY:      'notif-teal',
             self.TYPE_SYSTEM:       'notif-grey',
+            self.TYPE_PROXY:        'notif-orange',
         }.get(self.notif_type, 'notif-grey')
 
     @property
@@ -884,6 +961,206 @@ class SubjectTopicPlan(models.Model):
         if self.unit_number in [1, 2, 3, 4, 5]:
             return f"Unit {self.unit_number}"
         return "Other / Revision"
+
+
+# ─────────────────────────────────────────────
+# STUDENT FEEDBACK FORMS & QUESTIONNAIRES
+# ─────────────────────────────────────────────
+class FeedbackForm(models.Model):
+    """
+    Feedback Form created/uploaded by HOD or Admin.
+    Can attach an official document (Photo JPG/PNG or PDF) and/or dynamic questionnaire questions.
+    Can be scoped to Branch, Year, Semester, Section, or be college-wide.
+    """
+    FEEDBACK_TYPE_CHOICES = [
+        ('faculty',       'Faculty Teaching Evaluation'),
+        ('course',        'Course & Curriculum Feedback'),
+        ('institutional', 'Institutional Facilities & Infrastructure'),
+        ('general',       'General Student Feedback'),
+    ]
+
+    title                   = models.CharField(max_length=255, help_text="e.g. Faculty Performance Evaluation - Even Semester")
+    description             = models.TextField(blank=True, null=True, help_text="Instructions and evaluation guidelines for students")
+    feedback_type           = models.CharField(max_length=30, choices=FEEDBACK_TYPE_CHOICES, default='faculty', db_index=True)
+    
+    # Audience scoping (null means applicable to all)
+    branch                  = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True, db_index=True, help_text="Department (Leave blank for all departments)")
+    year                    = models.ForeignKey(Year, on_delete=models.CASCADE, null=True, blank=True, db_index=True, help_text="Academic Year (Leave blank for all years)")
+    semester                = models.IntegerField(choices=Subject.SEMESTER_CHOICES, null=True, blank=True, db_index=True, help_text="Semester (Leave blank for all semesters)")
+    section                 = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True, db_index=True, help_text="Section (Leave blank for all sections)")
+    
+    # Attached document (Photo or PDF uploaded by HOD/Admin)
+    uploaded_document       = models.FileField(upload_to='feedback_forms/documents/', null=True, blank=True, help_text="Official feedback form document (Image or PDF)")
+    
+    deadline                = models.DateField(null=True, blank=True, db_index=True, help_text="Last date for submission")
+    is_active               = models.BooleanField(default=True, db_index=True)
+    allow_online_submission = models.BooleanField(default=True, help_text="Allow students to submit responses online")
+    allow_offline_download  = models.BooleanField(default=True, help_text="Allow students to print blank form for physical submission")
+    
+    created_by              = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_feedback_forms')
+    created_at              = models.DateTimeField(auto_now_add=True)
+    updated_at              = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['branch', 'year', 'semester', 'is_active']),
+            models.Index(fields=['deadline', 'is_active']),
+        ]
+
+    def __str__(self):
+        target = self.branch.code if self.branch else "All Branches"
+        return f"{self.title} ({target}) [{self.get_feedback_type_display()}]"
+
+    @property
+    def is_expired(self):
+        if self.deadline:
+            return timezone.localdate() > self.deadline
+        return False
+
+    @property
+    def target_display(self):
+        parts = []
+        if self.branch:
+            parts.append(f"Dept: {self.branch.code}")
+        else:
+            parts.append("All Depts")
+        if self.year:
+            parts.append(f"Year {self.year.year}")
+        if self.semester:
+            parts.append(f"Sem {self.semester}")
+        if self.section:
+            parts.append(f"Sec {self.section.name}")
+        return " · ".join(parts)
+
+    @property
+    def document_is_pdf(self):
+        if self.uploaded_document:
+            return self.uploaded_document.name.lower().endswith('.pdf')
+        return False
+
+    @property
+    def document_is_image(self):
+        if self.uploaded_document:
+            ext = self.uploaded_document.name.lower()
+            return any(ext.endswith(e) for e in ['.png', '.jpg', '.jpeg', '.webp', '.gif'])
+        return False
+
+    def get_average_rating(self):
+        """Compute the average rating score across all submissions and rating questions."""
+        from django.db.models import Avg
+        avg = FeedbackAnswer.objects.filter(
+            submission__form=self,
+            rating_value__isnull=False
+        ).aggregate(Avg('rating_value'))['rating_value__avg']
+        return round(avg, 2) if avg is not None else 0.0
+
+    def total_submissions_count(self):
+        return self.submissions.count()
+
+
+class FeedbackQuestion(models.Model):
+    """
+    Individual evaluation criterion or question within a Feedback Form.
+    """
+    QUESTION_TYPE_CHOICES = [
+        ('rating_5',  '1 to 5 Star / Rating Scale (1-Poor, 5-Excellent)'),
+        ('rating_10', '1 to 10 Numerical Scale'),
+        ('text',      'Descriptive Text / Comments'),
+        ('choice',    'Single Choice Selection'),
+    ]
+
+    form          = models.ForeignKey(FeedbackForm, on_delete=models.CASCADE, related_name='questions', db_index=True)
+    question_text = models.CharField(max_length=500, help_text="e.g. Teacher's explanation and clarity of concepts")
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPE_CHOICES, default='rating_5')
+    options       = models.TextField(blank=True, null=True, help_text="Comma-separated options for choice question")
+    is_required   = models.BooleanField(default=True)
+    order         = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"Q{self.order}: {self.question_text[:50]}"
+
+    def get_options_list(self):
+        if self.options:
+            return [opt.strip() for opt in self.options.split(',') if opt.strip()]
+        return []
+
+    def get_average_score(self):
+        from django.db.models import Avg
+        avg = self.answers.filter(rating_value__isnull=False).aggregate(Avg('rating_value'))['rating_value__avg']
+        return round(avg, 2) if avg is not None else 0.0
+
+
+class FeedbackSubmission(models.Model):
+    """
+    Record of a student's feedback submission for a specific FeedbackForm.
+    """
+    MODE_CHOICES = [
+        ('online',          'Online Portal Submission'),
+        ('offline_printed', 'Offline Printed Copy Fill-in'),
+    ]
+
+    form             = models.ForeignKey(FeedbackForm, on_delete=models.CASCADE, related_name='submissions', db_index=True)
+    student          = models.ForeignKey('accounts.Student', on_delete=models.CASCADE, related_name='feedback_submissions', db_index=True)
+    submission_mode  = models.CharField(max_length=20, choices=MODE_CHOICES, default='online')
+    reference_no     = models.CharField(max_length=35, unique=True, db_index=True)
+    overall_comments = models.TextField(blank=True, null=True, help_text="General comments or suggestions by student")
+    ip_address       = models.CharField(max_length=50, blank=True, null=True)
+    submitted_at     = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at       = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('form', 'student')
+        ordering = ['-submitted_at']
+        indexes = [
+            models.Index(fields=['form', 'student']),
+            models.Index(fields=['reference_no']),
+        ]
+
+    def __str__(self):
+        return f"{self.reference_no} — {self.student.roll_number} ({self.form.title})"
+
+    def save(self, *args, **kwargs):
+        if not self.reference_no:
+            import datetime
+            import random
+            year_str = datetime.date.today().year
+            rand_suffix = f"{random.randint(10000, 99999)}"
+            self.reference_no = f"VVIT/FB/{year_str}/{rand_suffix}"
+            # Ensure uniqueness
+            while FeedbackSubmission.objects.filter(reference_no=self.reference_no).exists():
+                rand_suffix = f"{random.randint(10000, 99999)}"
+                self.reference_no = f"VVIT/FB/{year_str}/{rand_suffix}"
+        super().save(*args, **kwargs)
+
+    @property
+    def average_rating(self):
+        from django.db.models import Avg
+        avg = self.answers.filter(rating_value__isnull=False).aggregate(Avg('rating_value'))['rating_value__avg']
+        return round(avg, 2) if avg is not None else 0.0
+
+
+class FeedbackAnswer(models.Model):
+    """
+    Specific answer/rating given by a student to a FeedbackQuestion.
+    """
+    submission   = models.ForeignKey(FeedbackSubmission, on_delete=models.CASCADE, related_name='answers', db_index=True)
+    question     = models.ForeignKey(FeedbackQuestion, on_delete=models.CASCADE, related_name='answers', db_index=True)
+    rating_value = models.IntegerField(null=True, blank=True)
+    text_value   = models.TextField(blank=True, null=True)
+    choice_value = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('submission', 'question')
+        ordering = ['question__order', 'id']
+
+    def __str__(self):
+        val = self.rating_value if self.rating_value is not None else (self.choice_value or self.text_value or '-')
+        return f"Ans ({self.question.question_text[:20]}): {val}"
+
 
 
 

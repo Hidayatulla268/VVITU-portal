@@ -109,7 +109,7 @@
               </td>
               <td>
                 {% if r.document %}
-                <a href="{{ r.document.url }}" target="_blank" class="btn-vvit-outline px-2 py-1 small" title="View Document">
+                <a href="{% url 'view_student_leave_document' r.id %}" target="_blank" class="btn-vvit-outline px-2 py-1 small" title="View Document">
                   <i class="fas fa-file-pdf text-accent"></i>
                 </a>
                 {% else %}

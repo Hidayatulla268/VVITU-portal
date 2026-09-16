@@ -21,7 +21,7 @@ class Command(BaseCommand):
         # Fetch active class transfers for today where reminder has not been sent yet
         transfers = ClassTransfer.objects.filter(
             date=today,
-            status__in=['accepted', 'pending'],
+            status='accepted',
             reminder_sent=False
         ).select_related('substitute_faculty__user', 'original_faculty__user', 'timetable_entry__subject', 'timetable_entry__section')
 

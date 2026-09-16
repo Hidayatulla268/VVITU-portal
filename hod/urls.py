@@ -10,6 +10,11 @@ urlpatterns = [
     path('subject-mapping/',         views.subject_mapping,           name='subject_mapping'),
     path('timetable/',               views.manage_timetable,          name='manage_timetable'),
     path('timetable/edit/<int:section_id>/', views.edit_timetable,    name='edit_timetable'),
+    path('timetable/section/<int:section_id>/', views.edit_timetable, name='section_timetable'),
+    path('timetable/ajax-check-clash/', views.ajax_check_timetable_clash, name='ajax_check_timetable_clash'),
+    path('timetable/upload-api/',    views.upload_timetable_api,       name='upload_timetable_api'),
+    path('timetable/export-pdf/<int:section_id>/', views.export_timetable_pdf, name='export_timetable_pdf'),
+    path('timetable/faculty/<int:faculty_id>/', views.faculty_timetable_view, name='faculty_timetable'),
     path('verify-achievements/',     views.verify_achievements,       name='verify_achievements'),
     path('verify-achievement/<int:pk>/<str:action_type>/', views.verify_achievement_action, name='verify_achievement_action'),
     
@@ -51,6 +56,7 @@ urlpatterns = [
     # Class Diary & Syllabus Coverage
     path('class-diary/',             views.class_diary_coverage,              name='class_diary_coverage'),
     path('syllabus/',                views.manage_subject_syllabus,           name='manage_subject_syllabus'),
+    path('syllabus/<int:subject_id>/', views.manage_subject_syllabus,          name='manage_subject_syllabus_subject'),
     path('exam-schedules/',          views.manage_exam_schedules,             name='manage_exam_schedules'),
     # Detention, Readmission & Low Attendance
     path('detention-readmissions/',  views.manage_detention_readmissions,     name='manage_detention_readmissions'),
@@ -61,5 +67,18 @@ urlpatterns = [
     # Faculty Class Attendance & Conduction Audit Table
     path('faculty-class-audit/',     views.faculty_class_attendance_audit,     name='faculty_class_audit'),
     path('class-attendance/<int:timetable_id>/<str:date>/', views.class_session_audit_detail, name='class_attendance_detail'),
+
+    # Student Feedback Management & Document Upload (HOD)
+    path('feedback/',                     views.manage_feedback_forms, name='manage_feedback_forms'),
+    path('feedback/create/',              views.create_feedback_form,  name='create_feedback_form'),
+    path('feedback/<int:form_id>/edit/',  views.edit_feedback_form,    name='edit_feedback_form'),
+    path('feedback/<int:form_id>/analytics/', views.feedback_analytics, name='feedback_analytics'),
+    path('feedback/<int:form_id>/analytics/pdf/', views.export_feedback_analytics_pdf, name='export_feedback_analytics_pdf'),
+    path('feedback/<int:form_id>/blank-pdf/', views.download_blank_feedback_pdf, name='download_blank_feedback_pdf'),
+    path('feedback/<int:form_id>/submission/<int:submission_id>/', views.view_student_feedback_summary, name='view_student_feedback_summary'),
+    path('feedback/<int:form_id>/submission/<int:submission_id>/pdf/', views.download_student_feedback_pdf, name='download_student_feedback_pdf'),
+    path('feedback/<int:form_id>/toggle-status/', views.toggle_feedback_status, name='toggle_feedback_status'),
+    path('feedback/<int:form_id>/delete/', views.delete_feedback_form, name='delete_feedback_form'),
 ]
+
 

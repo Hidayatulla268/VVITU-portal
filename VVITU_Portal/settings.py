@@ -15,35 +15,43 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ─────────────────────────────────────────────
 # CORE SECURITY  (override via env vars / .env)
 # ─────────────────────────────────────────────
-SECRET_KEY = config(
-    'DJANGO_SECRET_KEY',
-    default='vvitu-dev-fallback-key-DO-NOT-USE-in-production-replace-me-immediately-2024'
-)
+DEV_FALLBACK_SECRET = 'vvitu-dev-fallback-key-DO-NOT-USE-in-production-replace-me-immediately-2024'
+SECRET_KEY = config('DJANGO_SECRET_KEY', default=DEV_FALLBACK_SECRET)
 
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
+
+# Production security guard: fail fast if production lacks a dedicated secret key
+if not DEBUG:
+    if not SECRET_KEY or SECRET_KEY == DEV_FALLBACK_SECRET:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "CRITICAL SECURITY ERROR: In production (DEBUG=False), DJANGO_SECRET_KEY must be explicitly set to a strong secret key in environment variables."
+        )
 
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver', cast=Csv())
 if 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('testserver')
 
 # ── Production HTTPS / Cookie security ──────
-# These are SAFE to leave as-is in dev (DEBUG=True bypasses most of them).
-# In production set DJANGO_DEBUG=False and point to your real HTTPS domain.
-SECURE_SSL_REDIRECT          = False  # True in production, False in dev
+SECURE_SSL_REDIRECT          = False if DEBUG else config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 SECURE_HSTS_SECONDS          = 0 if DEBUG else 31536000  # 1 year HSTS in prod
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD          = not DEBUG
 SECURE_BROWSER_XSS_FILTER   = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS              = 'DENY'
-SESSION_COOKIE_SECURE        = False # True in production (HTTPS only)
-CSRF_COOKIE_SECURE           = False  # True in production (HTTPS only)
+SESSION_COOKIE_SECURE        = not DEBUG # True in production (HTTPS only)
+CSRF_COOKIE_SECURE           = not DEBUG # True in production (HTTPS only)
 SESSION_COOKIE_HTTPONLY      = True
 SESSION_COOKIE_SAMESITE      = 'Lax'
 CSRF_COOKIE_HTTPONLY         = True
 CSRF_COOKIE_SAMESITE         = 'Lax'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE           = 60 * 60 * 4  # 4 hours auto-session timeout
+
+# Memory & file upload availability limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=5 * 1024 * 1024, cast=int)  # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=5 * 1024 * 1024, cast=int)  # 5 MB
 
 # ─────────────────────────────────────────────
 # INSTALLED APPS
@@ -109,6 +117,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.app_version',
             ],
         },
     },

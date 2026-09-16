@@ -1293,3 +1293,29 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
   border-color: rgba(220, 38, 38, 0.3);
   color: #dc2626;
 }
+
+/* ── Syllabus Unit Badges (Dark & Light Mode) ── */
+.badge-unit {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-unit-1 { background: rgba(59, 130, 246, 0.15) !important; color: #60a5fa !important; border: 1px solid rgba(96, 165, 250, 0.35) !important; }
+.badge-unit-2 { background: rgba(168, 85, 247, 0.15) !important; color: #c084fc !important; border: 1px solid rgba(192, 132, 252, 0.35) !important; }
+.badge-unit-3 { background: rgba(234, 179, 8, 0.15) !important; color: #facc15 !important; border: 1px solid rgba(250, 204, 21, 0.35) !important; }
+.badge-unit-4 { background: rgba(249, 115, 22, 0.15) !important; color: #fb923c !important; border: 1px solid rgba(251, 146, 60, 0.35) !important; }
+.badge-unit-5 { background: rgba(34, 197, 94, 0.15) !important; color: #4ade80 !important; border: 1px solid rgba(74, 222, 128, 0.35) !important; }
+.badge-unit-other { background: rgba(148, 163, 184, 0.15) !important; color: #cbd5e1 !important; border: 1px solid rgba(203, 213, 225, 0.35) !important; }
+
+[data-theme="light"] .badge-unit-1 { background: #eff6ff !important; color: #1d4ed8 !important; border-color: #bfdbfe !important; }
+[data-theme="light"] .badge-unit-2 { background: #faf5ff !important; color: #7e22ce !important; border-color: #e9d5ff !important; }
+[data-theme="light"] .badge-unit-3 { background: #fefce8 !important; color: #a16207 !important; border-color: #fef08a !important; }
+[data-theme="light"] .badge-unit-4 { background: #fff7ed !important; color: #c2410c !important; border-color: #fed7aa !important; }
+[data-theme="light"] .badge-unit-5 { background: #f0fdf4 !important; color: #15803d !important; border-color: #bbf7d0 !important; }
+[data-theme="light"] .badge-unit-other { background: #f1f5f9 !important; color: #475569 !important; border-color: #cbd5e1 !important; }
+

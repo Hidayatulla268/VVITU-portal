@@ -1,0 +1,207 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Student Feedback Forms — VVIT Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-comment-dots me-2 text-accent"></i>Student Feedback & Evaluation</h1>
+    <p class="ph-sub">Submit academic, faculty, and institutional evaluations online or print blank physical copies to submit offline.</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <span class="badge bg-dark-50 text-warning border border-warning px-3 py-2 d-flex align-items-center">
+      <i class="fas fa-clock me-1"></i> {{ total_pending }} Pending Form{{ total_pending|pluralize }}
+    </span>
+    <span class="badge bg-dark-50 text-success border border-success px-3 py-2 d-flex align-items-center">
+      <i class="fas fa-check-circle me-1"></i> {{ total_completed }} Completed
+    </span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Messages Alert -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+      <i class="fas fa-info-circle me-2"></i>{{ message }}
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Student Info Banner -->
+<div class="glass-card mb-4 p-3 p-md-4" style="border-left: 4px solid var(--accent);">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <h4 class="fw-bold mb-1 text-white">
+        <i class="fas fa-user-graduate text-accent me-2"></i>{{ student.user.get_full_name }} <span class="text-muted">({{ student.roll_number }})</span>
+      </h4>
+      <div class="text-light opacity-75 small">
+        Branch: <strong class="text-white">{{ student.branch.code }}</strong> &middot; 
+        Year: <strong class="text-white">{{ student.year.get_year_display }}</strong> &middot; 
+        Section: <strong class="text-white">{{ student.section.name|default:"A" }}</strong>
+      </div>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+      <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
+        <i class="fas fa-university me-1"></i> VVIT Autonomous Portal
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: Pending Feedback Forms -->
+<div class="mb-5">
+  <div class="d-flex align-items-center mb-3">
+    <h4 class="fw-bold mb-0 text-white">
+      <i class="fas fa-hourglass-half text-warning me-2"></i>Pending Feedback Forms
+    </h4>
+    <span class="badge bg-dark text-warning border border-warning ms-2 rounded-pill">{{ total_pending }}</span>
+  </div>
+
+  {% if pending_forms %}
+    <div class="row g-4">
+      {% for form in pending_forms %}
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="glass-card h-100 d-flex flex-column justify-content-between p-0 overflow-hidden" style="border: 1px solid rgba(255,255,255,0.12);">
+            <div class="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center" style="background: rgba(255,255,255,0.03);">
+              <span class="badge bg-dark text-accent border border-secondary px-2 py-1 small">
+                {{ form.get_feedback_type_display }}
+              </span>
+              {% if form.deadline %}
+                <span class="badge {% if form.is_expired %}bg-danger text-white{% else %}bg-dark-50 text-light border border-secondary{% endif %} px-2 py-1 small">
+                  <i class="fas fa-calendar-alt me-1 text-accent"></i>Due: {{ form.deadline|date:"d M Y" }}
+                </span>
+              {% endif %}
+            </div>
+
+            <div class="p-4 flex-grow-1">
+              <h5 class="fw-bold mb-2 text-white">{{ form.title }}</h5>
+              {% if form.description %}
+                <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                  {{ form.description }}
+                </p>
+              {% endif %}
+
+              <div class="d-flex flex-wrap gap-2 mb-3 text-light small opacity-75">
+                <span><i class="fas fa-layer-group text-accent me-1"></i>{{ form.target_display }}</span>
+                &middot;
+                <span><i class="fas fa-list-ol text-accent me-1"></i>{{ form.questions.count }} Question{{ form.questions.count|pluralize }}</span>
+              </div>
+
+              {% if form.uploaded_document %}
+                <div class="p-2 rounded d-flex align-items-center justify-content-between small" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);">
+                  <span class="text-light text-truncate me-2">
+                    <i class="{% if form.document_is_pdf %}fas fa-file-pdf text-danger{% else %}fas fa-file-image text-info{% endif %} me-1"></i>
+                    Official Attached Template
+                  </span>
+                  <a href="{% url 'view_feedback_document' form.id %}" target="_blank" class="btn btn-sm btn-outline-info py-0 px-2" style="font-size: 0.75rem;">
+                    <i class="fas fa-eye me-1"></i>View
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="p-3 border-top border-secondary mt-auto" style="background: rgba(0,0,0,0.2);">
+              <div class="d-grid gap-2">
+                {% if form.allow_online_submission %}
+                  <a href="{% url 'student:fill_feedback' form.id %}" class="btn-vvit-primary py-2 text-center text-decoration-none">
+                    <i class="fas fa-pen-fancy me-1"></i>Fill Feedback Online
+                  </a>
+                {% endif %}
+                {% if form.allow_offline_download %}
+                  <a href="{% url 'student:download_blank_feedback_pdf' form.id %}" class="btn btn-sm btn-outline-secondary py-1 text-center" title="Download printable blank copy to fill manually and submit offline">
+                    <i class="fas fa-print me-1"></i>Download Blank PDF (Offline Fill)
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="glass-card p-5 text-center">
+      <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+      <h4 class="fw-bold text-white">All Caught Up!</h4>
+      <p class="text-muted small mb-0">You have no pending feedback forms at this time.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Section 2: Completed Feedback Submissions -->
+<div class="mb-4">
+  <div class="d-flex align-items-center mb-3">
+    <h4 class="fw-bold mb-0 text-white">
+      <i class="fas fa-history text-success me-2"></i>Completed Submissions & Receipts
+    </h4>
+    <span class="badge bg-dark text-success border border-success ms-2 rounded-pill">{{ total_completed }}</span>
+  </div>
+
+  {% if completed_items %}
+    <div class="glass-card p-0 overflow-hidden">
+      <div class="table-responsive">
+        <table class="vvit-table mb-0">
+          <thead>
+            <tr>
+              <th>Reference No</th>
+              <th>Feedback Title & Type</th>
+              <th>Submitted On</th>
+              <th>Average Score</th>
+              <th>Mode</th>
+              <th class="text-end">Actions & PDF Summary</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in completed_items %}
+              <tr>
+                <td class="fw-bold font-monospace text-accent">
+                  {{ item.submission.reference_no }}
+                </td>
+                <td>
+                  <div class="fw-bold text-white">{{ item.form.title }}</div>
+                  <span class="badge bg-dark text-muted border border-secondary px-2 py-0 rounded-pill small" style="font-size: 0.7rem;">
+                    {{ item.form.get_feedback_type_display }}
+                  </span>
+                </td>
+                <td class="small text-muted">
+                  <i class="fas fa-clock me-1 text-accent"></i>{{ item.submission.submitted_at|date:"d M Y, h:i A" }}
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="fw-bold text-accent">{{ item.submission.average_rating }}</span>
+                    <span class="text-warning small"><i class="fas fa-star"></i></span>
+                  </div>
+                </td>
+                <td>
+                  <span class="status-pill status-approved small">
+                    <i class="fas fa-check-double me-1"></i>{{ item.submission.get_submission_mode_display }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <a href="{% url 'student:feedback_summary' item.form.id %}" class="btn btn-outline-info btn-sm" title="View Submission Summary">
+                      <i class="fas fa-eye me-1"></i>View Summary
+                    </a>
+                    <a href="{% url 'student:download_feedback_pdf' item.form.id %}" class="btn btn-danger btn-sm" title="Download Official PDF Summary">
+                      <i class="fas fa-file-pdf me-1"></i>PDF
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="glass-card p-5 text-center">
+      <i class="fas fa-inbox text-secondary fa-3x mb-3"></i>
+      <h5 class="fw-semibold text-light">No Feedback Submitted Yet</h5>
+      <p class="text-muted small mb-0">Forms you complete will show up here along with downloadable PDF summaries and receipts.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

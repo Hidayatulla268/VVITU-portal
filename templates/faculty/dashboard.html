@@ -72,14 +72,120 @@
   </div>
 </div>
 
-<!-- Proxy / Transferred Classes Alert Banner if any -->
-{% if transferred_today %}
-<div class="alert alert-info d-flex align-items-center justify-content-between mb-4 shadow-sm" style="border-radius: 12px;">
-  <div>
-    <i class="fas fa-exchange-alt fa-lg text-info me-2"></i>
-    <strong>Proxy Class Assigned Today:</strong> You have <strong>{{ transferred_today.count }}</strong> transferred class period(s) assigned to you today.
+<!-- Incoming Pending Proxy Requests (Action Required Banner & Action Cards) -->
+{% if pending_proxy_requests %}
+<div class="glass-card mb-4" style="border-left: 4px solid var(--accent); background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(24, 24, 27, 0.95) 100%);">
+  <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h3 class="card-title-custom text-warning mb-1">
+        <i class="fas fa-bell me-2 fa-shake text-warning"></i>Incoming Proxy Class Requests
+        <span class="badge bg-warning text-dark ms-2" style="font-size: 0.75rem;">Action Required ({{ pending_proxy_requests.count }})</span>
+      </h3>
+      <p class="small text-muted mb-0">The following class period(s) have been requested for you to take. The class will <strong>only transfer to you once you click Accept</strong>.</p>
+    </div>
   </div>
-  <a href="{% url 'faculty:mark_attendance' %}" class="btn btn-sm btn-info text-white">
+  <div class="table-responsive mt-2">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Date & Period</th>
+          <th>Subject & Section</th>
+          <th>Classroom</th>
+          <th>Requested By</th>
+          <th>Reason</th>
+          <th class="text-end pe-4">Decision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in pending_proxy_requests %}
+        <tr>
+          <td>
+            <strong class="text-white d-block">{{ req.date|date:"D, d M Y" }}</strong>
+            <span class="period-badge bg-warning text-dark fw-bold">Period {{ req.timetable_entry.period }}</span>
+          </td>
+          <td>
+            <div class="fw-bold text-accent" style="font-size: 0.92rem;">
+              <span class="badge bg-accent text-dark fw-bold px-2 py-0 me-1">{{ req.timetable_entry.subject.code }}</span>
+              {{ req.timetable_entry.subject.short_name }}
+            </div>
+            <small class="text-light">{{ req.timetable_entry.section }} · {{ req.timetable_entry.subject.name }}</small>
+          </td>
+          <td>
+            <span class="badge-section small"><i class="fas fa-door-open text-warning me-1"></i>{{ req.timetable_entry.room_number|default:"Room 101" }}</span>
+          </td>
+          <td>
+            <div class="fw-semibold text-white">Prof. {{ req.original_faculty.user.get_full_name }}</div>
+            <small class="text-muted" style="font-size: 0.72rem;">{{ req.assigned_by_role|upper }} Proxy</small>
+          </td>
+          <td>
+            <small class="text-muted fst-italic">{{ req.reason|default:"Class Period Substitution" }}</small>
+          </td>
+          <td class="text-end pe-4">
+            <div class="d-inline-flex align-items-center gap-2">
+              <!-- Accept Form -->
+              <form action="{% url 'faculty:respond_proxy' %}" method="POST" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="transfer_id" value="{{ req.id }}">
+                <input type="hidden" name="action" value="accept">
+                <button type="submit" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm px-3" style="font-weight: 600; font-size: 0.8rem; border-radius: 8px;">
+                  <i class="fas fa-check"></i>Accept
+                </button>
+              </form>
+
+              <!-- Decline Button triggering Decline Modal -->
+              <button type="button" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 px-3" style="font-size: 0.8rem; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#declineModal{{ req.id }}">
+                <i class="fas fa-times"></i>Decline
+              </button>
+            </div>
+
+            <!-- Decline Reason Modal -->
+            <div class="modal fade" id="declineModal{{ req.id }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered text-start">
+                <div class="modal-content glass-card border-0 shadow-lg" style="background: var(--clr-card-bg, #18181b); border: 1px solid rgba(239, 68, 68, 0.3) !important;">
+                  <form action="{% url 'faculty:respond_proxy' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="transfer_id" value="{{ req.id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <div class="modal-header border-0 pb-0">
+                      <h5 class="modal-title card-title-custom text-danger">
+                        <i class="fas fa-times-circle me-2"></i>Decline Proxy Request
+                      </h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body py-3">
+                      <p class="small text-muted mb-3">
+                        Are you sure you want to decline taking <strong>Period {{ req.timetable_entry.period }} ({{ req.timetable_entry.subject.code }})</strong> for Prof. {{ req.original_faculty.user.get_full_name }} on {{ req.date|date:"d-M-Y" }}?
+                      </p>
+                      <label class="form-label text-white small">Reason for Declining (Optional):</label>
+                      <input type="text" name="reason" class="vvit-input" placeholder="e.g. Schedule collision / Lab preparation / Official assignment">
+                    </div>
+                    <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-sm btn-danger px-3">
+                        <i class="fas fa-times me-1"></i>Confirm Decline
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Proxy / Transferred Classes Alert Banner if any accepted today -->
+{% if transferred_today %}
+<div class="alert alert-info d-flex align-items-center justify-content-between mb-4 shadow-sm" style="border-radius: 12px; background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.3);">
+  <div class="text-white">
+    <i class="fas fa-exchange-alt fa-lg text-info me-2"></i>
+    <strong>Active Proxy Class Assigned Today:</strong> You have <strong>{{ transferred_today.count }}</strong> accepted transferred class period(s) assigned to you today.
+  </div>
+  <a href="{% url 'faculty:mark_attendance' %}" class="btn btn-sm btn-info text-white fw-bold">
     <i class="fas fa-check-circle me-1"></i>Mark Transferred Class Attendance
   </a>
 </div>
@@ -149,11 +255,12 @@
       {% endif %}
     </div>
 
-    <!-- Transferred / Proxy Classes Received Today -->
+    <!-- Transferred / Proxy Classes Received Today (Accepted) -->
     {% if transferred_today %}
     <div class="glass-card mb-4" style="border-left: 4px solid var(--bs-info);">
-      <div class="card-header-custom">
-        <h3 class="card-title-custom"><i class="fas fa-hand-holding-medical me-2 text-info"></i>Proxy Classes Assigned to You Today</h3>
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-hand-holding-medical me-2 text-info"></i>Proxy Classes Assigned to You Today</h3>
+        <span class="badge bg-info text-dark">Accepted & Active</span>
       </div>
       <div class="table-responsive">
         <table class="vvit-table">
@@ -185,44 +292,6 @@
     </div>
     {% endif %}
 
-    <!-- Weekly Timetable Overview -->
-    <div class="glass-card">
-      <div class="card-header-custom">
-        <h3 class="card-title-custom"><i class="fas fa-calendar-alt me-2 text-accent"></i>Weekly Timetable & Classrooms</h3>
-      </div>
-      {% if weekly_timetable %}
-      <div class="table-responsive">
-        <table class="vvit-table">
-          <thead>
-            <tr>
-              <th>Day</th>
-              <th>Period</th>
-              <th>Subject</th>
-              <th>Section</th>
-              <th>Classroom</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for slot in weekly_timetable %}
-            <tr>
-              <td><strong>{{ slot.day }}</strong></td>
-              <td><span class="period-badge">P{{ slot.period }}</span></td>
-              <td>
-                <span class="badge bg-accent text-dark fw-bold px-2 py-0 me-1" style="font-size:0.75rem;">{{ slot.subject.code }}</span>
-                <span class="fw-bold text-accent px-1 py-0 me-1" style="font-size:0.8rem;">{{ slot.subject.short_name }}</span>
-                <small class="text-light">{{ slot.subject.name }}</small>
-              </td>
-              <td><span class="badge-section small">{{ slot.section }}</span></td>
-              <td><i class="fas fa-door-open text-accent me-1"></i>{{ slot.room_number|default:"Room 101" }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <p class="text-muted px-3 py-2 mb-0">No weekly timetable slots assigned.</p>
-      {% endif %}
-    </div>
   </div>
 
   <div class="col-xl-5">
@@ -232,6 +301,10 @@
         <h3 class="card-title-custom"><i class="fas fa-bolt me-2 text-accent"></i>Quick Actions</h3>
       </div>
       <div class="quick-actions-grid">
+        <a href="{% url 'faculty:my_timetable' %}" class="quick-action-btn" style="border: 1px solid var(--accent);">
+          <i class="fas fa-calendar-alt text-warning"></i>
+          <span class="fw-bold">My Timetable</span>
+        </a>
         <a href="{% url 'faculty:mark_attendance' %}" class="quick-action-btn">
           <i class="fas fa-user-check"></i>
           <span>Mark Attendance</span>
@@ -241,7 +314,7 @@
           <span>Class Diary</span>
         </a>
         <a href="{% url 'faculty:my_syllabus_tracker' %}" class="quick-action-btn">
-          <i class="fas fa-calendar-alt text-accent"></i>
+          <i class="fas fa-calendar-check text-accent"></i>
           <span>Syllabus Tracker</span>
         </a>
         <a href="{% url 'faculty:my_attendance' %}" class="quick-action-btn">
@@ -262,18 +335,47 @@
     <!-- Classes Transferred Out Today -->
     {% if transferred_given_today %}
     <div class="glass-card mt-4" style="border-left: 4px solid var(--bs-warning);">
-      <div class="card-header-custom">
-        <h3 class="card-title-custom"><i class="fas fa-paper-plane me-2 text-warning"></i>Classes Transferred Out Today</h3>
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom mb-0"><i class="fas fa-paper-plane me-2 text-warning"></i>Your Transferred Classes Today</h3>
+        <span class="badge bg-secondary">{{ transferred_given_today.count }}</span>
       </div>
       <ul class="list-group list-group-flush">
         {% for tr in transferred_given_today %}
-        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 border-secondary" style="border-bottom: 1px solid rgba(255,255,255,0.08) !important;">
           <div>
-            <strong>P{{ tr.timetable_entry.period }}: {{ tr.timetable_entry.subject.short_name }}</strong> ({{ tr.timetable_entry.section }})
-            <br>
-            <small class="text-muted">Substitute: {{ tr.substitute_faculty.user.get_full_name }}</small>
+            <div class="fw-bold text-white">
+              <span class="period-badge me-1">P{{ tr.timetable_entry.period }}</span>
+              {{ tr.timetable_entry.subject.short_name }}
+              <small class="text-muted">({{ tr.timetable_entry.section }})</small>
+            </div>
+            <small class="text-light d-block mt-1">
+              <i class="fas fa-user-friends me-1 text-accent"></i>Substitute: Prof. {{ tr.substitute_faculty.user.get_full_name }}
+            </small>
+            {% if tr.status == 'rejected' and tr.rejection_reason %}
+            <small class="text-danger d-block mt-1">
+              <i class="fas fa-info-circle me-1"></i>Declined: {{ tr.rejection_reason }}
+            </small>
+            {% endif %}
           </div>
-          <span class="badge bg-warning text-dark">Transferred</span>
+          <div>
+            {% if tr.status == 'pending' %}
+              <span class="status-pill status-pending" style="font-size:0.75rem;" title="Awaiting alternate faculty acceptance">
+                <i class="fas fa-clock me-1"></i>Pending Acceptance
+              </span>
+            {% elif tr.status == 'accepted' %}
+              <span class="status-pill status-approved" style="font-size:0.75rem;" title="Accepted by substitute faculty">
+                <i class="fas fa-check-circle me-1"></i>Accepted
+              </span>
+            {% elif tr.status == 'rejected' %}
+              <span class="status-pill status-rejected" style="font-size:0.75rem;" title="Declined by substitute faculty">
+                <i class="fas fa-times-circle me-1"></i>Declined
+              </span>
+            {% elif tr.status == 'completed' %}
+              <span class="status-pill status-approved" style="font-size:0.75rem; background: rgba(34, 197, 94, 0.2);" title="Class conducted and attendance posted">
+                <i class="fas fa-check-double me-1"></i>Completed
+              </span>
+            {% endif %}
+          </div>
         </li>
         {% endfor %}
       </ul>
@@ -299,6 +401,23 @@
       <p class="text-muted px-3 mb-0">No subjects assigned yet.</p>
       {% endif %}
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<!-- WEEKLY FACULTY TIMETABLE: CYBER NEON GLOWING FORMAT                            -->
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<div class="row mt-4 mb-4">
+  <div class="col-12">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h3 class="card-title-custom mb-0"><i class="fas fa-calendar-alt me-2 text-accent"></i>Weekly Timetable & Classrooms</h3>
+      <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-1 small">
+        <i class="fas fa-bolt text-success me-1"></i>Active Day Glowing Green Column
+      </span>
+    </div>
+    {% with grid=faculty_ctx.grid days=faculty_ctx.days periods=faculty_ctx.periods standard_timings=faculty_ctx.standard_timings handled_subjects=faculty_ctx.handled_subjects total_weekly_slots=faculty_ctx.total_weekly_slots target_date=today day_name=day_name %}
+      {% include "core/vvit_official_faculty_timetable.html" %}
+    {% endwith %}
   </div>
 </div>
 
@@ -356,4 +475,8 @@
   </div>
 </div>
 {% endif %}
+
+<!-- Include Timetable Photo/PDF Upload Modal -->
+{% include "core/timetable_upload_modal.html" %}
+
 {% endblock %}

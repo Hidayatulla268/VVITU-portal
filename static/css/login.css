@@ -892,3 +892,43 @@
 .input-wrapper .vvit-input:focus {
   animation: input-pulse 2s infinite ease-in-out;
 }
+
+/* ── Mobile Performance Optimizations (max-width: 768px) ─────────────── */
+@media (max-width: 768px) {
+  .orb,
+  .bg-radial-top,
+  .bg-radial-bottom,
+  .logo-pulse-ring {
+    display: none !important;
+  }
+  .parallax-container {
+    transform: none !important;
+  }
+  .login-card {
+    margin: 16px auto;
+    padding: 24px 20px !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ── Accessibility: Reduced Motion Support ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .orb,
+  .logo-pulse-ring,
+  .bg-radial-top,
+  .bg-radial-bottom {
+    animation: none !important;
+  }
+  .parallax-container {
+    transform: none !important;
+    transition: none !important;
+  }
+}

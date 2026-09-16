@@ -1,0 +1,256 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Feedback Analytics: {{ form.title }} — VVIT Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-chart-pie me-2 text-accent"></i>{{ form.title }}</h1>
+    <p class="ph-sub">
+      <span class="badge bg-dark-50 text-accent border border-secondary">{{ form.get_feedback_type_display }}</span> &middot;
+      <span>Target: <strong>{{ form.target_display }}</strong></span> &middot;
+      <span>Created on {{ form.created_at|date:"d M Y" }}</span>
+    </p>
+  </div>
+  <div class="ph-right d-flex flex-wrap gap-2">
+    {% if is_admin %}
+      <a href="{% url 'admin_dashboard:export_feedback_analytics_pdf' form.id %}" class="btn-vvit-primary btn-sm">
+        <i class="fas fa-file-pdf me-1"></i>Export Analytics PDF
+      </a>
+      <a href="{% url 'admin_dashboard:download_blank_feedback_pdf' form.id %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-print me-1"></i>Blank Printable Form
+      </a>
+      <a href="{% url 'admin_dashboard:edit_feedback_form' form.id %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-edit me-1"></i>Edit
+      </a>
+      <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Back
+      </a>
+    {% else %}
+      <a href="{% url 'hod:export_feedback_analytics_pdf' form.id %}" class="btn-vvit-primary btn-sm">
+        <i class="fas fa-file-pdf me-1"></i>Export Analytics PDF
+      </a>
+      <a href="{% url 'hod:download_blank_feedback_pdf' form.id %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-print me-1"></i>Blank Printable Form
+      </a>
+      <a href="{% url 'hod:edit_feedback_form' form.id %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-edit me-1"></i>Edit
+      </a>
+      <a href="{% url 'hod:manage_feedback_forms' %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Back
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Messages Alert -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+      <i class="fas fa-info-circle me-2"></i>{{ message }}
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- KPI Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="glass-card text-center p-3">
+      <div class="text-muted small text-uppercase fw-semibold mb-1">Total Submissions</div>
+      <div class="display-6 fw-bold text-white">{{ total_submissions }}</div>
+      <div class="small text-muted mt-1">Students Responded</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="glass-card text-center p-3">
+      <div class="text-muted small text-uppercase fw-semibold mb-1">Average Score</div>
+      <div class="display-6 fw-bold text-success">{{ overall_avg }} <span class="text-warning fs-5">★</span></div>
+      <div class="small text-muted mt-1">Out of 5.0 Rating</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="glass-card text-center p-3">
+      <div class="text-muted small text-uppercase fw-semibold mb-1">Satisfaction Index</div>
+      <div class="display-6 fw-bold text-info">{{ satisfaction_pct }}%</div>
+      <div class="small text-muted mt-1">Overall Approval</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="glass-card text-center p-3">
+      <div class="text-muted small text-uppercase fw-semibold mb-1">Form Status</div>
+      <div class="mt-2">
+        {% if form.is_active %}
+          <span class="status-pill status-approved">Active</span>
+        {% else %}
+          <span class="status-pill status-rejected">Closed</span>
+        {% endif %}
+      </div>
+      <div class="small text-muted mt-2">{% if form.deadline %}Due: {{ form.deadline|date:"d M Y" }}{% else %}No Deadline{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Uploaded Document Reference (if exists) -->
+{% if form.uploaded_document %}
+  <div class="glass-card d-flex justify-content-between align-items-center mb-4 p-3" style="border-left: 4px solid var(--accent);">
+    <div class="text-light">
+      <i class="{% if form.document_is_pdf %}fas fa-file-pdf text-danger{% else %}fas fa-file-image text-info{% endif %} me-2 fs-5"></i>
+      <strong>Official Form Document Attached:</strong> <span class="text-white">{{ form.uploaded_document.name }}</span>
+    </div>
+    <a href="{% url 'view_feedback_document' form.id %}" target="_blank" class="btn-sm-accent text-decoration-none">
+      <i class="fas fa-eye me-1"></i>View Uploaded File
+    </a>
+  </div>
+{% endif %}
+
+<!-- Section 1: Question-by-Question Analytics -->
+<div class="glass-card mb-4 p-4">
+  <div class="card-header-custom mb-3">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-chart-pie text-accent me-2"></i>Question-wise Performance Breakdown
+    </h3>
+  </div>
+
+  <div class="row g-3">
+    {% for stat in question_stats %}
+      <div class="col-12 col-lg-6">
+        <div class="p-3 rounded h-100 d-flex flex-column justify-content-between" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+          <div>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="fw-semibold text-light small" style="line-height: 1.4;">
+                <span class="badge bg-dark-50 text-accent border border-secondary me-1">Q{{ forloop.counter }}</span>
+                {{ stat.question.question_text }}
+              </div>
+              {% if stat.is_rating %}
+                <span class="badge bg-dark text-success border border-success px-2 py-1 ms-2 fw-bold text-nowrap">
+                  {{ stat.avg_score }} / {{ stat.max_scale|floatformat:0 }} ★
+                </span>
+              {% endif %}
+            </div>
+
+            {% if stat.is_rating %}
+              <div class="progress mb-2" style="height: 8px; background: rgba(255,255,255,0.08);">
+                <div class="progress-bar bg-accent" role="progressbar" style="width: {{ stat.percentage }}%;" aria-valuenow="{{ stat.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <div class="d-flex justify-content-between small text-muted mb-2" style="font-size: 0.75rem;">
+                <span class="text-light">Approval: <strong class="text-accent">{{ stat.percentage }}%</strong></span>
+                <span>
+                  5★: {{ stat.counts.5 }} &middot; 4★: {{ stat.counts.4 }} &middot; 3★: {{ stat.counts.3 }} &middot; 2★: {{ stat.counts.2 }} &middot; 1★: {{ stat.counts.1 }}
+                </span>
+              </div>
+            {% elif stat.is_choice %}
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                {% for opt, cnt in stat.choice_counts.items %}
+                  <span class="badge bg-dark text-light border border-secondary px-2 py-1 small">
+                    <strong>{{ opt }}</strong>: {{ cnt }}
+                  </span>
+                {% endfor %}
+              </div>
+            {% elif stat.is_text %}
+              <div class="small text-muted mt-2">
+                <strong>{{ stat.total_responses }}</strong> text responses recorded.
+                {% if stat.text_responses %}
+                  <div class="mt-2 p-2 rounded text-light" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); font-size: 0.8rem; max-height: 120px; overflow-y: auto;">
+                    {% for t in stat.text_responses %}
+                      <div class="border-bottom border-secondary pb-1 mb-1">&bull; {{ t }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Section 2: Student Submissions Roster -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom mb-0">
+      <i class="fas fa-user-check text-accent me-2"></i>Student Submissions Roster
+    </h3>
+    <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-1">{{ submissions.count }} Submissions</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Roll Number</th>
+          <th>Student Name</th>
+          <th>Dept & Section</th>
+          <th>Submitted At</th>
+          <th>Mode</th>
+          <th>Average Rating</th>
+          <th>Reference No</th>
+          <th class="text-end">Actions & PDF</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in submissions %}
+          <tr>
+            <td class="text-muted fw-semibold">{{ forloop.counter }}</td>
+            <td class="fw-bold text-white">{{ sub.student.roll_number }}</td>
+            <td>
+              <div class="fw-semibold text-light">{{ sub.student.user.get_full_name }}</div>
+              <small class="text-muted">{{ sub.student.user.email|default:"" }}</small>
+            </td>
+            <td>
+              <span class="badge-section small">{{ sub.student.branch.code }} Y{{ sub.student.year.year }} Sec {{ sub.student.section.name|default:"A" }}</span>
+            </td>
+            <td class="small text-muted">
+              <i class="fas fa-clock me-1 text-accent"></i>{{ sub.submitted_at|date:"d M Y, h:i A" }}
+            </td>
+            <td>
+              <span class="status-pill status-approved small">
+                {{ sub.get_submission_mode_display }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <span class="fw-bold text-accent">{{ sub.average_rating }}</span>
+                <span class="text-warning small"><i class="fas fa-star"></i></span>
+              </div>
+            </td>
+            <td><span class="badge bg-dark font-monospace text-muted border border-secondary">{{ sub.reference_no }}</span></td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                {% if is_admin %}
+                  <a href="{% url 'admin_dashboard:view_student_feedback_summary' form.id sub.id %}" class="btn btn-outline-info btn-sm" title="View Student Submission">
+                    <i class="fas fa-eye me-1"></i>View
+                  </a>
+                  <a href="{% url 'admin_dashboard:download_student_feedback_pdf' form.id sub.id %}" class="btn btn-danger btn-sm" title="Download Signed PDF">
+                    <i class="fas fa-file-pdf me-1"></i>PDF
+                  </a>
+                {% else %}
+                  <a href="{% url 'hod:view_student_feedback_summary' form.id sub.id %}" class="btn btn-outline-info btn-sm" title="View Student Submission">
+                    <i class="fas fa-eye me-1"></i>View
+                  </a>
+                  <a href="{% url 'hod:download_student_feedback_pdf' form.id sub.id %}" class="btn btn-danger btn-sm" title="Download Signed PDF">
+                    <i class="fas fa-file-pdf me-1"></i>PDF
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="fas fa-inbox fa-3x mb-3 text-secondary"></i>
+              <h5>No Student Submissions Yet</h5>
+              <p class="small mb-0">Submissions made by students will appear here in real-time.</p>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Fill Feedback: {{ form_obj.title }} — VVIT Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+.star-rating-group {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.star-rating-group input {
+  display: none;
+}
+.star-rating-group label {
+  cursor: pointer;
+  width: 46px;
+  height: 46px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+.star-rating-group label:hover,
+.star-rating-group label:hover ~ label,
+.star-rating-group input:checked ~ label {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+.star-label-desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-edit me-2 text-accent"></i>Fill Evaluation Form</h1>
+    <p class="ph-sub">{{ form_obj.title }} &middot; {{ form_obj.target_display }}</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <a href="{% url 'student:feedback_list' %}" class="btn-vvit-outline btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back to Feedback Forms
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 960px;">
+  <!-- Header Card -->
+  <div class="glass-card mb-4 p-4" style="border-left: 4px solid var(--accent);">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <span class="badge bg-dark text-accent border border-secondary px-3 py-1 rounded-pill">
+        {{ form_obj.get_feedback_type_display }}
+      </span>
+      {% if form_obj.deadline %}
+        <span class="badge bg-dark-50 text-warning border border-warning px-3 py-1 rounded-pill">
+          <i class="fas fa-calendar-alt me-1"></i>Due Date: {{ form_obj.deadline|date:"d M Y" }}
+        </span>
+      {% endif %}
+    </div>
+    <h3 class="fw-bold mb-2 text-white">{{ form_obj.title }}</h3>
+    {% if form_obj.description %}
+      <p class="mb-3 text-light opacity-90" style="font-size: 0.95rem; line-height: 1.5;">
+        {{ form_obj.description }}
+      </p>
+    {% endif %}
+    <div class="d-flex flex-wrap gap-3 small text-muted border-top border-secondary pt-2 mt-2">
+      <span><i class="fas fa-user-graduate text-accent me-1"></i>{{ student.roll_number }} &middot; {{ student.user.get_full_name }}</span>
+      <span><i class="fas fa-university text-accent me-1"></i>{{ form_obj.target_display }}</span>
+    </div>
+  </div>
+
+  <!-- Offline Alternative Notice Banner -->
+  {% if form_obj.allow_offline_download %}
+    <div class="glass-card d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-3" style="border-left: 4px solid #00e676;">
+      <div class="text-light small">
+        <i class="fas fa-info-circle me-2 fs-5 text-success"></i>
+        <strong>Prefer physical paper form?</strong> You can download and print the blank official copy, fill it manually, and submit it offline to your HOD/Class Teacher.
+      </div>
+      <a href="{% url 'student:download_blank_feedback_pdf' form_obj.id %}" class="btn-sm-accent text-decoration-none">
+        <i class="fas fa-print me-1"></i>Print Blank Form
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Uploaded Document Preview (if exists) -->
+  {% if form_obj.uploaded_document %}
+    <div class="glass-card mb-4 p-0 overflow-hidden">
+      <div class="card-header-custom p-3 d-flex justify-content-between align-items-center border-bottom border-secondary">
+        <span class="fw-bold text-white small">
+          <i class="fas fa-paperclip text-accent me-2"></i>Official Attached Feedback Document Template
+        </span>
+        <a href="{% url 'view_feedback_document' form_obj.id %}" target="_blank" class="btn btn-sm btn-outline-info">
+          <i class="fas fa-external-link-alt me-1"></i>Open Full Document
+        </a>
+      </div>
+      <div class="p-3 text-center">
+        {% if form_obj.document_is_image %}
+          <img src="{% url 'view_feedback_document' form_obj.id %}" alt="Feedback Form Document" class="img-fluid rounded border border-secondary" style="max-height: 500px; object-fit: contain;">
+        {% elif form_obj.document_is_pdf %}
+          <div class="p-4 rounded text-center" style="background: rgba(255,255,255,0.03);">
+            <i class="fas fa-file-pdf text-danger fa-4x mb-3"></i>
+            <h6 class="fw-bold text-white">PDF Document Attached</h6>
+            <p class="text-muted small mb-3">Click below to open and review the official PDF document uploaded by the Department.</p>
+            <a href="{% url 'view_feedback_document' form_obj.id %}" target="_blank" class="btn-vvit-outline btn-sm">
+              <i class="fas fa-file-pdf me-1"></i>View Uploaded PDF Document
+            </a>
+          </div>
+        {% else %}
+          <a href="{% url 'view_feedback_document' form_obj.id %}" target="_blank" class="btn-vvit-outline btn-sm">
+            <i class="fas fa-download me-1"></i>Download Attached Document
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Online Evaluation Form -->
+  <form method="POST" id="feedbackForm">
+    {% csrf_token %}
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="fw-bold text-white mb-0">
+        <i class="fas fa-tasks text-accent me-2"></i>Evaluation Questionnaire
+      </h4>
+      <span class="text-muted small">Rating Scale: 1 (Poor) to 5 (Excellent)</span>
+    </div>
+
+    {% for q in questions %}
+      <div class="glass-card mb-3 p-4" style="border: 1px solid rgba(255,255,255,0.08);">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <label class="fw-bold text-light mb-0" style="font-size: 0.98rem; line-height: 1.4;">
+            <span class="badge bg-dark-50 text-accent border border-secondary me-2">Q{{ forloop.counter }}</span>
+            {{ q.question_text }}
+            {% if q.is_required %}<span class="text-danger">*</span>{% endif %}
+          </label>
+        </div>
+
+        {% if q.question_type == 'rating_5' %}
+          <div class="mt-3">
+            <div class="star-rating-group">
+              <input type="radio" id="star5_{{ q.id }}" name="question_{{ q.id }}" value="5" {% if q.is_required %}required{% endif %} checked>
+              <label for="star5_{{ q.id }}" title="5 - Excellent">5★</label>
+
+              <input type="radio" id="star4_{{ q.id }}" name="question_{{ q.id }}" value="4">
+              <label for="star4_{{ q.id }}" title="4 - Very Good">4★</label>
+
+              <input type="radio" id="star3_{{ q.id }}" name="question_{{ q.id }}" value="3">
+              <label for="star3_{{ q.id }}" title="3 - Good">3★</label>
+
+              <input type="radio" id="star2_{{ q.id }}" name="question_{{ q.id }}" value="2">
+              <label for="star2_{{ q.id }}" title="2 - Fair">2★</label>
+
+              <input type="radio" id="star1_{{ q.id }}" name="question_{{ q.id }}" value="1">
+              <label for="star1_{{ q.id }}" title="1 - Poor">1★</label>
+            </div>
+            <div class="d-flex justify-content-between star-label-desc px-1 mt-1">
+              <span>1 - Poor</span>
+              <span>3 - Good</span>
+              <span>5 - Excellent</span>
+            </div>
+          </div>
+
+        {% elif q.question_type == 'rating_10' %}
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            {% for val in "12345678910" %}
+              <div class="form-check form-check-inline m-0">
+                <input class="btn-check" type="radio" name="question_{{ q.id }}" id="rate10_{{ q.id }}_{{ forloop.counter }}" value="{{ forloop.counter }}" {% if forloop.last %}checked{% endif %}>
+                <label class="btn btn-outline-secondary btn-sm px-3" for="rate10_{{ q.id }}_{{ forloop.counter }}">{{ forloop.counter }}</label>
+              </div>
+            {% endfor %}
+          </div>
+
+        {% elif q.question_type == 'choice' %}
+          <div class="mt-3">
+            {% for opt in q.get_options_list %}
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="opt_{{ q.id }}_{{ forloop.counter }}" value="{{ opt }}" {% if forloop.first %}checked{% endif %}>
+                <label class="form-check-label text-light" for="opt_{{ q.id }}_{{ forloop.counter }}">
+                  {{ opt }}
+                </label>
+              </div>
+            {% empty %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="opt_{{ q.id }}_yes" value="Yes" checked>
+                <label class="form-check-label text-light" for="opt_{{ q.id }}_yes">Yes</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="opt_{{ q.id }}_no" value="No">
+                <label class="form-check-label text-light" for="opt_{{ q.id }}_no">No</label>
+              </div>
+            {% endfor %}
+          </div>
+
+        {% elif q.question_type == 'text' %}
+          <div class="mt-3">
+            <textarea name="question_{{ q.id }}" class="vvit-input" rows="3" placeholder="Enter your comments or observations here..." {% if q.is_required %}required{% endif %}></textarea>
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="glass-card p-4 text-center mb-4">
+        <p class="text-muted mb-0">No specific questionnaire parameters defined for this form.</p>
+      </div>
+    {% endfor %}
+
+    <!-- Overall Comments & Suggestions -->
+    <div class="glass-card mb-4 p-4">
+      <label class="fw-bold text-light mb-2">
+        <i class="fas fa-comment-alt text-accent me-1"></i>General Remarks / Constructive Suggestions (Optional)
+      </label>
+      <textarea name="overall_comments" class="vvit-input" rows="3" placeholder="Provide any additional comments, suggestions for improvement, or appreciations..."></textarea>
+    </div>
+
+    <!-- Submit Section -->
+    <div class="glass-card p-4 text-center mt-4 mb-5">
+      <p class="text-muted small mb-3">
+        <i class="fas fa-shield-alt text-success me-1"></i>By submitting, your response will be recorded with digital verification. You can immediately download your summary PDF.
+      </p>
+      <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'student:feedback_list' %}" class="btn-vvit-outline px-4">Cancel</a>
+        <button type="submit" class="btn-vvit-primary px-5 py-2">
+          <i class="fas fa-paper-plane me-2"></i>Submit Feedback Online
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

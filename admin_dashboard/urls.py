@@ -31,6 +31,12 @@ urlpatterns = [
 
     # Timetable
     path('timetable/',               views.manage_timetable,     name='manage_timetable'),
+    path('timetable/edit/<int:section_id>/', views.edit_timetable, name='edit_timetable'),
+    path('timetable/section/<int:section_id>/', views.edit_timetable, name='section_timetable'),
+    path('timetable/ajax-check-clash/', views.ajax_check_timetable_clash, name='ajax_check_timetable_clash'),
+    path('timetable/upload-api/',    views.upload_timetable_api,  name='upload_timetable_api'),
+    path('timetable/export-pdf/<int:section_id>/', views.export_timetable_pdf, name='export_timetable_pdf'),
+    path('timetable/faculty/<int:faculty_id>/', views.faculty_timetable_view, name='faculty_timetable'),
 
     # Sections Management
     path('sections/',                views.manage_sections,      name='manage_sections'),
@@ -87,5 +93,18 @@ urlpatterns = [
     # Detention & Readmission Ratification
     path('detention-readmissions/',       views.manage_detention_readmissions, name='manage_detention_readmissions'),
     path('detention-readmissions/<int:pk>/<str:action>/', views.action_readmission_request, name='action_readmission_request'),
+
+    # Student Feedback Management & Document Upload
+    path('feedback/',                     views.manage_feedback_forms, name='manage_feedback_forms'),
+    path('feedback/create/',              views.create_feedback_form,  name='create_feedback_form'),
+    path('feedback/<int:form_id>/edit/',  views.edit_feedback_form,    name='edit_feedback_form'),
+    path('feedback/<int:form_id>/analytics/', views.feedback_analytics, name='feedback_analytics'),
+    path('feedback/<int:form_id>/analytics/pdf/', views.export_feedback_analytics_pdf, name='export_feedback_analytics_pdf'),
+    path('feedback/<int:form_id>/blank-pdf/', views.download_blank_feedback_pdf, name='download_blank_feedback_pdf'),
+    path('feedback/<int:form_id>/submission/<int:submission_id>/', views.view_student_feedback_summary, name='view_student_feedback_summary'),
+    path('feedback/<int:form_id>/submission/<int:submission_id>/pdf/', views.download_student_feedback_pdf, name='download_student_feedback_pdf'),
+    path('feedback/<int:form_id>/toggle-status/', views.toggle_feedback_status, name='toggle_feedback_status'),
+    path('feedback/<int:form_id>/delete/', views.delete_feedback_form, name='delete_feedback_form'),
 ]
+
 

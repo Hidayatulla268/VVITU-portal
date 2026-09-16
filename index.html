@@ -367,12 +367,17 @@
       <div style="width:1px; height:35px; background:rgba(255,255,255,0.1);"></div>
       <div>
         <div class="stat-num">8 Semesters</div>
-        <div class="stat-lbl">R23 SGPA / CGPA Calculation</div>
+        <div class="stat-lbl">R23 SGPA / CGPA Engine</div>
       </div>
       <div style="width:1px; height:35px; background:rgba(255,255,255,0.1);"></div>
       <div>
         <div class="stat-num">100% Automated</div>
-        <div class="stat-lbl">Counselling PDF Generator</div>
+        <div class="stat-lbl">Dossier &amp; Feedback PDF</div>
+      </div>
+      <div style="width:1px; height:35px; background:rgba(255,255,255,0.1);"></div>
+      <div>
+        <div class="stat-num" style="color:#10b981;">0 Vulnerabilities</div>
+        <div class="stat-lbl">Hardened Security Architecture</div>
       </div>
     </div>
   </div>
@@ -387,7 +392,37 @@
 
     <div class="features-grid">
       
-      <!-- Feature 1 -->
+      <!-- Feature 1: Cyber Neon Timetables -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+        <h3 class="feature-title">Cyber Neon Timetable Engine</h3>
+        <p class="feature-desc">
+          Drag-and-drop Excel and JSON parser with interactive modal preview, smart subject/faculty legend mapping, 
+          and multi-section clash detection. High-contrast neon grid highlighting active periods, co-faculty, and room numbers.
+        </p>
+      </div>
+
+      <!-- Feature 2: Student Feedback & PDF -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-poll-h"></i></div>
+        <h3 class="feature-title">Student Feedback Platform</h3>
+        <p class="feature-desc">
+          Dynamic form builder with department and section scoping. Supports online submissions and instant ReportLab 
+          Blank Evaluation PDF downloads for offline survey compliance, complete with sentiment tracking and analytical charts.
+        </p>
+      </div>
+
+      <!-- Feature 3: Proxy Transfer & Clash Engine -->
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-exchange-alt"></i></div>
+        <h3 class="feature-title">Proxy Class Transfer &amp; Clash Engine</h3>
+        <p class="feature-desc">
+          Peer-to-peer and HOD/Admin official proxy assignments with real-time free-faculty clash detection, 
+          delegated attendance marking authority, and 1-click administrative reversal.
+        </p>
+      </div>
+
+      <!-- Feature 4: Counselling Dossier PDF -->
       <div class="feature-card">
         <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
         <h3 class="feature-title">Student Counselling Dossier &amp; PDF</h3>
@@ -397,27 +432,27 @@
         </p>
       </div>
 
-      <!-- Feature 2 -->
+      <!-- Feature 5: Class Diary & Syllabus Coverage -->
       <div class="feature-card">
         <div class="feature-icon"><i class="fas fa-book-open"></i></div>
         <h3 class="feature-title">Class Diary &amp; Syllabus Coverage</h3>
         <p class="feature-desc">
           Faculty log period-by-period class topics, unit numbers (Units 1 to 5), and teaching methodology. 
-          HODs and Admins track real-time departmental syllabus progress percentages with visual progress meters.
+          Auto-matches taught topics against planned syllabus schedules with Mid-1 (2.5 units target) milestone tracking.
         </p>
       </div>
 
-      <!-- Feature 3 -->
+      <!-- Feature 6: Attendance Prefill & Sync -->
       <div class="feature-card">
         <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
-        <h3 class="feature-title">Attendance Prefill &amp; Multi-Period Sync</h3>
+        <h3 class="feature-title">Attendance Prefill &amp; OD Exemption</h3>
         <p class="feature-desc">
-          Automatically pre-fills student class lists with default status 'Present' to save faculty marking time. 
-          Multi-period sync propagates attendance records across consecutive timetable period slots instantly.
+          Automatically pre-fills student class lists with default status 'Present'. Propagates attendance across 
+          multi-period blocks and retroactively converts absences to approved leaves upon OD/medical authorization.
         </p>
       </div>
 
-      <!-- Feature 4 -->
+      <!-- Feature 7: R23 SGPA/CGPA Engine -->
       <div class="feature-card">
         <div class="feature-icon"><i class="fas fa-calculator"></i></div>
         <h3 class="feature-title">R23 Regulation SGPA / CGPA Engine</h3>
@@ -427,23 +462,13 @@
         </p>
       </div>
 
-      <!-- Feature 5 -->
+      <!-- Feature 8: Defense-in-Depth Security -->
       <div class="feature-card">
-        <div class="feature-icon"><i class="fas fa-sms"></i></div>
-        <h3 class="feature-title">Parent SMS &amp; Low-Attendance Alerts</h3>
+        <div class="feature-icon"><i class="fas fa-shield-virus"></i></div>
+        <h3 class="feature-title">Zero-Vulnerability Security Shield</h3>
         <p class="feature-desc">
-          Automated SMS notification pipeline that alerts parents when student attendance falls below 
-          the mandatory 75% threshold, ensuring proactive intervention and legal compliance.
-        </p>
-      </div>
-
-      <!-- Feature 6 -->
-      <div class="feature-card">
-        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-        <h3 class="feature-title">Role-Based Access Control (RBAC)</h3>
-        <p class="feature-desc">
-          Five strictly scoped roles (Admin, HOD, Faculty, Student, DEO) guarded by custom Django middleware 
-          to enforce data privacy, departmental scoping, and action authorization.
+          Binary magic-byte file validation, authenticated private media delivery with strict role scoping, 
+          anti-DoS IP-bound login rate limiting, memory upload bounds, and DOM XSS elimination.
         </p>
       </div>
 
@@ -458,15 +483,65 @@
   <p class="section-desc" style="margin-bottom:2rem;">Explore the core operational interfaces powering the VVITU Portal system.</p>
 
   <div class="preview-tabs">
-    <button class="tab-btn active" onclick="showTab('dossier')"><i class="fas fa-file-pdf"></i> Counselling PDF Dossier</button>
-    <button class="tab-btn" onclick="showTab('diary')"><i class="fas fa-book-reader"></i> Class Diary &amp; Syllabus</button>
+    <button class="tab-btn active" onclick="showTab('timetable')"><i class="fas fa-calendar-alt"></i> Cyber Neon Timetable</button>
+    <button class="tab-btn" onclick="showTab('feedback')"><i class="fas fa-poll"></i> Student Feedback &amp; PDF</button>
+    <button class="tab-btn" onclick="showTab('proxy')"><i class="fas fa-exchange-alt"></i> Proxy Clash Engine</button>
+    <button class="tab-btn" onclick="showTab('dossier')"><i class="fas fa-file-pdf"></i> Counselling Dossier</button>
+    <button class="tab-btn" onclick="showTab('diary')"><i class="fas fa-book-reader"></i> Class Diary &amp; Milestones</button>
     <button class="tab-btn" onclick="showTab('results')"><i class="fas fa-award"></i> R23 SGPA Result Card</button>
-    <button class="tab-btn" onclick="showTab('sms')"><i class="fas fa-comment-dots"></i> Parent SMS Alert Engine</button>
+    <button class="tab-btn" onclick="showTab('security')"><i class="fas fa-shield-alt"></i> Security Shield</button>
   </div>
 
-  <!-- Tab 1: Dossier -->
-  <div id="dossier" class="preview-content active">
-    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+  <!-- Tab 1: Timetable -->
+  <div id="timetable" class="preview-content active">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(0,240,255,0.25); box-shadow:0 0 25px rgba(0,240,255,0.1);">
+      <h3 style="color:#00f0ff; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-calendar-alt"></i> Cyber Neon Timetable &amp; Dynamic Upload Modal</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Interactive Monday-Saturday grid matrix with neon-glowing active period cards. Features drag-and-drop JSON/Excel schedule upload, client-side preview modal, and automated faculty clash detection across periods 1 to 7.
+      </p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <span class="code-span" style="border-color:#00f0ff; color:#00f0ff;">Engine: TimetableService</span>
+        <span class="code-span">Upload Formats: JSON, XLSX, CSV</span>
+        <span class="code-span">Periods: 7 Slots + Lunch Break</span>
+        <span class="code-span">Clash Prevention: Real-Time SQL Query</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Feedback -->
+  <div id="feedback" class="preview-content">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(251,191,36,0.25); box-shadow:0 0 25px rgba(251,191,36,0.1);">
+      <h3 style="color:#fbbf24; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-poll-h"></i> Institutional Student Feedback Platform</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Branch, year, and section-scoped survey management. Provides responsive online forms with star/numerical scale questions and instant ReportLab generation of clean, printable Blank Evaluation PDFs with department header tables.
+      </p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <span class="code-span" style="border-color:#fbbf24; color:#fbbf24;">PDF Engine: ReportLab A4 Document</span>
+        <span class="code-span">Rating Scales: 1-5 Stars &amp; 1-10 Metrics</span>
+        <span class="code-span">Access Control: Branch &amp; Section Scoped</span>
+        <span class="code-span">Analytics: Live Mean &amp; Sentiment Aggregation</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Proxy -->
+  <div id="proxy" class="preview-content">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(139,92,246,0.25); box-shadow:0 0 25px rgba(139,92,246,0.1);">
+      <h3 style="color:#a78bfa; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-exchange-alt"></i> Proxy Class Transfer &amp; Clash Engine</h3>
+      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
+        Zero-delay substitution routing that verifies whether substitute faculty are free during the target period. Empowers designated proxies to mark attendance directly while maintaining complete institutional audit trails.
+      </p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <span class="code-span" style="border-color:#a78bfa; color:#a78bfa;">Status: Live Attendance Delegation</span>
+        <span class="code-span">Reversal: 1-Click Instant HOD/Admin Revert</span>
+        <span class="code-span">Audit Register: Printable Daily Compliance Matrix</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Dossier -->
+  <div id="dossier" class="preview-content">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(239,68,68,0.25); box-shadow:0 0 25px rgba(239,68,68,0.1);">
       <h3 style="color:#ef4444; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-graduation-cap"></i> Student Counselling Dossier &amp; PDF</h3>
       <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
         Generates official ReportLab PDF documents with university seal, demographic profile card, academic KPI bar, semester marks tables, attendance breakdown, achievements, and signature blocks.
@@ -480,12 +555,12 @@
     </div>
   </div>
 
-  <!-- Tab 2: Diary -->
+  <!-- Tab 5: Diary -->
   <div id="diary" class="preview-content">
-    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(16,185,129,0.25); box-shadow:0 0 25px rgba(16,185,129,0.1);">
       <h3 style="color:#34d399; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-tasks"></i> Class Diary &amp; Unit Coverage Tracking</h3>
       <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
-        Faculty log unit topics (Units 1 to 5) taught during each period. HODs track departmental syllabus completion rates with visual percentage progress meters.
+        Faculty log unit topics (Units 1 to 5) taught during each period. Auto-matches topics against syllabus topic schedule with Mid-1 (2.5 units target) milestone compliance tracking.
       </p>
       <div style="background:rgba(255,255,255,0.05); height:12px; border-radius:6px; overflow:hidden; margin-top:10px;">
         <div style="width:85%; height:100%; background:linear-gradient(90deg, #10b981, #34d399);"></div>
@@ -494,9 +569,9 @@
     </div>
   </div>
 
-  <!-- Tab 3: Results -->
+  <!-- Tab 6: Results -->
   <div id="results" class="preview-content">
-    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(251,191,36,0.25); box-shadow:0 0 25px rgba(251,191,36,0.1);">
       <h3 style="color:#fbbf24; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-chart-line"></i> R23 Regulation SGPA &amp; CGPA Engine</h3>
       <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
         Computes Mid 1, Mid 2, Final, and Supplementary exam scores into official letter grades (S, A, B, C, D, E, F) and grade points under R23 regulations.
@@ -505,15 +580,18 @@
     </div>
   </div>
 
-  <!-- Tab 4: SMS -->
-  <div id="sms" class="preview-content">
-    <div style="background:rgba(15,23,42,0.8); padding:1.8rem; border-radius:14px; border:1px solid rgba(255,255,255,0.1);">
-      <h3 style="color:#60a5fa; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-sms"></i> Automated Parent SMS Alerts</h3>
+  <!-- Tab 7: Security -->
+  <div id="security" class="preview-content">
+    <div style="background:rgba(15,23,42,0.85); padding:1.8rem; border-radius:14px; border:1px solid rgba(59,130,246,0.25); box-shadow:0 0 25px rgba(59,130,246,0.1);">
+      <h3 style="color:#60a5fa; font-family:var(--font-d); margin-bottom:10px;"><i class="fas fa-user-shield"></i> Defense-in-Depth Security Shield</h3>
       <p style="color:var(--muted); font-size:0.9rem; margin-bottom:15px;">
-        Triggers instant SMS notifications to parent mobile numbers whenever student attendance drops below 75%.
+        Strict magic-byte validation rejecting disguised binaries, authenticated private media serving preventing confidential student dossier leaks, IP-bound rate limiting mitigating brute-force and DoS, and production fail-safe configuration.
       </p>
-      <div style="background:rgba(59,130,246,0.12); padding:10px 15px; border-radius:8px; border:1px solid rgba(59,130,246,0.3); font-size:0.85rem; color:#93c5fd;">
-        "Dear Parent, attendance for student 24BQ1A4942 has dropped to 68.2%. Please contact class teacher."
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <span class="code-span" style="border-color:#60a5fa; color:#60a5fa;">Validation: Binary Magic-Byte Inspection</span>
+        <span class="code-span">Media Routing: /secure-media/ Role-Scoped</span>
+        <span class="code-span">Upload Bound: 5MB Hard Max</span>
+        <span class="code-span">Audit: 0 Vulnerabilities Across Codebase</span>
       </div>
     </div>
   </div>
@@ -588,6 +666,21 @@
         <i class="fas fa-sms stack-icon" style="color:#10b981;"></i>
         <div class="stack-name">Twilio SMS</div>
         <div class="stack-role">Parent Alert API</div>
+      </div>
+      <div class="stack-item">
+        <i class="fas fa-calendar-alt stack-icon" style="color:#00f0ff;"></i>
+        <div class="stack-name">Timetable Matrix</div>
+        <div class="stack-role">Cyber Neon Clash Engine</div>
+      </div>
+      <div class="stack-item">
+        <i class="fas fa-poll-h stack-icon" style="color:#fbbf24;"></i>
+        <div class="stack-name">Feedback Engine</div>
+        <div class="stack-role">Survey &amp; PDF Generator</div>
+      </div>
+      <div class="stack-item">
+        <i class="fas fa-user-shield stack-icon" style="color:#60a5fa;"></i>
+        <div class="stack-name">Security Shield</div>
+        <div class="stack-role">Magic-Byte Binary Guard</div>
       </div>
     </div>
   </div>

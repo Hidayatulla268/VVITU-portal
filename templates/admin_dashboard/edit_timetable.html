@@ -1,0 +1,408 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Edit Timetable — {{ section }} (Admin){% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip no-print">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-edit me-2 text-accent"></i>Admin Timetable Editor — {{ section }}</h1>
+    <p class="ph-sub">College-wide control: Add, update, delete slots, modify period timings, change metadata & signatures</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <button type="button" class="btn btn-warning text-dark fw-bold btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#timetableUploadModal">
+      <i class="fas fa-camera me-1"></i>Upload Photo / PDF
+    </button>
+    <a href="{{ pdf_export_url }}" class="btn btn-danger btn-sm px-3" target="_blank">
+      <i class="fas fa-file-pdf me-1"></i>Official PDF
+    </a>
+    <a href="{% url 'admin_dashboard:manage_timetable' %}" class="btn-vvit-outline btn-sm">
+      <i class="fas fa-arrow-left me-2"></i>Back to Timetables
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4 no-print">
+  
+  <!-- Interactive Add / Update Slot Form -->
+  <div class="col-lg-4">
+    <div class="glass-card h-100">
+      <div class="card-header-custom mb-3">
+        <h4 class="card-title-custom"><i class="fas fa-plus-circle me-2 text-accent"></i>Add / Update Period Slot</h4>
+      </div>
+      
+      <form method="post" id="slotEditForm">
+        {% csrf_token %}
+        <input type="hidden" name="resolution" id="slotResolutionInput" value="">
+        
+        <div class="mb-3">
+          <label class="form-label text-muted small mb-1">Day of Week *</label>
+          <select name="day" id="slotDaySelect" class="vvit-select" required>
+            {% for d in days %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted small mb-1">Class Period *</label>
+          <select name="period" id="slotPeriodSelect" class="vvit-select" required>
+            {% for p in periods %}
+            <option value="{{ p }}">
+              Period {{ p }} ({% with t=standard_timings|dict_get:p %}{{ t.label }}{% endwith %})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label text-muted small mb-0">Subject *</label>
+            <a href="{% url 'admin_dashboard:add_subject' %}" class="small text-accent fw-bold text-decoration-none" target="_blank"><i class="fas fa-plus me-1"></i>Add Subject</a>
+          </div>
+          <select name="subject" id="slotSubjectSelect" class="vvit-select" required>
+            <option value="">— Select Subject —</option>
+            {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.short_name|default:s.code }} — {{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted small mb-1">Faculty Instructor</label>
+          <select name="faculty" id="slotFacultySelect" class="vvit-select">
+            <option value="">— Select Faculty (Optional) —</option>
+            {% for f in faculties %}
+            <option value="{{ f.id }}">{{ f.employee_id }} — {{ f.user.get_full_name }} ({{ f.department.code|default:"Gen" }})</option>
+            {% endfor %}
+          </select>
+          
+          <!-- Real-time Clash Alert Box -->
+          <div id="liveClashAlert" class="alert alert-warning d-none py-2 px-3 mt-2 mb-0 border-warning shadow-sm" style="font-size: 0.78rem; border-radius: 8px; background: rgba(234, 179, 8, 0.12);">
+            <div class="d-flex align-items-start gap-2">
+              <i class="fas fa-exclamation-triangle text-warning mt-1"></i>
+              <div>
+                <strong class="d-block text-warning fw-bold">Faculty Schedule Conflict!</strong>
+                <span id="liveClashMessage" class="text-white-50"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted small mb-1">Co-Faculty / Lab Team (For Multi-Faculty Labs)</label>
+          <input type="text" name="co_faculty_display" class="vvit-input" placeholder="e.g. Dr. S. Krishna Prasad / Dr. I.L.J. Baktha Singh / Mr. S. Saida Rao">
+          <small class="text-muted" style="font-size: 0.72rem;">Displayed in the official timetable legend table.</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-muted small mb-1">Classroom / Room No</label>
+          <input type="text" name="room_number" id="slotRoomInput" class="vvit-input" placeholder="e.g. C-402 / Block A Lab 4" value="{{ metadata.room_number|default:'C-402' }}">
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-6">
+            <label class="form-label text-muted small mb-1">Start Time (Optional)</label>
+            <input type="time" name="start_time" class="vvit-input">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-muted small mb-1">End Time (Optional)</label>
+            <input type="time" name="end_time" class="vvit-input">
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn-vvit-primary flex-grow-1" id="btnSaveSlot">
+            <i class="fas fa-save me-2"></i>Save Slot
+          </button>
+          <button type="submit" name="delete" value="true" class="btn btn-danger" onclick="return confirm('Delete this slot?')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Metadata & Settings Card -->
+  <div class="col-lg-8">
+    <div class="glass-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="card-title-custom mb-0"><i class="fas fa-sliders-h me-2 text-accent"></i>Official Timetable Header & Signatures</h4>
+        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#adminMetaCollapse">
+          <i class="fas fa-chevron-down me-1"></i>Toggle Settings
+        </button>
+      </div>
+
+      <div class="collapse show" id="adminMetaCollapse">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_metadata">
+          
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label text-muted small mb-1">Academic Year</label>
+              <input type="text" name="academic_year" class="vvit-input" value="{{ metadata.academic_year|default:'2026-27' }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small mb-1">Default Room No</label>
+              <input type="text" name="room_number" class="vvit-input" value="{{ metadata.room_number|default:'C-402' }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted small mb-1">With Effect From</label>
+              <input type="date" name="with_effect_from" class="vvit-input" value="{{ metadata.with_effect_from|date:'Y-m-d'|default:'2026-08-10' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small mb-1">Class Teacher</label>
+              <select name="class_teacher" class="vvit-select">
+                <option value="">— Select Class Teacher —</option>
+                {% for f in faculties %}
+                <option value="{{ f.id }}" {% if metadata.class_teacher.id == f.id %}selected{% endif %}>
+                  {{ f.employee_id }} — {{ f.user.get_full_name }} ({{ f.department.code|default:"Gen" }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small mb-1">Class Teacher Display Name (Fallback)</label>
+              <input type="text" name="class_teacher_name" class="vvit-input" value="{{ metadata.class_teacher_name|default:'Mr. S.Saida Rao' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label text-muted small mb-1">Program Header Banner</label>
+              <input type="text" name="program_name" class="vvit-input" value="{{ metadata.program_name|default:'' }}" placeholder="e.g. [Program: Computer Science and Engineering (Internet of Things) – CSO]">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-muted small mb-1">Signatory 1</label>
+              <input type="text" name="timetable_incharge" class="vvit-input" value="{{ metadata.timetable_incharge|default:'Timetable I/C' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-muted small mb-1">Signatory 2</label>
+              <input type="text" name="hod_name" class="vvit-input" value="{{ metadata.hod_name|default:'HOD' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-muted small mb-1">Signatory 3</label>
+              <input type="text" name="dean_academics_name" class="vvit-input" value="{{ metadata.dean_academics_name|default:'Dean,Academics' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-muted small mb-1">Signatory 4</label>
+              <input type="text" name="principal_name" class="vvit-input" value="{{ metadata.principal_name|default:'Principal' }}">
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-vvit-outline btn-sm px-4">
+                <i class="fas fa-save me-1"></i>Save Official Details & Signatures
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Official VVIT Timetable Preview Component -->
+{% include "core/vvit_official_timetable.html" %}
+
+<!-- Timetable Conflict Resolution Modal -->
+<div class="modal fade" id="timetableClashModal" tabindex="-1" aria-labelledby="timetableClashModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-warning shadow-lg" style="background: rgba(20, 20, 28, 0.96); backdrop-filter: blur(20px); border: 1px solid rgba(234, 179, 8, 0.4);">
+      <div class="modal-header border-bottom pb-3" style="border-color: rgba(255,255,255,0.1) !important;">
+        <h5 class="modal-title text-warning d-flex align-items-center gap-2 fw-bold" id="timetableClashModalLabel">
+          <i class="fas fa-calendar-times fs-4"></i> Faculty Schedule Conflict Detected
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-3">
+        <p class="mb-3 text-white">
+          <strong id="clashFacultyName" class="text-warning"></strong> is already scheduled for another period at this exact time across the college!
+        </p>
+
+        <!-- Conflicting Old Slot Card -->
+        <div class="p-3 mb-3" style="background: rgba(220, 53, 69, 0.12); border: 1px solid rgba(220, 53, 69, 0.35); border-radius: 8px;">
+          <div class="text-danger small text-uppercase fw-bold mb-1"><i class="fas fa-history me-1"></i> Existing Scheduled Period (Past Slot):</div>
+          <div class="d-flex align-items-center gap-2 text-white fw-bold" id="clashSlotDetails">
+            <i class="fas fa-clock text-danger"></i> <span></span>
+          </div>
+          <div class="text-white-50 small mt-1" id="clashSectionRoom"></div>
+        </div>
+
+        <!-- New Requested Slot Card -->
+        <div class="p-3 mb-3" style="background: rgba(25, 135, 84, 0.12); border: 1px solid rgba(25, 135, 84, 0.35); border-radius: 8px;">
+          <div class="text-success small text-uppercase fw-bold mb-1"><i class="fas fa-plus-circle me-1"></i> New Requested Period:</div>
+          <div class="d-flex align-items-center gap-2 text-white fw-bold" id="newSlotDetails">
+            <i class="fas fa-check-circle text-success"></i> <span></span>
+          </div>
+          <div class="text-white-50 small mt-1" id="newSectionRoom"></div>
+        </div>
+
+        <div class="alert alert-dark py-2 px-3 mb-0 text-white-50" style="font-size: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+          <i class="fas fa-info-circle text-accent me-1"></i> <strong>Single-Period Rule:</strong> A faculty member can only have 1 period at a time. Please choose how you want to resolve this conflict:
+        </div>
+      </div>
+      <div class="modal-footer border-top pt-3 d-flex flex-column gap-2" style="border-color: rgba(255,255,255,0.1) !important;">
+        <button type="button" id="btnReplacePast" class="btn btn-warning w-100 text-dark fw-bold d-flex align-items-center justify-content-center gap-2 py-2 shadow-sm">
+          <i class="fas fa-exchange-alt"></i> Fix That Period & Remove Past Period
+        </button>
+        <button type="button" id="btnKeepPast" class="btn btn-outline-light w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 py-2">
+          <i class="fas fa-lock text-warning"></i> Fix Only Past Period (Leave New Slot TBA)
+        </button>
+        <button type="button" class="btn btn-sm btn-link text-muted w-100 text-decoration-none mt-1" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i> Cancel & Choose Different Faculty
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Timetable Photo/PDF Upload Modal -->
+{% include "core/timetable_upload_modal.html" %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('slotEditForm');
+  if (!form) return;
+
+  const daySelect = document.getElementById('slotDaySelect');
+  const periodSelect = document.getElementById('slotPeriodSelect');
+  const facultySelect = document.getElementById('slotFacultySelect');
+  const subjectSelect = document.getElementById('slotSubjectSelect');
+  const roomInput = document.getElementById('slotRoomInput');
+  const resolutionInput = document.getElementById('slotResolutionInput');
+
+  const liveAlert = document.getElementById('liveClashAlert');
+  const liveMsg = document.getElementById('liveClashMessage');
+
+  const clashModalEl = document.getElementById('timetableClashModal');
+  const clashModal = clashModalEl ? new bootstrap.Modal(clashModalEl) : null;
+
+  let currentClashData = null;
+  const clashCheckUrl = "{% url 'admin_dashboard:ajax_check_timetable_clash' %}";
+  const currentSectionId = "{{ section.id }}";
+  const currentSectionName = "{{ section }}";
+
+  function checkClash(callback) {
+    const facultyId = facultySelect ? facultySelect.value : '';
+    const day = daySelect ? daySelect.value : '';
+    const period = periodSelect ? periodSelect.value : '';
+
+    if (!facultyId || !day || !period) {
+      if (liveAlert) liveAlert.classList.add('d-none');
+      currentClashData = null;
+      if (callback) callback(null);
+      return;
+    }
+
+    const params = new URLSearchParams({
+      faculty_id: facultyId,
+      day: day,
+      period: period,
+      section_id: currentSectionId
+    });
+
+    fetch(`${clashCheckUrl}?${params.toString()}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.has_clash && data.clash) {
+        currentClashData = data.clash;
+        if (liveAlert && liveMsg) {
+          liveMsg.textContent = data.clash.message;
+          liveAlert.classList.remove('d-none');
+        }
+        if (callback) callback(data.clash);
+      } else {
+        currentClashData = null;
+        if (liveAlert) liveAlert.classList.add('d-none');
+        if (callback) callback(null);
+      }
+    })
+    .catch(err => {
+      console.error("Clash check failed:", err);
+      if (callback) callback(null);
+    });
+  }
+
+  if (facultySelect) facultySelect.addEventListener('change', () => checkClash());
+  if (daySelect) daySelect.addEventListener('change', () => checkClash());
+  if (periodSelect) periodSelect.addEventListener('change', () => checkClash());
+
+  // Form Submit Handler
+  form.addEventListener('submit', function(e) {
+    const submitter = e.submitter;
+    if (submitter && submitter.name === 'delete') {
+      return true;
+    }
+    if (resolutionInput.value) {
+      return true;
+    }
+
+    const facultyId = facultySelect ? facultySelect.value : '';
+    if (!facultyId) {
+      return true;
+    }
+
+    e.preventDefault();
+
+    checkClash(function(clash) {
+      if (clash && clashModal) {
+        document.getElementById('clashFacultyName').textContent = clash.faculty_name;
+        document.getElementById('clashSlotDetails').querySelector('span').textContent = 
+          `${clash.day}, Period ${clash.period} — ${clash.subject_name}`;
+        document.getElementById('clashSectionRoom').textContent = 
+          `Section: ${clash.section_name} | Room: ${clash.room_number}`;
+
+        const subjText = subjectSelect.options[subjectSelect.selectedIndex] ? subjectSelect.options[subjectSelect.selectedIndex].text : 'Selected Subject';
+        const roomVal = roomInput ? (roomInput.value || 'Default Room') : 'Default Room';
+        document.getElementById('newSlotDetails').querySelector('span').textContent = 
+          `${daySelect.value}, Period ${periodSelect.value} — ${subjText}`;
+        document.getElementById('newSectionRoom').textContent = 
+          `Section: ${currentSectionName} | Room: ${roomVal}`;
+
+        clashModal.show();
+      } else {
+        form.submit();
+      }
+    });
+  });
+
+  // Modal Action Buttons
+  const btnReplace = document.getElementById('btnReplacePast');
+  if (btnReplace) {
+    btnReplace.addEventListener('click', function() {
+      resolutionInput.value = 'replace_past';
+      if (clashModal) clashModal.hide();
+      form.submit();
+    });
+  }
+
+  // Click on any timetable slot to auto-fill the editor form
+  document.querySelectorAll('.tt-slot-cell').forEach(cell => {
+    cell.addEventListener('click', function() {
+      const d = this.dataset.day;
+      const p = this.dataset.period;
+      const subjId = this.dataset.subjectId;
+      const facId = this.dataset.facultyId;
+      const room = this.dataset.room;
+
+      if (d && daySelect) daySelect.value = d;
+      if (p && periodSelect) periodSelect.value = p;
+      if (subjId && subjectSelect) subjectSelect.value = subjId;
+      if (facId && facultySelect) facultySelect.value = facId;
+      if (room && roomInput) roomInput.value = room;
+
+      // Scroll smoothly to form and highlight
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      form.classList.add('border-accent');
+      setTimeout(() => form.classList.remove('border-accent'), 1500);
+
+      checkClash();
+    });
+  });
+});
+</script>
+
+{% endblock %}

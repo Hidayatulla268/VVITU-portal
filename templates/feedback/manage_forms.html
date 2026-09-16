@@ -1,0 +1,225 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Student Feedback Management — VVIT Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-poll-h me-2 text-accent"></i>Student Feedback & Evaluation Management</h1>
+    <p class="ph-sub">
+      {% if is_admin %}
+        Upload official feedback documents (Photo/PDF), configure evaluation criteria, and monitor campus-wide response analytics.
+      {% else %}
+        Manage Department of {{ department.code }} student feedback forms, upload physical form templates, and view evaluation analytics.
+      {% endif %}
+    </p>
+  </div>
+  <div class="ph-right">
+    {% if is_admin %}
+      <a href="{% url 'admin_dashboard:create_feedback_form' %}" class="btn-vvit-primary">
+        <i class="fas fa-plus-circle me-1"></i>Create / Upload Feedback Form
+      </a>
+    {% else %}
+      <a href="{% url 'hod:create_feedback_form' %}" class="btn-vvit-primary">
+        <i class="fas fa-plus-circle me-1"></i>Create / Upload Feedback Form
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Messages Alert -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+      <i class="fas fa-info-circle me-2"></i>{{ message }}
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Filters Glass Card -->
+<div class="glass-card mb-4 p-3">
+  <form method="GET" class="row g-3 align-items-end">
+    {% if is_admin %}
+      <div class="col-md-3">
+        <label class="form-label text-light small fw-semibold">Filter by Branch</label>
+        <select name="branch" class="vvit-select" onchange="this.form.submit()">
+          <option value="">All Branches</option>
+          {% for b in branches %}
+            <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"s" %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+
+    <div class="col-md-3">
+      <label class="form-label text-light small fw-semibold">Feedback Type</label>
+      <select name="type" class="vvit-select" onchange="this.form.submit()">
+        <option value="">All Types</option>
+        <option value="faculty" {% if selected_type == 'faculty' %}selected{% endif %}>Faculty Evaluation</option>
+        <option value="course" {% if selected_type == 'course' %}selected{% endif %}>Course & Curriculum</option>
+        <option value="institutional" {% if selected_type == 'institutional' %}selected{% endif %}>Institutional Facilities</option>
+        <option value="general" {% if selected_type == 'general' %}selected{% endif %}>General</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label text-light small fw-semibold">Status</label>
+      <select name="status" class="vvit-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active Only</option>
+        <option value="closed" {% if selected_status == 'closed' %}selected{% endif %}>Closed Only</option>
+      </select>
+    </div>
+
+    <div class="col-md-3 d-flex align-items-end">
+      {% if is_admin %}
+        <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="btn-vvit-outline w-100 text-center">
+          <i class="fas fa-undo me-1"></i>Reset Filters
+        </a>
+      {% else %}
+        <a href="{% url 'hod:manage_feedback_forms' %}" class="btn-vvit-outline w-100 text-center">
+          <i class="fas fa-undo me-1"></i>Reset Filters
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Forms Table Glass Card -->
+<div class="glass-card mb-4">
+  <div class="card-header-custom d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom mb-0"><i class="fas fa-list me-2 text-accent"></i>Active & Archived Evaluation Forms</h3>
+    <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-1">{{ forms|length }} Form{{ forms|length|pluralize }}</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="vvit-table">
+      <thead>
+        <tr>
+          <th>Feedback Form Title</th>
+          <th>Type</th>
+          <th>Target Audience</th>
+          <th>Deadline</th>
+          <th>Attached Doc</th>
+          <th>Submissions</th>
+          <th>Avg Score</th>
+          <th>Status</th>
+          <th class="text-end">Actions & PDF</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in forms %}
+          <tr>
+            <td>
+              <div class="fw-bold text-white">{{ form.title }}</div>
+              <small class="text-muted">Created: {{ form.created_at|date:"d M Y" }}</small>
+            </td>
+            <td>
+              <span class="badge bg-dark text-accent border border-secondary px-2 py-1 small">
+                {{ form.get_feedback_type_display }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-section small">{{ form.target_display }}</span>
+            </td>
+            <td class="small">
+              {% if form.deadline %}
+                <span class="{% if form.is_expired %}text-danger fw-bold{% else %}text-light{% endif %}">
+                  <i class="fas fa-calendar-alt me-1 text-accent"></i>{{ form.deadline|date:"d M Y" }}
+                </span>
+              {% else %}
+                <span class="text-muted">No deadline</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if form.uploaded_document %}
+                <a href="{% url 'view_feedback_document' form.id %}" target="_blank" class="badge bg-dark text-info border border-info px-2 py-1 text-decoration-none" title="View attached document">
+                  <i class="{% if form.document_is_pdf %}fas fa-file-pdf text-danger{% else %}fas fa-file-image text-info{% endif %} me-1"></i>
+                  {% if form.document_is_pdf %}PDF Doc{% else %}Photo Doc{% endif %}
+                </a>
+              {% else %}
+                <span class="text-muted small">&mdash;</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge bg-secondary-subtle text-light border border-secondary px-2 py-1">
+                {{ form.total_submissions_count }} Responses
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <span class="fw-bold text-accent">{{ form.get_average_rating }}</span>
+                <span class="text-warning small"><i class="fas fa-star"></i></span>
+              </div>
+            </td>
+            <td>
+              {% if form.is_active %}
+                <span class="status-pill status-approved">Active</span>
+              {% else %}
+                <span class="status-pill status-rejected">Closed</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <!-- Analytics -->
+                {% if is_admin %}
+                  <a href="{% url 'admin_dashboard:feedback_analytics' form.id %}" class="btn btn-outline-info btn-sm" title="View Analytics & Responses">
+                    <i class="fas fa-chart-bar me-1"></i>Analytics
+                  </a>
+                {% else %}
+                  <a href="{% url 'hod:feedback_analytics' form.id %}" class="btn btn-outline-info btn-sm" title="View Analytics & Responses">
+                    <i class="fas fa-chart-bar me-1"></i>Analytics
+                  </a>
+                {% endif %}
+
+                <!-- Blank PDF download -->
+                {% if is_admin %}
+                  <a href="{% url 'admin_dashboard:download_blank_feedback_pdf' form.id %}" class="btn btn-outline-secondary btn-sm" title="Download Official Blank Printable PDF">
+                    <i class="fas fa-print me-1"></i>Blank PDF
+                  </a>
+                {% else %}
+                  <a href="{% url 'hod:download_blank_feedback_pdf' form.id %}" class="btn btn-outline-secondary btn-sm" title="Download Official Blank Printable PDF">
+                    <i class="fas fa-print me-1"></i>Blank PDF
+                  </a>
+                {% endif %}
+
+                <!-- Dropdown -->
+                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="visually-hidden">Toggle</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                  {% if is_admin %}
+                    <li><a class="dropdown-item text-light" href="{% url 'admin_dashboard:edit_feedback_form' form.id %}"><i class="fas fa-edit me-2 text-info"></i>Edit Form</a></li>
+                    <li><a class="dropdown-item text-light" href="{% url 'admin_dashboard:export_feedback_analytics_pdf' form.id %}"><i class="fas fa-file-pdf me-2 text-danger"></i>Export Analytics PDF</a></li>
+                    <li><a class="dropdown-item text-light" href="{% url 'admin_dashboard:toggle_feedback_status' form.id %}"><i class="fas fa-power-off me-2 text-warning"></i>Toggle Active/Closed</a></li>
+                    <li><hr class="dropdown-divider border-secondary"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'admin_dashboard:delete_feedback_form' form.id %}" onclick="return confirm('Are you sure you want to delete this feedback form and all its responses?');"><i class="fas fa-trash-alt me-2"></i>Delete Form</a></li>
+                  {% else %}
+                    <li><a class="dropdown-item text-light" href="{% url 'hod:edit_feedback_form' form.id %}"><i class="fas fa-edit me-2 text-info"></i>Edit Form</a></li>
+                    <li><a class="dropdown-item text-light" href="{% url 'hod:export_feedback_analytics_pdf' form.id %}"><i class="fas fa-file-pdf me-2 text-danger"></i>Export Analytics PDF</a></li>
+                    <li><a class="dropdown-item text-light" href="{% url 'hod:toggle_feedback_status' form.id %}"><i class="fas fa-power-off me-2 text-warning"></i>Toggle Active/Closed</a></li>
+                    <li><hr class="dropdown-divider border-secondary"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'hod:delete_feedback_form' form.id %}" onclick="return confirm('Are you sure you want to delete this feedback form and all its responses?');"><i class="fas fa-trash-alt me-2"></i>Delete Form</a></li>
+                  {% endif %}
+                </ul>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="fas fa-inbox fa-3x mb-3 text-secondary"></i>
+              <h5>No Feedback Forms Found</h5>
+              <p class="small mb-0">Create and upload your first student feedback form using the button above.</p>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

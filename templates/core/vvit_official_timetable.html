@@ -1,0 +1,880 @@
+{% load static %}
+{% load core_tags %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<!-- DUAL-THEME TIMETABLE: CYBER NEON GLOW (SCREEN) + OFFICIAL VVIT (PRINT/PDF)       -->
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ── CYBER NEON GLOW THEME ─────────────────────────── */
+.cyber-tt-container {
+  background: radial-gradient(circle at 50% 0%, #151724 0%, #0a0b10 100%);
+  border: 1px solid #1f2338;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.cyber-top-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cyber-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cyber-view-toggle {
+  background: #12131d;
+  border: 1px solid #282c44;
+  border-radius: 30px;
+  padding: 3px;
+  display: inline-flex;
+}
+.cyber-toggle-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.cyber-toggle-btn.active {
+  background: #00e676;
+  color: #052e16;
+  box-shadow: 0 0 15px rgba(0, 230, 118, 0.5);
+}
+
+/* Day Header Tabs */
+.cyber-grid-header {
+  display: grid;
+  grid-template-columns: 140px repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.cyber-time-hdr {
+  color: #ff3b5c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cyber-day-hdr {
+  text-align: center;
+  padding: 10px 4px 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+.cyber-day-hdr:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ACTIVE GLOWING DAY HEADER */
+.cyber-day-hdr.glowing-active-day {
+  color: #00e676 !important;
+  text-shadow: 0 0 15px rgba(0, 230, 118, 0.8), 0 0 30px rgba(0, 230, 118, 0.4);
+  border-bottom: 3.5px solid #00e676 !important;
+  box-shadow: 0 5px 15px rgba(0, 230, 118, 0.4);
+  position: relative;
+}
+.cyber-day-hdr.glowing-active-day::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 15%;
+  width: 70%;
+  height: 3.5px;
+  background: #00e676;
+  border-radius: 4px;
+  box-shadow: 0 0 12px #00e676;
+}
+
+/* Grid Row */
+.cyber-grid-row {
+  display: grid;
+  grid-template-columns: 140px repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Time Slot Card (Left) */
+.cyber-time-card {
+  background: #11121c;
+  border: 1px solid #1f2338;
+  border-radius: 12px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 110px;
+}
+.cyber-time-val {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+.cyber-slot-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Class Period Cards */
+.cyber-class-card {
+  background: #141520;
+  border: 1px solid #202438;
+  border-left: 3px solid #e11d48;
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.cyber-class-card:hover {
+  transform: translateY(-3px);
+  border-color: #f43f5e;
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.25);
+}
+
+.cyber-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.cyber-subj-badge {
+  background: rgba(225, 29, 72, 0.16);
+  color: #f43f5e;
+  border: 1px solid rgba(225, 29, 72, 0.35);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+.cyber-subj-icon {
+  color: #f43f5e;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.cyber-subj-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.3;
+  margin: 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cyber-card-bot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  gap: 4px;
+}
+.cyber-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cyber-faculty {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+/* ── ACTIVE DAY COLUMN GLOW (THE GREEN GLOW EFFECT) ── */
+.cyber-class-card.glowing-active-card {
+  background: #0d1f18 !important;
+  border: 2px solid #00e676 !important;
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.45), inset 0 0 12px rgba(0, 230, 118, 0.1) !important;
+  transform: translateY(-2px);
+}
+.cyber-class-card.glowing-active-card:hover {
+  box-shadow: 0 0 28px rgba(0, 230, 118, 0.7), inset 0 0 16px rgba(0, 230, 118, 0.2) !important;
+  transform: translateY(-4px);
+}
+.cyber-class-card.glowing-active-card .cyber-subj-badge {
+  background: rgba(0, 230, 118, 0.16) !important;
+  color: #00e676 !important;
+  border: 1px solid rgba(0, 230, 118, 0.4) !important;
+}
+.cyber-class-card.glowing-active-card .cyber-subj-icon {
+  color: #00e676 !important;
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.8);
+}
+.cyber-class-card.glowing-active-card .cyber-card-bot {
+  color: #a7f3d0 !important;
+}
+.cyber-class-card.glowing-active-card .cyber-room i {
+  color: #00e676 !important;
+}
+
+/* Empty Cell in Cyber Theme */
+.cyber-empty-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+.cyber-empty-card.glowing-active-card {
+  border: 1.5px dashed rgba(0, 230, 118, 0.45) !important;
+  background: rgba(0, 230, 118, 0.03) !important;
+  color: rgba(0, 230, 118, 0.5) !important;
+}
+
+/* Break Strip Row */
+.cyber-break-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.cyber-break-bar {
+  background: rgba(225, 29, 72, 0.06);
+  border: 1px dashed rgba(225, 29, 72, 0.35);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #f43f5e;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 20px;
+}
+
+/* Responsive scrolling */
+.cyber-scroll-wrap {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.cyber-grid-content {
+  min-width: 980px;
+}
+</style>
+
+<div class="vvit-tt-wrapper mb-4">
+  <!-- Top Action Controls -->
+  <div class="tt-actions-bar d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 no-print">
+    <div class="d-flex align-items-center gap-2">
+      <!-- Theme Switcher Pills -->
+      <div class="cyber-view-toggle">
+        <button type="button" class="cyber-toggle-btn active" id="btnCyberTheme" onclick="switchTimetableTheme('cyber')">
+          <i class="fas fa-sparkles text-success me-1"></i>Cyber Glow Theme
+        </button>
+        <button type="button" class="cyber-toggle-btn" id="btnPaperTheme" onclick="switchTimetableTheme('paper')">
+          <i class="fas fa-file-alt me-1"></i>Paper Document View
+        </button>
+      </div>
+      {% if target_date %}
+      <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
+        <i class="far fa-calendar-alt me-1"></i>Date: {{ target_date|date:"d M Y" }} ({{ day_name }})
+      </span>
+      {% endif %}
+    </div>
+    
+    <div class="d-flex gap-2">
+      {% if can_upload %}
+      <button type="button" class="btn btn-warning text-dark fw-bold btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#timetableUploadModal">
+        <i class="fas fa-camera me-1"></i>Upload Photo / PDF
+      </button>
+      {% endif %}
+
+      {% if can_edit %}
+      <button type="button" class="btn btn-outline-info btn-sm px-3" data-bs-toggle="modal" data-bs-target="#editMetadataModal">
+        <i class="fas fa-sliders-h me-1"></i>Edit Details / Signatures
+      </button>
+      {% endif %}
+
+      {% if pdf_export_url %}
+      <a href="{{ pdf_export_url }}" class="btn btn-danger btn-sm px-3" target="_blank">
+        <i class="fas fa-file-pdf me-1"></i>Download Official PDF
+      </a>
+      {% endif %}
+
+      <button type="button" class="btn btn-secondary btn-sm px-3" onclick="window.print()">
+        <i class="fas fa-print me-1"></i>Print
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. CYBER NEON GLOW TIMETABLE (MATCHING MOCKUP THEME EXACTLY)              -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="cyber-tt-container mb-4" id="cyberTimetableWrapper">
+    <!-- Top Meta Strip -->
+    <div class="cyber-top-strip">
+      <div class="cyber-title">
+        <i class="fas fa-calendar-week text-success fs-4"></i>
+        <span>{{ section.branch.code|default:"CSE" }} &middot; B.Tech Year {{ section.year.year|default:"II" }} &middot; Sec {{ section.name|default:"A" }}</span>
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small ms-2" style="font-size: 0.72rem;">
+          <i class="fas fa-circle text-success me-1" style="font-size: 0.55rem;"></i>Live Schedule
+        </span>
+      </div>
+      <div class="d-flex flex-wrap gap-2 small text-muted">
+        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+          <i class="fas fa-door-open me-1 text-warning"></i>Room: {{ metadata.room_number|default:"C-402" }}
+        </span>
+        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+          <i class="fas fa-user-tie me-1 text-info"></i>Class Teacher: {{ metadata.class_teacher.user.get_full_name|default:metadata.class_teacher_name|default:"TBA" }}
+        </span>
+        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+          <i class="fas fa-clock me-1 text-danger"></i>Click any Day Header to highlight
+        </span>
+      </div>
+    </div>
+
+    <!-- Scrollable Cyber Grid -->
+    <div class="cyber-scroll-wrap">
+      <div class="cyber-grid-content">
+        
+        <!-- Day Columns Header -->
+        <div class="cyber-grid-header">
+          <div class="cyber-time-hdr">
+            <i class="far fa-clock"></i> TIME
+          </div>
+          {% for day in days %}
+            <div class="cyber-day-hdr" data-day-name="{{ day }}" onclick="setGlowingDay('{{ day }}')">
+              {{ day|upper }}
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 1: 08:00 - 08:50 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">08:00 - 08:50</div>
+            <div class="cyber-slot-lbl">Slot 01</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:1 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="1" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="1">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- BREAK 1: 08:50 - 09:10 -->
+        <div class="cyber-break-row">
+          <div class="cyber-time-card" style="min-height: 48px; padding: 6px;">
+            <div class="cyber-time-val" style="font-size: 0.8rem;">08:50 - 09:10</div>
+            <div class="cyber-slot-lbl" style="font-size: 0.65rem;">Break</div>
+          </div>
+          <div class="cyber-break-bar">
+            <i class="fas fa-coffee"></i> Morning Refreshment Break <i class="fas fa-croissant"></i>
+          </div>
+        </div>
+
+        <!-- PERIOD 2: 09:10 - 10:00 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">09:10 - 10:00</div>
+            <div class="cyber-slot-lbl">Slot 02</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:2 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="2" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="2">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 3: 10:00 - 10:50 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">10:00 - 10:50</div>
+            <div class="cyber-slot-lbl">Slot 03</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:3 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="3" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="3">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- BREAK 2: 10:50 - 11:10 -->
+        <div class="cyber-break-row">
+          <div class="cyber-time-card" style="min-height: 48px; padding: 6px;">
+            <div class="cyber-time-val" style="font-size: 0.8rem;">10:50 - 11:10</div>
+            <div class="cyber-slot-lbl" style="font-size: 0.65rem;">Break</div>
+          </div>
+          <div class="cyber-break-bar">
+            <i class="fas fa-mug-hot"></i> Tea Break & Student Discussion <i class="fas fa-comments"></i>
+          </div>
+        </div>
+
+        <!-- PERIOD 4: 11:10 - 12:00 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">11:10 - 12:00</div>
+            <div class="cyber-slot-lbl">Slot 04</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:4 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="4" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="4">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 5: 12:00 - 12:50 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">12:00 - 12:50</div>
+            <div class="cyber-slot-lbl">Slot 05</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:5 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="5" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="5">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- LUNCH BREAK: 12:50 - 01:50 -->
+        <div class="cyber-break-row">
+          <div class="cyber-time-card" style="min-height: 52px; padding: 6px;">
+            <div class="cyber-time-val" style="font-size: 0.85rem;">12:50 - 01:50</div>
+            <div class="cyber-slot-lbl" style="font-size: 0.65rem;">Lunch</div>
+          </div>
+          <div class="cyber-break-bar" style="border-color: rgba(225, 29, 72, 0.45); background: rgba(225, 29, 72, 0.08);">
+            <i class="fas fa-utensils"></i> Refreshment & Lunch Break <i class="fas fa-mug-hot"></i>
+          </div>
+        </div>
+
+        <!-- PERIOD 6: 01:50 - 02:50 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">01:50 - 02:50</div>
+            <div class="cyber-slot-lbl">Slot 06</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:6 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="6" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="6">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 7: 02:50 - 03:50 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">02:50 - 03:50</div>
+            <div class="cyber-slot-lbl">Slot 07</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:7 %}
+              {% if s %}
+                <div class="cyber-class-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="7" data-subject-id="{{ s.subject.id|default:'' }}" data-faculty-id="{{ s.faculty.id|default:'' }}" data-room="{{ s.room_number|default:'' }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> {{ s.room_number|default:metadata.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.faculty.user.get_full_name|default:"TBA" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card tt-slot-cell" data-card-day="{{ day }}" data-day="{{ day }}" data-period="7">
+                  <span>&mdash;</span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. OFFICIAL VVIT WHITE PAPER TIMETABLE (FOR PRINT / INSTITUTIONAL MODE)  -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="vvit-paper-card p-4 bg-white text-dark shadow-lg rounded-3 border d-none" id="vvitTimetableSheet" style="font-family: 'Times New Roman', Times, serif; color: #111;">
+    
+    <!-- Top College Header -->
+    <div class="text-center pb-2 border-bottom border-dark position-relative">
+      <div class="d-flex align-items-center justify-content-center gap-3 mb-1">
+        <div class="vvit-logo-crest" style="width: 70px; height: 70px; background: #900; color: white; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Arial', sans-serif; font-weight: bold; border: 2px solid #500;">
+          <span style="font-size: 1.4rem; line-height: 1;">VVIT</span>
+          <span style="font-size: 0.5rem; text-align: center; text-transform: uppercase;">Autonomous</span>
+        </div>
+        <div>
+          <h2 class="mb-0 fw-bold" style="font-size: 1.45rem; color: #800000; letter-spacing: 0.5px; font-family: 'Georgia', serif;">
+            VASIREDDY VENKATADRI INSTITUTE OF TECHNOLOGY
+          </h2>
+          <div class="small fw-bold" style="font-size: 0.85rem; color: #333;">(Autonomous)</div>
+          <div style="font-size: 0.78rem; line-height: 1.25; color: #222;">
+            Approved by AICTE, Permanently Affiliated to JNTUK, NAAC Accredited with 'A' Grade, ISO 9001:2015 Certified<br>
+            Nambur (V), Pedakakani (M), Guntur (Dt.), Andhra Pradesh – 522 508
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-2 text-danger fw-bold" style="font-size: 1.05rem; letter-spacing: 0.5px; color: #990000;">
+        {% if metadata.program_name and "CSO" not in metadata.program_name or section.branch.code == "CSO" %}
+          {{ metadata.program_name }}
+        {% else %}
+          [Program: {{ section.branch.name|default:"Computer Science and Engineering" }} — {{ section.branch.code }} (Sec {{ section.name }})]
+        {% endif %}
+      </div>
+
+      <div class="mt-1">
+        <span class="fw-bold text-decoration-underline" style="font-size: 1rem; letter-spacing: 1px;">Time Table</span>
+      </div>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div class="my-2 border border-dark" style="font-size: 0.85rem;">
+      <div class="row g-0 border-bottom border-dark text-center fw-semibold">
+        <div class="col-4 border-end border-dark py-1 text-start ps-2">
+          <strong>Academic Year:</strong> {{ metadata.academic_year|default:"2026-27" }}
+        </div>
+        <div class="col-4 border-end border-dark py-1">
+          <strong>Room No:</strong> {{ metadata.room_number|default:"C-402" }}
+        </div>
+        <div class="col-4 py-1 text-end pe-2">
+          <strong>With effect from :</strong> {{ metadata.with_effect_from|date:"d-m-Y"|default:"10-08-2026" }}
+        </div>
+      </div>
+      <div class="row g-0 text-center fw-semibold">
+        <div class="col-4 border-end border-dark py-1 text-start ps-2">
+          <strong>B. Tech {% if section.year.year == 1 %}I - Year{% elif section.year.year == 2 %}II - Year{% elif section.year.year == 3 %}III - Year{% elif section.year.year == 4 %}IV - Year{% else %}{{ section.year.year }} - Year{% endif %}</strong>
+        </div>
+        <div class="col-4 border-end border-dark py-1">
+          <strong>{% if metadata.semester == 2 %}II - Semester{% else %}I - Semester{% endif %}</strong>
+        </div>
+        <div class="col-4 py-1 text-end pe-2">
+          <strong>Class Teacher :</strong> {% if metadata.class_teacher %}{{ metadata.class_teacher.user.get_full_name }}{% elif metadata.class_teacher_name %}{{ metadata.class_teacher_name }}{% else %}TBA{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Period Grid Table -->
+    <div class="table-responsive my-2">
+      <table class="table table-bordered border-dark text-center align-middle mb-0 vvit-tt-grid" style="font-size: 0.82rem; border: 1.5px solid #000;">
+        <thead>
+          <tr class="bg-light border-dark" style="background: #f8f9fa;">
+            <th class="border-dark py-1" style="width: 75px;">HOUR →</th>
+            <th class="border-dark py-1">8.00-8.50</th>
+            <th class="border-dark py-1 bg-secondary-subtle" style="width: 45px;">8.50-9.10</th>
+            <th class="border-dark py-1">9.10-10.00</th>
+            <th class="border-dark py-1">10.00-10.50</th>
+            <th class="border-dark py-1 bg-secondary-subtle" style="width: 45px;">10.50-11.10</th>
+            <th class="border-dark py-1">11.10-12.00</th>
+            <th class="border-dark py-1">12.00-12.50</th>
+            <th class="border-dark py-1 bg-secondary-subtle" style="width: 55px;">12.50-1.50</th>
+            <th class="border-dark py-1">1.50-2.50</th>
+            <th class="border-dark py-1">2.50-3.50</th>
+          </tr>
+          <tr class="bg-light border-dark fw-bold" style="background: #eceff1;">
+            <th class="border-dark py-1">DAY ↓</th>
+            <th class="border-dark py-1">1</th>
+            <th class="border-dark py-1 bg-secondary-subtle" rowspan="7" style="vertical-align: middle; width: 45px; writing-mode: vertical-lr; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; background: #e9ecef;">BREAK</th>
+            <th class="border-dark py-1">2</th>
+            <th class="border-dark py-1">3</th>
+            <th class="border-dark py-1 bg-secondary-subtle" rowspan="7" style="vertical-align: middle; width: 45px; writing-mode: vertical-lr; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; background: #e9ecef;">BREAK</th>
+            <th class="border-dark py-1">4</th>
+            <th class="border-dark py-1">5</th>
+            <th class="border-dark py-1 bg-secondary-subtle" rowspan="7" style="vertical-align: middle; width: 55px; writing-mode: vertical-lr; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; background: #dee2e6;">LUNCH</th>
+            <th class="border-dark py-1">6</th>
+            <th class="border-dark py-1">7</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in days %}
+          <tr>
+            <td class="fw-bold border-dark bg-light" style="background: #f8f9fa;">{{ day|slice:":3" }}</td>
+            
+            {% with s1=grid|dict_get:day|dict_get:1 %}
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="1">
+              {% if s1 %}<div class="fw-bold text-dark">{{ s1.subject.short_name|default:s1.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            {% endwith %}
+
+            {% with s2=grid|dict_get:day|dict_get:2 s3=grid|dict_get:day|dict_get:3 %}
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="2">
+              {% if s2 %}<div class="fw-bold text-dark">{{ s2.subject.short_name|default:s2.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="3">
+              {% if s3 %}<div class="fw-bold text-dark">{{ s3.subject.short_name|default:s3.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            {% endwith %}
+
+            {% with s4=grid|dict_get:day|dict_get:4 s5=grid|dict_get:day|dict_get:5 %}
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="4">
+              {% if s4 %}<div class="fw-bold text-dark">{{ s4.subject.short_name|default:s4.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="5">
+              {% if s5 %}<div class="fw-bold text-dark">{{ s5.subject.short_name|default:s5.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            {% endwith %}
+
+            {% with s6=grid|dict_get:day|dict_get:6 s7=grid|dict_get:day|dict_get:7 %}
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="6">
+              {% if s6 %}<div class="fw-bold text-dark">{{ s6.subject.short_name|default:s6.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            <td class="border-dark tt-slot-cell" data-day="{{ day }}" data-period="7">
+              {% if s7 %}<div class="fw-bold text-dark">{{ s7.subject.short_name|default:s7.subject.code }}</div>{% else %}—{% endif %}
+            </td>
+            {% endwith %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Subject & Faculty Legend Table -->
+    <div class="table-responsive my-2">
+      <table class="table table-bordered border-dark table-sm mb-0 align-middle" style="font-size: 0.82rem; border: 1.5px solid #000;">
+        <thead>
+          <tr class="bg-light border-dark text-center fw-bold" style="background: #eceff1;">
+            <th style="width: 55px;" class="border-dark py-1">S.NO</th>
+            <th class="border-dark py-1 text-center" style="width: 140px;">SUBJECT CODE</th>
+            <th class="border-dark py-1 text-start ps-3">SUBJECT NAME</th>
+            <th class="border-dark py-1 text-start ps-3">FACULTY NAME</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in legend_items %}
+          <tr class="border-dark">
+            <td class="text-center fw-bold border-dark py-1">{{ item.sno|default:forloop.counter }}</td>
+            <td class="text-center fw-bold border-dark py-1">{{ item.code }}</td>
+            <td class="border-dark py-1 ps-3">{{ item.name }}</td>
+            <td class="border-dark py-1 ps-3 fw-semibold">{{ item.faculty|default:"TBA" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center text-muted py-2">No subject legend entries configured.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures Footer -->
+    <div class="row pt-4 mt-3 text-center fw-bold border-top-0" style="font-size: 0.85rem; color: #111;">
+      <div class="col-3">
+        <div>{{ metadata.timetable_incharge|default:"Timetable I/C" }}</div>
+      </div>
+      <div class="col-3">
+        <div>{{ metadata.class_teacher_name|default:"Class Teacher" }}</div>
+      </div>
+      <div class="col-3">
+        <div>{{ metadata.hod_name|default:"HOD" }}</div>
+      </div>
+      <div class="col-3">
+        <div>{{ metadata.principal_name|default:"PRINCIPAL" }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Live Day Detection & Glowing Active Column Setter
+function setGlowingDay(targetDay) {
+  if (!targetDay) {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayIndex = new Date().getDay();
+    targetDay = dayNames[todayIndex] || 'Monday';
+    if (targetDay === 'Sunday') targetDay = 'Monday';
+  }
+
+  // 1. Update Header Tabs
+  document.querySelectorAll('.cyber-day-hdr').forEach(el => {
+    const dName = el.getAttribute('data-day-name');
+    if (dName && dName.toLowerCase() === targetDay.toLowerCase()) {
+      el.classList.add('glowing-active-day');
+    } else {
+      el.classList.remove('glowing-active-day');
+    }
+  });
+
+  // 2. Update Column Cards
+  document.querySelectorAll('[data-card-day]').forEach(card => {
+    const cDay = card.getAttribute('data-card-day');
+    if (cDay && cDay.toLowerCase() === targetDay.toLowerCase()) {
+      card.classList.add('glowing-active-card');
+    } else {
+      card.classList.remove('glowing-active-card');
+    }
+  });
+}
+
+function switchTimetableTheme(theme) {
+  const cyberWrap = document.getElementById('cyberTimetableWrapper');
+  const paperWrap = document.getElementById('vvitTimetableSheet');
+  const btnCyber = document.getElementById('btnCyberTheme');
+  const btnPaper = document.getElementById('btnPaperTheme');
+
+  if (theme === 'paper') {
+    cyberWrap.classList.add('d-none');
+    paperWrap.classList.remove('d-none');
+    btnPaper.classList.add('active');
+    btnCyber.classList.remove('active');
+  } else {
+    cyberWrap.classList.remove('d-none');
+    paperWrap.classList.add('d-none');
+    btnCyber.classList.add('active');
+    btnPaper.classList.remove('active');
+  }
+}
+
+// Auto-run on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setGlowingDay();
+});
+</script>

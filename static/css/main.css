@@ -52,9 +52,9 @@
   --shadow-glow:     0 0 24px rgba(220, 38, 38, 0.25);
   --shadow-elevated: 0 20px 60px rgba(0, 0, 0, 0.6);
 
-  /* Glass blur */
-  --blur:            blur(18px);
-  --blur-sm:         blur(10px);
+  /* Glass blur - Optimized for 60fps scrolling */
+  --blur:            blur(8px);
+  --blur-sm:         blur(4px);
 
   /* Transitions */
   --t-fast:          150ms ease;
@@ -65,7 +65,10 @@
 /* ── 2. RESET & BASE ──────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
   background-color: var(--clr-bg);
@@ -74,17 +77,25 @@ body {
   font-size: 14px;
   line-height: 1.6;
   min-height: 100vh;
-  /* Premium animated gradient mesh */
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(220, 38, 38, 0.08), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.08), transparent 25%);
-  background-attachment: fixed;
-  animation: pulseBg 15s ease-in-out infinite alternate;
+  position: relative;
+  overflow-x: hidden;
 }
 
-@keyframes pulseBg {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 100% 100%; }
+/* Ultra-smooth GPU accelerated fixed background layer */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+  background-image: 
+    radial-gradient(circle at 15% 40%, rgba(220, 38, 38, 0.07), transparent 35%),
+    radial-gradient(circle at 85% 60%, rgba(59, 130, 246, 0.06), transparent 35%);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 /* ── 3. TYPOGRAPHY ────────────────────────────────────────────────── */
@@ -2523,30 +2534,21 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
   }
 }
 
-/* Staggered cards entrance styles */
-.js-loaded .glass-card,
-.js-loaded .kpi-card,
-.js-loaded .vvit-table,
-.js-loaded .timetable-grid {
-  opacity: 0;
-  transform: translateY(15px);
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color var(--t-med), box-shadow var(--t-med);
-}
-
-/* Realistic dynamic card tilt and glow hover */
+/* Optimized card hover */
 .glass-card, .kpi-card {
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: border-color var(--t-med), box-shadow var(--t-med), transform var(--t-med);
+  contain: layout style;
+  transform: translateZ(0);
 }
 
 .glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 24px rgba(220, 38, 38, 0.18) !important;
   border-color: rgba(220, 38, 38, 0.35) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45) !important;
 }
 
 .kpi-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(220, 38, 38, 0.12) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4) !important;
   border-color: rgba(220, 38, 38, 0.3) !important;
 }
 
@@ -2632,14 +2634,12 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
   transform: translateX(6px) scale(1.02);
 }
 
-/* Tactile scale and lift transition on table rows */
+/* Smooth transition on table rows */
 .vvit-table tbody tr {
-  transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+  transition: background var(--t-fast);
 }
 
 .vvit-table tbody tr:hover {
-  transform: scale(1.006) translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   background: rgba(255, 255, 255, 0.04) !important;
 }
 

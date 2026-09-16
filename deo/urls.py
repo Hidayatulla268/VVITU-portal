@@ -18,4 +18,10 @@ urlpatterns = [
     
     # Scoped Fees Management
     path('fees/',                    views.manage_fees,          name='manage_fees'),
+
+    # Timetable
+    path('timetable/',               views.manage_timetable,     name='manage_timetable'),
+    path('timetable/section/<int:section_id>/', views.section_timetable, name='section_timetable'),
+    path('timetable/faculty/<int:faculty_id>/', views.faculty_timetable, name='faculty_timetable'),
+    path('timetable/export-pdf/<int:section_id>/', views.export_timetable_pdf, name='export_timetable_pdf'),
 ]

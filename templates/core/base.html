@@ -24,8 +24,8 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
   <!-- VVIT Custom CSS -->
-  <link rel="stylesheet" href="{% static 'css/main.css' %}?v={% now 'U' %}"/>
-  <link rel="stylesheet" href="{% static 'css/theme_and_calendar.css' %}?v={% now 'U' %}"/>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v={{ APP_VERSION|default:'2.5.0' }}"/>
+  <link rel="stylesheet" href="{% static 'css/theme_and_calendar.css' %}?v={{ APP_VERSION|default:'2.5.0' }}"/>
 
   {% block extra_head %}{% endblock %}
   {% block extra_css %}{% endblock %}
@@ -192,6 +192,10 @@
       <a href="{% url 'student:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' %}active{% endif %}">
         <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
       </a>
+      <a href="{% url 'student:feedback_list' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'student' %}active{% endif %}">
+        <i class="fas fa-comment-dots nav-icon text-warning"></i><span>Feedback Forms</span>
+      </a>
+
 
     {% elif user.role == 'faculty' or user.role == 'lab_technician' %}
       <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
@@ -199,6 +203,9 @@
       </a>
       <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
+      </a>
+      <a href="{% url 'faculty:my_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
       </a>
       <a href="{% url 'faculty:my_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'my_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
         <i class="fas fa-user-clock nav-icon"></i><span>My Attendance Log</span>
@@ -297,6 +304,10 @@
       <a href="{% url 'hod:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
         <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
       </a>
+      <a href="{% url 'hod:manage_feedback_forms' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
+        <i class="fas fa-poll-h nav-icon text-warning"></i><span>Student Feedback</span>
+      </a>
+
 
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-title px-3 py-2 text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em; font-weight: 700; opacity: 0.75;">My Teaching (Faculty Tools)</div>
@@ -349,6 +360,9 @@
       </a>
       <a href="{% url 'deo:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'deo' %}active{% endif %}">
         <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
+      </a>
+      <a href="{% url 'deo:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}">
+        <i class="fas fa-calendar-alt nav-icon"></i><span>Timetables</span>
       </a>
       <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
         <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
@@ -420,6 +434,10 @@
       <a href="{% url 'admin_dashboard:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
         <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
       </a>
+      <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
+        <i class="fas fa-poll-h nav-icon text-warning"></i><span>Student Feedback</span>
+      </a>
+
       <a href="{% url 'admin_dashboard:attendance_list' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
         <i class="fas fa-clipboard-list nav-icon"></i><span>Attendance Editor</span>
       </a>
@@ -490,7 +508,7 @@
 <!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- VVIT Main JS -->
-<script src="{% static 'js/main.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/main.js' %}?v={{ APP_VERSION|default:'2.5.0' }}"></script>
 
 {% block extra_js %}{% endblock %}
 

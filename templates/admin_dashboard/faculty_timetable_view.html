@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Faculty Timetable — {{ faculty.user.get_full_name }} (Admin){% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-chalkboard-teacher me-2 text-accent"></i>Faculty Weekly Schedule</h1>
+    <p class="ph-sub">{{ faculty.employee_id }} — {{ faculty.user.get_full_name }} ({{ faculty.department.name|default:"General" }})</p>
+  </div>
+  <div class="ph-right">
+    <a href="{% url 'admin_dashboard:manage_timetable' %}" class="btn-vvit-outline">
+      <i class="fas fa-arrow-left me-2"></i>Back to Timetables
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Render Official VVIT Faculty Weekly Timetable Format -->
+{% include "core/vvit_official_faculty_timetable.html" %}
+{% endblock %}

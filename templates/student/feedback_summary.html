@@ -1,0 +1,199 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Feedback Summary — {{ submission.reference_no }} — VVIT Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printableSummary, #printableSummary * {
+    visibility: visible;
+  }
+  #printableSummary {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print, .vvit-navbar, .vvit-sidebar, .sidebar-overlay, footer {
+    display: none !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip no-print">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-file-invoice me-2 text-accent"></i>Feedback Submission Acknowledgment</h1>
+    <p class="ph-sub">Ref: <span class="font-monospace text-accent">{{ submission.reference_no }}</span> &middot; {{ form_obj.title }}</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <button onclick="window.print()" class="btn-vvit-outline btn-sm">
+      <i class="fas fa-print me-1"></i>Print Summary
+    </button>
+    <a href="{% url 'student:download_feedback_pdf' form_obj.id %}" class="btn-vvit-primary btn-sm">
+      <i class="fas fa-file-pdf me-1"></i>Download Official PDF
+    </a>
+    <a href="{% url 'student:feedback_list' %}" class="btn-vvit-outline btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 900px;">
+  <!-- Messages Alert -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show no-print mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Printable Summary Document Sheet -->
+  <div class="glass-card mb-5 p-4 p-md-5" id="printableSummary">
+    <!-- College Header -->
+    <div class="text-center pb-3 border-bottom border-secondary mb-4">
+      <h3 class="fw-bold mb-1 text-white text-uppercase" style="letter-spacing: 0.5px;">
+        Vasireddy Venkatadri Institute of Technology
+      </h3>
+      <p class="text-muted small mb-1">
+        Autonomous Institution &middot; Approved by AICTE &middot; Permanently Affiliated to JNTUK &middot; Accredited by NAAC 'A' Grade
+      </p>
+      <p class="text-muted small mb-2">Nambur, Peda Kakani Mandal, Guntur &ndash; 522508, Andhra Pradesh</p>
+      <div class="badge bg-dark text-accent border border-secondary px-3 py-2 text-uppercase fw-bold" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+        <i class="fas fa-check-circle me-1 text-success"></i>Student Feedback Submission Summary & Acknowledgment
+      </div>
+    </div>
+
+    <!-- Submission & Student Meta -->
+    <div class="row g-3 mb-4 p-3 rounded" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+      <div class="col-sm-6">
+        <div class="text-muted small">Student Name</div>
+        <div class="fw-bold text-white fs-6">{{ student.user.get_full_name }}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Reference Number</div>
+        <span class="badge bg-dark font-monospace text-accent border border-secondary fs-6">{{ submission.reference_no }}</span>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Roll Number</div>
+        <div class="fw-bold text-white">{{ student.roll_number }}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Submission Date & Time</div>
+        <div class="fw-semibold text-light">{{ submission.submitted_at|date:"d M Y, h:i A" }}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Program & Department</div>
+        <div class="fw-semibold text-light">{{ student.branch.name|default:student.branch.code }} ({{ student.branch.code }})</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Academic Year & Section</div>
+        <div class="fw-semibold text-light">{{ student.year.get_year_display }} &middot; Section {{ student.section.name|default:"A" }}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Form Title</div>
+        <div class="fw-bold text-white">{{ form_obj.title }}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="text-muted small">Overall Average Rating Given</div>
+        <div class="fw-bold text-success fs-5">
+          {{ submission.average_rating }} / 5.0 <span class="text-warning small fs-6">★★★★★</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Answers Breakdown Table -->
+    <div class="card-header-custom mb-3">
+      <h4 class="card-title-custom mb-0">
+        <i class="fas fa-list-check text-accent me-2"></i>Evaluated Parameters & Responses
+      </h4>
+    </div>
+
+    <div class="table-responsive mb-4">
+      <table class="vvit-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;" class="text-center">S.No</th>
+            <th>Evaluation Parameter / Question</th>
+            <th style="width: 200px;" class="text-center">Student Response</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ans in answers %}
+            <tr>
+              <td class="text-center text-muted fw-semibold">{{ forloop.counter }}</td>
+              <td class="fw-medium text-light">{{ ans.question.question_text }}</td>
+              <td class="text-center">
+                {% if ans.rating_value %}
+                  <span class="badge bg-dark text-warning border border-secondary px-2 py-1 fw-bold">
+                    {{ ans.rating_value }} Stars &middot;
+                    {% if ans.rating_value == 5 %}Excellent
+                    {% elif ans.rating_value == 4 %}Very Good
+                    {% elif ans.rating_value == 3 %}Good
+                    {% elif ans.rating_value == 2 %}Fair
+                    {% else %}Poor{% endif %}
+                  </span>
+                {% elif ans.choice_value %}
+                  <span class="badge bg-dark text-info border border-secondary px-2 py-1">
+                    {{ ans.choice_value }}
+                  </span>
+                {% elif ans.text_value %}
+                  <span class="text-light small">{{ ans.text_value }}</span>
+                {% else %}
+                  <span class="text-muted small">&mdash;</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Overall Comments (if present) -->
+    {% if submission.overall_comments %}
+      <div class="p-3 rounded mb-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+        <h6 class="fw-bold text-accent mb-1 small text-uppercase">
+          <i class="fas fa-comment-dots me-1"></i>Student's Remarks:
+        </h6>
+        <p class="mb-0 text-light small" style="white-space: pre-line;">{{ submission.overall_comments }}</p>
+      </div>
+    {% endif %}
+
+    <!-- Verification Seal & Signatures -->
+    <div class="border-top border-secondary pt-4 mt-4">
+      <div class="row text-center small text-muted">
+        <div class="col-4">
+          <div class="small text-muted mb-3">Digital Verification</div>
+          <span class="badge bg-dark text-success border border-success px-2 py-1 small">
+            <i class="fas fa-lock me-1"></i>Tamper-Proof Record
+          </span>
+          <div class="small text-muted mt-1" style="font-size: 0.7rem;">IP: {{ submission.ip_address|default:"127.0.0.1" }}</div>
+        </div>
+        <div class="col-4">
+          <div class="small text-muted mb-3">Student Acknowledgment</div>
+          <div class="fw-bold text-white small">{{ student.user.get_full_name }}</div>
+          <div class="small text-success" style="font-size: 0.7rem;">(Digitally Authenticated)</div>
+        </div>
+        <div class="col-4">
+          <div class="small text-muted mb-3">Department Head</div>
+          <div class="fw-bold text-white small">Department of {{ student.branch.code }}</div>
+          <div class="small text-muted" style="font-size: 0.7rem;">VVIT Autonomous</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

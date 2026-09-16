@@ -1,0 +1,76 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}My Timetable — Faculty Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip no-print">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-alt me-2 text-accent"></i>My Timetable & Weekly Schedule</h1>
+    <p class="ph-sub">{{ faculty.employee_id }} — {{ faculty.user.get_full_name }} ({{ faculty.department.name|default:"General" }})</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <button type="button" class="btn btn-warning text-dark fw-bold btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#timetableUploadModal">
+      <i class="fas fa-camera me-1"></i>Upload Photo / PDF
+    </button>
+    <a href="{% url 'faculty:export_my_timetable_pdf' %}{% if selected_sec_id %}?section_id={{ selected_sec_id }}{% endif %}" class="btn btn-danger btn-sm px-3" target="_blank">
+      <i class="fas fa-file-pdf me-1"></i>Official PDF
+    </a>
+    <a href="{% url 'faculty:dashboard' %}" class="btn-vvit-outline btn-sm">
+      <i class="fas fa-arrow-left me-2"></i>Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Selector Bar -->
+<div class="glass-card mb-4 p-3 no-print">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <label class="text-muted fw-semibold small mb-0">View Mode:</label>
+      <a href="{% url 'faculty:my_timetable' %}" class="btn btn-sm {% if not selected_sec_id %}btn-accent text-dark fw-bold{% else %}btn-outline-secondary text-light{% endif %}">
+        <i class="fas fa-user-clock me-1"></i>My Personal Consolidated Schedule
+      </a>
+      
+      <div class="vr bg-secondary"></div>
+
+      <label class="text-muted fw-semibold small mb-0">View Class Timetable:</label>
+      <div class="btn-group" role="group">
+        {% for sec in handled_sections %}
+        <a href="{% url 'faculty:my_timetable' %}?section_id={{ sec.id }}" class="btn btn-sm {% if selected_sec_id == sec.id %}btn-info text-dark fw-bold{% else %}btn-outline-secondary text-light{% endif %}">
+          {{ sec }}
+        </a>
+        {% empty %}
+        <span class="text-muted small">No assigned classes</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
+        <i class="fas fa-chalkboard-teacher me-1"></i>{{ faculty_ctx.total_weekly_slots }} Teaching Slots / Week
+      </span>
+    </div>
+  </div>
+</div>
+
+{% if selected_sec_id and section_ctx %}
+  <!-- Render Official VVIT Section Timetable Format -->
+  {% with section=section_ctx.section metadata=section_ctx.metadata grid=section_ctx.grid legend_items=section_ctx.legend_items target_date=section_ctx.target_date day_name=section_ctx.day_name days=section_ctx.days periods=section_ctx.periods standard_timings=section_ctx.standard_timings pdf_export_url=section_ctx.pdf_export_url can_upload=can_upload can_edit=False %}
+    {% include "core/vvit_official_timetable.html" %}
+  {% endwith %}
+
+{% else %}
+  <!-- Render Official VVIT Consolidated Faculty Weekly Timetable -->
+  {% with grid=faculty_ctx.grid days=faculty_ctx.days periods=faculty_ctx.periods standard_timings=faculty_ctx.standard_timings handled_subjects=faculty_ctx.handled_subjects total_weekly_slots=faculty_ctx.total_weekly_slots target_date=faculty_ctx.target_date day_name=faculty_ctx.day_name %}
+    {% include "core/vvit_official_faculty_timetable.html" %}
+  {% endwith %}
+{% endif %}
+
+<!-- Include Timetable Photo/PDF Upload Modal -->
+{% include "core/timetable_upload_modal.html" %}
+
+{% endblock %}

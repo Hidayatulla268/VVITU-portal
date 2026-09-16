@@ -130,7 +130,7 @@
                   </small>
                 </td>
                 <td>
-                  {% if item.is_transferred %}
+                  {% if item.transfer %}
                     {% if item.is_proxy %}
                       <span class="status-pill status-pending" title="Official Proxy Assigned by HOD/Admin">
                         <i class="fas fa-user-shield me-1"></i>Proxy (HOD/Admin)
@@ -138,6 +138,24 @@
                     {% else %}
                       <span class="status-pill status-neutral text-info" style="border-color: rgba(56,189,248,0.4);" title="Faculty Peer Substituted Session">
                         <i class="fas fa-exchange-alt me-1"></i>Substituted Session
+                      </span>
+                    {% endif %}
+
+                    {% if item.is_pending %}
+                      <span class="badge bg-warning text-dark d-block mt-1" style="font-size: 0.68rem;" title="Alternate faculty has not yet accepted">
+                        <i class="fas fa-clock me-1"></i>Pending Acceptance
+                      </span>
+                    {% elif item.is_accepted %}
+                      <span class="badge bg-info text-dark d-block mt-1" style="font-size: 0.68rem;" title="Accepted by substitute faculty">
+                        <i class="fas fa-check-circle me-1"></i>Accepted
+                      </span>
+                    {% elif item.is_rejected %}
+                      <span class="badge bg-danger text-white d-block mt-1" style="font-size: 0.68rem;" title="Declined by substitute faculty">
+                        <i class="fas fa-times-circle me-1"></i>Declined
+                      </span>
+                    {% elif item.is_completed %}
+                      <span class="badge bg-success text-white d-block mt-1" style="font-size: 0.68rem;" title="Conducted and marked">
+                        <i class="fas fa-check-double me-1"></i>Completed
                       </span>
                     {% endif %}
                   {% else %}

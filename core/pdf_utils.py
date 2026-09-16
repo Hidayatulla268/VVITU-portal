@@ -432,3 +432,475 @@ def generate_semester_grade_card_pdf(student, selected_sem=None):
     doc.build(elements, canvasmaker=NumberedCanvas)
     buffer.seek(0)
     return buffer
+
+
+# ─────────────────────────────────────────────
+# 4. STUDENT FEEDBACK SUMMARY & ACKNOWLEDGMENT PDF
+# ─────────────────────────────────────────────
+def generate_student_feedback_summary_pdf(submission):
+    """
+    Generates an official Portrait A4 PDF summary and acknowledgment receipt
+    for a student's completed feedback submission.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=30,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    title_style  = ParagraphStyle('Title', fontName='Helvetica-Bold', fontSize=13, leading=15, alignment=1, textColor=colors.HexColor('#800000'))
+    sub_style    = ParagraphStyle('Sub',   fontName='Helvetica', fontSize=8, leading=11, alignment=1, textColor=colors.HexColor('#475569'))
+    banner_style = ParagraphStyle('Bnr',   fontName='Helvetica-Bold', fontSize=10.5, leading=13, alignment=1, textColor=colors.HexColor('#1e293b'))
+    cell_style   = ParagraphStyle('Cell',  fontName='Helvetica', fontSize=8, leading=10.5, textColor=colors.HexColor('#1e293b'))
+    bold_style   = ParagraphStyle('Bold',  fontName='Helvetica-Bold', fontSize=8, leading=10.5, textColor=colors.HexColor('#0f172a'))
+    center_bold  = ParagraphStyle('CBold', fontName='Helvetica-Bold', fontSize=8, leading=10.5, alignment=1, textColor=colors.HexColor('#0f172a'))
+    hdr_style    = ParagraphStyle('Hdr',   fontName='Helvetica-Bold', fontSize=8.5, leading=11, alignment=1, textColor=colors.white)
+    rating_style = ParagraphStyle('Rate',  fontName='Helvetica-Bold', fontSize=8.5, leading=10.5, alignment=1, textColor=colors.HexColor('#800000'))
+    remarks_style= ParagraphStyle('Rem',   fontName='Helvetica', fontSize=8, leading=11, textColor=colors.HexColor('#334155'))
+
+    elements = []
+    student = submission.student
+    form = submission.form
+
+    # 1. Header Banner
+    elements.append(Paragraph("<b>VASIREDDY VENKATADRI INSTITUTE OF TECHNOLOGY</b>", title_style))
+    elements.append(Paragraph("Autonomous Institution &middot; Approved by AICTE &middot; Permanently Affiliated to JNTUK &middot; Accredited by NAAC with 'A' Grade", sub_style))
+    elements.append(Paragraph("Nambur (V), Peda Kakani (M), Guntur &ndash; 522 508, Andhra Pradesh", sub_style))
+    elements.append(Spacer(1, 6))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#800000'), spaceAfter=6))
+    elements.append(Paragraph(f"<b>STUDENT FEEDBACK SUBMISSION SUMMARY &middot; ACKNOWLEDGMENT</b>", banner_style))
+    elements.append(Paragraph(f"<font color='#64748b'>Form: <b>{form.title}</b> &middot; {form.get_feedback_type_display()}</font>", sub_style))
+    elements.append(Spacer(1, 10))
+
+    # 2. Student & Submission Info Grid
+    branch_name = student.branch.name if student.branch else "N/A"
+    branch_code = student.branch.code if student.branch else "N/A"
+    sec_name    = student.section.name if student.section else "-"
+    year_val    = student.year.get_year_display() if student.year else "-"
+
+    info_data = [
+        [
+            Paragraph(f"<b>Student Name:</b> {student.user.get_full_name()}", cell_style),
+            Paragraph(f"<b>Reference No:</b> <font color='#800000'><b>{submission.reference_no}</b></font>", cell_style),
+        ],
+        [
+            Paragraph(f"<b>Roll Number:</b> <b>{student.roll_number}</b>", cell_style),
+            Paragraph(f"<b>Submission Date:</b> {submission.submitted_at.strftime('%d-%b-%Y %I:%M %p')}", cell_style),
+        ],
+        [
+            Paragraph(f"<b>Program / Dept:</b> {branch_code} ({branch_name})", cell_style),
+            Paragraph(f"<b>Submission Mode:</b> {submission.get_submission_mode_display()}", cell_style),
+        ],
+        [
+            Paragraph(f"<b>Year & Section:</b> {year_val} &middot; Section {sec_name}", cell_style),
+            Paragraph(f"<b>Overall Rating Given:</b> <b>{submission.average_rating} / 5.0</b>", cell_style),
+        ],
+    ]
+    info_table = Table(info_data, colWidths=[260, 263])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('BOX', (0,0), (-1,-1), 0.75, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 4.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 12))
+
+    # 3. Questions & Responses Table
+    answers = submission.answers.select_related('question').order_by('question__order', 'id')
+    
+    table_data = [
+        [
+            Paragraph("<b>S.No</b>", hdr_style),
+            Paragraph("<b>Evaluation Parameter / Question</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8.5, leading=11, alignment=0, textColor=colors.white)),
+            Paragraph("<b>Response / Score</b>", hdr_style),
+        ]
+    ]
+
+    rating_labels = {
+        5: "5 - Excellent ★★★★★",
+        4: "4 - Very Good ★★★★☆",
+        3: "3 - Good ★★★☆☆",
+        2: "2 - Fair ★★☆☆☆",
+        1: "1 - Poor ★☆☆☆☆",
+    }
+
+    for idx, ans in enumerate(answers, 1):
+        q = ans.question
+        if ans.rating_value is not None:
+            ans_display = rating_labels.get(ans.rating_value, f"{ans.rating_value} Stars")
+            ans_para = Paragraph(f"<b>{ans_display}</b>", rating_style)
+        elif ans.choice_value:
+            ans_para = Paragraph(f"<b>{ans.choice_value}</b>", bold_style)
+        elif ans.text_value:
+            ans_para = Paragraph(f"{ans.text_value}", remarks_style)
+        else:
+            ans_para = Paragraph("<font color='#94a3b8'>No response</font>", cell_style)
+
+        table_data.append([
+            Paragraph(str(idx), center_bold),
+            Paragraph(f"<b>{q.question_text}</b>", cell_style),
+            ans_para,
+        ])
+
+    q_table = Table(table_data, colWidths=[35, 335, 153], repeatRows=1)
+    q_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#800000')),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fbfcfd')]),
+    ]))
+    elements.append(q_table)
+    elements.append(Spacer(1, 10))
+
+    # 4. Overall Comments Box
+    if submission.overall_comments:
+        comments_data = [
+            [
+                Paragraph("<b>Student's General Remarks & Suggestions:</b><br/>" + submission.overall_comments.replace('\n', '<br/>'), remarks_style)
+            ]
+        ]
+        comm_table = Table(comments_data, colWidths=[523])
+        comm_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f1f5f9')),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+            ('TOPPADDING', (0,0), (-1,-1), 6),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('LEFTPADDING', (0,0), (-1,-1), 8),
+            ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ]))
+        elements.append(comm_table)
+        elements.append(Spacer(1, 14))
+
+    # 5. Digital Verification Seal & Signatures
+    verif_data = [
+        [
+            Paragraph("<font size=7 color='#64748b'><b>SYSTEM GENERATED ACKNOWLEDGMENT</b><br/>This document confirms the online submission of academic feedback on the VVITU Portal. Recorded under digital integrity verification.</font>", cell_style),
+            Paragraph("<b>Student Signature</b><br/><br/><br/>(Digitally Verified via Roll Auth)", ParagraphStyle('SSig', fontName='Helvetica', fontSize=7.5, leading=10, alignment=1, textColor=colors.HexColor('#475569'))),
+            Paragraph("<b>Head of Department</b><br/><br/><br/>Department of " + (branch_code or "Academic Unit"), ParagraphStyle('HSig', fontName='Helvetica', fontSize=7.5, leading=10, alignment=1, textColor=colors.HexColor('#475569'))),
+        ]
+    ]
+    verif_table = Table(verif_data, colWidths=[240, 140, 143])
+    verif_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('ALIGN', (1,0), (2,0), 'CENTER'),
+    ]))
+    elements.append(KeepTogether(verif_table))
+
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+    return buffer
+
+
+# ─────────────────────────────────────────────
+# 5. BLANK PRINTABLE FEEDBACK FORM PDF (OFFLINE)
+# ─────────────────────────────────────────────
+def generate_feedback_blank_printable_pdf(feedback_form):
+    """
+    Generates an official printable blank feedback form in Portrait A4
+    for physical distribution, manual filling, and offline submission.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=30,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    title_style  = ParagraphStyle('Title', fontName='Helvetica-Bold', fontSize=13, leading=15, alignment=1, textColor=colors.HexColor('#800000'))
+    sub_style    = ParagraphStyle('Sub',   fontName='Helvetica', fontSize=8, leading=11, alignment=1, textColor=colors.HexColor('#475569'))
+    banner_style = ParagraphStyle('Bnr',   fontName='Helvetica-Bold', fontSize=10, leading=13, alignment=1, textColor=colors.HexColor('#1e293b'))
+    cell_style   = ParagraphStyle('Cell',  fontName='Helvetica', fontSize=8, leading=10.5, textColor=colors.HexColor('#1e293b'))
+    center_bold  = ParagraphStyle('CBold', fontName='Helvetica-Bold', fontSize=8, leading=10.5, alignment=1, textColor=colors.HexColor('#0f172a'))
+    hdr_style    = ParagraphStyle('Hdr',   fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=1, textColor=colors.white)
+
+    elements = []
+
+    # 1. Header Banner
+    elements.append(Paragraph("<b>VASIREDDY VENKATADRI INSTITUTE OF TECHNOLOGY</b>", title_style))
+    elements.append(Paragraph("Autonomous Institution &middot; Approved by AICTE &middot; Permanently Affiliated to JNTUK &middot; Accredited by NAAC 'A' Grade", sub_style))
+    elements.append(Paragraph("Nambur, Guntur &ndash; 522 508, Andhra Pradesh", sub_style))
+    elements.append(Spacer(1, 4))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#800000'), spaceAfter=5))
+    elements.append(Paragraph(f"<b>STUDENT EVALUATION & FEEDBACK QUESTIONNAIRE &middot; PHYSICAL FORM</b>", banner_style))
+    elements.append(Paragraph(f"<b>Form Title:</b> {feedback_form.title} &middot; <font color='#64748b'>{feedback_form.get_feedback_type_display()} ({feedback_form.target_display})</font>", sub_style))
+    elements.append(Spacer(1, 8))
+
+    # 2. Blank Student Identification Block
+    blank_info_data = [
+        [
+            Paragraph("<b>Student Name:</b> ____________________________________", cell_style),
+            Paragraph("<b>Roll Number:</b> ________________________", cell_style),
+        ],
+        [
+            Paragraph("<b>Department & Year:</b> ______________________________", cell_style),
+            Paragraph("<b>Section:</b> _____ &nbsp;&nbsp; <b>Date:</b> _____________", cell_style),
+        ],
+    ]
+    blank_table = Table(blank_info_data, colWidths=[280, 243])
+    blank_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.75, colors.HexColor('#94a3b8')),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    elements.append(blank_table)
+    elements.append(Spacer(1, 8))
+
+    # 3. Rating Scale Legend
+    legend_data = [
+        [
+            Paragraph("<b>Evaluation Rating Scale:</b> &nbsp; <b>5</b> = Excellent &nbsp;|&nbsp; <b>4</b> = Very Good &nbsp;|&nbsp; <b>3</b> = Good &nbsp;|&nbsp; <b>2</b> = Fair &nbsp;|&nbsp; <b>1</b> = Poor", ParagraphStyle('Leg', fontName='Helvetica', fontSize=7.5, leading=9, alignment=1, textColor=colors.HexColor('#334155')))
+        ]
+    ]
+    leg_table = Table(legend_data, colWidths=[523])
+    leg_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+    ]))
+    elements.append(leg_table)
+    elements.append(Spacer(1, 8))
+
+    # 4. Questionnaire Grid
+    questions = feedback_form.questions.all().order_by('order', 'id')
+    
+    grid_data = [
+        [
+            Paragraph("<b>S.No</b>", hdr_style),
+            Paragraph("<b>Evaluation Parameter / Question</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=0, textColor=colors.white)),
+            Paragraph("<b>5</b>", hdr_style),
+            Paragraph("<b>4</b>", hdr_style),
+            Paragraph("<b>3</b>", hdr_style),
+            Paragraph("<b>2</b>", hdr_style),
+            Paragraph("<b>1</b>", hdr_style),
+            Paragraph("<b>Remarks</b>", hdr_style),
+        ]
+    ]
+
+    for idx, q in enumerate(questions, 1):
+        grid_data.append([
+            Paragraph(str(idx), center_bold),
+            Paragraph(f"{q.question_text}", cell_style),
+            Paragraph("[ &nbsp; ]", center_bold),
+            Paragraph("[ &nbsp; ]", center_bold),
+            Paragraph("[ &nbsp; ]", center_bold),
+            Paragraph("[ &nbsp; ]", center_bold),
+            Paragraph("[ &nbsp; ]", center_bold),
+            Paragraph("________________", ParagraphStyle('RmkB', fontName='Helvetica', fontSize=7, leading=8, textColor=colors.HexColor('#94a3b8'))),
+        ])
+
+    q_grid = Table(grid_data, colWidths=[28, 275, 28, 28, 28, 28, 28, 80], repeatRows=1)
+    q_grid.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#800000')),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+        ('ALIGN', (2,1), (6,-1), 'CENTER'),
+    ]))
+    elements.append(q_grid)
+    elements.append(Spacer(1, 8))
+
+    # 5. Suggestions & Signature block
+    footer_data = [
+        [
+            Paragraph("<b>Suggestions / General Comments:</b><br/><br/>____________________________________________________________________________________________________________<br/><br/>____________________________________________________________________________________________________________", cell_style)
+        ]
+    ]
+    f_table = Table(footer_data, colWidths=[523])
+    f_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(f_table)
+    elements.append(Spacer(1, 16))
+
+    sig_data = [
+        [
+            Paragraph("<b>Student Signature:</b> ______________________", cell_style),
+            Paragraph("<b>Verified By (Faculty/HOD):</b> ______________________", ParagraphStyle('SigR', fontName='Helvetica', fontSize=8, leading=10.5, alignment=2, textColor=colors.HexColor('#1e293b'))),
+        ]
+    ]
+    sig_t = Table(sig_data, colWidths=[260, 263])
+    elements.append(KeepTogether(sig_t))
+
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+    return buffer
+
+
+# ─────────────────────────────────────────────
+# 6. CONSOLIDATED FEEDBACK ANALYTICS REPORT PDF
+# ─────────────────────────────────────────────
+def generate_feedback_analytics_pdf(feedback_form):
+    """
+    Generates an official Consolidated Feedback Analytics & Summary Report
+    for HOD and College Administration.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=30,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    title_style  = ParagraphStyle('Title', fontName='Helvetica-Bold', fontSize=13, leading=15, alignment=1, textColor=colors.HexColor('#800000'))
+    sub_style    = ParagraphStyle('Sub',   fontName='Helvetica', fontSize=8, leading=11, alignment=1, textColor=colors.HexColor('#475569'))
+    banner_style = ParagraphStyle('Bnr',   fontName='Helvetica-Bold', fontSize=10.5, leading=13, alignment=1, textColor=colors.HexColor('#1e293b'))
+    cell_style   = ParagraphStyle('Cell',  fontName='Helvetica', fontSize=8, leading=10, textColor=colors.HexColor('#1e293b'))
+    bold_style   = ParagraphStyle('Bold',  fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=colors.HexColor('#0f172a'))
+    center_bold  = ParagraphStyle('CBold', fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=1, textColor=colors.HexColor('#0f172a'))
+    hdr_style    = ParagraphStyle('Hdr',   fontName='Helvetica-Bold', fontSize=8.5, leading=11, alignment=1, textColor=colors.white)
+
+    elements = []
+
+    # 1. Header
+    elements.append(Paragraph("<b>VASIREDDY VENKATADRI INSTITUTE OF TECHNOLOGY</b>", title_style))
+    elements.append(Paragraph("Autonomous Institution &middot; NAAC 'A' Grade &middot; NBA Accredited", sub_style))
+    elements.append(Spacer(1, 4))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#800000'), spaceAfter=5))
+    elements.append(Paragraph("<b>CONSOLIDATED STUDENT FEEDBACK ANALYTICAL REPORT</b>", banner_style))
+    elements.append(Paragraph(f"<b>Title:</b> {feedback_form.title} &middot; Target: {feedback_form.target_display}", sub_style))
+    elements.append(Spacer(1, 8))
+
+    # 2. Key Metrics Summary Box
+    total_subs = feedback_form.total_submissions_count()
+    overall_avg = feedback_form.get_average_rating()
+    rating_pct = round((overall_avg / 5.0) * 100, 1) if overall_avg > 0 else 0.0
+
+    kpi_data = [
+        [
+            Paragraph(f"<b>Total Submissions:</b><br/><font size=11 color='#800000'><b>{total_subs}</b></font>", center_bold),
+            Paragraph(f"<b>Overall Average Score:</b><br/><font size=11 color='#059669'><b>{overall_avg} / 5.0</b></font>", center_bold),
+            Paragraph(f"<b>Satisfaction Index:</b><br/><font size=11 color='#2563eb'><b>{rating_pct}%</b></font>", center_bold),
+            Paragraph(f"<b>Status:</b><br/><font size=9><b>{'Active' if feedback_form.is_active else 'Closed'}</b></font>", center_bold),
+        ]
+    ]
+    kpi_table = Table(kpi_data, colWidths=[130, 131, 131, 131])
+    kpi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('BOX', (0,0), (-1,-1), 0.75, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(kpi_table)
+    elements.append(Spacer(1, 12))
+
+    # 3. Question Breakdown Table
+    questions = feedback_form.questions.all().order_by('order', 'id')
+    q_data = [
+        [
+            Paragraph("<b>S.No</b>", hdr_style),
+            Paragraph("<b>Evaluation Parameter / Question</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8.5, leading=11, alignment=0, textColor=colors.white)),
+            Paragraph("<b>Type</b>", hdr_style),
+            Paragraph("<b>Avg Score (out of 5)</b>", hdr_style),
+            Paragraph("<b>Score %</b>", hdr_style),
+        ]
+    ]
+
+    for idx, q in enumerate(questions, 1):
+        if q.question_type == 'rating_5':
+            avg_score = q.get_average_score()
+            pct = f"{round((avg_score / 5.0) * 100, 1)}%" if avg_score > 0 else "0%"
+            score_display = f"{avg_score} / 5.0"
+        elif q.question_type == 'rating_10':
+            avg_score = q.get_average_score()
+            pct = f"{round((avg_score / 10.0) * 100, 1)}%" if avg_score > 0 else "0%"
+            score_display = f"{avg_score} / 10.0"
+        else:
+            ans_count = q.answers.count()
+            score_display = f"{ans_count} Responses"
+            pct = "-"
+
+        q_data.append([
+            Paragraph(str(idx), center_bold),
+            Paragraph(f"<b>{q.question_text}</b>", cell_style),
+            Paragraph(q.get_question_type_display(), cell_style),
+            Paragraph(f"<b>{score_display}</b>", center_bold),
+            Paragraph(f"<b>{pct}</b>", center_bold),
+        ])
+
+    table_breakdown = Table(q_data, colWidths=[30, 273, 90, 75, 55], repeatRows=1)
+    table_breakdown.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#800000')),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0,0), (-1,-1), 4.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#fbfcfd')]),
+    ]))
+    elements.append(table_breakdown)
+    elements.append(Spacer(1, 14))
+
+    # 4. Recent Submissions Roster
+    submissions = feedback_form.submissions.select_related('student__user', 'student__branch', 'student__section').order_by('-submitted_at')[:40]
+    if submissions.exists():
+        sub_data = [
+            [
+                Paragraph("<b>S.No</b>", hdr_style),
+                Paragraph("<b>Roll Number</b>", hdr_style),
+                Paragraph("<b>Student Name</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=0, textColor=colors.white)),
+                Paragraph("<b>Section</b>", hdr_style),
+                Paragraph("<b>Submitted At</b>", hdr_style),
+                Paragraph("<b>Avg Rating</b>", hdr_style),
+                Paragraph("<b>Ref No</b>", hdr_style),
+            ]
+        ]
+        for s_idx, sub in enumerate(submissions, 1):
+            sec_lbl = sub.student.section.name if sub.student.section else "-"
+            sub_data.append([
+                Paragraph(str(s_idx), center_bold),
+                Paragraph(sub.student.roll_number, center_bold),
+                Paragraph(sub.student.user.get_full_name(), cell_style),
+                Paragraph(sec_lbl, center_bold),
+                Paragraph(sub.submitted_at.strftime('%d-%b %I:%M %p'), cell_style),
+                Paragraph(f"{sub.average_rating} ★", center_bold),
+                Paragraph(sub.reference_no, ParagraphStyle('Ref', fontName='Helvetica', fontSize=7, leading=8, alignment=1, textColor=colors.HexColor('#64748b'))),
+            ])
+        sub_table = Table(sub_data, colWidths=[25, 80, 135, 45, 95, 55, 88], repeatRows=1)
+        sub_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e293b')),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
+        ]))
+        elements.append(KeepTogether(sub_table))
+
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+    return buffer
+

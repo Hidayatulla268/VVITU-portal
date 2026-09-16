@@ -1,3 +1,4 @@
+import json
 import logging
 import datetime as dt
 from functools import wraps
@@ -347,40 +348,117 @@ def assign_teacher(request):
 # ─────────────────────────────────────────────
 # TIMETABLE MANAGEMENT
 # ─────────────────────────────────────────────
+from django.http import HttpResponse, JsonResponse
+from core.models import (
+    Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result,
+    Notification, ResultRelease, FacultyAttendance, ClassTransfer, ClassDiary,
+    SubjectTopicPlan, ExamSchedule, SectionTimetableMetadata, ensure_sections_for_all_branches
+)
+from core.timetable_service import (
+    get_section_timetable_context, get_faculty_timetable_context,
+    sync_class_timetable_from_data, sync_faculty_timetable_from_data,
+    extract_timetable_with_ai, generate_official_timetable_pdf,
+    check_faculty_schedule_clash,
+    STANDARD_PERIOD_TIMINGS, DAY_LIST, PERIOD_LIST
+)
+
 @hod_required
 def manage_timetable(request):
+    """
+    Department-scoped timetable dashboard for HOD.
+    Lists department sections, department faculty timetables, and allows Photo/PDF upload.
+    """
     ensure_sections_for_all_branches()
     dept = request.department
     sections = Section.objects.filter(branch=dept).select_related('year', 'branch')
-    return render(request, 'hod/manage_timetable.html', {'sections': sections})
+    faculties = Faculty.objects.filter(department=dept, is_active=True).select_related('user')
+    
+    # Check if a specific faculty is selected for preview
+    selected_faculty_id = request.GET.get('faculty_id')
+    selected_faculty_ctx = None
+    if selected_faculty_id:
+        fac = get_object_or_404(Faculty, id=selected_faculty_id, department=dept)
+        selected_faculty_ctx = get_faculty_timetable_context(fac)
+
+    return render(request, 'hod/manage_timetable.html', {
+        'sections': sections,
+        'faculties': faculties,
+        'selected_faculty_ctx': selected_faculty_ctx,
+        'can_upload': True,
+        'department': dept,
+    })
 
 @hod_required
 def edit_timetable(request, section_id):
+    """
+    Allows HOD to view, edit, modify periods, and update metadata for a department section
+    in the official VVIT Timetable layout. Handles schedule conflicts with interactive resolution.
+    """
     dept = request.department
     section = get_object_or_404(Section, id=section_id, branch=dept)
     subjects = Subject.objects.filter(branch=dept, year=section.year, is_deleted=False)
     faculties = Faculty.objects.filter(department=dept, is_active=True).select_related('user')
     
-    entries = Timetable.objects.filter(section=section).select_related('subject', 'faculty__user').order_by('day', 'period')
-    
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    periods = list(range(1, 9))
-    grid = {day: {p: None for p in periods} for day in days}
-    for e in entries:
-        if e.day in grid:
-            grid[e.day][e.period] = e
-            
+    # Metadata for this section
+    metadata, _ = SectionTimetableMetadata.objects.get_or_create(
+        section=section,
+        defaults={
+            'academic_year': '2026-27',
+            'room_number': 'C-402',
+            'program_name': f"[Program: {dept.name} – {dept.code}]",
+        }
+    )
+
     if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        # 1. Update Official Metadata (Room, Academic Year, Effective Date, Class Teacher, Signatures)
+        if action == 'update_metadata':
+            metadata.academic_year = request.POST.get('academic_year', '2026-27').strip()
+            metadata.room_number = request.POST.get('room_number', 'C-402').strip()
+            metadata.program_name = request.POST.get('program_name', '').strip() or f"[Program: {dept.name} – {dept.code}]"
+            metadata.timetable_incharge = request.POST.get('timetable_incharge', 'Timetable I/C').strip()
+            metadata.hod_name = request.POST.get('hod_name', 'HOD').strip()
+            metadata.dean_academics_name = request.POST.get('dean_academics_name', 'Dean, Academics').strip()
+            metadata.principal_name = request.POST.get('principal_name', 'Principal').strip()
+
+            eff_date_str = request.POST.get('with_effect_from', '')
+            if eff_date_str:
+                try:
+                    metadata.with_effect_from = dt.date.fromisoformat(eff_date_str)
+                except Exception:
+                    pass
+
+            ct_id = request.POST.get('class_teacher')
+            if ct_id:
+                ct_fac = Faculty.objects.filter(id=ct_id, department=dept).first()
+                if ct_fac:
+                    metadata.class_teacher = ct_fac
+                    metadata.class_teacher_name = ct_fac.user.get_full_name()
+                    # Update all students in this section
+                    Student.objects.filter(section=section).update(class_teacher=ct_fac)
+            else:
+                ct_name_input = request.POST.get('class_teacher_name', '').strip()
+                if ct_name_input:
+                    metadata.class_teacher_name = ct_name_input
+
+            metadata.save()
+            messages.success(request, "Official timetable metadata & signatures updated.")
+            return redirect('hod:edit_timetable', section_id=section_id)
+
+        # 2. Add / Update / Delete Timetable Slot
         day = request.POST.get('day', '').strip().capitalize()
         period = request.POST.get('period')
         subject_id = request.POST.get('subject')
         faculty_id = request.POST.get('faculty')
         delete_slot = request.POST.get('delete')
+        co_faculty_str = request.POST.get('co_faculty_display', '').strip()
+        resolution = request.POST.get('resolution', '').strip()
         
         try:
             period = int(period)
-        except ValueError:
-            messages.error(request, "Invalid period.")
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid period number.")
             return redirect('hod:edit_timetable', section_id=section_id)
             
         if delete_slot:
@@ -388,33 +466,239 @@ def edit_timetable(request, section_id):
             messages.success(request, f"Timetable slot for {day} Period {period} deleted.")
         else:
             subj = get_object_or_404(Subject, id=subject_id, branch=dept)
-            fac = get_object_or_404(Faculty, id=faculty_id, department=dept)
+            fac = None
+            if faculty_id:
+                fac = get_object_or_404(Faculty, id=faculty_id, department=dept)
+            
             start_time = request.POST.get('start_time') or None
             end_time = request.POST.get('end_time') or None
-            room_number = request.POST.get('room_number', '').strip() or 'Room 101'
+            room_number = request.POST.get('room_number', '').strip() or metadata.room_number or 'C-402'
+
+            # Fallback to standard VVIT period timings if not specified
+            if not start_time and period in STANDARD_PERIOD_TIMINGS:
+                start_time = STANDARD_PERIOD_TIMINGS[period]['start']
+            if not end_time and period in STANDARD_PERIOD_TIMINGS:
+                end_time = STANDARD_PERIOD_TIMINGS[period]['end']
+
+            # Check if faculty has a clash in another section
+            clash_info = check_faculty_schedule_clash(fac, day, period, exclude_section=section)
+
+            if clash_info:
+                if resolution == 'replace_past':
+                    # Fix this period and unassign/remove from the past conflicting slot
+                    conflicting_slot = Timetable.objects.filter(id=clash_info['timetable_id']).first()
+                    if conflicting_slot:
+                        conflicting_slot.faculty = None
+                        conflicting_slot.save(update_fields=['faculty'])
+
+                    Timetable.objects.update_or_create(
+                        section=section, day=day, period=period,
+                        defaults={
+                            'subject': subj,
+                            'faculty': fac,
+                            'co_faculty_display': co_faculty_str or None,
+                            'room_number': room_number,
+                            'start_time': start_time,
+                            'end_time': end_time,
+                        }
+                    )
+
+                    # Send notification to the faculty
+                    if fac and fac.user:
+                        try:
+                            Notification.objects.create(
+                                title="Timetable Schedule Reassigned",
+                                message=(
+                                    f"Your schedule on {day}, Period {period} has been reassigned by HOD. "
+                                    f"You have been unassigned from {clash_info['section_name']} ({clash_info['subject_name']}) "
+                                    f"and assigned to {section} ({subj.name})."
+                                ),
+                                notif_type=Notification.TYPE_SYSTEM,
+                                priority=Notification.PRIORITY_HIGH,
+                                target_all=False,
+                                target_user=fac.user,
+                                created_by=request.user
+                            )
+                        except Exception as ne:
+                            logger.error(f"Error sending timetable reassignment notification: {ne}")
+
+                    messages.warning(
+                        request,
+                        f"Schedule conflict resolved: {fac.user.get_full_name()} assigned to {section} ({day} P{period}) "
+                        f"and unassigned from previous slot in {clash_info['section_name']}."
+                    )
+                    return redirect('hod:edit_timetable', section_id=section_id)
+
+                elif resolution == 'keep_past':
+                    # Fix only the past period (preserve past slot, save this slot with faculty=None / TBA)
+                    Timetable.objects.update_or_create(
+                        section=section, day=day, period=period,
+                        defaults={
+                            'subject': subj,
+                            'faculty': None,
+                            'co_faculty_display': co_faculty_str or None,
+                            'room_number': room_number,
+                            'start_time': start_time,
+                            'end_time': end_time,
+                        }
+                    )
+                    messages.info(
+                        request,
+                        f"Slot saved for {day} Period {period} ({subj.code}) with faculty TBA. "
+                        f"Past assignment for {fac.user.get_full_name() if fac else 'Faculty'} in {clash_info['section_name']} was preserved."
+                    )
+                    return redirect('hod:edit_timetable', section_id=section_id)
+
+                else:
+                    # Conflict without resolution: prevent duplicate slot and alert HOD
+                    messages.error(
+                        request,
+                        f"Schedule Clash Detected! {fac.user.get_full_name()} is already assigned to {clash_info['section_name']} "
+                        f"({clash_info['subject_name']}) on {day}, Period {period}. Please resolve using 'Fix That Period (Remove Past)' or 'Fix Only Past Period'."
+                    )
+                    return redirect('hod:edit_timetable', section_id=section_id)
             
             Timetable.objects.update_or_create(
                 section=section, day=day, period=period,
                 defaults={
                     'subject': subj,
                     'faculty': fac,
+                    'co_faculty_display': co_faculty_str or None,
                     'room_number': room_number,
                     'start_time': start_time,
                     'end_time': end_time,
                 }
             )
-            messages.success(request, f"Timetable slot updated: {day} Period {period} -> {subj.code} ({room_number}).")
+            messages.success(request, f"Slot updated: {day} Period {period} -> {subj.code} ({fac.user.get_full_name() if fac else 'TBA'}).")
             
         return redirect('hod:edit_timetable', section_id=section_id)
-        
-    return render(request, 'hod/edit_timetable.html', {
-        'section': section,
-        'days': days,
-        'periods': periods,
-        'grid': grid,
+
+    # Build full official VVIT timetable context
+    ctx = get_section_timetable_context(section)
+    ctx.update({
         'subjects': subjects,
         'faculties': faculties,
+        'can_edit': True,
+        'can_upload': True,
+        'pdf_export_url': f"/hod/timetable/export-pdf/{section.id}/",
     })
+    return render(request, 'hod/edit_timetable.html', ctx)
+
+
+@hod_required
+def ajax_check_timetable_clash(request):
+    """
+    Real-time AJAX endpoint for HOD to check if a faculty member has a timetable conflict on (day, period).
+    """
+    faculty_id = request.GET.get('faculty_id') or request.POST.get('faculty_id')
+    day = request.GET.get('day') or request.POST.get('day')
+    period = request.GET.get('period') or request.POST.get('period')
+    current_section_id = request.GET.get('section_id') or request.POST.get('section_id')
+
+    if not faculty_id or not day or not period:
+        return JsonResponse({'has_clash': False, 'clash': None})
+
+    try:
+        faculty = Faculty.objects.select_related('user').filter(id=faculty_id, is_active=True).first()
+        if not faculty:
+            return JsonResponse({'has_clash': False, 'clash': None})
+
+        section = Section.objects.filter(id=current_section_id).first() if current_section_id else None
+        clash = check_faculty_schedule_clash(faculty, day, period, exclude_section=section)
+
+        if clash:
+            return JsonResponse({
+                'has_clash': True,
+                'clash': clash
+            })
+    except Exception as e:
+        logger.error(f"Error checking timetable clash: {e}", exc_info=True)
+
+    return JsonResponse({'has_clash': False, 'clash': None})
+
+
+@hod_required
+def upload_timetable_api(request):
+    """
+    AJAX API endpoint for HOD to:
+      1. Parse Photo / PDF timetable via AI / OCR
+      2. Commit and synchronize verified timetable into DB
+    Enforces departmental boundary.
+    """
+    dept = request.department
+
+    if request.method == 'POST':
+        # Check if JSON payload (commit) or Multipart (parse)
+        if request.content_type and 'application/json' in request.content_type:
+            try:
+                body = json.loads(request.body.decode('utf-8'))
+            except Exception as e:
+                logger.error(f"Timetable JSON decode error: {e}", exc_info=True)
+                return JsonResponse({'success': False, 'error': f'Invalid JSON body: {str(e)}'}, status=400)
+
+            action = body.get('action')
+            sec_id = body.get('section_id')
+            data = body.get('data')
+
+            if action == 'commit':
+                section = get_object_or_404(Section, id=sec_id, branch=dept)
+                res = sync_class_timetable_from_data(section, data, user=request.user)
+                return JsonResponse(res)
+
+        else: # File upload
+            action = request.POST.get('action')
+            sec_id = request.POST.get('section_id')
+            uploaded_file = request.FILES.get('file')
+
+            if not uploaded_file:
+                return JsonResponse({'success': False, 'error': 'No file uploaded.'}, status=400)
+
+            if action == 'parse':
+                from core.file_validators import validate_document_upload
+                from django.core.exceptions import ValidationError
+                try:
+                    validate_document_upload(uploaded_file, allowed_extensions={'.png', '.jpg', '.jpeg', '.pdf'}, max_size_mb=5)
+                except ValidationError as ve:
+                    return JsonResponse({'success': False, 'error': str(ve.message if hasattr(ve, 'message') else ve)}, status=400)
+
+                section = get_object_or_404(Section, id=sec_id, branch=dept)
+                content_type = uploaded_file.content_type
+                file_bytes = uploaded_file.read()
+
+                parsed = extract_timetable_with_ai(file_bytes, content_type)
+                return JsonResponse({
+                    'success': True,
+                    'parsed': parsed,
+                    'filename': uploaded_file.name,
+                })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=405)
+
+
+@hod_required
+def export_timetable_pdf(request, section_id):
+    """
+    Exports official VVIT Timetable as A4 Landscape PDF for a department section.
+    """
+    dept = request.department
+    section = get_object_or_404(Section, id=section_id, branch=dept)
+    pdf_bytes = generate_official_timetable_pdf(section)
+    
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="VVIT_Timetable_{section.branch.code}_{section.year.year}_{section.name}.pdf"'
+    return response
+
+
+@hod_required
+def faculty_timetable_view(request, faculty_id):
+    """
+    Displays the weekly timetable and assigned classes for a department faculty member.
+    """
+    dept = request.department
+    faculty = get_object_or_404(Faculty, id=faculty_id, department=dept)
+    ctx = get_faculty_timetable_context(faculty)
+    ctx['department'] = dept
+    return render(request, 'hod/faculty_timetable_view.html', ctx)
 
 
 # ─────────────────────────────────────────────
@@ -1726,11 +2010,19 @@ def manage_class_transfers(request):
                         'original_faculty': slot.faculty,
                         'substitute_faculty': substitute,
                         'reason': reason or 'HOD Official Proxy Assignment',
-                        'status': 'accepted',
+                        'status': 'pending',
+                        'rejection_reason': None,
+                        'responded_at': None,
                         'assigned_by_role': 'hod',
                         'transfer_type': 'proxy',
                         'assigned_by': request.user,
                     }
+                )
+
+                send_class_transfer_notification(transfer_obj)
+                messages.success(
+                    request,
+                    f"Official proxy request for Period {slot.period} ({slot.subject.code}) sent to Prof. {substitute.full_name}. Notification dispatched — class will officially transfer once accepted."
                 )
 
         elif action == 'cancel_proxy':
@@ -2895,6 +3187,312 @@ def class_session_audit_detail(request, timetable_id, date):
         'att_pct': att_pct,
     }
     return render(request, 'hod/class_attendance_detail.html', context)
+
+
+# ─────────────────────────────────────────────
+# STUDENT FEEDBACK FORMS & DOCUMENT MANAGEMENT (HOD)
+# ─────────────────────────────────────────────
+@hod_required
+def manage_feedback_forms(request):
+    """HOD feedback management console listing department feedback forms."""
+    from core.models import FeedbackForm
+    dept = request.department
+    type_filter = request.GET.get('type', '')
+    status_filter = request.GET.get('status', '')
+
+    forms_qs = FeedbackForm.objects.filter(
+        Q(branch=dept) | Q(branch__isnull=True)
+    ).select_related('branch', 'year', 'section', 'created_by').order_by('-created_at')
+
+    if type_filter:
+        forms_qs = forms_qs.filter(feedback_type=type_filter)
+    if status_filter == 'active':
+        forms_qs = forms_qs.filter(is_active=True)
+    elif status_filter == 'closed':
+        forms_qs = forms_qs.filter(is_active=False)
+
+    return render(request, 'feedback/manage_forms.html', {
+        'forms': forms_qs,
+        'department': dept,
+        'selected_type': type_filter,
+        'selected_status': status_filter,
+        'is_hod': True,
+    })
+
+
+@hod_required
+def create_feedback_form(request):
+    """HOD create/upload feedback form view for department."""
+    from core.models import FeedbackForm, FeedbackQuestion, Year, Section
+    from core.feedback_service import populate_preset_questions
+
+    dept = request.department
+    years = Year.objects.all().order_by('year')
+    sections = Section.objects.filter(branch=dept).order_by('year', 'name')
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        feedback_type = request.POST.get('feedback_type', 'faculty')
+        year_id = request.POST.get('year') or None
+        semester = request.POST.get('semester') or None
+        section_id = request.POST.get('section') or None
+        deadline_str = request.POST.get('deadline', '').strip()
+        allow_online = request.POST.get('allow_online_submission') == 'on'
+        allow_offline = request.POST.get('allow_offline_download') == 'on'
+        preset_template = request.POST.get('preset_template', '').strip()
+
+        uploaded_doc = request.FILES.get('uploaded_document')
+
+        deadline = None
+        if deadline_str:
+            import datetime
+            try:
+                deadline = datetime.datetime.strptime(deadline_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        if not title:
+            messages.error(request, "Please enter a feedback form title.")
+        else:
+            if uploaded_doc:
+                from core.file_validators import validate_document_upload
+                from django.core.exceptions import ValidationError
+                try:
+                    validate_document_upload(uploaded_doc, allowed_extensions={'.pdf', '.jpg', '.jpeg', '.png'}, max_size_mb=5)
+                except ValidationError as ve:
+                    messages.error(request, f"Attached document rejected: {ve.message if hasattr(ve, 'message') else ve}")
+                    return redirect('hod:manage_feedback_forms')
+
+            form_obj = FeedbackForm.objects.create(
+                title=title,
+                description=description,
+                feedback_type=feedback_type,
+                branch=dept,
+                year_id=year_id,
+                semester=semester if semester else None,
+                section_id=section_id,
+                uploaded_document=uploaded_doc,
+                deadline=deadline,
+                allow_online_submission=allow_online,
+                allow_offline_download=allow_offline,
+                created_by=request.user
+            )
+
+            if preset_template:
+                populate_preset_questions(form_obj, preset_template)
+
+            q_texts = request.POST.getlist('custom_question_text[]')
+            q_types = request.POST.getlist('custom_question_type[]')
+            order = form_obj.questions.count() + 1
+
+            for q_t, q_tp in zip(q_texts, q_types):
+                if q_t.strip():
+                    FeedbackQuestion.objects.create(
+                        form=form_obj,
+                        question_text=q_t.strip(),
+                        question_type=q_tp if q_tp else 'rating_5',
+                        order=order
+                    )
+                    order += 1
+
+            messages.success(request, f"Feedback form '{form_obj.title}' created successfully for {dept.code}!")
+            return redirect('hod:manage_feedback_forms')
+
+    return render(request, 'feedback/form_editor.html', {
+        'department': dept,
+        'years': years,
+        'sections': sections,
+        'is_hod': True,
+    })
+
+
+@hod_required
+def edit_feedback_form(request, form_id):
+    """HOD edit department feedback form."""
+    from core.models import FeedbackForm, FeedbackQuestion, Year, Section
+    dept = request.department
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+
+    if form_obj.branch and form_obj.branch != dept:
+        messages.error(request, "Access denied. You can only edit feedback forms for your department.")
+        return redirect('hod:manage_feedback_forms')
+
+    years = Year.objects.all().order_by('year')
+    sections = Section.objects.filter(branch=dept).order_by('year', 'name')
+
+    if request.method == 'POST':
+        form_obj.title = request.POST.get('title', '').strip() or form_obj.title
+        form_obj.description = request.POST.get('description', '').strip()
+        form_obj.feedback_type = request.POST.get('feedback_type', form_obj.feedback_type)
+        form_obj.year_id = request.POST.get('year') or None
+        sem = request.POST.get('semester')
+        form_obj.semester = int(sem) if sem else None
+        form_obj.section_id = request.POST.get('section') or None
+        form_obj.allow_online_submission = request.POST.get('allow_online_submission') == 'on'
+        form_obj.allow_offline_download = request.POST.get('allow_offline_download') == 'on'
+        form_obj.is_active = request.POST.get('is_active') == 'on'
+
+        deadline_str = request.POST.get('deadline', '').strip()
+        if deadline_str:
+            import datetime
+            try:
+                form_obj.deadline = datetime.datetime.strptime(deadline_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        else:
+            form_obj.deadline = None
+
+        if 'uploaded_document' in request.FILES:
+            form_obj.uploaded_document = request.FILES['uploaded_document']
+
+        form_obj.save()
+        messages.success(request, f"Feedback form '{form_obj.title}' updated successfully.")
+        return redirect('hod:manage_feedback_forms')
+
+    return render(request, 'feedback/form_editor.html', {
+        'form_obj': form_obj,
+        'department': dept,
+        'years': years,
+        'sections': sections,
+        'is_hod': True,
+        'is_edit': True,
+    })
+
+
+@hod_required
+def feedback_analytics(request, form_id):
+    """HOD feedback analytics view."""
+    from core.models import FeedbackForm
+    from core.feedback_service import get_form_analytics
+
+    dept = request.department
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+
+    if form_obj.branch and form_obj.branch != dept:
+        messages.error(request, "Access denied to external department feedback forms.")
+        return redirect('hod:manage_feedback_forms')
+
+    analytics_data = get_form_analytics(form_obj)
+    analytics_data['is_hod'] = True
+    analytics_data['department'] = dept
+
+    return render(request, 'feedback/analytics.html', analytics_data)
+
+
+@hod_required
+def export_feedback_analytics_pdf(request, form_id):
+    """HOD export consolidated analytics PDF."""
+    from core.models import FeedbackForm
+    from core.pdf_utils import generate_feedback_analytics_pdf
+
+    dept = request.department
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    if form_obj.branch and form_obj.branch != dept:
+        messages.error(request, "Access denied.")
+        return redirect('hod:manage_feedback_forms')
+
+    try:
+        pdf_buffer = generate_feedback_analytics_pdf(form_obj)
+        filename = f"VVIT_Feedback_Analytics_{dept.code}_{form_obj.id}.pdf"
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Failed to generate analytics PDF: {e}")
+        return redirect('hod:feedback_analytics', form_id=form_id)
+
+
+@hod_required
+def download_blank_feedback_pdf(request, form_id):
+    """HOD download blank printable PDF."""
+    from core.models import FeedbackForm
+    from core.pdf_utils import generate_feedback_blank_printable_pdf
+
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    try:
+        pdf_buffer = generate_feedback_blank_printable_pdf(form_obj)
+        filename = f"VVIT_Blank_Feedback_Form_{form_obj.id}.pdf"
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Failed to generate blank form: {e}")
+        return redirect('hod:manage_feedback_forms')
+
+
+@hod_required
+def view_student_feedback_summary(request, form_id, submission_id):
+    """HOD view specific student response."""
+    from core.models import FeedbackForm, FeedbackSubmission
+    dept = request.department
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    submission = get_object_or_404(FeedbackSubmission, id=submission_id, form=form_obj)
+
+    answers = submission.answers.select_related('question').order_by('question__order', 'id')
+
+    return render(request, 'feedback/student_summary.html', {
+        'form_obj': form_obj,
+        'submission': submission,
+        'answers': answers,
+        'student': submission.student,
+        'is_hod': True,
+        'department': dept,
+    })
+
+
+@hod_required
+def download_student_feedback_pdf(request, form_id, submission_id):
+    """HOD download student's signed summary PDF."""
+    from core.models import FeedbackForm, FeedbackSubmission
+    from core.pdf_utils import generate_student_feedback_summary_pdf
+
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    submission = get_object_or_404(FeedbackSubmission, id=submission_id, form=form_obj)
+
+    try:
+        pdf_buffer = generate_student_feedback_summary_pdf(submission)
+        filename = f"VVIT_Feedback_{submission.student.roll_number}_{form_obj.id}.pdf"
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Failed to generate student PDF: {e}")
+        return redirect('hod:feedback_analytics', form_id=form_id)
+
+
+@hod_required
+def toggle_feedback_status(request, form_id):
+    """HOD toggle active/closed status."""
+    from core.models import FeedbackForm
+    dept = request.department
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    if form_obj.branch and form_obj.branch != dept:
+        messages.error(request, "Access denied.")
+        return redirect('hod:manage_feedback_forms')
+
+    form_obj.is_active = not form_obj.is_active
+    form_obj.save()
+    status_str = "Activated" if form_obj.is_active else "Closed"
+    messages.success(request, f"Feedback form '{form_obj.title}' is now {status_str}.")
+    return redirect('hod:manage_feedback_forms')
+
+
+@hod_required
+def delete_feedback_form(request, form_id):
+    """HOD delete feedback form."""
+    from core.models import FeedbackForm
+    dept = request.department
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    if form_obj.branch and form_obj.branch != dept:
+        messages.error(request, "Access denied.")
+        return redirect('hod:manage_feedback_forms')
+
+    title = form_obj.title
+    form_obj.delete()
+    messages.success(request, f"Feedback form '{title}' deleted successfully.")
+    return redirect('hod:manage_feedback_forms')
+
 
 
 

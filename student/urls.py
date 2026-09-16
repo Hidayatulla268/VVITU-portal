@@ -13,6 +13,7 @@ urlpatterns = [
     path('syllabus/',          views.syllabus_coverage,name='syllabus_coverage'),
     path('syllabus/<int:subject_id>/', views.syllabus_coverage, name='syllabus_coverage_subject'),
     path('timetable/',         views.timetable,        name='timetable'),
+    path('timetable/pdf/',     views.download_timetable_pdf, name='download_timetable_pdf'),
     path('results/',           views.results,          name='results'),
     path('academic-calendar/', views.academic_calendar,name='academic_calendar'),
     path('question-papers/',   views.question_papers,  name='question_papers'),
@@ -24,4 +25,12 @@ urlpatterns = [
     path('results/grade-card/pdf/', views.download_grade_card_pdf, name='download_grade_card_pdf'),
     path('leave-od/apply/',    views.apply_leave_od,    name='apply_leave_od'),
     path('readmission/apply/', views.apply_readmission, name='apply_readmission'),
+
+    # Student Feedback Forms & Document Workflow
+    path('feedback/',          views.feedback_list,     name='feedback_list'),
+    path('feedback/<int:form_id>/fill/',       views.fill_feedback,     name='fill_feedback'),
+    path('feedback/<int:form_id>/summary/',    views.feedback_summary,  name='feedback_summary'),
+    path('feedback/<int:form_id>/pdf/',        views.download_feedback_pdf, name='download_feedback_pdf'),
+    path('feedback/<int:form_id>/blank-pdf/',  views.download_blank_feedback_pdf, name='download_blank_feedback_pdf'),
 ]
+

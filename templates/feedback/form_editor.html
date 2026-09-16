@@ -1,0 +1,278 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Feedback Form{% else %}Create / Upload Feedback Form{% endif %} — VVIT Portal{% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip">
+  <div class="ph-left">
+    <h1 class="ph-title">
+      <i class="fas fa-file-signature me-2 text-accent"></i>
+      {% if is_edit %}Edit Feedback Form: {{ form_obj.title }}{% else %}Create & Upload Student Feedback Form{% endif %}
+    </h1>
+    <p class="ph-sub">Upload official documents (Photo/PDF), configure target audience, and define evaluation criteria.</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    {% if is_admin %}
+      <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Back to Feedback Management
+      </a>
+    {% else %}
+      <a href="{% url 'hod:manage_feedback_forms' %}" class="btn-vvit-outline btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Back to Feedback Management
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-5 p-4 p-md-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
+    <div>
+      <h3 class="card-title-custom mb-1">
+        <i class="fas fa-edit me-2 text-accent"></i>{% if is_edit %}Form Configuration & Settings{% else %}Feedback Form Parameters{% endif %}
+      </h3>
+      <p class="text-muted small mb-0">Define scope, upload official physical documents for offline filling, and configure evaluation questions.</p>
+    </div>
+    <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
+      <i class="fas fa-shield-alt me-1"></i>{% if is_admin %}Administrator Access{% else %}HOD {{ department.code }} Department Access{% endif %}
+    </span>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i>{{ message }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- 1. Form Details & Categorization -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
+        <i class="fas fa-info-circle me-2"></i>1. Form Details & Categorization
+      </h5>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label text-light fw-semibold small">Feedback Form Title <span class="text-danger">*</span></label>
+          <input type="text" name="title" class="vvit-input" placeholder="e.g. Faculty Teaching Performance Evaluation — Even Sem 2025-26" value="{{ form_obj.title|default:'' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-light fw-semibold small">Feedback Category <span class="text-danger">*</span></label>
+          <select name="feedback_type" class="vvit-select" required>
+            <option value="faculty" {% if form_obj.feedback_type == 'faculty' %}selected{% endif %}>Faculty Teaching Evaluation</option>
+            <option value="course" {% if form_obj.feedback_type == 'course' %}selected{% endif %}>Course & Curriculum Feedback</option>
+            <option value="institutional" {% if form_obj.feedback_type == 'institutional' %}selected{% endif %}>Institutional Facilities & Infrastructure</option>
+            <option value="general" {% if form_obj.feedback_type == 'general' %}selected{% endif %}>General Student Feedback</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label text-light fw-semibold small">Description & Instructions for Students</label>
+          <textarea name="description" class="vvit-input" rows="2" style="height: auto; min-height: 60px;" placeholder="Provide evaluation guidelines, rating criteria, or instructions for students...">{{ form_obj.description|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Target Audience Scoping -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
+        <i class="fas fa-users-cog me-2"></i>2. Target Audience Scoping
+      </h5>
+      <div class="row g-3">
+        {% if is_admin %}
+          <div class="col-md-3">
+            <label class="form-label text-light fw-semibold small">Branch / Department</label>
+            <select name="branch" class="vvit-select">
+              <option value="">All Branches (College-wide)</option>
+              {% for b in branches %}
+                <option value="{{ b.id }}" {% if form_obj.branch_id == b.id %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% else %}
+          <div class="col-md-3">
+            <label class="form-label text-light fw-semibold small">Branch / Department</label>
+            <input type="text" class="vvit-input opacity-75" value="{{ department.code }} — {{ department.name }}" disabled>
+            <small class="text-muted" style="font-size: 0.75rem;">Locked to your department.</small>
+          </div>
+        {% endif %}
+
+        <div class="col-md-3">
+          <label class="form-label text-light fw-semibold small">Academic Year</label>
+          <select name="year" class="vvit-select">
+            <option value="">All Academic Years</option>
+            {% for y in years %}
+              <option value="{{ y.id }}" {% if form_obj.year_id == y.id %}selected{% endif %}>{{ y.get_year_display }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label text-light fw-semibold small">Semester</label>
+          <select name="semester" class="vvit-select">
+            <option value="">All Semesters</option>
+            {% for s_val in "12345678" %}
+              <option value="{{ forloop.counter }}" {% if form_obj.semester == forloop.counter %}selected{% endif %}>Semester {{ forloop.counter }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label text-light fw-semibold small">Section</label>
+          <select name="section" class="vvit-select">
+            <option value="">All Sections</option>
+            {% for sec in sections %}
+              <option value="{{ sec.id }}" {% if form_obj.section_id == sec.id %}selected{% endif %}>
+                {{ sec.name }} ({{ sec.branch.code }} Y{{ sec.year.year }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Upload Official Form Document (Photo or PDF) -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
+        <i class="fas fa-file-upload me-2"></i>3. Upload Official Form Document (Photo or PDF)
+      </h5>
+      <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.2);">
+        <label class="form-label text-light fw-semibold small">Attach Official Physical Feedback Form (Image JPG/PNG or PDF)</label>
+        <input type="file" name="uploaded_document" class="vvit-input" accept="image/*,application/pdf">
+        <div class="form-text small text-muted mt-1">
+          <i class="fas fa-info-circle me-1 text-accent"></i>Students can view/download this official uploaded document and print it to fill out and submit offline.
+        </div>
+
+        {% if form_obj.uploaded_document %}
+          <div class="mt-3 p-3 rounded d-flex align-items-center justify-content-between" style="background: rgba(0, 230, 118, 0.06); border: 1px solid rgba(0, 230, 118, 0.25);">
+            <span class="small text-light text-truncate">
+              <i class="{% if form_obj.document_is_pdf %}fas fa-file-pdf text-danger{% else %}fas fa-file-image text-info{% endif %} me-2 fa-lg"></i>
+              Current Attached Document: <strong class="text-white">{{ form_obj.uploaded_document.name }}</strong>
+            </span>
+            <a href="{% url 'view_feedback_document' form_obj.id %}" target="_blank" class="btn btn-sm btn-outline-info">
+              <i class="fas fa-eye me-1"></i>View Uploaded File
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4. Submission Settings & Deadline -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
+        <i class="fas fa-cog me-2"></i>4. Submission Settings & Deadline
+      </h5>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label text-light fw-semibold small">Submission Deadline</label>
+          <input type="date" name="deadline" class="vvit-input" value="{{ form_obj.deadline|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div class="col-md-8 d-flex flex-wrap align-items-center gap-4 pt-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="allow_online_submission" id="allowOnline" {% if form_obj.allow_online_submission or not is_edit %}checked{% endif %}>
+            <label class="form-check-label text-light fw-semibold small" for="allowOnline">Allow Online Web Form Submission</label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="allow_offline_download" id="allowOffline" {% if form_obj.allow_offline_download or not is_edit %}checked{% endif %}>
+            <label class="form-check-label text-light fw-semibold small" for="allowOffline">Allow Blank Printable PDF Download</label>
+          </div>
+          {% if is_edit %}
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if form_obj.is_active %}checked{% endif %}>
+              <label class="form-check-label text-light fw-semibold small" for="isActive">Form Active (Accepting Responses)</label>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Questionnaire Questions & Presets -->
+    {% if not is_edit %}
+      <div class="mb-4">
+        <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
+          <i class="fas fa-list-ol me-2"></i>5. Questionnaire Questions & Presets
+        </h5>
+        
+        <!-- Preset Loader -->
+        <div class="p-3 rounded mb-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);">
+          <label class="form-label text-light fw-semibold small">
+            <i class="fas fa-magic text-warning me-1"></i>1-Click Load Standard VVIT Questionnaire Preset:
+          </label>
+          <select name="preset_template" class="vvit-select">
+            <option value="">-- Do Not Load Preset (Build Custom Only) --</option>
+            <option value="faculty_10" selected>★ Standard Faculty Teaching Evaluation (10 Quality Criteria)</option>
+            <option value="course_5">★ Standard Course & Curriculum Feedback (5 Criteria)</option>
+            <option value="infrastructure_6">★ Campus Infrastructure & Facilities Evaluation (6 Criteria)</option>
+          </select>
+          <div class="form-text small text-muted mt-1">
+            Selecting a preset will automatically generate the official standard questions for this form.
+          </div>
+        </div>
+
+        <!-- Dynamic Custom Question Adder -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <label class="form-label text-light fw-semibold small mb-0">Additional Custom Evaluation Questions (Optional):</label>
+          <button type="button" class="btn btn-sm btn-outline-info" onclick="addCustomQuestion()">
+            <i class="fas fa-plus me-1"></i>Add Custom Question
+          </button>
+        </div>
+        <div id="customQuestionsContainer"></div>
+      </div>
+    {% endif %}
+
+    <!-- Submit buttons -->
+    <div class="d-flex justify-content-end gap-3 border-top border-secondary pt-4">
+      {% if is_admin %}
+        <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="btn-vvit-outline">Cancel</a>
+      {% else %}
+        <a href="{% url 'hod:manage_feedback_forms' %}" class="btn-vvit-outline">Cancel</a>
+      {% endif %}
+      <button type="submit" class="btn-vvit-primary px-4">
+        <i class="fas fa-save me-1"></i>{% if is_edit %}Save Changes{% else %}Publish Feedback Form{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+let qIndex = 1;
+function addCustomQuestion() {
+  const container = document.getElementById('customQuestionsContainer');
+  const div = document.createElement('div');
+  div.style.background = "rgba(255, 255, 255, 0.04)";
+  div.style.border = "1px solid rgba(255, 255, 255, 0.12)";
+  div.style.borderRadius = "10px";
+  div.style.padding = "14px";
+  div.style.marginBottom = "12px";
+  div.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="fw-bold small text-accent">Custom Parameter #${qIndex}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="this.closest('div[style]').remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="row g-2">
+      <div class="col-md-8">
+        <input type="text" name="custom_question_text[]" class="vvit-input" placeholder="Enter question or evaluation parameter...">
+      </div>
+      <div class="col-md-4">
+        <select name="custom_question_type[]" class="vvit-select">
+          <option value="rating_5">1 to 5 Star Rating Scale</option>
+          <option value="rating_10">1 to 10 Scale</option>
+          <option value="choice">Yes / No (Choice)</option>
+          <option value="text">Descriptive Text Feedback</option>
+        </select>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+  qIndex++;
+}
+</script>
+{% endblock %}

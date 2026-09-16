@@ -83,11 +83,41 @@ A production-grade college ERP web application built with Django, featuring a gl
 *   **Glassmorphism & Cinematic UI**: Fully responsive dark/light mode visual design built with custom CSS tokens, backdrop blur effects, animated gradients, and smooth micro-animations.
 *   **Bulk CSV Uploads**: Instantly upload spreadsheets to create thousands of student profiles and populate test marks.
 *   **Excel & PDF Export**: Download dynamically generated attendance reports on demand via openpyxl and ReportLab.
-*   **Enterprise Security Hardening & Web Application Firewall (WAF)**:
-    *   **Global Security Payload Sanitizer (`SecuritySanitizerMiddleware`)**: Intercepts all incoming GET and POST parameters to block SQL Injection (SQLi), Cross-Site Scripting (XSS), Path Traversal (LFI), and Command Injection attack vectors with HTTP 403 Forbidden responses.
-    *   **Security Headers Engine (`GlobalSecurityHeadersMiddleware`)**: Automatically injects mandatory security headers (`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 1; mode=block`, `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`).
-    *   **Brute-Force & Credential-Stuffing Defense (`LoginRateLimitMiddleware`)**: Locks out client IPs after 5 failed login attempts in 60 seconds and username targets after 10 failed attempts in 120 seconds.
-    *   **Strict Session Hardening**: Enforces `SESSION_COOKIE_HTTPONLY`, `SESSION_COOKIE_SAMESITE='Lax'`, `CSRF_COOKIE_HTTPONLY`, `SESSION_EXPIRE_AT_BROWSER_CLOSE=True`, and 4-hour automatic session timeouts.
+*   **Cyber Neon Glowing Timetable Experience**:
+    *   **Dynamic Active Day Column Glow (`#00e676` / `#10b981`)**: Auto-detects the current day of the week, illuminating the active day column in vibrant neon green with glowing borders and badges.
+    *   **Real-Time Interactive Day Switcher**: Click any day header (`MONDAY` through `SATURDAY`) to dynamically shift the green neon column instantly with zero page reload.
+    *   **Universal Deployment Across All Schedule Views**: Unified across Faculty Dashboard (`/faculty/`), Faculty Timetable (`/faculty/timetable/`), Student Timetable (`/student/timetable/`), HOD Timetables (`/hod/timetable/`), Admin Timetables (`/admin-portal/timetable/`), and DEO Timetables (`/deo/timetable/`).
+    *   **Dual-View Mode & Break Rows**: Integrated rows for Morning Break, Tea Break, and Lunch Break (`🍴 REFRESHMENT & LUNCH BREAK ☕`), with toggle between interactive Cyber Glow View and clean Paper Document View (`@media print` black-and-white for A4 institutional printing).
+*   **Student Feedback & Institutional Questionnaire Platform (`core/feedback_service.py`)**:
+    *   **Targeted Questionnaire Scoping**: Admin and HODs can create feedback forms scoped to Branch, Year, Semester, and Section.
+    *   **Official Document Attachments**: Upload and attach physical questionnaire templates (Photo JPG/PNG or PDF).
+    *   **1-Click Questionnaire Presets**: 10-Point Faculty Teaching Evaluation, 5-Point Course & Curriculum Feedback, 6-Point Campus Infrastructure & Facilities.
+    *   **Online Digital 5-Star Submissions**: Interactive 5-star rating inputs with real-time score indicators, text comments, and single-submission enforcement.
+    *   **Offline Physical Questionnaire Workflow**: Download blank official printable PDF forms (`generate_feedback_blank_printable_pdf`) for physical paper completion.
+    *   **Authenticated Student Summary PDF (`generate_student_feedback_summary_pdf`)**: Students can download an authenticated summary PDF with a unique reference number (`VVIT/FB/2026/XXXXX`) and digital seal.
+    *   **HOD & Admin Analytics Dashboard (`generate_feedback_analytics_pdf`)**: Real-time statistical analysis with question-by-question averages, satisfaction %, star breakdown, and downloadable PDF report.
+    *   **100% Dark Glassmorphic Styling**: Full visual integration across all 7 feedback views adhering to the portal dark theme.
+*   **Proxy Class Request & Single-Period Faculty Collision Engine (`core/timetable_service.py`)**:
+    *   **Two-Way Substitute Approval**: Substitute faculty receive in-app notifications with Accept and Decline actions; timetables and audits update only upon confirmation.
+    *   **Single-Period Faculty Constraint**: Prevents faculty from having more than one class at the same time slot across all branches/sections.
+    *   **Interactive Modal Conflict Resolution**: "Fix That Period & Remove Past Period" vs "Fix Only Past Period".
+*   **Comprehensive Security & Reliability Hardening**:
+    *   **Strict File Upload Validation (`core/file_validators.py`)**: Whitelist enforcement (`.pdf`, `.jpg`, `.jpeg`, `.png`), 5MB size limits, and binary magic-byte inspection (`%PDF-`, `\xff\xd8\xff`, `\x89PNG\r\n\x1a\n`) preventing disguised file uploads and MIME spoofing.
+    *   **Private Media Delivery Architecture (`core/views_media.py`)**: Sensitive documents (student medical certificates, feedback attachments) routed through authenticated, role-authorized views with `X-Content-Type-Options: nosniff`.
+    *   **XSS Elimination in Dynamic UI**: Eliminated `innerHTML` injection in timetable upload previews and dynamic attendance marking rows by constructing DOM nodes safely with `textContent` and URL encoding.
+    *   **Memory & Upload Bounds**: Enforced 5MB size limits before reading uploads into RAM; configured `DATA_UPLOAD_MAX_MEMORY_SIZE` and `FILE_UPLOAD_MAX_MEMORY_SIZE` to 5MB in `settings.py`.
+    *   **Anti-DoS Login Rate Limiting (`middleware.py`)**: Bound throttling to canonical `REMOTE_ADDR`, incrementing failed attempts only on authentication failure (HTTP 200) and clearing on success (HTTP 302) to prevent attacker-driven account lockouts.
+    *   **Production Configuration Fail-Safe**: Fails fast with `ImproperlyConfigured` if `DEBUG=False` with the fallback secret key. Secure cookie flags and HTTPS redirects activate automatically in production.
+    *   **Non-Blocking WAF Telemetry**: Routes suspicious SQL query keywords into audit logging telemetry without falsely blocking legitimate academic curriculum text.
+    *   **Persistent Static Asset Caching**: `APP_VERSION = '2.5.0'` via `core/context_processors.py` replaces per-request timestamps, restoring browser and CDN caching.
+    *   **Accessibility & Reduced Motion**: Added `@media (prefers-reduced-motion: reduce)` in `login.css` and optimized floating background layers for mobile devices (`@media (max-width: 768px)`).
+*   **Official ReportLab PDF Generation Engines (`core/pdf_utils.py`)**:
+    *   **Student Monthly Attendance PDF** (`generate_monthly_attendance_pdf`)
+    *   **Semester Grade Card Marksheet PDF** (`generate_semester_grade_card_pdf`)
+    *   **Student Feedback Summary PDF** (`generate_student_feedback_summary_pdf`)
+    *   **Blank Printable Feedback Form PDF** (`generate_feedback_blank_printable_pdf`)
+    *   **Consolidated Feedback Analytics PDF** (`generate_feedback_analytics_pdf`)
+    *   **Student Counselling Dossier PDF** (`generate_counselling_report_pdf`)
 *   **AI Attendance Predictor**: Utilizes scikit-learn linear regression to analyze student records and predict semester attendance outcomes.
 *   **PostgreSQL Sequence Synchronizer**: Automated script (`scratch/fix_postgres_sequences.py`) to align PostgreSQL primary key sequences with table max IDs, preventing primary key collision errors in production.
 

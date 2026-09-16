@@ -40,12 +40,21 @@ except ImportError:
 # ── Decorator ────────────────────────────────────────────────────────────────
 
 def student_required(view_func):
-    """Ensures the visitor is an authenticated student with a valid profile."""
+    """Ensures the visitor is an authenticated student with a valid profile, or gracefully routes other roles."""
     @wraps(view_func)
     @login_required
     def wrapper(request, *args, **kwargs):
         if request.user.role != 'student':
-            messages.error(request, "This page is for students only.")
+            # Smooth role redirection for timetable routes
+            if 'timetable' in request.path:
+                if request.user.role == 'admin':
+                    return redirect('admin_dashboard:manage_timetable')
+                elif request.user.role == 'hod':
+                    return redirect('hod:manage_timetable')
+                elif request.user.role in ['faculty', 'lab_technician']:
+                    return redirect('faculty:my_timetable')
+                elif request.user.role == 'deo':
+                    return redirect('deo:manage_timetable')
             return redirect(request.user.get_dashboard_url())
         try:
             request.student = request.user.student_profile
@@ -685,33 +694,46 @@ def syllabus_coverage(request, subject_id=None):
     return render(request, 'student/syllabus_coverage.html', context)
 
 
+from core.timetable_service import get_section_timetable_context, generate_official_timetable_pdf
+
 @student_required
 def timetable(request):
+    """
+    Renders the student's class timetable in the official VVIT institutional layout
+    with live faculty attendance status and proxy teacher alerts.
+    """
     student = request.student
     section = student.section
 
     if not section:
         return render(request, 'student/timetable.html', {'no_section': True})
 
-    entries = (
-        Timetable.objects
-        .filter(section=section)
-        .select_related('subject', 'faculty__user')
-        .order_by('day', 'period')
-    )
-    days    = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    periods = list(range(1, 9))
-    grid    = {day: {p: None for p in periods} for day in days}
-    for e in entries:
-        if e.day in grid:
-            grid[e.day][e.period] = e
-
-    return render(request, 'student/timetable.html', {
-        'section': section,
-        'days':    days,
-        'periods': periods,
-        'grid':    grid,
+    ctx = get_section_timetable_context(section, target_date=timezone.localdate())
+    ctx.update({
+        'can_edit': False,
+        'can_upload': False,
+        'pdf_export_url': '/student/timetable/pdf/',
     })
+    return render(request, 'student/timetable.html', ctx)
+
+
+@student_required
+def download_timetable_pdf(request):
+    """
+    Downloads the student's class timetable as an official A4 Landscape PDF.
+    """
+    student = request.student
+    section = student.section
+
+    if not section:
+        messages.error(request, "No section assigned.")
+        return redirect('student:timetable')
+
+    pdf_bytes = generate_official_timetable_pdf(section)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="VVIT_Timetable_{section.branch.code}_{section.year.year}_{section.name}.pdf"'
+    return response
+
 
 
 @student_required
@@ -1053,6 +1075,16 @@ def apply_leave_od(request):
                 if end_date < start_date:
                     messages.error(request, "End date cannot be before start date.")
                 else:
+                    if doc_file:
+                        from core.file_validators import validate_document_upload
+                        from django.core.exceptions import ValidationError
+                        try:
+                            validate_document_upload(doc_file, max_size_mb=5)
+                        except ValidationError as ve:
+                            messages.error(request, f"Document upload rejected: {ve.message if hasattr(ve, 'message') else ve}")
+                            past_requests = StudentLeaveRequest.objects.filter(student=student).order_by('-created_at')
+                            return render(request, 'student/leave_apply.html', {'student': student, 'past_requests': past_requests})
+
                     leave_req = StudentLeaveRequest.objects.create(
                         student=student,
                         leave_type=leave_type,
@@ -1125,5 +1157,235 @@ def apply_readmission(request):
         'available_years': available_years,
         'available_sections': available_sections,
     })
+
+
+# ─────────────────────────────────────────────
+# STUDENT FEEDBACK FORMS & DOCUMENT WORKFLOW
+# ─────────────────────────────────────────────
+@student_required
+def feedback_list(request):
+    """
+    Lists all active feedback questionnaires targeting this student's branch, year, semester, or section.
+    Distinguishes between pending forms and already submitted forms.
+    """
+    from core.models import FeedbackForm, FeedbackSubmission
+    student = request.student
+
+    # Filter applicable forms
+    forms_qs = FeedbackForm.objects.filter(is_active=True).filter(
+        Q(branch__isnull=True) | Q(branch=student.branch)
+    ).filter(
+        Q(year__isnull=True) | Q(year=student.year)
+    ).filter(
+        Q(section__isnull=True) | Q(section=student.section)
+    ).order_by('-created_at')
+
+    # Submissions by this student
+    student_submissions = FeedbackSubmission.objects.filter(
+        student=student
+    ).select_related('form')
+    
+    submitted_form_map = {sub.form_id: sub for sub in student_submissions}
+
+    pending_forms = []
+    completed_items = []
+
+    for f in forms_qs:
+        if f.id in submitted_form_map:
+            sub = submitted_form_map[f.id]
+            completed_items.append({
+                'form': f,
+                'submission': sub,
+            })
+        else:
+            pending_forms.append(f)
+
+    return render(request, 'student/feedback_list.html', {
+        'student': student,
+        'pending_forms': pending_forms,
+        'completed_items': completed_items,
+        'total_pending': len(pending_forms),
+        'total_completed': len(completed_items),
+    })
+
+
+@student_required
+def fill_feedback(request, form_id):
+    """
+    Interactive online feedback form view.
+    Renders questions with star ratings and comments, allows downloading blank PDF for offline fill,
+    and records answers on POST.
+    """
+    from core.models import FeedbackForm, FeedbackSubmission, FeedbackAnswer
+    student = request.student
+    form_obj = get_object_or_404(FeedbackForm, id=form_id, is_active=True)
+
+    # Scoping check
+    if form_obj.branch and form_obj.branch != student.branch:
+        messages.error(request, "This feedback form is not applicable to your department.")
+        return redirect('student:feedback_list')
+    if form_obj.year and form_obj.year != student.year:
+        messages.error(request, "This feedback form is not applicable to your academic year.")
+        return redirect('student:feedback_list')
+    if form_obj.section and form_obj.section != student.section:
+        messages.error(request, "This feedback form is not applicable to your section.")
+        return redirect('student:feedback_list')
+
+    # Enforce online submission permission
+    if not form_obj.allow_online_submission:
+        messages.error(request, "Online submissions are disabled for this feedback form. Please submit a physical copy.")
+        return redirect('student:feedback_list')
+
+    # Enforce deadline check
+    from django.utils import timezone
+    if form_obj.deadline and form_obj.deadline < timezone.now().date():
+        messages.error(request, "The submission deadline for this feedback form has passed.")
+        return redirect('student:feedback_list')
+
+    # Check if already submitted
+    existing_sub = FeedbackSubmission.objects.filter(form=form_obj, student=student).first()
+    if existing_sub:
+        messages.info(request, "You have already submitted responses for this feedback form. Viewing your submission summary.")
+        return redirect('student:feedback_summary', form_id=form_obj.id)
+
+    questions = form_obj.questions.all().order_by('order', 'id')
+
+    if request.method == 'POST':
+        overall_comments = request.POST.get('overall_comments', '').strip()
+        
+        # Get client IP
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_addr = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip_addr = request.META.get('REMOTE_ADDR')
+
+        # Create submission
+        submission = FeedbackSubmission.objects.create(
+            form=form_obj,
+            student=student,
+            submission_mode='online',
+            overall_comments=overall_comments,
+            ip_address=ip_addr
+        )
+
+        # Save answers
+        for q in questions:
+            rating_val = None
+            text_val = None
+            choice_val = None
+
+            if q.question_type in ['rating_5', 'rating_10']:
+                r_str = request.POST.get(f'question_{q.id}')
+                if r_str:
+                    try:
+                        rating_val = int(r_str)
+                    except ValueError:
+                        rating_val = 5
+                elif q.is_required:
+                    rating_val = 5 # Default fallback
+            elif q.question_type == 'choice':
+                choice_val = request.POST.get(f'question_{q.id}', '').strip()
+            elif q.question_type == 'text':
+                text_val = request.POST.get(f'question_{q.id}', '').strip()
+
+            FeedbackAnswer.objects.create(
+                submission=submission,
+                question=q,
+                rating_value=rating_val,
+                choice_value=choice_val,
+                text_value=text_val
+            )
+
+        messages.success(request, f"Feedback submitted successfully! Reference No: {submission.reference_no}. You can now download or print your summary.")
+        return redirect('student:feedback_summary', form_id=form_obj.id)
+
+    return render(request, 'student/fill_feedback.html', {
+        'student': student,
+        'form_obj': form_obj,
+        'questions': questions,
+    })
+
+
+@student_required
+def feedback_summary(request, form_id):
+    """
+    Displays the authenticated submission summary and receipt for a completed feedback form.
+    """
+    from core.models import FeedbackForm, FeedbackSubmission
+    student = request.student
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    submission = get_object_or_404(FeedbackSubmission, form=form_obj, student=student)
+
+    answers = submission.answers.select_related('question').order_by('question__order', 'id')
+
+    return render(request, 'student/feedback_summary.html', {
+        'student': student,
+        'form_obj': form_obj,
+        'submission': submission,
+        'answers': answers,
+    })
+
+
+@student_required
+def download_feedback_pdf(request, form_id):
+    """
+    Downloads the official ReportLab PDF summary and acknowledgment receipt for a student submission.
+    """
+    from core.models import FeedbackForm, FeedbackSubmission
+    from core.pdf_utils import generate_student_feedback_summary_pdf
+    
+    student = request.student
+    form_obj = get_object_or_404(FeedbackForm, id=form_id)
+    submission = get_object_or_404(FeedbackSubmission, form=form_obj, student=student)
+
+    try:
+        pdf_buffer = generate_student_feedback_summary_pdf(submission)
+        filename = f"VVIT_Feedback_Summary_{student.roll_number}_{form_obj.id}.pdf"
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Failed to generate PDF summary: {e}")
+        return redirect('student:feedback_summary', form_id=form_id)
+
+
+@student_required
+def download_blank_feedback_pdf(request, form_id):
+    """
+    Downloads the official blank printable PDF feedback questionnaire for offline physical filling.
+    Restricted to student's department, year, and section scope.
+    """
+    from core.models import FeedbackForm
+    from core.pdf_utils import generate_feedback_blank_printable_pdf
+
+    student = request.student
+    form_obj = get_object_or_404(FeedbackForm, id=form_id, is_active=True)
+
+    # Scoping check
+    if form_obj.branch and form_obj.branch != student.branch:
+        messages.error(request, "This feedback form is not applicable to your department.")
+        return redirect('student:feedback_list')
+    if form_obj.year and form_obj.year != student.year:
+        messages.error(request, "This feedback form is not applicable to your academic year.")
+        return redirect('student:feedback_list')
+    if form_obj.section and form_obj.section != student.section:
+        messages.error(request, "This feedback form is not applicable to your section.")
+        return redirect('student:feedback_list')
+
+    if not form_obj.allow_offline_download:
+        messages.error(request, "Blank form download is disabled for this feedback questionnaire.")
+        return redirect('student:feedback_list')
+
+    try:
+        pdf_buffer = generate_feedback_blank_printable_pdf(form_obj)
+        filename = f"VVIT_Blank_Feedback_Form_{form_obj.id}.pdf"
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        messages.error(request, f"Failed to generate blank feedback form: {e}")
+        return redirect('student:feedback_list')
+
 
 

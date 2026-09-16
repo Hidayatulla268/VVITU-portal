@@ -58,3 +58,33 @@ def to_range(value):
         return range(int(value))
     except (ValueError, TypeError):
         return []
+
+
+@register.filter
+def subject_icon(subject_name):
+    """Returns a fontawesome icon class based on subject title."""
+    if not subject_name:
+        return 'fas fa-book'
+    s = str(subject_name).lower()
+    if any(k in s for k in ['physic', 'mechanic', 'machin']):
+        return 'fas fa-cog'
+    elif any(k in s for k in ['ui', 'ux', 'design', 'cad', 'drawing']):
+        return 'fas fa-drafting-compass'
+    elif any(k in s for k in ['data struct', 'code', 'python', 'java', 'c++', 'program', 'algorithm', 'software']):
+        return 'fas fa-code'
+    elif any(k in s for k in ['database', 'dbms', 'sql', 'oracle', 'big data']):
+        return 'fas fa-database'
+    elif any(k in s for k in ['security', 'cyber', 'crypto', 'network']):
+        return 'fas fa-shield-alt'
+    elif any(k in s for k in ['math', 'calculus', 'algebra', 'statistic', 'discrete', 'probability']):
+        return 'fas fa-calculator'
+    elif any(k in s for k in ['ai', 'neural', 'machine learn', 'deep learn', 'intelligence']):
+        return 'fas fa-brain'
+    elif any(k in s for k in ['web', 'html', 'react', 'full stack']):
+        return 'fas fa-laptop-code'
+    elif any(k in s for k in ['circuit', 'electronic', 'vlsi', 'embed', 'digital']):
+        return 'fas fa-microchip'
+    elif any(k in s for k in ['lab', 'practical', 'workshop']):
+        return 'fas fa-flask'
+    return 'fas fa-graduation-cap'
+

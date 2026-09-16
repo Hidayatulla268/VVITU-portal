@@ -1,0 +1,806 @@
+{% load static %}
+{% load core_tags %}
+
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+<!-- DUAL-THEME FACULTY TIMETABLE: CYBER NEON GLOW (SCREEN) + OFFICIAL VVIT (PRINT)  -->
+<!-- ══════════════════════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ── CYBER NEON GLOW THEME ─────────────────────────── */
+.cyber-tt-container {
+  background: radial-gradient(circle at 50% 0%, #151724 0%, #0a0b10 100%);
+  border: 1px solid #1f2338;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.cyber-top-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cyber-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cyber-view-toggle {
+  background: #12131d;
+  border: 1px solid #282c44;
+  border-radius: 30px;
+  padding: 3px;
+  display: inline-flex;
+}
+.cyber-toggle-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.cyber-toggle-btn.active {
+  background: #00e676;
+  color: #052e16;
+  box-shadow: 0 0 15px rgba(0, 230, 118, 0.5);
+}
+
+/* Day Header Tabs */
+.cyber-grid-header {
+  display: grid;
+  grid-template-columns: 140px repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.cyber-time-hdr {
+  color: #ff3b5c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cyber-day-hdr {
+  text-align: center;
+  padding: 10px 4px 12px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+.cyber-day-hdr:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ACTIVE GLOWING DAY HEADER */
+.cyber-day-hdr.glowing-active-day {
+  color: #00e676 !important;
+  text-shadow: 0 0 15px rgba(0, 230, 118, 0.8), 0 0 30px rgba(0, 230, 118, 0.4);
+  border-bottom: 3.5px solid #00e676 !important;
+  box-shadow: 0 5px 15px rgba(0, 230, 118, 0.4);
+  position: relative;
+}
+.cyber-day-hdr.glowing-active-day::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 15%;
+  width: 70%;
+  height: 3.5px;
+  background: #00e676;
+  border-radius: 4px;
+  box-shadow: 0 0 12px #00e676;
+}
+
+/* Grid Row */
+.cyber-grid-row {
+  display: grid;
+  grid-template-columns: 140px repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Time Slot Card (Left) */
+.cyber-time-card {
+  background: #11121c;
+  border: 1px solid #1f2338;
+  border-radius: 12px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 110px;
+}
+.cyber-time-val {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+.cyber-slot-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Class Period Cards */
+.cyber-class-card {
+  background: #141520;
+  border: 1px solid #202438;
+  border-left: 3px solid #e11d48;
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.cyber-class-card:hover {
+  transform: translateY(-3px);
+  border-color: #f43f5e;
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.25);
+}
+
+.cyber-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.cyber-subj-badge {
+  background: rgba(225, 29, 72, 0.16);
+  color: #f43f5e;
+  border: 1px solid rgba(225, 29, 72, 0.35);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+.cyber-subj-icon {
+  color: #f43f5e;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.cyber-subj-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.3;
+  margin: 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cyber-card-bot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  gap: 4px;
+}
+.cyber-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cyber-faculty {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+/* ── ACTIVE DAY COLUMN GLOW (THE GREEN GLOW EFFECT) ── */
+.cyber-class-card.glowing-active-card {
+  background: #0d1f18 !important;
+  border: 2px solid #00e676 !important;
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.45), inset 0 0 12px rgba(0, 230, 118, 0.1) !important;
+  transform: translateY(-2px);
+}
+.cyber-class-card.glowing-active-card:hover {
+  box-shadow: 0 0 28px rgba(0, 230, 118, 0.7), inset 0 0 16px rgba(0, 230, 118, 0.2) !important;
+  transform: translateY(-4px);
+}
+.cyber-class-card.glowing-active-card .cyber-subj-badge {
+  background: rgba(0, 230, 118, 0.16) !important;
+  color: #00e676 !important;
+  border: 1px solid rgba(0, 230, 118, 0.4) !important;
+}
+.cyber-class-card.glowing-active-card .cyber-subj-icon {
+  color: #00e676 !important;
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.8);
+}
+.cyber-class-card.glowing-active-card .cyber-card-bot {
+  color: #a7f3d0 !important;
+}
+.cyber-class-card.glowing-active-card .cyber-room i {
+  color: #00e676 !important;
+}
+
+/* Empty Cell in Cyber Theme */
+.cyber-empty-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+.cyber-empty-card.glowing-active-card {
+  border: 1.5px dashed rgba(0, 230, 118, 0.45) !important;
+  background: rgba(0, 230, 118, 0.03) !important;
+  color: rgba(0, 230, 118, 0.5) !important;
+}
+
+/* Break Strip Row */
+.cyber-break-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.cyber-break-bar {
+  background: rgba(225, 29, 72, 0.06);
+  border: 1px dashed rgba(225, 29, 72, 0.35);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #f43f5e;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 20px;
+}
+
+/* Responsive scrolling */
+.cyber-scroll-wrap {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.cyber-grid-content {
+  min-width: 980px;
+}
+</style>
+
+<div class="vvit-tt-wrapper mb-4">
+  <!-- Top Action Controls -->
+  <div class="tt-actions-bar d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 no-print">
+    <div class="d-flex align-items-center gap-2">
+      <!-- Theme Switcher Pills -->
+      <div class="cyber-view-toggle">
+        <button type="button" class="cyber-toggle-btn active" id="btnFacultyCyberTheme" onclick="switchFacultyTimetableTheme('cyber')">
+          <i class="fas fa-sparkles text-success me-1"></i>Cyber Glow Theme
+        </button>
+        <button type="button" class="cyber-toggle-btn" id="btnFacultyPaperTheme" onclick="switchFacultyTimetableTheme('paper')">
+          <i class="fas fa-file-alt me-1"></i>Paper Document View
+        </button>
+      </div>
+      <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
+        <i class="fas fa-chalkboard-teacher me-1"></i>Faculty: {{ faculty.user.get_full_name }} ({{ faculty.employee_id }})
+      </span>
+    </div>
+    
+    <div class="d-flex gap-2">
+      {% if can_upload %}
+      <button type="button" class="btn btn-warning text-dark fw-bold btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#timetableUploadModal">
+        <i class="fas fa-camera me-1"></i>Upload Photo / PDF
+      </button>
+      {% endif %}
+
+      {% if pdf_export_url %}
+      <a href="{{ pdf_export_url }}" class="btn btn-danger btn-sm px-3" target="_blank">
+        <i class="fas fa-file-pdf me-1"></i>Download Official PDF
+      </a>
+      {% endif %}
+
+      <button type="button" class="btn btn-secondary btn-sm px-3" onclick="window.print()">
+        <i class="fas fa-print me-1"></i>Print
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. CYBER NEON GLOW FACULTY TIMETABLE                                      -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="cyber-tt-container mb-4" id="cyberFacultyTimetableWrapper">
+    <!-- Top Meta Strip -->
+    <div class="cyber-top-strip">
+      <div class="cyber-title">
+        <i class="fas fa-user-tie text-success fs-4"></i>
+        <span>{{ faculty.user.get_full_name }} &middot; Weekly Teaching Schedule</span>
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small ms-2" style="font-size: 0.72rem;">
+          <i class="fas fa-circle text-success me-1" style="font-size: 0.55rem;"></i>Workload: {{ total_weekly_slots|default:faculty_ctx.total_weekly_slots|default:0 }} Periods/Week
+        </span>
+      </div>
+      <div class="d-flex flex-wrap gap-2 small text-muted">
+        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+          <i class="fas fa-id-badge me-1 text-warning"></i>Emp ID: {{ faculty.employee_id }}
+        </span>
+        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+          <i class="fas fa-university me-1 text-info"></i>Dept: {{ faculty.department.code|default:"General" }}
+        </span>
+        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+          <i class="fas fa-clock me-1 text-danger"></i>Click any Day Header to highlight
+        </span>
+      </div>
+    </div>
+
+    <!-- Scrollable Cyber Grid -->
+    <div class="cyber-scroll-wrap">
+      <div class="cyber-grid-content">
+        
+        <!-- Day Columns Header -->
+        <div class="cyber-grid-header">
+          <div class="cyber-time-hdr">
+            <i class="far fa-clock"></i> TIME
+          </div>
+          {% for day in days %}
+            <div class="cyber-day-hdr" data-day-name="{{ day }}" onclick="setGlowingDayFaculty('{{ day }}')">
+              {{ day|upper }}
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 1 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">08:00 - 08:50</div>
+            <div class="cyber-slot-lbl">Slot 01</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:1 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- BREAK 1 -->
+        <div class="cyber-break-row">
+          <div class="cyber-time-card" style="min-height: 48px; padding: 6px;">
+            <div class="cyber-time-val" style="font-size: 0.8rem;">08:50 - 09:10</div>
+            <div class="cyber-slot-lbl" style="font-size: 0.65rem;">Break</div>
+          </div>
+          <div class="cyber-break-bar">
+            <i class="fas fa-coffee"></i> Morning Refreshment Break <i class="fas fa-croissant"></i>
+          </div>
+        </div>
+
+        <!-- PERIOD 2 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">09:10 - 10:00</div>
+            <div class="cyber-slot-lbl">Slot 02</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:2 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 3 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">10:00 - 10:50</div>
+            <div class="cyber-slot-lbl">Slot 03</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:3 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- BREAK 2 -->
+        <div class="cyber-break-row">
+          <div class="cyber-time-card" style="min-height: 48px; padding: 6px;">
+            <div class="cyber-time-val" style="font-size: 0.8rem;">10:50 - 11:10</div>
+            <div class="cyber-slot-lbl" style="font-size: 0.65rem;">Break</div>
+          </div>
+          <div class="cyber-break-bar">
+            <i class="fas fa-mug-hot"></i> Tea Break & Student Discussion <i class="fas fa-comments"></i>
+          </div>
+        </div>
+
+        <!-- PERIOD 4 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">11:10 - 12:00</div>
+            <div class="cyber-slot-lbl">Slot 04</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:4 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 5 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">12:00 - 12:50</div>
+            <div class="cyber-slot-lbl">Slot 05</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:5 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- LUNCH BREAK -->
+        <div class="cyber-break-row">
+          <div class="cyber-time-card" style="min-height: 52px; padding: 6px;">
+            <div class="cyber-time-val" style="font-size: 0.85rem;">12:50 - 01:50</div>
+            <div class="cyber-slot-lbl" style="font-size: 0.65rem;">Lunch</div>
+          </div>
+          <div class="cyber-break-bar" style="border-color: rgba(225, 29, 72, 0.45); background: rgba(225, 29, 72, 0.08);">
+            <i class="fas fa-utensils"></i> Refreshment & Lunch Break <i class="fas fa-mug-hot"></i>
+          </div>
+        </div>
+
+        <!-- PERIOD 6 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">01:50 - 02:50</div>
+            <div class="cyber-slot-lbl">Slot 06</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:6 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+        <!-- PERIOD 7 -->
+        <div class="cyber-grid-row">
+          <div class="cyber-time-card">
+            <div class="cyber-time-val">02:50 - 03:50</div>
+            <div class="cyber-slot-lbl">Slot 07</div>
+          </div>
+          {% for day in days %}
+            {% with s=grid|dict_get:day|dict_get:7 %}
+              {% if s %}
+                <div class="cyber-class-card" data-card-day="{{ day }}">
+                  <div class="cyber-card-top">
+                    <span class="cyber-subj-badge">{{ s.subject.short_name|default:s.subject.code }}</span>
+                    <i class="{{ s.subject.name|subject_icon }} cyber-subj-icon"></i>
+                  </div>
+                  <div class="cyber-subj-name">{{ s.subject.name }}</div>
+                  <div class="cyber-card-bot">
+                    <span class="cyber-room"><i class="fas fa-map-marker-alt text-danger"></i> Room {{ s.room_number|default:"C-402" }}</span>
+                    <span class="cyber-faculty">{{ s.section.branch.code }}-{{ s.section.name }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="cyber-empty-card" data-card-day="{{ day }}"><span>&mdash;</span></div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. OFFICIAL VVIT WHITE PAPER FACULTY TIMETABLE                            -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <div class="vvit-paper-card p-4 bg-white text-dark shadow-lg rounded-3 border d-none" id="vvitFacultyTimetableSheet" style="font-family: 'Times New Roman', Times, serif; color: #111;">
+    
+    <!-- Top College Header -->
+    <div class="text-center pb-2 border-bottom border-dark position-relative">
+      <div class="d-flex align-items-center justify-content-center gap-3 mb-1">
+        <div class="vvit-logo-crest" style="width: 70px; height: 70px; background: #900; color: white; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Arial', sans-serif; font-weight: bold; border: 2px solid #500;">
+          <span style="font-size: 1.4rem; line-height: 1;">VVIT</span>
+          <span style="font-size: 0.5rem; text-align: center; text-transform: uppercase;">Autonomous</span>
+        </div>
+        <div>
+          <h2 class="mb-0 fw-bold" style="font-size: 1.45rem; color: #800000; letter-spacing: 0.5px; font-family: 'Georgia', serif;">
+            VASIREDDY VENKATADRI INSTITUTE OF TECHNOLOGY
+          </h2>
+          <div class="small fw-bold" style="font-size: 0.85rem; color: #333;">(Autonomous)</div>
+          <div style="font-size: 0.78rem; line-height: 1.25; color: #222;">
+            Approved by AICTE, Permanently Affiliated to JNTUK, NAAC Accredited with 'A' Grade, ISO 9001:2015 Certified<br>
+            Nambur (V), Pedakakani (M), Guntur (Dt.), Andhra Pradesh – 522 508
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-2 text-danger fw-bold" style="font-size: 1.05rem; letter-spacing: 0.5px; color: #990000;">
+        [Faculty Weekly Teaching Schedule & Workload — {{ faculty.department.name|default:"General Engineering" }}]
+      </div>
+
+      <div class="mt-1">
+        <span class="fw-bold text-decoration-underline" style="font-size: 1rem; letter-spacing: 1px;">Faculty Time Table</span>
+      </div>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div class="my-2 border border-dark" style="font-size: 0.85rem;">
+      <div class="row g-0 border-bottom border-dark text-center fw-semibold">
+        <div class="col-4 border-end border-dark py-1 text-start ps-2">
+          <strong>Faculty Name:</strong> {{ faculty.user.get_full_name }}
+        </div>
+        <div class="col-4 border-end border-dark py-1">
+          <strong>Employee ID:</strong> {{ faculty.employee_id }}
+        </div>
+        <div class="col-4 py-1 text-end pe-2">
+          <strong>Department:</strong> {{ faculty.department.code|default:"GEN" }} &bull; {{ faculty.department.name|default:"General" }}
+        </div>
+      </div>
+      <div class="row g-0 text-center fw-semibold">
+        <div class="col-4 border-end border-dark py-1 text-start ps-2">
+          <strong>Designation:</strong> {{ faculty.designation|default:"Assistant Professor" }}
+        </div>
+        <div class="col-4 border-end border-dark py-1">
+          <strong>Total Workload:</strong> {{ total_weekly_slots|default:faculty_ctx.total_weekly_slots|default:0 }} Periods / Week
+        </div>
+        <div class="col-4 py-1 text-end pe-2">
+          <strong>Academic Year:</strong> {{ academic_year|default:"2026-27" }} ({{ semester_display|default:"I - Semester" }})
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Period Grid Table -->
+    <div class="table-responsive my-2">
+      <table class="table table-bordered border-dark text-center align-middle mb-0 vvit-tt-grid" style="font-size: 0.82rem; border: 1.5px solid #000;">
+        <thead>
+          <tr class="bg-light border-dark" style="background: #f8f9fa;">
+            <th class="border-dark py-1" style="width: 75px;">HOUR →</th>
+            <th class="border-dark py-1">8.00-8.50</th>
+            <th class="border-dark py-1 bg-secondary-subtle" style="width: 45px;">8.50-9.10</th>
+            <th class="border-dark py-1">9.10-10.00</th>
+            <th class="border-dark py-1">10.00-10.50</th>
+            <th class="border-dark py-1 bg-secondary-subtle" style="width: 45px;">10.50-11.10</th>
+            <th class="border-dark py-1">11.10-12.00</th>
+            <th class="border-dark py-1">12.00-12.50</th>
+            <th class="border-dark py-1 bg-secondary-subtle" style="width: 55px;">12.50-1.50</th>
+            <th class="border-dark py-1">1.50-2.50</th>
+            <th class="border-dark py-1">2.50-3.50</th>
+          </tr>
+          <tr class="bg-light border-dark fw-bold" style="background: #eceff1;">
+            <th class="border-dark py-1">DAY ↓</th>
+            <th class="border-dark py-1">1</th>
+            <th class="border-dark py-1 bg-secondary-subtle" rowspan="7" style="vertical-align: middle; width: 45px; writing-mode: vertical-lr; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; background: #e9ecef;">BREAK</th>
+            <th class="border-dark py-1">2</th>
+            <th class="border-dark py-1">3</th>
+            <th class="border-dark py-1 bg-secondary-subtle" rowspan="7" style="vertical-align: middle; width: 45px; writing-mode: vertical-lr; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; background: #e9ecef;">BREAK</th>
+            <th class="border-dark py-1">4</th>
+            <th class="border-dark py-1">5</th>
+            <th class="border-dark py-1 bg-secondary-subtle" rowspan="7" style="vertical-align: middle; width: 55px; writing-mode: vertical-lr; transform: rotate(180deg); letter-spacing: 4px; font-weight: bold; background: #dee2e6;">LUNCH</th>
+            <th class="border-dark py-1">6</th>
+            <th class="border-dark py-1">7</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for day in days %}
+          <tr>
+            <td class="fw-bold border-dark bg-light" style="background: #f8f9fa;">{{ day|slice:":3" }}</td>
+            
+            {% with s1=grid|dict_get:day|dict_get:1 %}
+            <td class="border-dark tt-slot-cell">{% if s1 %}<div class="fw-bold">{{ s1.subject.short_name|default:s1.subject.code }}</div><small class="text-muted">{{ s1.section.branch.code }}-{{ s1.section.name }}</small>{% else %}—{% endif %}</td>
+            {% endwith %}
+
+            {% with s2=grid|dict_get:day|dict_get:2 s3=grid|dict_get:day|dict_get:3 %}
+            <td class="border-dark tt-slot-cell">{% if s2 %}<div class="fw-bold">{{ s2.subject.short_name|default:s2.subject.code }}</div><small class="text-muted">{{ s2.section.branch.code }}-{{ s2.section.name }}</small>{% else %}—{% endif %}</td>
+            <td class="border-dark tt-slot-cell">{% if s3 %}<div class="fw-bold">{{ s3.subject.short_name|default:s3.subject.code }}</div><small class="text-muted">{{ s3.section.branch.code }}-{{ s3.section.name }}</small>{% else %}—{% endif %}</td>
+            {% endwith %}
+
+            {% with s4=grid|dict_get:day|dict_get:4 s5=grid|dict_get:day|dict_get:5 %}
+            <td class="border-dark tt-slot-cell">{% if s4 %}<div class="fw-bold">{{ s4.subject.short_name|default:s4.subject.code }}</div><small class="text-muted">{{ s4.section.branch.code }}-{{ s4.section.name }}</small>{% else %}—{% endif %}</td>
+            <td class="border-dark tt-slot-cell">{% if s5 %}<div class="fw-bold">{{ s5.subject.short_name|default:s5.subject.code }}</div><small class="text-muted">{{ s5.section.branch.code }}-{{ s5.section.name }}</small>{% else %}—{% endif %}</td>
+            {% endwith %}
+
+            {% with s6=grid|dict_get:day|dict_get:6 s7=grid|dict_get:day|dict_get:7 %}
+            <td class="border-dark tt-slot-cell">{% if s6 %}<div class="fw-bold">{{ s6.subject.short_name|default:s6.subject.code }}</div><small class="text-muted">{{ s6.section.branch.code }}-{{ s6.section.name }}</small>{% else %}—{% endif %}</td>
+            <td class="border-dark tt-slot-cell">{% if s7 %}<div class="fw-bold">{{ s7.subject.short_name|default:s7.subject.code }}</div><small class="text-muted">{{ s7.section.branch.code }}-{{ s7.section.name }}</small>{% else %}—{% endif %}</td>
+            {% endwith %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Signatures Footer -->
+    <div class="row pt-4 mt-3 text-center fw-bold border-top-0" style="font-size: 0.85rem; color: #111;">
+      <div class="col-3"><div>Faculty Member</div></div>
+      <div class="col-3"><div>Timetable Coordinator</div></div>
+      <div class="col-3"><div>Head of the Department</div></div>
+      <div class="col-3"><div>Dean Academics / Principal</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function setGlowingDayFaculty(targetDay) {
+  if (!targetDay) {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayIndex = new Date().getDay();
+    targetDay = dayNames[todayIndex] || 'Monday';
+    if (targetDay === 'Sunday') targetDay = 'Monday';
+  }
+
+  // 1. Update Header Tabs
+  document.querySelectorAll('#cyberFacultyTimetableWrapper .cyber-day-hdr').forEach(el => {
+    const dName = el.getAttribute('data-day-name');
+    if (dName && dName.toLowerCase() === targetDay.toLowerCase()) {
+      el.classList.add('glowing-active-day');
+    } else {
+      el.classList.remove('glowing-active-day');
+    }
+  });
+
+  // 2. Update Column Cards
+  document.querySelectorAll('#cyberFacultyTimetableWrapper [data-card-day]').forEach(card => {
+    const cDay = card.getAttribute('data-card-day');
+    if (cDay && cDay.toLowerCase() === targetDay.toLowerCase()) {
+      card.classList.add('glowing-active-card');
+    } else {
+      card.classList.remove('glowing-active-card');
+    }
+  });
+}
+
+function switchFacultyTimetableTheme(theme) {
+  const cyberWrap = document.getElementById('cyberFacultyTimetableWrapper');
+  const paperWrap = document.getElementById('vvitFacultyTimetableSheet');
+  const btnCyber = document.getElementById('btnFacultyCyberTheme');
+  const btnPaper = document.getElementById('btnFacultyPaperTheme');
+
+  if (theme === 'paper') {
+    cyberWrap.classList.add('d-none');
+    paperWrap.classList.remove('d-none');
+    btnPaper.classList.add('active');
+    btnCyber.classList.remove('active');
+  } else {
+    cyberWrap.classList.remove('d-none');
+    paperWrap.classList.add('d-none');
+    btnCyber.classList.add('active');
+    btnPaper.classList.remove('active');
+  }
+}
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setGlowingDayFaculty();
+} else {
+  document.addEventListener('DOMContentLoaded', function() {
+    setGlowingDayFaculty();
+  });
+}
+</script>

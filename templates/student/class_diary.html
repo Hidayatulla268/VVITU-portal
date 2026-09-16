@@ -140,9 +140,19 @@
             </div>
           </td>
           <td>
-            <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-30 fw-bold" style="font-size: 0.75rem;">
-              {{ entry.unit_label }}
-            </span>
+            {% if entry.unit_number == 1 %}
+              <span class="badge-unit badge-unit-1"><i class="fas fa-bookmark" style="font-size: 0.68rem;"></i>Unit 1</span>
+            {% elif entry.unit_number == 2 %}
+              <span class="badge-unit badge-unit-2"><i class="fas fa-bookmark" style="font-size: 0.68rem;"></i>Unit 2</span>
+            {% elif entry.unit_number == 3 %}
+              <span class="badge-unit badge-unit-3"><i class="fas fa-bookmark" style="font-size: 0.68rem;"></i>Unit 3</span>
+            {% elif entry.unit_number == 4 %}
+              <span class="badge-unit badge-unit-4"><i class="fas fa-bookmark" style="font-size: 0.68rem;"></i>Unit 4</span>
+            {% elif entry.unit_number == 5 %}
+              <span class="badge-unit badge-unit-5"><i class="fas fa-check-circle" style="font-size: 0.68rem;"></i>Unit 5</span>
+            {% else %}
+              <span class="badge-unit badge-unit-other"><i class="fas fa-layer-group" style="font-size: 0.68rem;"></i>{{ entry.unit_label }}</span>
+            {% endif %}
           </td>
           <td>
             <span class="badge bg-primary bg-opacity-75 text-light">{{ entry.subject.code }}</span>

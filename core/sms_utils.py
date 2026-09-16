@@ -370,7 +370,8 @@ send_result_sms_to_parent = send_result_notifications
 
 def send_class_transfer_notification(transfer):
     """
-    Sends SMS, Email, and In-App Notification to substitute faculty when assigned a proxy class.
+    Sends SMS, Email, and In-App Notification to substitute faculty when requested/assigned for a proxy class.
+    Prompts substitute faculty to accept or decline the proxy class.
     """
     if not transfer or not transfer.substitute_faculty or not transfer.substitute_faculty.user:
         return False
@@ -381,23 +382,26 @@ def send_class_transfer_notification(transfer):
     sub_user = sub.user
     
     date_str = transfer.date.strftime('%d-%b-%Y')
-    subj_str = f"{tt.subject.code} — {tt.subject.name}" if tt.subject else "Class Period"
-    period_str = f"Period {tt.period}" + (f" ({tt.start_time.strftime('%I:%M %p')})" if tt.start_time else "")
-    branch_str = f"{tt.section.branch.code} Year {tt.section.year.year} Sec {tt.section.name}" if (tt.section and tt.section.branch and tt.section.year) else ""
+    subj_str = f"{tt.subject.code} — {tt.subject.name}" if (tt and tt.subject) else "Class Period"
+    period_str = f"Period {tt.period}" + (f" ({tt.start_time.strftime('%I:%M %p')})" if (tt and tt.start_time) else "")
+    branch_str = f"{tt.section.branch.code} Year {tt.section.year.year} Sec {tt.section.name}" if (tt and tt.section and tt.section.branch and tt.section.year) else ""
 
+    assigner_text = "HOD/Admin" if transfer.is_proxy else f"Prof. {orig.full_name}"
     msg = (
-        f"Hello Prof. {sub.full_name}, you have been assigned as proxy substitute for Prof. {orig.full_name}'s "
-        f"{subj_str} class on {date_str} at {period_str} [{branch_str}]. Please take attendance for this class."
+        f"Hello Prof. {sub.full_name}, {assigner_text} has requested you as substitute proxy for "
+        f"{orig.full_name}'s {subj_str} class on {date_str} at {period_str} [{branch_str}]. "
+        f"Reason: {transfer.reason or 'Class substitution'}. "
+        f"Action Required: Please log in to your VVITU portal to Accept or Decline this proxy assignment."
     )
 
     # 1. SMS Notification
     if sub.phone:
-        send_sms(sub.phone, f"VVITU Proxy Assigned: {subj_str} on {date_str} at {period_str}. Check portal.")
+        send_sms(sub.phone, f"VVITU Proxy Request: {subj_str} on {date_str} P{tt.period}. Please login to Accept/Decline.")
 
     # 2. Email Notification
     if sub_user.email:
         send_mail(
-            subject=f"[VVITU Proxy Class Assignment] {subj_str} on {date_str}",
+            subject=f"[Action Required: Proxy Class Request] {subj_str} on {date_str}",
             message=msg,
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
             recipient_list=[sub_user.email],
@@ -408,16 +412,87 @@ def send_class_transfer_notification(transfer):
     try:
         from core.models import Notification
         Notification.objects.create(
-            title=f"Proxy Class Assigned: {tt.subject.code if tt.subject else 'Class'}",
+            title=f"Proxy Class Request: {tt.subject.code if (tt and tt.subject) else 'Class'} (P{tt.period})",
             message=msg,
-            notif_type=Notification.TYPE_ANNOUNCEMENT,
+            notif_type=getattr(Notification, 'TYPE_PROXY', Notification.TYPE_ANNOUNCEMENT),
             priority=Notification.PRIORITY_HIGH,
             target_user=sub_user,
             target_all=False,
-            target_role='faculty'
+            target_role='faculty',
+            link="/faculty/"
         )
     except Exception as e:
         logger.error(f"Failed to create in-app proxy notification: {e}")
+
+    return True
+
+
+def send_proxy_response_notification(transfer, accepted=True, rejection_reason=""):
+    """
+    Sends SMS, Email, and In-App Notification to original faculty (and assigner)
+    when the substitute faculty accepts or declines the proxy request.
+    """
+    if not transfer or not transfer.original_faculty or not transfer.original_faculty.user:
+        return False
+
+    orig = transfer.original_faculty
+    sub = transfer.substitute_faculty
+    tt = transfer.timetable_entry
+    orig_user = orig.user
+
+    date_str = transfer.date.strftime('%d-%b-%Y')
+    subj_str = f"{tt.subject.code} — {tt.subject.name}" if (tt and tt.subject) else "Class Period"
+    period_str = f"Period {tt.period}" + (f" ({tt.start_time.strftime('%I:%M %p')})" if (tt and tt.start_time) else "")
+
+    recipients_users = [orig_user]
+    if transfer.assigned_by and transfer.assigned_by != orig_user and transfer.assigned_by not in recipients_users:
+        recipients_users.append(transfer.assigned_by)
+
+    if accepted:
+        title = f"Proxy Accepted: {tt.subject.code if (tt and tt.subject) else 'Class'} (P{tt.period})"
+        msg = (
+            f"Prof. {sub.full_name} has ACCEPTED the proxy class assignment for your {subj_str} "
+            f"on {date_str} at {period_str}. The class is now transferred to Prof. {sub.full_name} for attendance and conduction."
+        )
+        sms_text = f"VVITU: Prof. {sub.full_name} ACCEPTED your proxy request for {subj_str} on {date_str} P{tt.period}."
+        email_subject = f"[Proxy Accepted] {subj_str} on {date_str} transferred to Prof. {sub.full_name}"
+    else:
+        reason_detail = f" Reason: {rejection_reason}" if rejection_reason else ""
+        title = f"Proxy Declined: {tt.subject.code if (tt and tt.subject) else 'Class'} (P{tt.period})"
+        msg = (
+            f"Prof. {sub.full_name} has DECLINED the proxy class request for your {subj_str} "
+            f"on {date_str} at {period_str}.{reason_detail} The class remains assigned to you."
+        )
+        sms_text = f"VVITU: Prof. {sub.full_name} DECLINED your proxy request for {subj_str} on {date_str} P{tt.period}."
+        email_subject = f"[Proxy Declined] {subj_str} on {date_str} remains with you"
+
+    # SMS to original faculty
+    if orig.phone:
+        send_sms(orig.phone, sms_text)
+
+    # Email & In-App notification to recipients
+    from core.models import Notification
+    for u in recipients_users:
+        if u.email:
+            send_mail(
+                subject=email_subject,
+                message=msg,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@vvitu.ac.in'),
+                recipient_list=[u.email],
+                fail_silently=True
+            )
+        try:
+            Notification.objects.create(
+                title=title,
+                message=msg,
+                notif_type=getattr(Notification, 'TYPE_PROXY', Notification.TYPE_ANNOUNCEMENT),
+                priority=Notification.PRIORITY_HIGH if not accepted else Notification.PRIORITY_NORMAL,
+                target_user=u,
+                target_all=False,
+                link="/faculty/" if u.role in ['faculty', 'hod'] else "/admin-portal/faculty-class-history/"
+            )
+        except Exception as e:
+            logger.error(f"Failed to create in-app proxy response notification: {e}")
 
     return True
 

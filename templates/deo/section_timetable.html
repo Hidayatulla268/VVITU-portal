@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Official Timetable — {{ section }} (DEO){% endblock %}
+
+{% block page_header %}
+<div class="page-header-strip no-print">
+  <div class="ph-left">
+    <h1 class="ph-title"><i class="fas fa-calendar-alt me-2 text-accent"></i>Official Class Timetable — {{ section }}</h1>
+    <p class="ph-sub">{{ section }} &bull; {{ branch.name }} Department</p>
+  </div>
+  <div class="ph-right d-flex gap-2">
+    <a href="{{ pdf_export_url }}" class="btn btn-danger btn-sm px-3" target="_blank">
+      <i class="fas fa-file-pdf me-1"></i>Official PDF
+    </a>
+    <a href="{% url 'deo:manage_timetable' %}" class="btn-vvit-outline btn-sm">
+      <i class="fas fa-arrow-left me-2"></i>Back to Timetables
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Include Authentic VVIT Official Timetable Component -->
+{% include "core/vvit_official_timetable.html" %}
+{% endblock %}

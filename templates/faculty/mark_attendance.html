@@ -409,32 +409,47 @@ async function loadStudentsRollSheet() {
       const isPresent = (st.status === 'P');
       const isAbsent  = (st.status === 'A');
 
+      const safeId = encodeURIComponent(st.id);
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="text-muted small">${idx + 1}</td>
-        <td>
-          <a href="/accounts/students/${st.id}/detail/" target="_blank" class="fw-bold text-accent text-decoration-none" title="Click to view student profile sheet">
-            <i class="fas fa-id-card me-1"></i>${st.roll_number}
-          </a>
-        </td>
-        <td>
-          <a href="/accounts/students/${st.id}/detail/" target="_blank" class="fw-600 text-light text-decoration-none" title="Click to view student profile sheet">
-            ${st.name}
-          </a>
-        </td>
-        <td class="text-center">
-          <input type="radio" name="attendance_${st.id}" value="P" form="attendanceForm"
-                 id="p_${st.id}" class="att-radio att-radio-present" ${isPresent ? 'checked' : ''}
-                 onchange="updateCounts()"/>
-          <label for="p_${st.id}" class="radio-label-present">P</label>
-        </td>
-        <td class="text-center">
-          <input type="radio" name="attendance_${st.id}" value="A" form="attendanceForm"
-                 id="a_${st.id}" class="att-radio att-radio-absent" ${isAbsent ? 'checked' : ''}
-                 onchange="updateCounts()"/>
-          <label for="a_${st.id}" class="radio-label-absent">A</label>
-        </td>
-      `;
+
+      const tdIdx = document.createElement('td');
+      tdIdx.className = 'text-muted small';
+      tdIdx.textContent = idx + 1;
+      row.appendChild(tdIdx);
+
+      const tdRoll = document.createElement('td');
+      const aRoll = document.createElement('a');
+      aRoll.href = `/accounts/students/${safeId}/detail/`;
+      aRoll.target = '_blank';
+      aRoll.className = 'fw-bold text-accent text-decoration-none';
+      aRoll.title = 'Click to view student profile sheet';
+      const iRoll = document.createElement('i');
+      iRoll.className = 'fas fa-id-card me-1';
+      aRoll.appendChild(iRoll);
+      aRoll.appendChild(document.createTextNode(st.roll_number || ''));
+      tdRoll.appendChild(aRoll);
+      row.appendChild(tdRoll);
+
+      const tdName = document.createElement('td');
+      const aName = document.createElement('a');
+      aName.href = `/accounts/students/${safeId}/detail/`;
+      aName.target = '_blank';
+      aName.className = 'fw-600 text-light text-decoration-none';
+      aName.title = 'Click to view student profile sheet';
+      aName.textContent = st.name || '';
+      tdName.appendChild(aName);
+      row.appendChild(tdName);
+
+      const tdP = document.createElement('td');
+      tdP.className = 'text-center';
+      tdP.innerHTML = `<input type="radio" name="attendance_${safeId}" value="P" form="attendanceForm" id="p_${safeId}" class="att-radio att-radio-present" ${isPresent ? 'checked' : ''} onchange="updateCounts()"/><label for="p_${safeId}" class="radio-label-present">P</label>`;
+      row.appendChild(tdP);
+
+      const tdA = document.createElement('td');
+      tdA.className = 'text-center';
+      tdA.innerHTML = `<input type="radio" name="attendance_${safeId}" value="A" form="attendanceForm" id="a_${safeId}" class="att-radio att-radio-absent" ${isAbsent ? 'checked' : ''} onchange="updateCounts()"/><label for="a_${safeId}" class="radio-label-absent">A</label>`;
+      row.appendChild(tdA);
+
       tbody.appendChild(row);
     });
 

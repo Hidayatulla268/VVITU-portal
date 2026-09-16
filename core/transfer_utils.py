@@ -273,9 +273,13 @@ def get_conducted_class_history(branch=None, faculty=None, search_query=None, da
         marked_by_fac = s['marked_by'] if s else None
         orig_fac = ct.original_faculty if ct else tt.faculty
 
-        actual_conducted_fac = (ct.substitute_faculty if ct else marked_by_fac) or orig_fac
+        # If proxy is accepted or completed, substitute conducted/is conducting; otherwise original faculty
+        if ct and ct.status in ['accepted', 'completed']:
+            actual_conducted_fac = ct.substitute_faculty
+        else:
+            actual_conducted_fac = marked_by_fac or orig_fac
         
-        is_transferred = (ct is not None) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id)
+        is_transferred = (ct is not None and ct.status in ['accepted', 'completed']) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id)
         is_proxy = (ct.is_proxy if ct else False) or (marked_by_fac and orig_fac and marked_by_fac.id != orig_fac.id and not ct)
         is_substitution = (ct.is_substitution if ct else False) and not is_proxy
         type_label = ct.type_label if ct else ("Proxy" if is_proxy else "Regular Class")
@@ -293,12 +297,20 @@ def get_conducted_class_history(branch=None, faculty=None, search_query=None, da
             'branch': tt.section.branch if tt.section else None,
             'year': tt.section.year if tt.section else None,
             'conducted_by': actual_conducted_fac,
+            'substitute_faculty': ct.substitute_faculty if ct else None,
             'original_faculty': orig_fac,
             'is_transferred': is_transferred,
             'is_proxy': is_proxy,
             'is_substitution': is_substitution,
             'type_label': type_label,
             'transfer': ct,
+            'transfer_status': ct.status if ct else None,
+            'transfer_status_label': ct.status_label if ct else None,
+            'transfer_status_badge': ct.status_badge_class if ct else None,
+            'is_pending': ct.is_pending if ct else False,
+            'is_accepted': ct.is_accepted if ct else False,
+            'is_rejected': ct.is_rejected if ct else False,
+            'is_completed': ct.is_completed if ct else False,
             'present_count': s['present_cnt'] if s else 0,
             'absent_count': s['absent_cnt'] if s else 0,
             'total_students': s['total_cnt'] if s else 0,

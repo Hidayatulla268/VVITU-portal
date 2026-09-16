@@ -13,6 +13,7 @@ permission mapping (both resolve to faculty:* URLs).
 """
 
 import io
+import json
 import logging
 import datetime
 from functools import wraps
@@ -135,15 +136,23 @@ def dashboard(request):
     section_count = sections.count()
     student_count = Student.objects.filter(section__in=sections, user__is_deleted=False).count()
 
-    # Transferred classes for today
-    # 1. Received (Proxy assigned to logged-in faculty)
+    # Transferred classes
+    # 1. Incoming Pending Proxy Requests (Action Required: Accept / Decline)
+    pending_proxy_requests = (
+        ClassTransfer.objects
+        .filter(substitute_faculty=faculty, status='pending', date__gte=today)
+        .select_related('timetable_entry__section__branch', 'timetable_entry__section__year', 'timetable_entry__subject', 'original_faculty__user', 'assigned_by')
+        .order_by('date', 'timetable_entry__period')
+    )
+
+    # 2. Accepted Proxy Classes Assigned to Logged-in Faculty Today
     transferred_today = (
         ClassTransfer.objects
-        .filter(substitute_faculty=faculty, date=today)
+        .filter(substitute_faculty=faculty, date=today, status__in=['accepted', 'completed'])
         .select_related('timetable_entry__section', 'timetable_entry__subject', 'original_faculty__user')
     )
 
-    # 2. Transferred Out (Given to someone else today)
+    # 3. Transferred Out Today (Given to someone else today)
     transferred_given_today = (
         ClassTransfer.objects
         .filter(original_faculty=faculty, date=today)
@@ -154,6 +163,10 @@ def dashboard(request):
     department_faculty = Faculty.objects.filter(is_active=True).exclude(id=faculty.id).select_related('user', 'department')
     if faculty.department:
         department_faculty = department_faculty.filter(department=faculty.department)
+
+    from django.urls import reverse
+    from core.timetable_service import get_faculty_timetable_context
+    faculty_ctx = get_faculty_timetable_context(faculty, today)
 
     context = {
         'faculty':              faculty,
@@ -167,9 +180,21 @@ def dashboard(request):
         'faculty_att_pct':      faculty_att_pct,
         'timetable_today':      timetable_today,
         'weekly_timetable':     weekly_timetable,
+        'faculty_ctx':          faculty_ctx,
+        'grid':                 faculty_ctx.get('grid'),
+        'days':                 faculty_ctx.get('days'),
+        'periods':              faculty_ctx.get('periods'),
+        'standard_timings':     faculty_ctx.get('standard_timings'),
+        'handled_subjects':     faculty_ctx.get('handled_subjects'),
+        'total_weekly_slots':   faculty_ctx.get('total_weekly_slots', 0),
+        'target_date':          today,
+        'day_name':             day_name,
+        'pdf_export_url':       reverse('faculty:export_my_timetable_pdf'),
+        'can_upload':           True,
         'subjects':             subjects,
         'section_count':        section_count,
         'student_count':        student_count,
+        'pending_proxy_requests': pending_proxy_requests,
         'transferred_today':    transferred_today,
         'transferred_given_today': transferred_given_today,
         'department_faculty':   department_faculty,
@@ -201,7 +226,7 @@ def ajax_get_students(request):
         if not faculty:
             return JsonResponse({'error': 'Faculty profile not found'}, status=403)
         has_tt_slot = Timetable.objects.filter(faculty=faculty, section_id=section_id).exists()
-        has_proxy = ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__section_id=section_id).exists()
+        has_proxy = ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__section_id=section_id, status__in=['accepted', 'completed']).exists()
         is_mentor_or_ct = Student.objects.filter(Q(class_teacher=faculty) | Q(counsellor=faculty), section_id=section_id).exists()
         if not (has_tt_slot or has_proxy or is_mentor_or_ct):
             return JsonResponse({'error': 'Unauthorized section access'}, status=403)
@@ -438,7 +463,7 @@ def mark_attendance(request):
     )
     proxy_sec_ids = list(
         ClassTransfer.objects
-        .filter(substitute_faculty=faculty, date=today)
+        .filter(substitute_faculty=faculty, date=today, status__in=['accepted', 'completed'])
         .values_list('timetable_entry__section_id', flat=True)
     )
     all_sec_ids = list(set(section_ids + proxy_sec_ids))
@@ -466,10 +491,10 @@ def mark_attendance(request):
 
         slot = get_object_or_404(Timetable, id=slot_id)
 
-        # Authorization check: verify faculty owns slot, has active proxy transfer, or is class teacher
+        # Authorization check: verify faculty owns slot, has active accepted proxy transfer, or is class teacher
         is_slot_owner = (slot.faculty == faculty)
         is_proxy = ClassTransfer.objects.filter(
-            substitute_faculty=faculty, timetable_entry=slot, date=att_date
+            substitute_faculty=faculty, timetable_entry=slot, date=att_date, status__in=['accepted', 'completed']
         ).exists()
         is_class_teacher = Student.objects.filter(section=slot.section, class_teacher=faculty).exists()
         is_admin_or_hod = request.user.role in ['admin', 'hod']
@@ -540,7 +565,7 @@ def mark_attendance(request):
 
         # Mark ClassTransfer as completed if substitute faculty marked attendance
         for target_slot in target_slots:
-            ClassTransfer.objects.filter(timetable_entry=target_slot, date=att_date).update(status='completed')
+            ClassTransfer.objects.filter(timetable_entry=target_slot, date=att_date, status='accepted').update(status='completed')
 
         # Optional Class Discussion / Lesson Log
         topic_covered = request.POST.get('topic_covered', '').strip()
@@ -661,7 +686,7 @@ def class_diary(request):
             elif slot_id and slot_id.isdigit():
                 slot = get_object_or_404(Timetable, id=int(slot_id))
                 is_slot_owner = (slot.faculty == faculty)
-                is_proxy = ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry=slot, date=entry_date).exists()
+                is_proxy = ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry=slot, date=entry_date, status__in=['accepted', 'completed']).exists()
                 if not (is_slot_owner or is_proxy or request.user.role in ['admin']):
                     messages.error(request, "You are not authorized to record class diary for this timetable slot.")
                     return redirect('faculty:class_diary')
@@ -762,13 +787,14 @@ def class_diary(request):
 
 
 # ─────────────────────────────────────────────
-# CLASS TRANSFER / PROXY ACTION
+# CLASS TRANSFER / PROXY ACTION & RESPONSE
 # ─────────────────────────────────────────────
 @faculty_required
 def transfer_class(request):
     """
-    Allows faculty to transfer a timetable class period for today (or selected date)
+    Allows faculty to initiate a class transfer request for today (or selected date)
     to another available faculty member as a proxy/substitute.
+    Sets status='pending'. The class will transfer only once the substitute faculty accepts.
     """
     faculty = request.faculty
     today   = timezone.localdate()
@@ -816,22 +842,85 @@ def transfer_class(request):
                 'original_faculty': faculty,
                 'substitute_faculty': substitute,
                 'reason': reason or 'Faculty Peer Class Substitution',
-                'status': 'accepted',
+                'status': 'pending',
+                'rejection_reason': None,
+                'responded_at': None,
                 'assigned_by_role': 'faculty',
                 'transfer_type': 'substitution',
                 'assigned_by': request.user,
             }
         )
 
-
-        # Send instant SMS & Email notification to substitute faculty
+        # Send instant SMS, Email & In-App notification to substitute faculty requesting acceptance
         send_class_transfer_notification(transfer)
 
         messages.success(
             request,
-            f"Class P{slot.period} ({slot.subject.code}) transferred to Prof. {substitute.full_name} for {transfer_date.strftime('%d-%b-%Y')}. SMS & Email notification dispatched."
+            f"Class transfer request for Period {slot.period} ({slot.subject.code}) dispatched to Prof. {substitute.full_name} for {transfer_date.strftime('%d-%b-%Y')}. Notification sent — the class will officially transfer once accepted."
         )
         return redirect('faculty:dashboard')
+
+    return redirect('faculty:dashboard')
+
+
+@faculty_required
+@require_POST
+def respond_proxy(request):
+    """
+    Allows substitute faculty to Accept or Decline (Reject) an incoming proxy class request.
+    If accepted:
+      - ClassTransfer status transitions to 'accepted'
+      - Dispatches notification to original faculty / assigner
+      - Substitute faculty is authorized to take the class and mark attendance
+    If declined:
+      - ClassTransfer status transitions to 'rejected'
+      - Dispatches notification to original faculty / assigner
+      - Class remains with the original faculty
+    """
+    faculty = request.faculty
+    transfer_id = request.POST.get('transfer_id')
+    action = request.POST.get('action')  # 'accept' or 'reject'
+    reason = request.POST.get('reason', '').strip()
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if not transfer_id:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Transfer ID required'}, status=400)
+        messages.error(request, "Transfer ID is required.")
+        return redirect('faculty:dashboard')
+
+    transfer = get_object_or_404(ClassTransfer, id=transfer_id, substitute_faculty=faculty)
+
+    from core.sms_utils import send_proxy_response_notification
+
+    if action == 'accept':
+        transfer.status = 'accepted'
+        transfer.responded_at = timezone.now()
+        transfer.rejection_reason = None
+        transfer.save()
+
+        send_proxy_response_notification(transfer, accepted=True)
+        msg = f"You accepted the proxy class for Period {transfer.timetable_entry.period} ({transfer.timetable_entry.subject.code}) on {transfer.date.strftime('%d-%b-%Y')}. You can now conduct this class and mark attendance."
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': msg, 'status': 'accepted'})
+        messages.success(request, msg)
+
+    elif action == 'reject':
+        transfer.status = 'rejected'
+        transfer.responded_at = timezone.now()
+        transfer.rejection_reason = reason or "Declined by substitute faculty"
+        transfer.save()
+
+        send_proxy_response_notification(transfer, accepted=False, rejection_reason=transfer.rejection_reason)
+        msg = f"You declined the proxy class for Period {transfer.timetable_entry.period} ({transfer.timetable_entry.subject.code}) on {transfer.date.strftime('%d-%b-%Y')}. The class remains with Prof. {transfer.original_faculty.full_name}."
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': msg, 'status': 'rejected'})
+        messages.warning(request, msg)
+
+    else:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Invalid action'}, status=400)
+        messages.error(request, "Invalid action specified.")
 
     return redirect('faculty:dashboard')
 
@@ -1421,7 +1510,7 @@ def upload_marks(request):
             selected_section = get_object_or_404(Section, id=selected_section_id, branch=faculty.department)
         else:
             can_access = Timetable.objects.filter(faculty=faculty, subject=selected_subject, section_id=selected_section_id).exists() or \
-                         ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__subject=selected_subject, timetable_entry__section_id=selected_section_id).exists()
+                         ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__subject=selected_subject, timetable_entry__section_id=selected_section_id, status__in=['accepted', 'completed']).exists()
             if not can_access:
                 messages.error(request, "You are not assigned to teach this subject to the selected section.")
                 return redirect('faculty:upload_marks')
@@ -1453,7 +1542,7 @@ def upload_marks(request):
         else:
             subj = get_object_or_404(Subject, id=subj_id, faculty=faculty)
             can_access = Timetable.objects.filter(faculty=faculty, subject=subj, section_id=sec_id).exists() or \
-                         ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__subject=subj, timetable_entry__section_id=sec_id).exists()
+                         ClassTransfer.objects.filter(substitute_faculty=faculty, timetable_entry__subject=subj, timetable_entry__section_id=sec_id, status__in=['accepted', 'completed']).exists()
             if not can_access:
                 messages.error(request, "You are not authorized to upload marks for this section and subject.")
                 return redirect('faculty:upload_marks')
@@ -2020,6 +2109,130 @@ def ajax_toggle_topic_complete(request):
         'status_label': progress['status_label'],
         'status_color': progress['status_color'],
     })
+
+
+# ─────────────────────────────────────────────
+# FACULTY TIMETABLE & OFFICIAL VVIT VIEWS
+# ─────────────────────────────────────────────
+from core.timetable_service import (
+    get_faculty_timetable_context, get_section_timetable_context,
+    sync_class_timetable_from_data, sync_faculty_timetable_from_data,
+    extract_timetable_with_ai, generate_official_timetable_pdf
+)
+
+@faculty_required
+def my_timetable(request):
+    """
+    Dedicated timetable view for Faculty members.
+    Shows their consolidated weekly schedule across sections, plus official class timetables
+    with live attendance & proxy status for sections they teach.
+    """
+    faculty = request.faculty
+    
+    # Check if a specific handled section is selected
+    handled_sec_ids = Timetable.objects.filter(faculty=faculty).values_list('section_id', flat=True).distinct()
+    handled_sections = Section.objects.filter(id__in=handled_sec_ids).select_related('branch', 'year')
+    
+    selected_sec_id = request.GET.get('section_id')
+    section_ctx = None
+    if selected_sec_id:
+        sec = get_object_or_404(Section, id=selected_sec_id, id__in=handled_sec_ids)
+        section_ctx = get_section_timetable_context(sec)
+        section_ctx.update({
+            'can_edit': False,
+            'can_upload': True,
+            'pdf_export_url': f"/faculty/timetable/export-pdf/?section_id={sec.id}",
+        })
+
+    faculty_ctx = get_faculty_timetable_context(faculty)
+
+    return render(request, 'faculty/my_timetable.html', {
+        'faculty': faculty,
+        'faculty_ctx': faculty_ctx,
+        'handled_sections': handled_sections,
+        'selected_sec_id': int(selected_sec_id) if selected_sec_id else None,
+        'section_ctx': section_ctx,
+        'can_upload': True,
+        'sections': handled_sections,
+    })
+
+
+@faculty_required
+def export_my_timetable_pdf(request):
+    """
+    Exports official VVIT Timetable PDF for a section taught by the faculty.
+    """
+    faculty = request.faculty
+    sec_id = request.GET.get('section_id')
+    if not sec_id:
+        sec = Timetable.objects.filter(faculty=faculty).values_list('section', flat=True).first()
+        if sec:
+            sec_id = sec
+    
+    if sec_id:
+        section = get_object_or_404(Section, id=sec_id)
+        pdf_bytes = generate_official_timetable_pdf(section)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="VVIT_Timetable_{section.branch.code}_{section.name}.pdf"'
+        return response
+
+    messages.error(request, "No timetable available to export.")
+    return redirect('faculty:my_timetable')
+
+
+@faculty_required
+def upload_my_timetable_api(request):
+    """
+    Allows faculty to upload photo / PDF timetable for sections they teach.
+    """
+    faculty = request.faculty
+
+    if request.method == 'POST':
+        if request.content_type and 'application/json' in request.content_type:
+            try:
+                body = json.loads(request.body.decode('utf-8'))
+            except Exception as e:
+                logger.error(f"Faculty Timetable JSON decode error: {e}", exc_info=True)
+                return JsonResponse({'success': False, 'error': f'Invalid JSON body: {str(e)}'}, status=400)
+
+            action = body.get('action')
+            sec_id = body.get('section_id')
+            data = body.get('data')
+
+            if action == 'commit':
+                section = get_object_or_404(Section, id=sec_id)
+                res = sync_class_timetable_from_data(section, data, user=request.user)
+                return JsonResponse(res)
+
+        else:
+            action = request.POST.get('action')
+            sec_id = request.POST.get('section_id')
+            uploaded_file = request.FILES.get('file')
+
+            if not uploaded_file:
+                return JsonResponse({'success': False, 'error': 'No file uploaded.'}, status=400)
+
+            if action == 'parse':
+                from core.file_validators import validate_document_upload
+                from django.core.exceptions import ValidationError
+                try:
+                    validate_document_upload(uploaded_file, allowed_extensions={'.png', '.jpg', '.jpeg', '.pdf'}, max_size_mb=5)
+                except ValidationError as ve:
+                    return JsonResponse({'success': False, 'error': str(ve.message if hasattr(ve, 'message') else ve)}, status=400)
+
+                section = get_object_or_404(Section, id=sec_id)
+                content_type = uploaded_file.content_type
+                file_bytes = uploaded_file.read()
+
+                parsed = extract_timetable_with_ai(file_bytes, content_type)
+                return JsonResponse({
+                    'success': True,
+                    'parsed': parsed,
+                    'filename': uploaded_file.name,
+                })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=405)
+
 
 
 

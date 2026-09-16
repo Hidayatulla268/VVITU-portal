@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 from accounts.models import User, Student, Faculty, DEOProfile, Achievement, generate_secure_temp_password
 from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification
+from core.timetable_service import get_section_timetable_context, get_faculty_timetable_context, generate_official_timetable_pdf
 
 # ─────────────────────────────────────────────
 # DECORATOR
@@ -622,3 +624,67 @@ def manage_fees(request):
         'total_outstanding': total_outstanding,
         'role': 'deo',
     })
+
+
+# ─────────────────────────────────────────────
+# TIMETABLE MANAGEMENT & OFFICIAL VIEW
+# ─────────────────────────────────────────────
+@deo_required
+def manage_timetable(request):
+    """
+    Allows DEO to view department sections and faculty schedules in the official VVIT format.
+    """
+    branch = request.branch
+    sections = Section.objects.filter(branch=branch).select_related('year', 'branch')
+    faculties = Faculty.objects.filter(department=branch, is_active=True, user__is_deleted=False).select_related('user')
+    return render(request, 'deo/manage_timetable.html', {
+        'sections': sections,
+        'faculties': faculties,
+        'branch': branch,
+    })
+
+
+@deo_required
+def section_timetable(request, section_id):
+    """
+    Displays the official institutional timetable for a section to the DEO.
+    """
+    branch = request.branch
+    section = get_object_or_404(Section, id=section_id, branch=branch)
+    ctx = get_section_timetable_context(section)
+    ctx.update({
+        'can_edit': False,
+        'can_upload': False,
+        'pdf_export_url': f"/deo/timetable/export-pdf/{section.id}/",
+        'branch': branch,
+    })
+    return render(request, 'deo/section_timetable.html', ctx)
+
+
+@deo_required
+def faculty_timetable(request, faculty_id):
+    """
+    Displays the official institutional weekly timetable for a faculty member to the DEO.
+    """
+    branch = request.branch
+    faculty = get_object_or_404(Faculty, id=faculty_id, department=branch)
+    ctx = get_faculty_timetable_context(faculty)
+    ctx.update({
+        'can_edit': False,
+        'can_upload': False,
+        'branch': branch,
+    })
+    return render(request, 'deo/faculty_timetable_view.html', ctx)
+
+
+@deo_required
+def export_timetable_pdf(request, section_id):
+    """
+    Exports official VVIT Timetable PDF for DEO.
+    """
+    branch = request.branch
+    section = get_object_or_404(Section, id=section_id, branch=branch)
+    pdf_bytes = generate_official_timetable_pdf(section)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="VVIT_Timetable_{section.branch.code}_{section.year.year}_{section.name}.pdf"'
+    return response

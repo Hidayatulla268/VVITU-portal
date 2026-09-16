@@ -209,12 +209,17 @@ function triggerStaggeredEntrance() {
   const elements = document.querySelectorAll('.glass-card, .kpi-card, .vvit-table, .timetable-grid');
   elements.forEach((el, index) => {
     el.style.opacity = '0';
-    el.style.transform = 'translateY(15px)';
-    el.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color var(--t-med), box-shadow var(--t-med)';
+    el.style.transform = 'translateY(10px)';
+    el.style.transition = 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
     setTimeout(() => {
       el.style.opacity = '1';
-      el.style.transform = 'translateY(0)';
-    }, index * 60);
+      el.style.transform = 'none';
+      setTimeout(() => {
+        el.style.transition = '';
+        el.style.transform = '';
+        el.style.opacity = '';
+      }, 400);
+    }, Math.min(index * 35, 300));
   });
 }
 
