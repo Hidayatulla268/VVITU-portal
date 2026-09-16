@@ -347,7 +347,26 @@ a:hover { color: var(--text-primary); }
 .sidebar-divider {
   height: 1px;
   background: var(--clr-border);
-  margin: 8px 4px;
+  margin: 10px 8px;
+  opacity: 0.6;
+}
+
+.sidebar-section-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  padding: 10px 14px 4px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.85;
+}
+
+.sidebar-section-title i {
+  font-size: 0.65rem;
+  color: var(--clr-accent, #ef4444);
 }
 
 .nav-link-danger { color: #f87171 !important; }

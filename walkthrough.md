@@ -59,6 +59,15 @@ This walkthrough documents the complete implementation, verification, and synchr
 ### 📚 5. Root Project Landing Guide (`README.md`)
 - Created top-level `c:\Users\HP\OneDrive\Desktop\vvitu\README.md` providing unified repository structure, quickstart guide, credential table, and verification results.
 
+### 🧭 6. Role-Based Sidebar Navigation Menu Architecture (`templates/core/base.html`)
+- Restructured sidebar navigation menus across all 5 dashboard portals (Admin, HOD, Faculty, Student, DEO) into a standardized, intuitive 5-tier mental model:
+  1. *Main & Overview* (Dashboard, Profile)
+  2. *Academics & Schedule* (Timetables, Attendance Logs, Class Diary, Syllabus Trackers)
+  3. *Class Conduction & Audits / Mentoring* (Conduction Audits, Proxy Transfers, Student Mentoring)
+  4. *Exams, Records & Feedback* (Results, Marks Uploads, Counselling Dossiers, Feedback Forms)
+  5. *Services, Finance & System* (OD/Medical Leaves, Fee Accounts, Notices, Backups, Tech Admin)
+- Styled with `.sidebar-section-title` in `static/css/main.css` with clean icons, uppercase letter-spacing, and subtle dividers.
+
 ---
 
 ## 3. Verification & Quality Assurance Results

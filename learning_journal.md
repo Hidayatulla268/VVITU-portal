@@ -875,3 +875,17 @@ def generate_semester_grade_card_pdf(student, year_obj, semester):
        - Documented private `/secure-media/` authenticated streaming routing, memory upload limits (`5MB`), and production fail-safe configuration requirements.
     5. **Master Technical Documentation (`README.md`)**:
        - Synchronized both inner portal and root project README files with complete module catalogs, endpoint routes, database model references, test suites, and default credentials.
+
+### PP. Role-Based Sidebar Navigation Menu Architecture & Categorization
+*   **What it is:** Complete restructuring of the sidebar navigation menu across all 5 dashboard portals (Admin, HOD, Faculty, Student, DEO) into a standardized, intuitive mental model with clear visual section groupings.
+*   **Key Enhancements:**
+    1. **Standardized 5-Tier Mental Model**:
+       - *Main & Overview*: Quick access to Dashboard and Profile.
+       - *Academics & Teaching / Schedule*: Timetables, Attendance marking, Class Diary, Syllabus Trackers.
+       - *Class Conduction & Audits / Mentoring*: Conduction audits, proxy substitutions, student mentoring.
+       - *Exams, Records & Feedback*: Results, marks uploads, counselling dossier, feedback questionnaires.
+       - *Services, Finance & System*: OD leave application, fee accounts, notices, backups, and tech admin.
+    2. **Refined Typography & Micro-Aesthetics**:
+       - Added `.sidebar-section-title` in `static/css/main.css` with uppercase tracking, subtle icons, and adaptive dark/light contrast.
+       - Clean dividers (`.sidebar-divider`) demarcating functional areas to eliminate cluttered, monolithic link lists.
+
