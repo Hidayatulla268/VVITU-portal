@@ -27,10 +27,19 @@
   <link rel="stylesheet" href="{% static 'css/main.css' %}?v={{ APP_VERSION|default:'2.5.0' }}"/>
   <link rel="stylesheet" href="{% static 'css/theme_and_calendar.css' %}?v={{ APP_VERSION|default:'2.5.0' }}"/>
 
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('vvit_sidebar_compact') === 'true' && window.innerWidth >= 992) {
+          document.documentElement.classList.add('sidebar-compact-active');
+        }
+      } catch(e) {}
+    })();
+  </script>
   {% block extra_head %}{% endblock %}
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% if user.is_authenticated %}with-sidebar-nav{% endif %}">
 
 <!-- ══════════════════════════════════════════
      TOP NAVBAR
@@ -145,373 +154,669 @@
      SIDEBAR
 ══════════════════════════════════════════ -->
 <aside class="vvit-sidebar" id="sidebar">
+  <!-- Sidebar Brand Header -->
   <div class="sidebar-header">
-    <div class="sidebar-logo-ring">
-      <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT"
-           onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"
-           class="sidebar-logo"/>
+    <div class="sidebar-brand-box">
+      <div class="sidebar-logo-ring">
+        <img src="{% static 'images/vvit_logo.png' %}" alt="VVIT"
+             onerror="this.onerror=null;this.src='/static/images/vvit_logo_fallback.svg'"
+             class="sidebar-logo"/>
+      </div>
+      <div class="sidebar-brand-text">
+        <div class="sidebar-college-name">Vasireddy Venkatadri International Technological University</div>
+        <div class="sidebar-college-sub">Nambur, Guntur, AP</div>
+      </div>
     </div>
-    <div>
-      <div class="sidebar-college-name">Vasireddy Venkatadri International Technological University</div>
-      <div class="sidebar-college-sub">Nambur, Guntur, AP</div>
+    <button type="button" class="sidebar-pin-btn d-none d-lg-flex" id="sidebarPinBtn" title="Toggle compact sidebar" aria-label="Toggle compact sidebar">
+      <i class="fas fa-angles-left"></i>
+    </button>
+  </div>
+
+  <!-- Real-time Navigation Search Box -->
+  <div class="sidebar-search-wrap">
+    <div class="sidebar-search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="sidebarSearchInput" placeholder="Quick search..." autocomplete="off" spellcheck="false" aria-label="Search menu">
+      <span class="search-kbd-hint">Ctrl+K</span>
+      <button type="button" id="sidebarSearchClear" class="search-clear-btn" aria-label="Clear search" style="display:none;">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
   </div>
 
-  <nav class="sidebar-nav">
+  <div id="sidebarSearchEmpty" class="sidebar-search-empty" style="display: none;">
+    <i class="fas fa-search-minus me-1"></i>No matching pages found
+  </div>
+
+  <!-- Sidebar Nav with Accordion Sections -->
+  <nav class="sidebar-nav" id="sidebarNav">
+
     {% if user.role == 'student' %}
-      <div class="sidebar-section-title"><i class="fas fa-compass"></i>Main</div>
-      <a href="{% url 'student:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'student' %}active{% endif %}">
-        <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
-      </a>
-      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
-      </a>
+      <!-- Student: Main -->
+      <div class="nav-section-group open" data-group="student-main">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-compass"></i><span>Main</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">2</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'student:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'student' %}active{% endif %}" data-nav-title="Dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
+          </a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" data-nav-title="My Profile">
+            <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-book-open"></i>Academics & Schedule</div>
-      <a href="{% url 'student:timetable' %}" class="nav-link {% if request.resolver_match.url_name == 'timetable' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
-      </a>
-      <a href="{% url 'student:attendance' %}" class="nav-link {% if request.resolver_match.url_name in 'attendance my_attendance' %}active{% endif %}">
-        <i class="fas fa-user-clock nav-icon"></i><span>My Attendance Log</span>
-      </a>
-      <a href="{% url 'student:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' %}active{% endif %}">
-        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary (Lessons)</span>
-      </a>
-      <a href="{% url 'student:syllabus_coverage' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'student' %}active{% endif %}">
-        <i class="fas fa-book-bookmark nav-icon"></i><span>Syllabus Tracker</span>
-      </a>
-      <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}">
-        <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
-      </a>
+      <!-- Student: Academics & Schedule -->
+      <div class="nav-section-group open" data-group="student-academics">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-book-open"></i><span>Academics & Schedule</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">5</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'student:timetable' %}" class="nav-link {% if request.resolver_match.url_name == 'timetable' %}active{% endif %}" data-nav-title="My Timetable">
+            <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
+          </a>
+          <a href="{% url 'student:attendance' %}" class="nav-link {% if request.resolver_match.url_name in 'attendance my_attendance' %}active{% endif %}" data-nav-title="My Attendance Log">
+            <i class="fas fa-user-clock nav-icon"></i><span>My Attendance Log</span>
+          </a>
+          <a href="{% url 'student:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' %}active{% endif %}" data-nav-title="Class Diary (Lessons)">
+            <i class="fas fa-book-reader nav-icon"></i><span>Class Diary (Lessons)</span>
+          </a>
+          <a href="{% url 'student:syllabus_coverage' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'student' %}active{% endif %}" data-nav-title="Syllabus Tracker">
+            <i class="fas fa-book-bookmark nav-icon"></i><span>Syllabus Tracker</span>
+          </a>
+          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+            <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-graduation-cap"></i>Exams & Records</div>
-      <a href="{% url 'student:results' %}" class="nav-link {% if request.resolver_match.url_name == 'results' %}active{% endif %}">
-        <i class="fas fa-chart-bar nav-icon"></i><span>Results & Backlogs</span>
-      </a>
-      <a href="{% url 'student:counselling_report' %}" class="nav-link {% if request.resolver_match.url_name == 'counselling_report' %}active{% endif %}">
-        <i class="fas fa-id-card-clip nav-icon"></i><span>Counselling Dossier</span>
-      </a>
-      <a href="{% url 'student:question_papers' %}" class="nav-link {% if request.resolver_match.url_name == 'question_papers' %}active{% endif %}">
-        <i class="fas fa-file-pdf nav-icon"></i><span>Question Papers</span>
-      </a>
+      <!-- Student: Exams & Records -->
+      <div class="nav-section-group open" data-group="student-exams">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-graduation-cap"></i><span>Exams & Records</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">3</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'student:results' %}" class="nav-link {% if request.resolver_match.url_name == 'results' %}active{% endif %}" data-nav-title="Results & Backlogs">
+            <i class="fas fa-chart-bar nav-icon"></i><span>Results & Backlogs</span>
+          </a>
+          <a href="{% url 'student:counselling_report' %}" class="nav-link {% if request.resolver_match.url_name == 'counselling_report' %}active{% endif %}" data-nav-title="Counselling Dossier">
+            <i class="fas fa-id-card-clip nav-icon"></i><span>Counselling Dossier</span>
+          </a>
+          <a href="{% url 'student:question_papers' %}" class="nav-link {% if request.resolver_match.url_name == 'question_papers' %}active{% endif %}" data-nav-title="Question Papers">
+            <i class="fas fa-file-pdf nav-icon"></i><span>Question Papers</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-hands-helping"></i>Student Services</div>
-      <a href="{% url 'student:apply_leave_od' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-file-medical nav-icon"></i><span>Apply OD / Medical Leave</span>
-      </a>
-      <a href="{% url 'student:feedback_list' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'student' %}active{% endif %}">
-        <i class="fas fa-comment-dots nav-icon text-warning"></i><span>Feedback Forms</span>
-      </a>
-      <a href="{% url 'student:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' %}active{% endif %}">
-        <i class="fas fa-trophy nav-icon"></i><span>My Achievements</span>
-      </a>
+      <!-- Student: Student Services -->
+      <div class="nav-section-group open" data-group="student-services">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-hands-helping"></i><span>Student Services</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">3</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'student:apply_leave_od' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Apply OD / Medical Leave">
+            <i class="fas fa-file-medical nav-icon"></i><span>Apply OD / Medical Leave</span>
+          </a>
+          <a href="{% url 'student:feedback_list' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'student' %}active{% endif %}" data-nav-title="Feedback Forms">
+            <i class="fas fa-comment-dots nav-icon text-warning"></i><span>Feedback Forms</span>
+          </a>
+          <a href="{% url 'student:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' %}active{% endif %}" data-nav-title="My Achievements">
+            <i class="fas fa-trophy nav-icon"></i><span>My Achievements</span>
+          </a>
+        </div>
+      </div>
 
     {% elif user.role == 'faculty' or user.role == 'lab_technician' %}
-      <div class="sidebar-section-title"><i class="fas fa-compass"></i>Main</div>
-      <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Dashboard</span>
-      </a>
-      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
-      </a>
+      <!-- Faculty: Main -->
+      <div class="nav-section-group open" data-group="faculty-main">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-compass"></i><span>Main</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">2</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Faculty Dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Dashboard</span>
+          </a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" data-nav-title="My Profile">
+            <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-chalkboard-teacher"></i>Teaching & Schedule</div>
-      <a href="{% url 'faculty:my_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
-      </a>
-      <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
-      </a>
-      <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary (Lessons)</span>
-      </a>
-      <a href="{% url 'faculty:my_syllabus_tracker' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-calendar-check nav-icon"></i><span>My Syllabus Tracker</span>
-      </a>
+      <!-- Faculty: Teaching & Schedule -->
+      <div class="nav-section-group open" data-group="faculty-teaching">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-chalkboard-teacher"></i><span>Teaching & Schedule</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">4</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'faculty:my_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Timetable">
+            <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
+          </a>
+          <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Mark Attendance">
+            <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
+          </a>
+          <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Class Diary (Lessons)">
+            <i class="fas fa-book-reader nav-icon"></i><span>Class Diary (Lessons)</span>
+          </a>
+          <a href="{% url 'faculty:my_syllabus_tracker' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Syllabus Coverage Tracker">
+            <i class="fas fa-book-bookmark nav-icon"></i><span>Syllabus Coverage Tracker</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-user-graduate"></i>Students & Evaluation</div>
-      <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-user-graduate nav-icon"></i><span>My Students (Mentees)</span>
-      </a>
-      <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_marks' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
-      </a>
-      <a href="{% url 'faculty:student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-poll-h nav-icon"></i><span>Student Results</span>
-      </a>
-      <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-file-chart-line nav-icon"></i><span>Attendance Reports</span>
-      </a>
+      <!-- Faculty: Students & Evaluation -->
+      <div class="nav-section-group open" data-group="faculty-students">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-user-graduate"></i><span>Students & Evaluation</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">4</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Students & Attendance">
+            <i class="fas fa-users-viewfinder nav-icon"></i><span>My Students & Attendance</span>
+          </a>
+          <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_marks' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Enter Internal Marks">
+            <i class="fas fa-file-signature nav-icon"></i><span>Enter Internal Marks</span>
+          </a>
+          <a href="{% url 'faculty:student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Student Results & SGPA">
+            <i class="fas fa-chart-line nav-icon"></i><span>Student Results & SGPA</span>
+          </a>
+          <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Mentoring & Reports">
+            <i class="fas fa-user-friends nav-icon"></i><span>Mentoring & Reports</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-briefcase"></i>Faculty Desk</div>
-      <a href="{% url 'faculty:my_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'my_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-user-clock nav-icon"></i><span>My Attendance Log</span>
-      </a>
-      <a href="{% url 'faculty:leave_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'leave_requests' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-calendar-minus nav-icon"></i><span>Apply / My Leaves</span>
-      </a>
-      <a href="{% url 'faculty:transfer_class' %}" class="nav-link {% if 'transfer' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-exchange-alt nav-icon"></i><span>Proxy Class Transfer</span>
-      </a>
-      <a href="{% url 'faculty:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-trophy nav-icon"></i><span>Achievements</span>
-      </a>
+      <!-- Faculty: Faculty Desk -->
+      <div class="nav-section-group open" data-group="faculty-desk">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-briefcase"></i><span>Faculty Desk</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">6</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'faculty:my_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'my_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Attendance History">
+            <i class="fas fa-user-clock nav-icon"></i><span>My Attendance History</span>
+          </a>
+          <a href="{% url 'faculty:leave_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'leave_requests' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Apply Leave">
+            <i class="fas fa-calendar-minus nav-icon"></i><span>Apply Leave</span>
+          </a>
+          <a href="{% url 'faculty:transfer_class' %}" class="nav-link {% if 'transfer' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Class Transfers & Proxies">
+            <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
+          </a>
+          <a href="{% url 'student:academic_calendar' %}" class="nav-link" data-nav-title="Academic Calendar">
+            <i class="fas fa-calendar-alt nav-icon"></i><span>Academic Calendar</span>
+          </a>
+          <a href="{% url 'notifications:centre' %}" class="nav-link" data-nav-title="Department Notices">
+            <i class="fas fa-bell nav-icon"></i><span>Department Notices</span>
+          </a>
+          <a href="{% url 'faculty:add_achievement' %}" class="nav-link {% if request.resolver_match.url_name == 'add_achievement' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Add Achievement">
+            <i class="fas fa-trophy nav-icon"></i><span>Add Achievement</span>
+          </a>
+        </div>
+      </div>
 
     {% elif user.role == 'hod' %}
-      <div class="sidebar-section-title"><i class="fas fa-compass"></i>Department Overview</div>
-      <a href="{% url 'hod:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-shield-alt nav-icon"></i><span>HOD Command Center</span>
-      </a>
-      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
-      </a>
+      <!-- HOD: Department Overview -->
+      <div class="nav-section-group open" data-group="hod-overview">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-university"></i><span>Department Overview</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">2</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'hod:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="HOD Dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i><span>HOD Dashboard</span>
+          </a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" data-nav-title="My Profile">
+            <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-calendar-alt"></i>Schedule & Conduction</div>
-      <a href="{% url 'hod:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Branch Timetables</span>
-      </a>
-      <a href="{% url 'hod:faculty_class_audit' %}" class="nav-link {% if 'faculty_class_audit' in request.resolver_match.url_name or 'class_attendance' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-clipboard-check nav-icon text-warning"></i><span>Class Conduction Audit</span>
-      </a>
-      <a href="{% url 'hod:manage_class_transfers' %}" class="nav-link {% if 'class_transfers' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
-      </a>
-      <a href="{% url 'hod:faculty_attendance' %}" class="nav-link {% if 'faculty_attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-user-clock nav-icon"></i><span>Faculty Attendance</span>
-      </a>
+      <!-- HOD: Schedule & Conduction -->
+      <div class="nav-section-group open" data-group="hod-schedule">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-calendar-alt"></i><span>Schedule & Conduction</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">5</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'hod:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Master Timetable">
+            <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Master Timetable</span>
+          </a>
+          <a href="{% url 'hod:faculty_class_audit' %}" class="nav-link {% if 'faculty_class_audit' in request.resolver_match.url_name or 'class_attendance' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Class Conduction Audits">
+            <i class="fas fa-clipboard-check nav-icon"></i><span>Class Conduction Audits</span>
+          </a>
+          <a href="{% url 'hod:manage_class_transfers' %}" class="nav-link {% if 'class_transfers' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Class Transfers & Proxies">
+            <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
+          </a>
+          <a href="{% url 'hod:faculty_attendance' %}" class="nav-link {% if 'faculty_attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Faculty Attendance Register">
+            <i class="fas fa-user-clock nav-icon"></i><span>Faculty Attendance Register</span>
+          </a>
+          <a href="{% url 'hod:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Faculty Class Diary Coverage">
+            <i class="fas fa-book-reader nav-icon"></i><span>Faculty Class Diary Coverage</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-book-open"></i>Curriculum & Syllabus</div>
-      <a href="{% url 'hod:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
-      </a>
-      <a href="{% url 'hod:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon"></i><span>Topic Schedule (Units 1-5)</span>
-      </a>
-      <a href="{% url 'hod:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-file-invoice nav-icon"></i><span>Exam Milestones (Targets)</span>
-      </a>
-      <a href="{% url 'hod:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-book-open nav-icon"></i><span>Manage Subjects</span>
-      </a>
-      <a href="{% url 'hod:subject_mapping' %}" class="nav-link {% if 'subject_mapping' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-book nav-icon"></i><span>Subject Mapping</span>
-      </a>
+      <!-- HOD: Curriculum & Syllabus -->
+      <div class="nav-section-group open" data-group="hod-curriculum">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-book"></i><span>Curriculum & Syllabus</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">5</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'hod:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Department Subjects">
+            <i class="fas fa-book-open nav-icon"></i><span>Department Subjects</span>
+          </a>
+          <a href="{% url 'hod:subject_mapping' %}" class="nav-link {% if 'subject_mapping' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Subject Mapping">
+            <i class="fas fa-cubes nav-icon"></i><span>Subject Mapping</span>
+          </a>
+          <a href="{% url 'hod:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Topic Schedule Plan">
+            <i class="fas fa-list-check nav-icon"></i><span>Topic Schedule Plan</span>
+          </a>
+          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+            <i class="fas fa-calendar-day nav-icon"></i><span>Academic Calendar</span>
+          </a>
+          <a href="{% url 'hod:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Exam Milestones">
+            <i class="fas fa-file-invoice nav-icon"></i><span>Exam Milestones</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-users-cog"></i>Staff & Students</div>
-      <a href="{% url 'hod:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty Directory</span>
-      </a>
-      <a href="{% url 'hod:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-calendar-minus nav-icon"></i><span>Faculty Leave Approvals</span>
-      </a>
-      <a href="{% url 'hod:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-user-graduate nav-icon"></i><span>Students Registry</span>
-      </a>
-      <a href="{% url 'hod:assign_teacher' %}" class="nav-link {% if 'assign_teacher' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-user-plus nav-icon"></i><span>Assign Class Teachers</span>
-      </a>
-      <a href="{% url 'hod:verify_achievements' %}" class="nav-link {% if 'achievements' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-trophy nav-icon"></i><span>Verify Achievements</span>
-      </a>
+      <!-- HOD: Staff & Students -->
+      <div class="nav-section-group open" data-group="hod-staff">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-users"></i><span>Staff & Students</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">4</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'hod:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name and request.resolver_match.url_name != 'faculty_attendance' and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Faculty Directory">
+            <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty Directory</span>
+          </a>
+          <a href="{% url 'hod:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Faculty Leave Approvals">
+            <i class="fas fa-calendar-minus nav-icon"></i><span>Faculty Leave Approvals</span>
+          </a>
+          <a href="{% url 'hod:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Student Directory">
+            <i class="fas fa-user-graduate nav-icon"></i><span>Student Directory</span>
+          </a>
+          <a href="{% url 'hod:assign_teacher' %}" class="nav-link {% if 'assign_teacher' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Assign Class Teachers">
+            <i class="fas fa-user-tie nav-icon"></i><span>Assign Class Teachers</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-chart-line"></i>Exams, Feedback & Fees</div>
-      <a href="{% url 'hod:upload_mid_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_mid_marks' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-file-upload nav-icon"></i><span>Mid Marks Entry & Edit</span>
-      </a>
-      <a href="{% url 'hod:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-check-double nav-icon"></i><span>Attendance Overrides</span>
-      </a>
-      <a href="{% url 'hod:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}">
-        <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
-      </a>
-      <a href="{% url 'hod:manage_feedback_forms' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-poll-h nav-icon text-warning"></i><span>Student Feedback</span>
-      </a>
-      <a href="{% url 'hod:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'hod' %}active{% endif %}">
-        <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
-      </a>
-      <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
-        <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
-      </a>
+      <!-- HOD: Exams, Feedback & Fees -->
+      <div class="nav-section-group open" data-group="hod-exams">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-chart-line"></i><span>Exams, Feedback & Fees</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">6</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'hod:upload_mid_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_mid_marks' and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Mid Marks Entry & Edit">
+            <i class="fas fa-file-upload nav-icon"></i><span>Mid Marks Entry & Edit</span>
+          </a>
+          <a href="{% url 'hod:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Attendance Overrides">
+            <i class="fas fa-check-double nav-icon"></i><span>Attendance Overrides</span>
+          </a>
+          <a href="{% url 'hod:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Release Results">
+            <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
+          </a>
+          <a href="{% url 'hod:manage_feedback_forms' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Student Feedback Forms">
+            <i class="fas fa-poll-h nav-icon text-warning"></i><span>Student Feedback Forms</span>
+          </a>
+          <a href="{% url 'hod:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Student Fee Dues">
+            <i class="fas fa-receipt nav-icon"></i><span>Student Fee Dues</span>
+          </a>
+          <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}" data-nav-title="Department Notices">
+            <i class="fas fa-envelope-open-text nav-icon"></i><span>Department Notices</span>
+          </a>
+          <a href="{% url 'hod:verify_achievements' %}" class="nav-link {% if 'achievements' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Verify Achievements">
+            <i class="fas fa-trophy nav-icon"></i><span>Verify Achievements</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title" style="color: var(--clr-accent);"><i class="fas fa-chalkboard"></i>My Teaching Hub</div>
-      <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Teaching View</span>
-      </a>
-      <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
-      </a>
-      <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if request.resolver_match.url_name == 'class_diary' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
-      </a>
-      <a href="{% url 'faculty:my_syllabus_tracker' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon"></i><span>My Syllabus Tracker</span>
-      </a>
-      <a href="{% url 'faculty:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-file-chart-line nav-icon"></i><span>Attendance Reports</span>
-      </a>
-      <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if request.resolver_match.url_name == 'counselled_students' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-user-graduate nav-icon"></i><span>My Students</span>
-      </a>
-      <a href="{% url 'faculty:student_results' %}" class="nav-link {% if request.resolver_match.url_name == 'student_results' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-poll-h nav-icon"></i><span>Student Results</span>
-      </a>
-      <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_marks' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
-      </a>
-      <a href="{% url 'faculty:my_attendance' %}" class="nav-link {% if request.resolver_match.url_name == 'my_attendance' and request.resolver_match.app_name == 'faculty' %}active{% endif %}">
-        <i class="fas fa-user-clock nav-icon"></i><span>My Attendance Log</span>
-      </a>
+      {% if faculty_obj %}
+      <!-- HOD: My Teaching Hub -->
+      <div class="nav-section-group" data-group="hod-teaching-hub">
+        <button class="nav-section-header" type="button" aria-expanded="false">
+          <span class="nav-section-title"><i class="fas fa-chalkboard-user"></i><span>My Teaching Hub</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">9</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'faculty:dashboard' %}" class="nav-link" data-nav-title="Faculty Dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Dashboard</span>
+          </a>
+          <a href="{% url 'faculty:my_timetable' %}" class="nav-link" data-nav-title="My Timetable">
+            <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
+          </a>
+          <a href="{% url 'faculty:mark_attendance' %}" class="nav-link" data-nav-title="Mark Attendance">
+            <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
+          </a>
+          <a href="{% url 'faculty:class_diary' %}" class="nav-link" data-nav-title="Class Diary">
+            <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
+          </a>
+          <a href="{% url 'faculty:upload_marks' %}" class="nav-link" data-nav-title="Enter Internal Marks">
+            <i class="fas fa-file-signature nav-icon"></i><span>Enter Internal Marks</span>
+          </a>
+          <a href="{% url 'faculty:counselled_students' %}" class="nav-link" data-nav-title="My Mentees">
+            <i class="fas fa-users-viewfinder nav-icon"></i><span>My Mentees</span>
+          </a>
+          <a href="{% url 'faculty:my_attendance' %}" class="nav-link" data-nav-title="My Attendance History">
+            <i class="fas fa-user-clock nav-icon"></i><span>My Attendance History</span>
+          </a>
+          <a href="{% url 'faculty:leave_requests' %}" class="nav-link" data-nav-title="Apply Leave">
+            <i class="fas fa-calendar-minus nav-icon"></i><span>Apply Leave</span>
+          </a>
+          <a href="{% url 'faculty:transfer_class' %}" class="nav-link" data-nav-title="Class Transfers">
+            <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers</span>
+          </a>
+        </div>
+      </div>
+      {% endif %}
 
     {% elif user.role == 'deo' %}
-      <div class="sidebar-section-title"><i class="fas fa-compass"></i>Main</div>
-      <a href="{% url 'deo:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'deo' %}active{% endif %}">
-        <i class="fas fa-tachometer-alt nav-icon"></i><span>DEO Dashboard</span>
-      </a>
-      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
-      </a>
+      <!-- DEO: Main -->
+      <div class="nav-section-group open" data-group="deo-main">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-compass"></i><span>Main</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">2</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'deo:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="DEO Dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i><span>DEO Dashboard</span>
+          </a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" data-nav-title="My Profile">
+            <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-keyboard"></i>Data Entry & Roster</div>
-      <a href="{% url 'deo:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}">
-        <i class="fas fa-user-graduate nav-icon"></i><span>Student Enrollment</span>
-      </a>
-      <a href="{% url 'deo:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}">
-        <i class="fas fa-check-square nav-icon"></i><span>Attendance Entry (24h)</span>
-      </a>
-      <a href="{% url 'deo:upload_marks' %}" class="nav-link {% if 'upload_marks' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-file-upload nav-icon"></i><span>Upload Examination Marks</span>
-      </a>
+      <!-- DEO: Data Entry & Roster -->
+      <div class="nav-section-group open" data-group="deo-roster">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-id-card"></i><span>Data Entry & Operations</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">3</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'deo:manage_students' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_students' and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Student Enrollment & Records">
+            <i class="fas fa-user-plus nav-icon"></i><span>Student Enrollment & Records</span>
+          </a>
+          <a href="{% url 'deo:attendance_list' %}" class="nav-link {% if 'attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Attendance Entry">
+            <i class="fas fa-check-square nav-icon"></i><span>Attendance Entry</span>
+          </a>
+          <a href="{% url 'deo:upload_marks' %}" class="nav-link {% if 'upload_marks' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Upload Marks">
+            <i class="fas fa-file-upload nav-icon"></i><span>Upload Marks</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-calendar-alt"></i>Academics & Accounts</div>
-      <a href="{% url 'deo:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Section Timetables</span>
-      </a>
-      <a href="{% url 'deo:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'deo' %}active{% endif %}">
-        <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
-      </a>
-      <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
-        <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
-      </a>
+      <!-- DEO: Academics & Accounts -->
+      <div class="nav-section-group open" data-group="deo-academics">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-file-invoice-dollar"></i><span>Academics & Accounts</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">3</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'deo:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Student Fees & Dues">
+            <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
+          </a>
+          <a href="{% url 'deo:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Department Timetables">
+            <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Department Timetables</span>
+          </a>
+          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+            <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
+          </a>
+        </div>
+      </div>
 
     {% elif user.role == 'admin' %}
-      <div class="sidebar-section-title"><i class="fas fa-compass"></i>Main & Overview</div>
-      <a href="{% url 'admin_dashboard:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-        <i class="fas fa-tachometer-alt nav-icon"></i><span>Admin Dashboard</span>
-      </a>
-      <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-        <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
-      </a>
+      <!-- Admin: Main & Overview -->
+      <div class="nav-section-group open" data-group="admin-main">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-tachometer-alt"></i><span>Main & Overview</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">2</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'admin_dashboard:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Admin Dashboard">
+            <i class="fas fa-tachometer-alt nav-icon"></i><span>Admin Dashboard</span>
+          </a>
+          <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" data-nav-title="My Profile">
+            <i class="fas fa-user-circle nav-icon"></i><span>My Profile</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-cubes"></i>Academic Structure & Schedule</div>
-      <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-cubes nav-icon"></i><span>Sections & Batches</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Master Timetables</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-book-open nav-icon"></i><span>Manage Subjects</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-calendar-alt nav-icon"></i><span>Topic Schedule Plan</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-file-invoice nav-icon"></i><span>Exam Milestones (Targets)</span>
-      </a>
+      <!-- Admin: Academic Structure & Schedule -->
+      <div class="nav-section-group open" data-group="admin-academics">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-sitemap"></i><span>Academic Structure & Schedule</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">6</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+            <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Master Timetables">
+            <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Master Timetables</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_subjects' %}" class="nav-link {% if 'subjects' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Subjects Catalog">
+            <i class="fas fa-book-open nav-icon"></i><span>Subjects Catalog</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Topic Schedule Plan">
+            <i class="fas fa-list-check nav-icon"></i><span>Topic Schedule Plan</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Exam Milestones">
+            <i class="fas fa-file-invoice nav-icon"></i><span>Exam Milestones</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_sections' %}" class="nav-link {% if 'sections' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Manage Sections">
+            <i class="fas fa-cubes nav-icon"></i><span>Manage Sections</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-clipboard-check"></i>Class Conduction & Audits</div>
-      <a href="{% url 'admin_dashboard:faculty_class_audit' %}" class="nav-link {% if 'faculty_class_audit' in request.resolver_match.url_name or 'class_attendance' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-clipboard-check nav-icon text-warning"></i><span>Class Conduction Audit</span>
-      </a>
-      <a href="{% url 'admin_dashboard:faculty_class_history' %}" class="nav-link {% if 'faculty_class_history' in request.resolver_match.url_name or 'class_transfers' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
-      </a>
-      <a href="{% url 'admin_dashboard:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
-      </a>
-      <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'faculty_attendance_report' %}active{% endif %}">
-        <i class="fas fa-user-clock nav-icon"></i><span>Faculty Attendance Register</span>
-      </a>
-      <a href="{% url 'admin_dashboard:attendance_list' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
-        <i class="fas fa-clipboard-list nav-icon"></i><span>Student Attendance Editor</span>
-      </a>
-      <a href="{% url 'admin_dashboard:admin_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_attendance_report' %}active{% endif %}">
-        <i class="fas fa-chart-pie nav-icon"></i><span>Attendance Analytics Report</span>
-      </a>
+      <!-- Admin: Class Conduction & Audits -->
+      <div class="nav-section-group open" data-group="admin-conduction">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-clipboard-check"></i><span>Class Conduction & Audits</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">6</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'admin_dashboard:faculty_class_audit' %}" class="nav-link {% if 'faculty_class_audit' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Conduction Audit Monitor">
+            <i class="fas fa-satellite-dish nav-icon"></i><span>Conduction Audit Monitor</span>
+          </a>
+          <a href="{% url 'admin_dashboard:faculty_class_history' %}" class="nav-link {% if 'faculty_class_history' in request.resolver_match.url_name or 'class_transfers' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Class Transfers & Proxies">
+            <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
+          </a>
+          <a href="{% url 'admin_dashboard:class_diary_coverage' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Class Diary & Syllabus">
+            <i class="fas fa-book-reader nav-icon"></i><span>Class Diary & Syllabus</span>
+          </a>
+          <a href="{% url 'admin_dashboard:faculty_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'faculty_attendance_report' %}active{% endif %}" data-nav-title="Faculty Attendance Register">
+            <i class="fas fa-user-clock nav-icon"></i><span>Faculty Attendance Register</span>
+          </a>
+          <a href="{% url 'admin_dashboard:attendance_list' %}" class="nav-link {% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}" data-nav-title="Student Attendance Editor">
+            <i class="fas fa-clipboard-list nav-icon"></i><span>Student Attendance Editor</span>
+          </a>
+          <a href="{% url 'admin_dashboard:admin_attendance_report' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_attendance_report' %}active{% endif %}" data-nav-title="Attendance Analytics Report">
+            <i class="fas fa-chart-pie nav-icon"></i><span>Attendance Analytics Report</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-users"></i>Staff & Students</div>
-      <a href="{% url 'admin_dashboard:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name and request.resolver_match.url_name != 'faculty_attendance_report' %}active{% endif %}">
-        <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty Directory</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-calendar-minus nav-icon"></i><span>Faculty Leave Approvals</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-user-graduate nav-icon"></i><span>Student Registry</span>
-      </a>
-      <a href="{% url 'admin_dashboard:assign_class_teacher' %}" class="nav-link">
-        <i class="fas fa-user-tie nav-icon"></i><span>Assign Class Teacher</span>
-      </a>
-      <a href="{% url 'admin_dashboard:assign_counsellor' %}" class="nav-link">
-        <i class="fas fa-user-friends nav-icon"></i><span>Assign Counsellor</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_achievements' %}" class="nav-link {% if 'achievements' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-trophy nav-icon"></i><span>College Achievements</span>
-      </a>
+      <!-- Admin: Staff & Students -->
+      <div class="nav-section-group open" data-group="admin-staff">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-users-cog"></i><span>Staff & Students</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">6</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'admin_dashboard:manage_faculty' %}" class="nav-link {% if 'faculty' in request.resolver_match.url_name and request.resolver_match.url_name != 'faculty_attendance_report' %}active{% endif %}" data-nav-title="Faculty Directory">
+            <i class="fas fa-chalkboard-teacher nav-icon"></i><span>Faculty Directory</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_leave_requests' %}" class="nav-link {% if 'leave' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Faculty Leave Approvals">
+            <i class="fas fa-calendar-minus nav-icon"></i><span>Faculty Leave Approvals</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_students' %}" class="nav-link {% if 'student' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Student Registry">
+            <i class="fas fa-user-graduate nav-icon"></i><span>Student Registry</span>
+          </a>
+          <a href="{% url 'admin_dashboard:assign_class_teacher' %}" class="nav-link" data-nav-title="Assign Class Teacher">
+            <i class="fas fa-user-tie nav-icon"></i><span>Assign Class Teacher</span>
+          </a>
+          <a href="{% url 'admin_dashboard:assign_counsellor' %}" class="nav-link" data-nav-title="Assign Counsellor">
+            <i class="fas fa-user-friends nav-icon"></i><span>Assign Counsellor</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_achievements' %}" class="nav-link {% if 'achievements' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="College Achievements">
+            <i class="fas fa-trophy nav-icon"></i><span>College Achievements</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-chart-bar"></i>Exams, Feedback & Accounts</div>
-      <a href="{% url 'admin_dashboard:add_results' %}" class="nav-link {% if request.resolver_match.url_name == 'add_results' %}active{% endif %}">
-        <i class="fas fa-plus-circle nav-icon"></i><span>Add Examination Results</span>
-      </a>
-      <a href="{% url 'admin_dashboard:bulk_upload_results' %}" class="nav-link {% if request.resolver_match.url_name == 'bulk_upload_results' %}active{% endif %}">
-        <i class="fas fa-file-csv nav-icon"></i><span>Bulk Upload Results (CSV)</span>
-      </a>
-      <a href="{% url 'admin_dashboard:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}">
-        <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-poll-h nav-icon text-warning"></i><span>Student Feedback Platform</span>
-      </a>
-      <a href="{% url 'admin_dashboard:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}">
-        <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
-      </a>
+      <!-- Admin: Exams, Feedback & Accounts -->
+      <div class="nav-section-group open" data-group="admin-exams">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-chart-pie"></i><span>Exams, Feedback & Accounts</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">5</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'admin_dashboard:add_results' %}" class="nav-link {% if request.resolver_match.url_name == 'add_results' %}active{% endif %}" data-nav-title="Add Examination Results">
+            <i class="fas fa-plus-circle nav-icon"></i><span>Add Examination Results</span>
+          </a>
+          <a href="{% url 'admin_dashboard:bulk_upload_results' %}" class="nav-link {% if request.resolver_match.url_name == 'bulk_upload_results' %}active{% endif %}" data-nav-title="Bulk Upload Results (CSV)">
+            <i class="fas fa-file-csv nav-icon"></i><span>Bulk Upload Results (CSV)</span>
+          </a>
+          <a href="{% url 'admin_dashboard:release_results' %}" class="nav-link {% if request.resolver_match.url_name == 'release_results' %}active{% endif %}" data-nav-title="Release Results">
+            <i class="fas fa-paper-plane nav-icon"></i><span>Release Results</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_feedback_forms' %}" class="nav-link {% if 'feedback' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Student Feedback Platform">
+            <i class="fas fa-poll-h nav-icon text-warning"></i><span>Student Feedback Platform</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_fees' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_fees' and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Student Fees & Dues">
+            <i class="fas fa-receipt nav-icon"></i><span>Student Fees & Dues</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section-title"><i class="fas fa-cogs"></i>Communications & System</div>
-      <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}">
-        <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
-      </a>
-      <a href="{% url 'admin_dashboard:backup_list' %}" class="nav-link {% if 'backup' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-database nav-icon"></i><span>Backups & PDF Export</span>
-      </a>
-      <a href="/admin/" class="nav-link" target="_blank">
-        <i class="fas fa-cog nav-icon"></i><span>Django Technical Admin</span>
-      </a>
+      <!-- Admin: Communications & System -->
+      <div class="nav-section-group open" data-group="admin-system">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-sliders-h"></i><span>Communications & System</span></span>
+          <span class="nav-section-meta">
+            <span class="section-count-badge">3</span>
+            <i class="fas fa-chevron-right chevron-icon"></i>
+          </span>
+        </button>
+        <div class="nav-section-items">
+          <a href="{% url 'notifications:manage' %}" class="nav-link {% if request.resolver_match.url_name == 'manage' %}active{% endif %}" data-nav-title="Manage Notices">
+            <i class="fas fa-envelope-open-text nav-icon"></i><span>Manage Notices</span>
+          </a>
+          <a href="{% url 'admin_dashboard:backup_list' %}" class="nav-link {% if 'backup' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Backups & PDF Export">
+            <i class="fas fa-database nav-icon"></i><span>Backups & PDF Export</span>
+          </a>
+          <a href="/admin/" class="nav-link" target="_blank" data-nav-title="Django Technical Admin">
+            <i class="fas fa-cog nav-icon"></i><span>Django Technical Admin</span>
+          </a>
+        </div>
+      </div>
     {% endif %}
 
     <div class="sidebar-divider"></div>
-    <a href="{% url 'accounts:logout' %}" class="nav-link nav-link-danger">
+    <a href="{% url 'accounts:logout' %}" class="nav-link nav-link-danger" data-nav-title="Logout">
       <i class="fas fa-sign-out-alt nav-icon"></i><span>Logout</span>
     </a>
   </nav>
+
+  <!-- Sidebar Footer: Integrated User Profile Dock -->
+  <div class="sidebar-user-dock">
+    <div class="user-dock-avatar-wrap">
+      <div class="user-dock-avatar">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture.url }}" alt="{{ user.first_name }}">
+        {% else %}
+          {{ user.first_name|first|upper|default:"U" }}{{ user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <span class="user-dock-status-dot" title="Online"></span>
+    </div>
+    <div class="user-dock-info">
+      <div class="user-dock-name" title="{{ user.get_full_name|default:user.username }}">{{ user.get_full_name|default:user.username }}</div>
+      <div class="user-dock-role">{{ user.get_role_display|default:user.role|upper }}</div>
+    </div>
+    <div class="user-dock-actions">
+      <a href="{% url 'accounts:logout' %}" class="user-dock-logout-btn" title="Logout" aria-label="Logout">
+        <i class="fas fa-power-off"></i>
+      </a>
+    </div>
+  </div>
 </aside>
 
 <!-- Mobile overlay -->
@@ -757,6 +1062,161 @@ setInterval(() => { refreshBadge(); notifsLoaded = false; }, 60000);
         sessionStorage.setItem('vvit_sidebar_scroll_val', sb.scrollTop);
       });
     });
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   ULTRA-MODERN SIDEBAR NAVIGATION MICRO-ENGINE
+   Handles: Accordion toggling, live search, compact dock mode
+═══════════════════════════════════════════════ */
+(function() {
+  document.addEventListener("DOMContentLoaded", function() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+
+    // 1. Compact Dock Mode Toggle
+    const pinBtn = document.getElementById('sidebarPinBtn');
+    const COMPACT_KEY = 'vvit_sidebar_compact';
+
+    function setCompactMode(compact) {
+      if (compact) {
+        document.body.classList.add('sidebar-compact');
+        document.documentElement.classList.add('sidebar-compact-active');
+        if (pinBtn) pinBtn.setAttribute('title', 'Expand sidebar');
+      } else {
+        document.body.classList.remove('sidebar-compact');
+        document.documentElement.classList.remove('sidebar-compact-active');
+        if (pinBtn) pinBtn.setAttribute('title', 'Collapse sidebar');
+      }
+      localStorage.setItem(COMPACT_KEY, compact ? 'true' : 'false');
+    }
+
+    // Apply saved compact preference
+    const isSavedCompact = localStorage.getItem(COMPACT_KEY) === 'true';
+    if (isSavedCompact && window.innerWidth >= 992) {
+      setCompactMode(true);
+    }
+
+    if (pinBtn) {
+      pinBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const currentlyCompact = document.body.classList.contains('sidebar-compact');
+        setCompactMode(!currentlyCompact);
+      });
+    }
+
+    // 2. Accordion Section Toggling
+    const headers = sidebar.querySelectorAll('.nav-section-header');
+    headers.forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // If in compact mode, expanding should un-compact sidebar on desktop
+        if (document.body.classList.contains('sidebar-compact') && window.innerWidth >= 992) {
+          setCompactMode(false);
+        }
+        const group = btn.closest('.nav-section-group');
+        if (!group) return;
+        const isOpen = group.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    });
+
+    // Ensure active section is open and visible
+    const activeLink = sidebar.querySelector('.nav-link.active');
+    if (activeLink) {
+      const activeGroup = activeLink.closest('.nav-section-group');
+      if (activeGroup) {
+        activeGroup.classList.add('open');
+        const header = activeGroup.querySelector('.nav-section-header');
+        if (header) header.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    // 3. Real-time Live Search Filter
+    const searchInput = document.getElementById('sidebarSearchInput');
+    const searchClear = document.getElementById('sidebarSearchClear');
+    const searchEmpty = document.getElementById('sidebarSearchEmpty');
+    const groups = sidebar.querySelectorAll('.nav-section-group');
+
+    if (searchInput) {
+      function performFilter() {
+        const query = searchInput.value.trim().toLowerCase();
+        if (searchClear) searchClear.style.display = query.length > 0 ? 'inline-flex' : 'none';
+
+        if (!query) {
+          // Reset all
+          groups.forEach(function(grp) {
+            grp.style.display = 'flex';
+            grp.querySelectorAll('.nav-link').forEach(function(link) {
+              link.style.display = 'flex';
+            });
+          });
+          if (searchEmpty) searchEmpty.style.display = 'none';
+          return;
+        }
+
+        // If sidebar is compact, expand it so user can see search results
+        if (document.body.classList.contains('sidebar-compact') && window.innerWidth >= 992) {
+          setCompactMode(false);
+        }
+
+        let totalMatches = 0;
+
+        groups.forEach(function(grp) {
+          let grpMatches = 0;
+          const links = grp.querySelectorAll('.nav-link');
+          links.forEach(function(link) {
+            const title = (link.getAttribute('data-nav-title') || link.innerText || '').toLowerCase();
+            if (title.includes(query)) {
+              link.style.display = 'flex';
+              grpMatches++;
+            } else {
+              link.style.display = 'none';
+            }
+          });
+
+          if (grpMatches > 0) {
+            grp.style.display = 'flex';
+            grp.classList.add('open');
+            const hdr = grp.querySelector('.nav-section-header');
+            if (hdr) hdr.setAttribute('aria-expanded', 'true');
+            totalMatches += grpMatches;
+          } else {
+            grp.style.display = 'none';
+          }
+        });
+
+        if (searchEmpty) {
+          searchEmpty.style.display = totalMatches === 0 ? 'block' : 'none';
+        }
+      }
+
+      searchInput.addEventListener('input', performFilter);
+
+      if (searchClear) {
+        searchClear.addEventListener('click', function() {
+          searchInput.value = '';
+          performFilter();
+          searchInput.focus();
+        });
+      }
+
+      // Keyboard shortcuts: Ctrl+K or Cmd+K to focus search, Esc to clear
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+          e.preventDefault();
+          if (document.body.classList.contains('sidebar-compact')) {
+            setCompactMode(false);
+          }
+          searchInput.focus();
+          searchInput.select();
+        } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+          searchInput.value = '';
+          performFilter();
+          searchInput.blur();
+        }
+      });
+    }
   });
 })();
 </script>
