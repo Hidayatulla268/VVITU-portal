@@ -4534,20 +4534,123 @@ def delete_feedback_form(request, form_id):
 
 @admin_required
 def academic_calendar(request):
-    """Admin view of the university academic calendar."""
+    """Admin view of the university academic calendar with full CRUD operations."""
     today = timezone.localdate()
     branch_id = request.GET.get('branch', '')
+    event_type = request.GET.get('type', '')
     
-    qs = AcademicCalendar.objects.filter(date__gte=today - datetime.timedelta(days=30))
+    qs = AcademicCalendar.objects.select_related('branch', 'year').all()
     if branch_id:
         qs = qs.filter(Q(branch_id=branch_id) | Q(branch__isnull=True))
+    if event_type:
+        qs = qs.filter(event_type=event_type)
     
     events = list(qs.order_by('date'))
+    branches = Branch.objects.all().order_by('code')
+    years = Year.objects.all().order_by('year')
+
     return render(request, 'student/academic_calendar.html', {
         'upcoming': [e for e in events if e.date >= today],
         'past':     [e for e in events if e.date <  today],
         'today':    today,
+        'branches': branches,
+        'years':    years,
+        'selected_branch': branch_id,
+        'selected_type': event_type,
+        'event_types': AcademicCalendar.EVENT_TYPE_CHOICES,
+        'is_admin_manager': True,
     })
+
+
+@admin_required
+@require_POST
+def add_academic_calendar_event(request):
+    """Admin add new academic calendar event."""
+    title = request.POST.get('title', '').strip()
+    date_str = request.POST.get('date', '').strip()
+    event_type = request.POST.get('event_type', 'other').strip()
+    description = request.POST.get('description', '').strip()
+    branch_id = request.POST.get('branch', '').strip()
+    year_id = request.POST.get('year', '').strip()
+
+    if not title or not date_str:
+        messages.error(request, "Event Title and Date are required.")
+        return redirect('admin_dashboard:academic_calendar')
+
+    try:
+        event_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
+        return redirect('admin_dashboard:academic_calendar')
+
+    branch = Branch.objects.filter(id=branch_id).first() if branch_id else None
+    year = Year.objects.filter(id=year_id).first() if year_id else None
+
+    AcademicCalendar.objects.create(
+        title=title,
+        date=event_date,
+        event_type=event_type,
+        description=description,
+        branch=branch,
+        year=year,
+    )
+    from django.core.cache import cache
+    cache.clear()
+
+    messages.success(request, f"Academic event '{title}' scheduled for {event_date.strftime('%d %b %Y')} successfully added!")
+    return redirect('admin_dashboard:academic_calendar')
+
+
+@admin_required
+@require_POST
+def edit_academic_calendar_event(request, event_id):
+    """Admin edit existing academic calendar event."""
+    event = get_object_or_404(AcademicCalendar, id=event_id)
+    title = request.POST.get('title', '').strip()
+    date_str = request.POST.get('date', '').strip()
+    event_type = request.POST.get('event_type', 'other').strip()
+    description = request.POST.get('description', '').strip()
+    branch_id = request.POST.get('branch', '').strip()
+    year_id = request.POST.get('year', '').strip()
+
+    if not title or not date_str:
+        messages.error(request, "Event Title and Date are required.")
+        return redirect('admin_dashboard:academic_calendar')
+
+    try:
+        event.date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, "Invalid date format. Use YYYY-MM-DD.")
+        return redirect('admin_dashboard:academic_calendar')
+
+    event.title = title
+    event.event_type = event_type
+    event.description = description
+    event.branch = Branch.objects.filter(id=branch_id).first() if branch_id else None
+    event.year = Year.objects.filter(id=year_id).first() if year_id else None
+    event.save()
+
+    from django.core.cache import cache
+    cache.clear()
+
+    messages.success(request, f"Academic event '{title}' updated successfully!")
+    return redirect('admin_dashboard:academic_calendar')
+
+
+@admin_required
+@require_POST
+def delete_academic_calendar_event(request, event_id):
+    """Admin delete academic calendar event."""
+    event = get_object_or_404(AcademicCalendar, id=event_id)
+    title = event.title
+    event.delete()
+
+    from django.core.cache import cache
+    cache.clear()
+
+    messages.success(request, f"Academic event '{title}' removed from calendar.")
+    return redirect('admin_dashboard:academic_calendar')
+
 
 
 

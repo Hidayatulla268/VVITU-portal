@@ -2,62 +2,133 @@
 {% load static %}
 {% load core_tags %}
 
-{% block title %}Academic Calendar{% endblock %}
+{% block title %}Academic Calendar — VVITU Portal{% endblock %}
 
 {% block page_header %}
-<div class="page-header-strip">
+<div class="page-header-strip d-flex justify-content-between align-items-center flex-wrap gap-3">
   <div class="ph-left">
     <h1 class="ph-title"><i class="fas fa-calendar-check me-2 text-accent"></i>Academic Calendar</h1>
-    <p class="ph-sub">Important dates, holidays, and events</p>
+    <p class="ph-sub">Official institutional schedule, exams, holidays, and milestones</p>
   </div>
+  {% if user.role == 'admin' %}
+  <div class="ph-right">
+    <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addEventModal">
+      <i class="fas fa-plus-circle me-1"></i> Add Academic Event
+    </button>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block content %}
+<!-- Filters Strip (For Admin / All Roles) -->
+{% if branches or event_types %}
+<div class="glass-card mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted small mb-1 fw-bold"><i class="fas fa-filter me-1 text-accent"></i>Event Category</label>
+      <select name="type" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
+        <option value="">All Categories (Holidays, Exams, Events...)</option>
+        {% for code, label in event_types %}
+        <option value="{{ code }}" {% if selected_type == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if branches %}
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted small mb-1 fw-bold"><i class="fas fa-code-branch me-1 text-accent"></i>Branch Filter</label>
+      <select name="branch" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
+        <option value="">All Branches / University-Wide</option>
+        {% for b in branches %}
+        <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"i" %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div class="col-12 col-md-4 d-flex align-items-end gap-2 mt-auto">
+      {% if selected_type or selected_branch %}
+      <a href="{% if user.role == 'admin' %}{% url 'admin_dashboard:academic_calendar' %}{% else %}{% url 'academic_calendar' %}{% endif %}" class="btn btn-outline-secondary btn-sm w-100">
+        <i class="fas fa-times me-1"></i> Reset Filter
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endif %}
+
 <!-- Upcoming Events -->
 <div class="glass-card mb-4">
-  <div class="card-header-custom">
-    <h3 class="card-title-custom"><i class="fas fa-forward me-2 text-accent"></i>Upcoming Events</h3>
-    <span class="card-badge">{{ upcoming|length }} event{{ upcoming|length|pluralize }}</span>
+  <div class="card-header-custom d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom"><i class="fas fa-forward me-2 text-accent"></i>Upcoming Academic Schedule</h3>
+    <span class="card-badge">{{ upcoming|length }} upcoming event{{ upcoming|length|pluralize }}</span>
   </div>
 
   {% if upcoming %}
   <div class="events-timeline">
     {% for event in upcoming %}
-    <div class="event-item event-{{ event.event_type }}">
-      <div class="event-date-badge">
-        <span class="event-day">{{ event.date|date:"d" }}</span>
-        <span class="event-month">{{ event.date|date:"M" }}</span>
-      </div>
-      <div class="event-body">
-        <div class="event-type-pill pill-{{ event.event_type }}">
-          <i class="fas {% if event.event_type == 'holiday' %}fa-umbrella-beach
-                        {% elif event.event_type == 'exam' %}fa-pen-to-square
-                        {% elif event.event_type == 'event' %}fa-star
-                        {% elif event.event_type == 'deadline' %}fa-clock
-                        {% else %}fa-circle-info{% endif %} me-1"></i>
-          {{ event.get_event_type_display }}
+    <div class="event-item event-{{ event.event_type }} d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-start gap-3 flex-grow-1">
+        <div class="event-date-badge">
+          <span class="event-day">{{ event.date|date:"d" }}</span>
+          <span class="event-month">{{ event.date|date:"M" }}</span>
         </div>
-        <h5 class="event-title">{{ event.title }}</h5>
-        {% if event.description %}<p class="event-desc">{{ event.description }}</p>{% endif %}
-        <small class="event-scope text-muted">
-          {% if event.branch %}{{ event.branch.code }}{% else %}All Branches{% endif %}
-          {% if event.year %}· {{ event.year }}{% endif %}
-        </small>
+        <div class="event-body">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <span class="event-type-pill pill-{{ event.event_type }}">
+              <i class="fas {% if event.event_type == 'holiday' %}fa-umbrella-beach
+                            {% elif event.event_type == 'exam' %}fa-pen-to-square
+                            {% elif event.event_type == 'event' %}fa-star
+                            {% elif event.event_type == 'deadline' %}fa-clock
+                            {% else %}fa-circle-info{% endif %} me-1"></i>
+              {{ event.get_event_type_display }}
+            </span>
+            <small class="event-scope text-muted">
+              <i class="fas fa-layer-group me-1"></i>
+              {% if event.branch %}{{ event.branch.code }}{% else %}All Branches{% endif %}
+              {% if event.year %}· Year {{ event.year }}{% endif %}
+            </small>
+          </div>
+          <h5 class="event-title mb-1 fw-bold text-light">{{ event.title }}</h5>
+          {% if event.description %}<p class="event-desc text-muted mb-0 small">{{ event.description }}</p>{% endif %}
+        </div>
       </div>
-      <div class="event-days-away">
-        {% with days=event.date|timeuntil %}
-        <span class="days-away-num">{{ days|truncatewords:1 }}</span>
-        <span class="days-away-label">away</span>
-        {% endwith %}
+
+      <div class="d-flex align-items-center gap-3">
+        <div class="event-days-away text-end d-none d-sm-block">
+          {% with days=event.date|timeuntil %}
+          <span class="days-away-num fw-bold text-accent">{{ days|truncatewords:1 }}</span>
+          <span class="days-away-label text-muted small d-block">away</span>
+          {% endwith %}
+        </div>
+
+        {% if user.role == 'admin' %}
+        <div class="d-flex gap-1">
+          <button type="button" class="btn btn-sm btn-outline-warning" 
+                  title="Edit Event"
+                  onclick="openEditModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.event_type }}', '{{ event.branch_id|default:'' }}', '{{ event.year_id|default:'' }}', '{{ event.description|escapejs }}')">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" 
+                  title="Delete Event"
+                  onclick="openDeleteModal('{{ event.id }}', '{{ event.title|escapejs }}')">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-state py-4">
-    <i class="fas fa-calendar-times empty-icon fa-2x mb-2"></i>
-    <p>No upcoming events found.</p>
+  <div class="empty-state py-5 text-center">
+    <i class="fas fa-calendar-times empty-icon fa-3x mb-3 text-muted" style="opacity: 0.5;"></i>
+    <h5 class="text-light">No upcoming events scheduled</h5>
+    <p class="text-muted small">All academic milestones and examination timelines will appear here.</p>
+    {% if user.role == 'admin' %}
+    <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addEventModal">
+      <i class="fas fa-plus me-1"></i> Add First Event
+    </button>
+    {% endif %}
   </div>
   {% endif %}
 </div>
@@ -65,28 +136,238 @@
 <!-- Past Events -->
 {% if past %}
 <div class="glass-card">
-  <div class="card-header-custom">
-    <h3 class="card-title-custom"><i class="fas fa-history me-2"></i>Past Events</h3>
-    <span class="card-badge">{{ past|length }}</span>
+  <div class="card-header-custom d-flex justify-content-between align-items-center">
+    <h3 class="card-title-custom"><i class="fas fa-history me-2 text-secondary"></i>Completed & Past Events</h3>
+    <span class="card-badge">{{ past|length }} past event{{ past|length|pluralize }}</span>
   </div>
   <div class="table-responsive">
-    <table class="vvit-table">
+    <table class="vvit-table table table-dark table-hover mb-0 align-middle">
       <thead>
-        <tr><th>Date</th><th>Title</th><th>Type</th><th>Scope</th></tr>
+        <tr>
+          <th>Date</th>
+          <th>Title & Description</th>
+          <th>Type</th>
+          <th>Scope</th>
+          {% if user.role == 'admin' %}<th class="text-end">Actions</th>{% endif %}
+        </tr>
       </thead>
       <tbody>
         {% for event in past %}
-        <tr class="text-muted">
-          <td>{{ event.date|date:"d M Y" }}</td>
-          <td>{{ event.title }}</td>
-          <td><span class="event-type-pill pill-{{ event.event_type }} pill-sm">{{ event.get_event_type_display }}</span></td>
-          <td>{% if event.branch %}{{ event.branch.code }}{% else %}All{% endif %}</td>
+        <tr>
+          <td class="text-nowrap fw-bold text-accent"><i class="far fa-calendar-alt me-1"></i>{{ event.date|date:"d M Y" }}</td>
+          <td>
+            <div class="fw-semibold text-light">{{ event.title }}</div>
+            {% if event.description %}<div class="text-muted small">{{ event.description|truncatechars:80 }}</div>{% endif %}
+          </td>
+          <td>
+            <span class="event-type-pill pill-{{ event.event_type }} pill-sm">
+              {{ event.get_event_type_display }}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-secondary">
+              {% if event.branch %}{{ event.branch.code }}{% else %}All Branches{% endif %}
+              {% if event.year %}· Y{{ event.year }}{% endif %}
+            </span>
+          </td>
+          {% if user.role == 'admin' %}
+          <td class="text-end text-nowrap">
+            <button type="button" class="btn btn-sm btn-outline-warning me-1" 
+                    title="Edit Event"
+                    onclick="openEditModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.event_type }}', '{{ event.branch_id|default:'' }}', '{{ event.year_id|default:'' }}', '{{ event.description|escapejs }}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" 
+                    title="Delete Event"
+                    onclick="openDeleteModal('{{ event.id }}', '{{ event.title|escapejs }}')">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% endif %}
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ADMIN MODALS (ADD, EDIT, DELETE)                   -->
+<!-- ══════════════════════════════════════════════════ -->
+{% if user.role == 'admin' %}
+
+<!-- 1. ADD EVENT MODAL -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <form method="POST" action="{% url 'admin_dashboard:add_academic_calendar_event' %}">
+        {% csrf_token %}
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title text-light" id="addEventModalLabel"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Academic Event</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-light fw-semibold">Event Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control bg-black text-light border-secondary" placeholder="e.g. Mid-1 Examinations, Republic Day, Tech Fest" required>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Event Date <span class="text-danger">*</span></label>
+              <input type="date" name="date" class="form-control bg-black text-light border-secondary" value="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Event Category</label>
+              <select name="event_type" class="form-select bg-black text-light border-secondary">
+                <option value="holiday">🏖️ Holiday</option>
+                <option value="exam">📝 Examination</option>
+                <option value="event">🌟 University Event</option>
+                <option value="deadline">⏰ Deadline</option>
+                <option value="other" selected>📌 Other Milestone</option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Target Branch</label>
+              <select name="branch" class="form-select bg-black text-light border-secondary">
+                <option value="">All Branches</option>
+                {% for b in branches %}
+                <option value="{{ b.id }}">{{ b.code }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Target Year</label>
+              <select name="year" class="form-select bg-black text-light border-secondary">
+                <option value="">All Years</option>
+                {% for y in years %}
+                <option value="{{ y.id }}">Year {{ y.year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label text-light fw-semibold">Description (Optional)</label>
+            <textarea name="description" class="form-control bg-black text-light border-secondary" rows="2" placeholder="Additional details, circular notes, or timings..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 2. EDIT EVENT MODAL -->
+<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <form method="POST" id="editEventForm" action="">
+        {% csrf_token %}
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title text-light" id="editEventModalLabel"><i class="fas fa-edit me-2 text-warning"></i>Edit Academic Event</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-light fw-semibold">Event Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" id="edit_title" class="form-control bg-black text-light border-secondary" required>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Event Date <span class="text-danger">*</span></label>
+              <input type="date" name="date" id="edit_date" class="form-control bg-black text-light border-secondary" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Event Category</label>
+              <select name="event_type" id="edit_event_type" class="form-select bg-black text-light border-secondary">
+                <option value="holiday">🏖️ Holiday</option>
+                <option value="exam">📝 Examination</option>
+                <option value="event">🌟 University Event</option>
+                <option value="deadline">⏰ Deadline</option>
+                <option value="other">📌 Other Milestone</option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Target Branch</label>
+              <select name="branch" id="edit_branch" class="form-select bg-black text-light border-secondary">
+                <option value="">All Branches</option>
+                {% for b in branches %}
+                <option value="{{ b.id }}">{{ b.code }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-light fw-semibold">Target Year</label>
+              <select name="year" id="edit_year" class="form-select bg-black text-light border-secondary">
+                <option value="">All Years</option>
+                {% for y in years %}
+                <option value="{{ y.id }}">Year {{ y.year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label text-light fw-semibold">Description (Optional)</label>
+            <textarea name="description" id="edit_description" class="form-control bg-black text-light border-secondary" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning"><i class="fas fa-check me-1"></i> Update Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 3. DELETE EVENT MODAL -->
+<div class="modal fade" id="deleteEventModal" tabindex="-1" aria-labelledby="deleteEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content bg-dark text-light border-danger">
+      <form method="POST" id="deleteEventForm" action="">
+        {% csrf_token %}
+        <div class="modal-header border-danger">
+          <h5 class="modal-title text-danger" id="deleteEventModalLabel"><i class="fas fa-trash-alt me-2"></i>Delete Event</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p class="mb-2">Are you sure you want to remove this academic event from the calendar?</p>
+          <div class="fw-bold text-warning" id="delete_event_title"></div>
+        </div>
+        <div class="modal-footer border-secondary justify-content-center">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i> Confirm Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openEditModal(id, title, date, eventType, branchId, yearId, description) {
+  document.getElementById('edit_title').value = title;
+  document.getElementById('edit_date').value = date;
+  document.getElementById('edit_event_type').value = eventType;
+  document.getElementById('edit_branch').value = branchId;
+  document.getElementById('edit_year').value = yearId;
+  document.getElementById('edit_description').value = description;
+  document.getElementById('editEventForm').action = '/admin-portal/academic-calendar/' + id + '/edit/';
+  new bootstrap.Modal(document.getElementById('editEventModal')).show();
+}
+
+function openDeleteModal(id, title) {
+  document.getElementById('delete_event_title').innerText = title;
+  document.getElementById('deleteEventForm').action = '/admin-portal/academic-calendar/' + id + '/delete/';
+  new bootstrap.Modal(document.getElementById('deleteEventModal')).show();
+}
+</script>
 {% endif %}
 
 {% endblock %}
