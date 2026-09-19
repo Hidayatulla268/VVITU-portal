@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VVITU Smart Portal — Scopes & Architecture Overview</title>
+  <title>VVITU Smart Portal — Complete Features, Menu & Sidebar Directory</title>
   
-  <!-- SEO & Social Meta -->
-  <meta name="description" content="Comprehensive Architecture, Operational Scopes, and Module Capabilities of the VVITU University Platform. Compare traditional legacy ERPs with next-gen autonomous university systems.">
-  <meta name="keywords" content="VVITU, University Portal, Education ERP, Attendance Automation, Timetable Generator, Student Management System">
+  <!-- SEO & Meta -->
+  <meta name="description" content="Complete detailed breakdown of every menu bar, sidebar option, and operational scope inside the VVITU University Portal. Compare traditional legacy ERPs with the next-gen VVITU Smart Portal.">
+  <meta name="keywords" content="VVITU, University Portal, Features, Sidebar, Menu, Attendance, Timetable, ERP Comparison">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Bootstrap 5 & Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
@@ -20,22 +20,22 @@
 
   <style>
     :root {
-      --bg-dark: #070a13;
-      --bg-card: rgba(15, 23, 42, 0.75);
-      --bg-card-hover: rgba(30, 41, 59, 0.85);
-      --border-card: rgba(255, 255, 255, 0.1);
-      --border-card-hover: rgba(14, 165, 233, 0.4);
-      --accent-crimson: #e11d48;
-      --accent-cyan: #0ea5e9;
+      --bg-dark: #060913;
+      --bg-card: #0d1424;
+      --bg-card-sub: #111a30;
+      --bg-card-hover: #16223f;
+      --border-card: rgba(255, 255, 255, 0.14);
+      --border-card-hover: #38bdf8;
+      --accent-crimson: #f43f5e;
+      --accent-cyan: #38bdf8;
       --accent-emerald: #10b981;
       --accent-amber: #f59e0b;
-      --accent-purple: #8b5cf6;
-      --accent-indigo: #6366f1;
-      --text-main: #f8fafc;
-      --text-sub: #94a3b8;
-      --glow-cyan: 0 0 25px rgba(14, 165, 233, 0.35);
-      --glow-crimson: 0 0 25px rgba(225, 29, 72, 0.35);
-      --glow-purple: 0 0 25px rgba(139, 92, 246, 0.35);
+      --accent-purple: #a855f7;
+      --accent-indigo: #818cf8;
+      --text-main: #ffffff;
+      --text-sub: #cbd5e1;
+      --text-dim: #94a3b8;
+      --glow-cyan: 0 0 25px rgba(56, 189, 248, 0.35);
       --font-title: 'Space Grotesk', sans-serif;
       --font-heading: 'Outfit', sans-serif;
       --font-body: 'Inter', sans-serif;
@@ -52,13 +52,14 @@
       line-height: 1.6;
     }
 
-    /* Ambient Canvas Background */
+    /* Ambient Canvas */
     #particle-canvas {
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
       z-index: -1;
       pointer-events: none;
+      opacity: 0.6;
     }
     .bg-radial-overlay {
       position: fixed;
@@ -66,15 +67,15 @@
       width: 100vw; height: 100vh;
       z-index: -2;
       pointer-events: none;
-      background: radial-gradient(circle at 15% 20%, rgba(225, 29, 72, 0.12) 0%, transparent 45%),
-                  radial-gradient(circle at 85% 25%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
-                  radial-gradient(circle at 50% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-                  #070a13;
+      background: radial-gradient(circle at 10% 15%, rgba(244, 63, 94, 0.1) 0%, transparent 45%),
+                  radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                  #060913;
     }
 
     /* Top Sticky Navigation */
     .showcase-nav {
-      background: rgba(7, 10, 19, 0.85);
+      background: rgba(6, 9, 19, 0.94);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border-card);
@@ -82,32 +83,31 @@
       top: 0;
       z-index: 1000;
       padding: 14px 0;
-      transition: all 0.3s ease;
     }
     .brand-title {
       font-family: var(--font-title);
       font-weight: 800;
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       letter-spacing: -0.5px;
-      color: #fff;
+      color: #ffffff;
     }
     .nav-link-custom {
       color: var(--text-sub);
-      font-weight: 500;
-      font-size: 0.9rem;
+      font-weight: 600;
+      font-size: 0.92rem;
       text-decoration: none;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 8px;
       transition: all 0.2s ease;
     }
     .nav-link-custom:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     /* Hero Section */
     .hero-section {
-      padding: 85px 0 60px;
+      padding: 75px 0 50px;
       text-align: center;
       position: relative;
     }
@@ -117,61 +117,60 @@
       gap: 10px;
       padding: 8px 22px;
       border-radius: 30px;
-      background: rgba(14, 165, 233, 0.12);
-      border: 1px solid rgba(14, 165, 233, 0.4);
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.5);
       color: #38bdf8;
       font-family: var(--font-mono);
       font-size: 0.88rem;
-      font-weight: 600;
-      margin-bottom: 25px;
+      font-weight: 700;
+      margin-bottom: 22px;
       box-shadow: var(--glow-cyan);
-      animation: pulseGlow 3s infinite alternate;
-    }
-    @keyframes pulseGlow {
-      from { box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); }
-      to { box-shadow: 0 0 30px rgba(14, 165, 233, 0.5); }
     }
     .hero-title {
       font-family: var(--font-title);
-      font-size: 3.4rem;
+      font-size: 3.3rem;
       font-weight: 800;
       letter-spacing: -1.2px;
       line-height: 1.15;
-      margin-bottom: 22px;
-      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 45%, #94a3b8 100%);
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #f43f5e 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .hero-sub {
-      color: var(--text-sub);
-      font-size: 1.25rem;
-      max-width: 880px;
-      margin: 0 auto 35px;
+      color: #e2e8f0;
+      font-size: 1.22rem;
+      max-width: 900px;
+      margin: 0 auto 30px;
       font-weight: 400;
+      line-height: 1.65;
     }
 
     /* KPI Highlights Grid */
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 18px;
-      margin-top: 40px;
+      margin-top: 35px;
     }
     .kpi-card {
       background: var(--bg-card);
       border: 1px solid var(--border-card);
-      backdrop-filter: blur(14px);
       padding: 24px 20px;
       border-radius: 18px;
       text-align: left;
       position: relative;
       overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
     }
     .kpi-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(14, 165, 233, 0.45);
-      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.5);
+      transform: translateY(-4px);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.6);
     }
     .kpi-card::before {
       content: '';
@@ -183,53 +182,57 @@
       font-family: var(--font-title);
       font-size: 2.3rem;
       font-weight: 800;
-      color: #fff;
+      color: #ffffff;
       line-height: 1;
       margin-bottom: 6px;
     }
     .kpi-label {
-      color: var(--text-sub);
-      font-size: 0.88rem;
+      color: #cbd5e1;
+      font-size: 0.9rem;
       font-weight: 500;
     }
 
     /* Section Headers */
     .section-title-wrap {
       text-align: center;
-      margin-bottom: 50px;
+      margin-bottom: 45px;
     }
     .section-tag {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: var(--accent-crimson);
-      font-weight: 700;
+      font-weight: 800;
       display: inline-block;
       margin-bottom: 8px;
+      background: rgba(244, 63, 94, 0.12);
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(244, 63, 94, 0.3);
     }
     .section-main-heading {
       font-family: var(--font-heading);
       font-size: 2.5rem;
       font-weight: 800;
-      color: #fff;
+      color: #ffffff;
       letter-spacing: -0.5px;
     }
 
     /* Scope Tabs Navigation */
     .scope-tab-buttons {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       justify-content: center;
       margin-bottom: 35px;
     }
     .scope-tab-btn {
-      padding: 13px 24px;
+      padding: 13px 22px;
       border-radius: 14px;
-      background: rgba(15, 23, 42, 0.6);
+      background: #0d1424;
       border: 1px solid var(--border-card);
-      color: var(--text-sub);
+      color: #e2e8f0;
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
@@ -239,16 +242,17 @@
       gap: 10px;
     }
     .scope-tab-btn:hover {
-      background: rgba(30, 41, 59, 0.85);
-      color: #fff;
-      border-color: rgba(255, 255, 255, 0.25);
+      background: #16223f;
+      color: #ffffff;
+      border-color: #38bdf8;
       transform: translateY(-2px);
     }
     .scope-tab-btn.active {
-      background: linear-gradient(135deg, rgba(225, 29, 72, 0.3) 0%, rgba(14, 165, 233, 0.3) 100%);
-      border-color: var(--accent-cyan);
-      color: #fff;
-      box-shadow: 0 0 25px rgba(14, 165, 233, 0.35);
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.35) 0%, rgba(56, 189, 248, 0.35) 100%);
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+      font-weight: 700;
     }
 
     /* Auto Tour Bar */
@@ -260,13 +264,14 @@
       margin-bottom: 25px;
     }
     .tour-btn {
-      background: rgba(15, 23, 42, 0.8);
+      background: #0d1424;
       border: 1px solid var(--border-card);
       color: #38bdf8;
       border-radius: 30px;
-      padding: 6px 18px;
-      font-size: 0.85rem;
+      padding: 7px 20px;
+      font-size: 0.88rem;
       font-family: var(--font-mono);
+      font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -274,22 +279,22 @@
       transition: all 0.2s;
     }
     .tour-btn:hover {
-      background: rgba(14, 165, 233, 0.2);
+      background: rgba(56, 189, 248, 0.2);
       border-color: #38bdf8;
-      color: #fff;
+      color: #ffffff;
     }
     .tour-progress-bar {
       width: 140px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
       overflow: hidden;
       display: none;
     }
     .tour-progress-fill {
       width: 0%;
       height: 100%;
-      background: var(--accent-cyan);
+      background: #38bdf8;
       transition: width 0.1s linear;
     }
 
@@ -297,11 +302,9 @@
     .scope-detail-card {
       background: var(--bg-card);
       border: 1px solid var(--border-card);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
       border-radius: 22px;
-      padding: 40px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      padding: 35px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
       animation: scopeFade 0.4s ease;
     }
     @keyframes scopeFade {
@@ -309,48 +312,100 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Feature Grid */
-    .feature-grid-3 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 22px;
-      margin-top: 30px;
-    }
-    .feature-box {
-      background: rgba(10, 15, 29, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Menu & Sidebar Feature Group Box */
+    .sidebar-group-box {
+      background: var(--bg-card-sub);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 16px;
       padding: 24px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+      margin-bottom: 25px;
     }
-    .feature-box:hover {
-      border-color: rgba(14, 165, 233, 0.4);
-      transform: translateY(-4px);
-      background: rgba(15, 23, 42, 0.95);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    .group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .feature-icon-wrap {
-      width: 48px;
-      height: 48px;
+    .group-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .group-badge {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    /* Detailed Feature Item Grid */
+    .feature-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .feature-item-card {
+      background: #090e1c;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 12px;
+      padding: 16px;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .feature-item-card:hover {
+      border-color: #38bdf8;
+      background: #111a30;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .item-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.3rem;
-      margin-bottom: 16px;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      border: 1px solid rgba(56, 189, 248, 0.25);
     }
-    .feature-title {
+    .item-name {
       font-family: var(--font-heading);
-      font-size: 1.15rem;
       font-weight: 700;
-      color: #fff;
-      margin-bottom: 8px;
+      font-size: 1.02rem;
+      color: #ffffff;
+      line-height: 1.25;
+      margin-bottom: 4px;
     }
-    .feature-desc {
-      font-size: 0.9rem;
-      color: var(--text-sub);
-      line-height: 1.55;
+    .item-path {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+    .item-desc {
+      color: #cbd5e1;
+      font-size: 0.88rem;
+      line-height: 1.5;
     }
 
     /* Comparison Section */
@@ -371,6 +426,7 @@
       display: flex;
       align-items: center;
       gap: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
     .score-badge {
       width: 75px;
@@ -391,7 +447,7 @@
       border: 1px solid var(--border-card);
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
     }
     .table-compare {
       width: 100%;
@@ -400,49 +456,49 @@
     }
     .table-compare th, .table-compare td {
       padding: 20px 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       vertical-align: top;
     }
     .table-compare thead th {
-      background: rgba(10, 15, 29, 0.95);
+      background: #090e1c;
       font-family: var(--font-heading);
       font-weight: 700;
       font-size: 1.1rem;
-      color: #fff;
+      color: #ffffff;
     }
     .col-trad {
-      color: #f87171 !important;
-      background: rgba(239, 68, 68, 0.03);
+      color: #fca5a5 !important;
+      background: rgba(239, 68, 68, 0.05);
     }
     .col-vvitu {
-      color: #38bdf8 !important;
-      background: rgba(14, 165, 233, 0.04);
+      color: #7dd3fc !important;
+      background: rgba(14, 165, 233, 0.06);
       font-weight: 500;
     }
     .pill-bad {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #ef4444;
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
       padding: 4px 10px;
       border-radius: 6px;
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.84rem;
+      font-weight: 700;
       margin-bottom: 8px;
     }
     .pill-good {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #10b981;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
       padding: 4px 10px;
       border-radius: 6px;
-      font-size: 0.82rem;
-      font-weight: 600;
+      font-size: 0.84rem;
+      font-weight: 700;
       margin-bottom: 8px;
     }
 
@@ -454,7 +510,7 @@
       margin-top: 30px;
     }
     .arch-step-box {
-      background: rgba(10, 15, 29, 0.8);
+      background: #090e1c;
       border: 1px solid var(--border-card);
       border-radius: 16px;
       padding: 22px 18px;
@@ -465,32 +521,32 @@
     .arch-step-box:hover {
       border-color: var(--accent-cyan);
       transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
     .arch-step-num {
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--accent-cyan);
+      font-size: 0.78rem;
+      color: #38bdf8;
       margin-bottom: 8px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 1px;
     }
     .arch-step-title {
       font-family: var(--font-heading);
       font-weight: 700;
-      color: #fff;
+      color: #ffffff;
       font-size: 1.05rem;
       margin-bottom: 6px;
     }
     .arch-step-desc {
-      font-size: 0.82rem;
-      color: var(--text-sub);
+      font-size: 0.85rem;
+      color: #cbd5e1;
       line-height: 1.45;
     }
 
     /* Footer */
     .cta-footer {
-      background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.95) 100%);
+      background: linear-gradient(180deg, transparent 0%, #0d1424 100%);
       border-top: 1px solid var(--border-card);
       padding: 70px 0 45px;
       text-align: center;
@@ -500,7 +556,8 @@
     @media (max-width: 768px) {
       .hero-title { font-size: 2.3rem; }
       .hero-sub { font-size: 1.05rem; }
-      .scope-detail-card { padding: 24px; }
+      .scope-detail-card { padding: 20px; }
+      .sidebar-group-box { padding: 16px; }
       .score-meter-wrap { grid-template-columns: 1fr; }
       .table-compare th, .table-compare td { padding: 14px 16px; font-size: 0.88rem; }
     }
@@ -508,7 +565,7 @@
 </head>
 <body>
 
-  <!-- Background Canvas & Glow Overlays -->
+  <!-- Background Canvas & Radial Overlays -->
   <div class="bg-radial-overlay"></div>
   <canvas id="particle-canvas"></canvas>
 
@@ -516,19 +573,19 @@
   <nav class="showcase-nav">
     <div class="container d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-3">
-        <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #e11d48, #0ea5e9); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(225, 29, 72, 0.4);">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #f43f5e, #38bdf8); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(244, 63, 94, 0.45);">
           <i class="fas fa-graduation-cap text-white fs-5"></i>
         </div>
         <div>
           <div class="brand-title">VVITU Smart University Portal</div>
-          <div style="font-size: 0.72rem; color: var(--text-sub); font-family: var(--font-mono);">Autonomous Operating System & Platform Architecture</div>
+          <div style="font-size: 0.74rem; color: #cbd5e1; font-family: var(--font-mono);">Autonomous Operating System & Complete Features Directory</div>
         </div>
       </div>
       <div class="d-flex align-items-center gap-3">
-        <a href="#scopes" class="nav-link-custom d-none d-md-inline-block">Operational Scopes</a>
+        <a href="#scopes" class="nav-link-custom d-none d-md-inline-block">Scopes & Sidebar Directory</a>
         <a href="#comparison" class="nav-link-custom d-none d-md-inline-block">Legacy ERP vs VVITU</a>
         <a href="#architecture" class="nav-link-custom d-none d-md-inline-block">Cloud Architecture</a>
-        <a href="/accounts/login/" class="btn btn-sm btn-primary px-3 shadow" style="border-radius: 10px; font-weight: 600;">
+        <a href="/accounts/login/" class="btn btn-primary px-3 py-2 shadow" style="border-radius: 10px; font-weight: 700;">
           <i class="fas fa-sign-in-alt me-1"></i> Launch Portal
         </a>
       </div>
@@ -538,13 +595,13 @@
   <!-- Hero Section -->
   <section class="hero-section container">
     <div class="badge-pill-neon">
-      <i class="fas fa-bolt"></i> Next-Gen Academic Operating System
+      <i class="fas fa-bolt"></i> Complete Menu &amp; Sidebar Navigation Directory
     </div>
     <h1 class="hero-title">
-      Unified University Intelligence &<br>Autonomous Governance Platform
+      Every Scope, Feature &amp; Menu Option<br><span>Clearly Explained &amp; Visualized</span>
     </h1>
     <p class="hero-sub">
-      A high-performance, real-time academic ERP engineered specifically for <strong>Vasireddy Venkatadri International Technological University</strong>. Eliminating paperwork with automated clash-free timetables, instant absentee alerts, AI document parsing, and topic-by-topic syllabus synchronization.
+      A high-performance academic operating system engineered for <strong>Vasireddy Venkatadri International Technological University</strong>. Explore every menu item, sidebar option, and administrative workflow across all 5 user roles below.
     </p>
 
     <!-- Auto Play Tour Switcher -->
@@ -560,450 +617,1583 @@
     <!-- KPI Matrix Highlights -->
     <div class="kpi-row">
       <div class="kpi-card" style="border-left-color: #38bdf8;">
-        <div class="kpi-num" style="color: #38bdf8;" data-target="5">5</div>
-        <div class="kpi-label">Scoped Role Portals (Admin, HOD, Faculty, Student, DEO)</div>
+        <div class="kpi-num" style="color: #38bdf8;">5 Portals</div>
+        <div class="kpi-label">Scoped Role Workspaces (Admin, HOD, Faculty, Student, DEO)</div>
       </div>
-      <div class="kpi-card" style="border-left-color: #fb7185;">
-        <div class="kpi-num" style="color: #fb7185;" data-target="32">32+</div>
-        <div class="kpi-label">Core Modules (Timetables, Diaries, Syllabi, Proxies, Marks, Leaves)</div>
+      <div class="kpi-card" style="border-left-color: #f43f5e;">
+        <div class="kpi-num" style="color: #fb7185;">32+ Engines</div>
+        <div class="kpi-label">Timetables, Diaries, Syllabi, Proxies, Marks &amp; Leaves</div>
       </div>
-      <div class="kpi-card" style="border-left-color: #34d399;">
-        <div class="kpi-num" style="color: #34d399;" data-target="100">&lt;100ms</div>
-        <div class="kpi-label">Response Time with WhiteNoise Asset Compression & Caching</div>
+      <div class="kpi-card" style="border-left-color: #10b981;">
+        <div class="kpi-num" style="color: #34d399;">&lt;100ms</div>
+        <div class="kpi-label">Sub-second Latency with WhiteNoise Asset Compression</div>
       </div>
-      <div class="kpi-card" style="border-left-color: #c084fc;">
+      <div class="kpi-card" style="border-left-color: #a855f7;">
         <div class="kpi-num" style="color: #c084fc;">Zero-Trust</div>
-        <div class="kpi-label">WAF Payload Sanitizer & Multi-Factor Role Verification</div>
+        <div class="kpi-label">WAF Payload Sanitizer &amp; Brute-Force Rate Limiter</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UNIVERSAL TOP NAVBAR BREAKDOWN -->
+  <section class="container py-4">
+    <div class="sidebar-group-box" style="border-color: rgba(56, 189, 248, 0.4); background: #0b1222;">
+      <div class="group-header">
+        <div class="group-title">
+          <i class="fas fa-window-maximize text-info"></i>
+          <span>Universal Top Navbar Options (Available to all logged-in roles)</span>
+        </div>
+        <span class="group-badge">Global Navigation Dock</span>
+      </div>
+      <div class="feature-items-grid">
+        <div class="feature-item-card">
+          <div class="item-top">
+            <div class="item-icon"><i class="fas fa-university"></i></div>
+            <div>
+              <div class="item-name">VVITU Brand Logo &amp; Name</div>
+              <div class="item-path">Quick Redirect</div>
+            </div>
+          </div>
+          <div class="item-desc">Instantly redirects user back to their respective role dashboard with 1 click.</div>
+        </div>
+
+        <div class="feature-item-card">
+          <div class="item-top">
+            <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-sun"></i></div>
+            <div>
+              <div class="item-name">Dark / Light Obsidian Engine</div>
+              <div class="item-path">Theme Switcher</div>
+            </div>
+          </div>
+          <div class="item-desc">Seamlessly toggle between Cyber-Obsidian Dark Mode and clean Executive Light Mode.</div>
+        </div>
+
+        <div class="feature-item-card">
+          <div class="item-top">
+            <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-bell"></i></div>
+            <div>
+              <div class="item-name">Real-Time Notification Bell</div>
+              <div class="item-path">Live Feed &amp; Broadcasts</div>
+            </div>
+          </div>
+          <div class="item-desc">Displays live unread badge, expandable notification list, "Mark All Read", and quick notice dispatch.</div>
+        </div>
+
+        <div class="feature-item-card">
+          <div class="item-top">
+            <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-user-circle"></i></div>
+            <div>
+              <div class="item-name">User Profile Chip &amp; Actions</div>
+              <div class="item-path">Account Menu</div>
+            </div>
+          </div>
+          <div class="item-desc">Displays avatar, name, and role tag. Opens dropdown to edit Profile, change Password, or Logout.</div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- SCOPES SECTION -->
-  <section id="scopes" class="container py-5">
+  <section id="scopes" class="container py-4">
     <div class="section-title-wrap">
       <span class="section-tag">Role Architecture</span>
-      <h2 class="section-main-heading">Explore Every Operational Scope</h2>
-      <p class="text-muted" style="max-width: 650px; margin: 8px auto 0;">
-        Each role inside VVITU possesses a dedicated workspace with granular permissions, purpose-built workflows, and zero unauthorized data leakage.
+      <h2 class="section-main-heading">Complete Menu &amp; Sidebar Directory by Role</h2>
+      <p class="text-white" style="max-width: 750px; margin: 8px auto 0; font-size: 1.05rem;">
+        Click any role tab below to inspect every single sidebar option, menu group, and operational workflow.
       </p>
     </div>
 
     <!-- Scope Switcher Buttons -->
     <div class="scope-tab-buttons">
       <button class="scope-tab-btn active" data-scope="admin" onclick="switchScope('admin', this)">
-        <i class="fas fa-crown text-warning"></i> Admin Command Center
+        <i class="fas fa-crown text-warning"></i> 1. Admin Command Center (28 Options)
       </button>
       <button class="scope-tab-btn" data-scope="hod" onclick="switchScope('hod', this)">
-        <i class="fas fa-university text-info"></i> HOD Department Suite
+        <i class="fas fa-university text-info"></i> 2. HOD Department Suite (27 Options)
       </button>
       <button class="scope-tab-btn" data-scope="faculty" onclick="switchScope('faculty', this)">
-        <i class="fas fa-chalkboard-teacher text-success"></i> Faculty Workspace
+        <i class="fas fa-chalkboard-teacher text-success"></i> 3. Faculty Workspace (16 Options)
       </button>
       <button class="scope-tab-btn" data-scope="student" onclick="switchScope('student', this)">
-        <i class="fas fa-user-graduate text-danger"></i> Student Hub
+        <i class="fas fa-user-graduate text-danger"></i> 4. Student Portal (13 Options)
       </button>
       <button class="scope-tab-btn" data-scope="deo" onclick="switchScope('deo', this)">
-        <i class="fas fa-keyboard text-primary"></i> DEO Center
+        <i class="fas fa-keyboard text-primary"></i> 5. DEO Operations (8 Options)
       </button>
       <button class="scope-tab-btn" data-scope="ai" onclick="switchScope('ai', this)">
-        <i class="fas fa-robot text-purple" style="color: #c084fc;"></i> AI & OCR Engine
+        <i class="fas fa-robot text-purple" style="color: #c084fc;"></i> 6. AI &amp; Document OCR
       </button>
       <button class="scope-tab-btn" data-scope="security" onclick="switchScope('security', this)">
-        <i class="fas fa-shield-halved text-success"></i> Security & Cloud
+        <i class="fas fa-shield-halved text-success"></i> 7. Security &amp; Cloud
       </button>
     </div>
 
     <!-- Scope Content Display Container -->
     <div id="scopeContainer">
 
-      <!-- 1. ADMIN PANEL -->
+      <!-- ══════════════════════════════════════════════════════
+           1. ADMIN PANEL (28 Options across 6 Groups)
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-admin" class="scope-detail-card">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(245, 158, 11, 0.3);">
+            <div style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(245, 158, 11, 0.4);">
               <i class="fas fa-crown"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">University Admin Command Center</h3>
-              <span class="text-muted small">Global institutional governance, curriculum masters, and security oversight</span>
+              <h3 class="mb-0 fw-bold text-white">University Admin Command Center</h3>
+              <span class="text-white small">Complete institutional governance, academic schedules, user lifecycle &amp; database controls</span>
             </div>
           </div>
-          <span class="badge bg-warning text-dark px-3 py-2 fw-bold">Executive Authority</span>
+          <span class="badge bg-warning text-dark px-3 py-2 fw-bold fs-6">28 Sidebar Options</span>
         </div>
 
-        <p class="text-sub">
-          The Admin portal empowers university leadership with complete top-down control over academic schedules, student enrollments, faculty deployments, financial overrides, and database operations.
-        </p>
+        <!-- Group 1: Main & Overview -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-tachometer-alt text-warning"></i> Group 1: Main &amp; Overview</div>
+            <span class="group-badge">2 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div>
+                  <div class="item-name">Admin Dashboard</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; Admin Dashboard</div>
+                </div>
+              </div>
+              <div class="item-desc">High-level institutional KPI cards, real-time university attendance average, active student/faculty totals, department breakdowns, and system health status.</div>
+            </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
-              <i class="fas fa-calendar-alt"></i>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-circle"></i></div>
+                <div>
+                  <div class="item-name">My Profile</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; My Profile</div>
+                </div>
+              </div>
+              <div class="item-desc">Manage administrative user details, email address, contact numbers, authentication credentials, and official avatar upload.</div>
             </div>
-            <div class="feature-title">Master Timetable Engine</div>
-            <div class="feature-desc">Interactive 6-day timetable matrix with real-time faculty double-booking conflict detection and instant official PDF generation.</div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-              <i class="fas fa-users-cog"></i>
-            </div>
-            <div class="feature-title">Faculty & Student Lifecycle</div>
-            <div class="feature-desc">Complete CRUD directory with bulk CSV onboarding, class teacher assignments, counsellor mappings, and soft-delete protections.</div>
+        </div>
+
+        <!-- Group 2: Academic Structure & Schedule -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-sitemap text-info"></i> Group 2: Academic Structure &amp; Schedule</div>
+            <span class="group-badge">6 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
-              <i class="fas fa-calendar-check"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-calendar-check"></i></div>
+                <div>
+                  <div class="item-name">Academic Calendar (Full CRUD)</div>
+                  <div class="item-path">Sidebar &rarr; Academic Calendar</div>
+                </div>
+              </div>
+              <div class="item-desc">Full authority to <strong>Add, Edit, Filter, and Delete</strong> university holidays, semester milestones, mid exams, tech fests, and circular deadlines.</div>
             </div>
-            <div class="feature-title">Academic Calendar CRUD</div>
-            <div class="feature-desc">Full authority to schedule, edit, or remove university holidays, examination milestones, tech fests, and circular deadlines.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">Master Timetables</div>
+                  <div class="item-path">Sidebar &rarr; Master Timetables</div>
+                </div>
+              </div>
+              <div class="item-desc">6-day timetable matrix editor across all branches with real-time faculty double-booking conflict detection and 1-click official PDF export.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-open"></i></div>
+                <div>
+                  <div class="item-name">Subjects Catalog</div>
+                  <div class="item-path">Sidebar &rarr; Subjects Catalog</div>
+                </div>
+              </div>
+              <div class="item-desc">Central curriculum master mapping subjects by branch, regulation (R23, R20, R19), semester, credits, theory/lab type, and course codes.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-list-check"></i></div>
+                <div>
+                  <div class="item-name">Topic Schedule Plan</div>
+                  <div class="item-path">Sidebar &rarr; Topic Schedule Plan</div>
+                </div>
+              </div>
+              <div class="item-desc">Topic-by-topic curriculum plans across all 5 units for each subject with scheduled delivery dates vs. actual completion tracking.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-invoice"></i></div>
+                <div>
+                  <div class="item-name">Exam Milestones</div>
+                  <div class="item-path">Sidebar &rarr; Exam Milestones</div>
+                </div>
+              </div>
+              <div class="item-desc">Configure Mid-1, Mid-2, lab practical exams, and semester-end examination milestone dates and room allotments.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-cubes"></i></div>
+                <div>
+                  <div class="item-name">Manage Sections</div>
+                  <div class="item-path">Sidebar &rarr; Manage Sections</div>
+                </div>
+              </div>
+              <div class="item-desc">Add, edit, or configure branch sections (e.g. CSE Section A, CSE Section B, AI&amp;DS, ECE, Mechanical).</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
-              <i class="fas fa-database"></i>
-            </div>
-            <div class="feature-title">1-Click Automated Backups</div>
-            <div class="feature-desc">On-demand SQL & PDF backups with point-in-time downloadable archives and instant database restoration safeguards.</div>
+        </div>
+
+        <!-- Group 3: Class Conduction & Audits -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-clipboard-check text-success"></i> Group 3: Class Conduction &amp; Audits</div>
+            <span class="group-badge">6 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
-              <i class="fas fa-award"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-satellite-dish"></i></div>
+                <div>
+                  <div class="item-name">Conduction Audit Monitor</div>
+                  <div class="item-path">Sidebar &rarr; Conduction Audit</div>
+                </div>
+              </div>
+              <div class="item-desc">Live period-by-period radar monitoring whether faculty have entered classrooms and taken attendance across all departments.</div>
             </div>
-            <div class="feature-title">Achievement Ratification</div>
-            <div class="feature-desc">Verification hub for student hackathon wins, research papers, certifications, and faculty awards with portfolio badges.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-exchange-alt"></i></div>
+                <div>
+                  <div class="item-name">Class Transfers &amp; Proxies</div>
+                  <div class="item-path">Sidebar &rarr; Class Transfers &amp; Proxies</div>
+                </div>
+              </div>
+              <div class="item-desc">Complete audit log of teacher substitution handovers, proxy lectures conducted, and HOD approval histories.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-reader"></i></div>
+                <div>
+                  <div class="item-name">Class Diary &amp; Syllabus</div>
+                  <div class="item-path">Sidebar &rarr; Class Diary &amp; Syllabus</div>
+                </div>
+              </div>
+              <div class="item-desc">Inspect daily lesson delivery notes written by teachers, teaching aids used, and unit completion percentages.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-clock"></i></div>
+                <div>
+                  <div class="item-name">Faculty Attendance Register</div>
+                  <div class="item-path">Sidebar &rarr; Faculty Attendance Register</div>
+                </div>
+              </div>
+              <div class="item-desc">Review staff biometric punch logs, daily check-in times, leave days, and monthly presence totals.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-clipboard-list"></i></div>
+                <div>
+                  <div class="item-name">Student Attendance Editor</div>
+                  <div class="item-path">Sidebar &rarr; Student Attendance Editor</div>
+                </div>
+              </div>
+              <div class="item-desc">Administrative override tool to review and modify student attendance logs with mandatory change audit trails.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;"><i class="fas fa-chart-pie"></i></div>
+                <div>
+                  <div class="item-name">Attendance Analytics Report</div>
+                  <div class="item-path">Sidebar &rarr; Attendance Analytics</div>
+                </div>
+              </div>
+              <div class="item-desc">Comprehensive visual report identifying students at detention risk (&lt;65%), condonation list (65–74%), and top attendees (&ge;75%).</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
-              <i class="fas fa-paper-plane"></i>
+        </div>
+
+        <!-- Group 4: Staff & Students -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-users-cog text-primary"></i> Group 4: Staff &amp; Students Management</div>
+            <span class="group-badge">6 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div>
+                  <div class="item-name">Faculty Directory</div>
+                  <div class="item-path">Sidebar &rarr; Faculty Directory</div>
+                </div>
+              </div>
+              <div class="item-desc">Staff lifecycle management: add faculty, assign employee IDs, designations, branches, phone numbers, and profile cards.</div>
             </div>
-            <div class="feature-title">Result Publishing Engine</div>
-            <div class="feature-desc">Bulk exam score upload, grade calculation (SGPA/CGPA), and instantaneous multi-channel release (Web, Email, SMS).</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-calendar-minus"></i></div>
+                <div>
+                  <div class="item-name">Faculty Leave Approvals</div>
+                  <div class="item-path">Sidebar &rarr; Faculty Leave Approvals</div>
+                </div>
+              </div>
+              <div class="item-desc">Approve or reject casual, medical, and on-duty leave applications submitted by professors and lecturers.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-graduate"></i></div>
+                <div>
+                  <div class="item-name">Student Registry</div>
+                  <div class="item-path">Sidebar &rarr; Student Registry</div>
+                </div>
+              </div>
+              <div class="item-desc">Complete student records database with bulk CSV onboarding, roll number search, bio-data, and soft-delete protections.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-tie"></i></div>
+                <div>
+                  <div class="item-name">Assign Class Teacher</div>
+                  <div class="item-path">Sidebar &rarr; Assign Class Teacher</div>
+                </div>
+              </div>
+              <div class="item-desc">Map designated faculty members as official Class Teachers for specific branch years and sections.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-friends"></i></div>
+                <div>
+                  <div class="item-name">Assign Counsellor</div>
+                  <div class="item-path">Sidebar &rarr; Assign Counsellor</div>
+                </div>
+              </div>
+              <div class="item-desc">Allocate batches of student mentees to designated faculty mentors for personalized guidance dossiers.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-trophy"></i></div>
+                <div>
+                  <div class="item-name">College Achievements</div>
+                  <div class="item-path">Sidebar &rarr; College Achievements</div>
+                </div>
+              </div>
+              <div class="item-desc">Verification and approval hub for student &amp; faculty hackathon wins, research publications, patents, and awards.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 5: Exams, Feedback & Accounts -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-chart-pie text-purple" style="color: #c084fc;"></i> Group 5: Exams, Feedback &amp; Accounts</div>
+            <span class="group-badge">5 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-plus-circle"></i></div>
+                <div>
+                  <div class="item-name">Add Examination Results</div>
+                  <div class="item-path">Sidebar &rarr; Add Examination Results</div>
+                </div>
+              </div>
+              <div class="item-desc">Individual student score entry with automatic grade points and SGPA/CGPA calculations.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-csv"></i></div>
+                <div>
+                  <div class="item-name">Bulk Upload Results (CSV)</div>
+                  <div class="item-path">Sidebar &rarr; Bulk Upload Results (CSV)</div>
+                </div>
+              </div>
+              <div class="item-desc">Mass import thousands of student semester examination grades via formatted CSV spreadsheets.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-paper-plane"></i></div>
+                <div>
+                  <div class="item-name">Release Results</div>
+                  <div class="item-path">Sidebar &rarr; Release Results</div>
+                </div>
+              </div>
+              <div class="item-desc">1-click official release of semester examination results to student dashboards with instant SMS/Email notifications.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-poll-h"></i></div>
+                <div>
+                  <div class="item-name">Student Feedback Platform</div>
+                  <div class="item-path">Sidebar &rarr; Student Feedback</div>
+                </div>
+              </div>
+              <div class="item-desc">Institutional student feedback survey builder with Gemini Vision AI form ingestion and rating analytics.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-receipt"></i></div>
+                <div>
+                  <div class="item-name">Student Fees &amp; Dues</div>
+                  <div class="item-path">Sidebar &rarr; Student Fees &amp; Dues</div>
+                </div>
+              </div>
+              <div class="item-desc">Manage tuition, transport, and hostel fee structures, track outstanding dues, and issue clearance slips.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 6: Communications & System -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-sliders-h text-danger"></i> Group 6: Communications &amp; System</div>
+            <span class="group-badge">3 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-envelope-open-text"></i></div>
+                <div>
+                  <div class="item-name">Manage Notices</div>
+                  <div class="item-path">Sidebar &rarr; Manage Notices</div>
+                </div>
+              </div>
+              <div class="item-desc">Create and broadcast urgent circulars targeted to specific departments, faculty, or student years.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;"><i class="fas fa-database"></i></div>
+                <div>
+                  <div class="item-name">Backups &amp; PDF Export</div>
+                  <div class="item-path">Sidebar &rarr; Backups &amp; PDF Export</div>
+                </div>
+              </div>
+              <div class="item-desc">1-click PostgreSQL database snapshots, downloadable SQL dumps, and archived PDF reports.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-cog"></i></div>
+                <div>
+                  <div class="item-name">Django Technical Admin</div>
+                  <div class="item-path">Sidebar &rarr; Django Technical Admin</div>
+                </div>
+              </div>
+              <div class="item-desc">Direct gateway to underlying Django core ORM models for technical administrators and developers.</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 2. HOD PANEL -->
+      <!-- ══════════════════════════════════════════════════════
+           2. HOD PANEL (27 Options across 6 Groups)
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-hod" class="scope-detail-card d-none">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(14, 165, 233, 0.3);">
+            <div style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(56, 189, 248, 0.4);">
               <i class="fas fa-university"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">Head of Department (HOD) Operations Suite</h3>
-              <span class="text-muted small">Branch-level academic execution, lecture auditing, proxy approvals, and syllabus tracking</span>
+              <h3 class="mb-0 fw-bold text-white">Head of Department (HOD) Operations Suite</h3>
+              <span class="text-white small">Departmental academic governance, faculty teaching panel, proxy approvals &amp; syllabus audits</span>
             </div>
           </div>
-          <span class="badge bg-info text-dark px-3 py-2 fw-bold">Department Governance</span>
+          <span class="badge bg-info text-dark px-3 py-2 fw-bold fs-6">27 Sidebar Options</span>
         </div>
 
-        <p class="text-sub">
-          The HOD suite bridges institutional policy with daily classroom execution, offering granular oversight into lecture conduction, teacher substitutions, topic completion, and digital feedback analytics.
-        </p>
+        <!-- HOD Group 1: Department Overview -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-university text-info"></i> Group 1: Department Overview</div>
+            <span class="group-badge">2 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div>
+                  <div class="item-name">HOD Dashboard</div>
+                  <div class="item-path">Sidebar &rarr; Department Overview &rarr; Dashboard</div>
+                </div>
+              </div>
+              <div class="item-desc">Branch-specific KPIs: today's class conduction rate, faculty on leave, absent student counts, and pending proxy requests.</div>
+            </div>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-circle"></i></div>
+                <div>
+                  <div class="item-name">My Profile</div>
+                  <div class="item-path">Sidebar &rarr; Department Overview &rarr; Profile</div>
+                </div>
+              </div>
+              <div class="item-desc">Manage HOD designation, academic credentials, department contacts, and profile photo.</div>
+            </div>
+          </div>
+        </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
-              <i class="fas fa-clipboard-check"></i>
-            </div>
-            <div class="feature-title">Class Conduction Audits</div>
-            <div class="feature-desc">Real-time inspection of daily lecture logs, verifying period-by-period faculty attendance and student presence.</div>
+        <!-- HOD Group 2: Schedule & Conduction -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-calendar-alt text-warning"></i> Group 2: Schedule &amp; Conduction</div>
+            <span class="group-badge">5 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-              <i class="fas fa-list-check"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">Master Timetable</div>
+                  <div class="item-path">Sidebar &rarr; Master Timetable</div>
+                </div>
+              </div>
+              <div class="item-desc">View and manage branch weekly timetables across all semesters with clash verification and PDF downloads.</div>
             </div>
-            <div class="feature-title">Syllabus Topic Plans</div>
-            <div class="feature-desc">Topic-by-topic curriculum plans across all 5 units with scheduled dates versus actual delivery tracking.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-clipboard-check"></i></div>
+                <div>
+                  <div class="item-name">Class Conduction Audits</div>
+                  <div class="item-path">Sidebar &rarr; Class Conduction Audits</div>
+                </div>
+              </div>
+              <div class="item-desc">Real-time inspection of daily lecture logs, verifying period-by-period faculty attendance and student presence.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-exchange-alt"></i></div>
+                <div>
+                  <div class="item-name">Class Transfers &amp; Proxies</div>
+                  <div class="item-path">Sidebar &rarr; Class Transfers &amp; Proxies</div>
+                </div>
+              </div>
+              <div class="item-desc">Approve or reject peer faculty class substitution requests with automated audit trails and timetable reassignment.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-clock"></i></div>
+                <div>
+                  <div class="item-name">Faculty Attendance Register</div>
+                  <div class="item-path">Sidebar &rarr; Faculty Attendance Register</div>
+                </div>
+              </div>
+              <div class="item-desc">Audit branch faculty daily punch records, biometric check-in times, and monthly presence totals.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-reader"></i></div>
+                <div>
+                  <div class="item-name">Faculty Class Diary Coverage</div>
+                  <div class="item-path">Sidebar &rarr; Class Diary Coverage</div>
+                </div>
+              </div>
+              <div class="item-desc">Review lesson entries submitted by branch teachers to ensure subjects are being taught according to lesson plans.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
-              <i class="fas fa-exchange-alt"></i>
-            </div>
-            <div class="feature-title">Proxy & Transfer Approvals</div>
-            <div class="feature-desc">Approve or reject peer-to-peer faculty class exchanges with automated audit trails and timetable reassignment.</div>
+        </div>
+
+        <!-- HOD Group 3: Curriculum & Syllabus -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-book text-success"></i> Group 3: Curriculum &amp; Syllabus</div>
+            <span class="group-badge">5 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
-              <i class="fas fa-poll-h"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-open"></i></div>
+                <div>
+                  <div class="item-name">Department Subjects</div>
+                  <div class="item-path">Sidebar &rarr; Department Subjects</div>
+                </div>
+              </div>
+              <div class="item-desc">Manage branch course codes, elective subjects, laboratory assignments, credits, and syllabus regulations.</div>
             </div>
-            <div class="feature-title">Feedback Form Creator</div>
-            <div class="feature-desc">Create custom evaluation surveys or upload paper form photos to parse questions with Gemini Vision AI.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-cubes"></i></div>
+                <div>
+                  <div class="item-name">Subject Mapping</div>
+                  <div class="item-path">Sidebar &rarr; Subject Mapping</div>
+                </div>
+              </div>
+              <div class="item-desc">Map each theoretical subject and practical lab session to specific department faculty members.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-list-check"></i></div>
+                <div>
+                  <div class="item-name">Topic Schedule Plan</div>
+                  <div class="item-path">Sidebar &rarr; Topic Schedule Plan</div>
+                </div>
+              </div>
+              <div class="item-desc">Inspect 5-unit syllabus timelines submitted by teachers and monitor delivery completion percentages.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-calendar-day"></i></div>
+                <div>
+                  <div class="item-name">Academic Calendar</div>
+                  <div class="item-path">Sidebar &rarr; Academic Calendar</div>
+                </div>
+              </div>
+              <div class="item-desc">View university working days, holidays, examination dates, and department event schedules.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-invoice"></i></div>
+                <div>
+                  <div class="item-name">Exam Milestones</div>
+                  <div class="item-path">Sidebar &rarr; Exam Milestones</div>
+                </div>
+              </div>
+              <div class="item-desc">Department-level schedule coordinator for Mid-1, Mid-2, lab internals, and semester-end practical exams.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
-              <i class="fas fa-chalkboard-user"></i>
-            </div>
-            <div class="feature-title">Integrated Teaching Panel</div>
-            <div class="feature-desc">Complete faculty workstation for HOD's own teaching subjects (My Timetable, Attendance, Diary, Marks).</div>
+        </div>
+
+        <!-- HOD Group 4: Staff & Students -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-users text-primary"></i> Group 4: Staff &amp; Students</div>
+            <span class="group-badge">4 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
-              <i class="fas fa-calendar-minus"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div>
+                  <div class="item-name">Faculty Directory</div>
+                  <div class="item-path">Sidebar &rarr; Faculty Directory</div>
+                </div>
+              </div>
+              <div class="item-desc">Branch staff directory, workload calculations, subject allocations, and contact records.</div>
             </div>
-            <div class="feature-title">Faculty Leave Management</div>
-            <div class="feature-desc">Approve casual/medical leave requests while verifying that class substitutions have been secured.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-calendar-minus"></i></div>
+                <div>
+                  <div class="item-name">Faculty Leave Approvals</div>
+                  <div class="item-path">Sidebar &rarr; Faculty Leave Approvals</div>
+                </div>
+              </div>
+              <div class="item-desc">Approve or reject leave applications submitted by department teachers with substitution verification.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-graduate"></i></div>
+                <div>
+                  <div class="item-name">Student Directory</div>
+                  <div class="item-path">Sidebar &rarr; Student Directory</div>
+                </div>
+              </div>
+              <div class="item-desc">Department student roster categorized by year, section, roll number, and academic standing.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-tie"></i></div>
+                <div>
+                  <div class="item-name">Assign Class Teachers</div>
+                  <div class="item-path">Sidebar &rarr; Assign Class Teachers</div>
+                </div>
+              </div>
+              <div class="item-desc">Designate class teachers for branch sections to oversee student attendance and discipline.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOD Group 5: Exams, Feedback & Fees -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-chart-line text-purple" style="color: #c084fc;"></i> Group 5: Exams, Feedback &amp; Fees</div>
+            <span class="group-badge">5 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-upload"></i></div>
+                <div>
+                  <div class="item-name">Mid Marks Entry &amp; Edit</div>
+                  <div class="item-path">Sidebar &rarr; Mid Marks Entry &amp; Edit</div>
+                </div>
+              </div>
+              <div class="item-desc">Review and modify internal examination marks submitted by teachers before final ratification.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-check-double"></i></div>
+                <div>
+                  <div class="item-name">Attendance Overrides</div>
+                  <div class="item-path">Sidebar &rarr; Attendance Overrides</div>
+                </div>
+              </div>
+              <div class="item-desc">Department-level attendance adjustments for students with authorized Medical / On-Duty certificates.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-paper-plane"></i></div>
+                <div>
+                  <div class="item-name">Release Results</div>
+                  <div class="item-path">Sidebar &rarr; Release Results</div>
+                </div>
+              </div>
+              <div class="item-desc">Approve and publish branch semester/mid examination results to student portals.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-poll-h"></i></div>
+                <div>
+                  <div class="item-name">Student Feedback Forms</div>
+                  <div class="item-path">Sidebar &rarr; Student Feedback Forms</div>
+                </div>
+              </div>
+              <div class="item-desc">Deploy branch feedback forms and analyze faculty evaluation ratings submitted by students.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-receipt"></i></div>
+                <div>
+                  <div class="item-name">Student Fee Dues</div>
+                  <div class="item-path">Sidebar &rarr; Student Fee Dues</div>
+                </div>
+              </div>
+              <div class="item-desc">Verify student fee dues before approving hall tickets and exam clearances.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOD Group 6: My Teaching Panel (Restored for HOD's own classes!) -->
+        <div class="sidebar-group-box" style="border: 1px solid rgba(244, 63, 94, 0.4); background: #120e1a;">
+          <div class="group-header">
+            <div class="group-title" style="color: #fb7185;"><i class="fas fa-chalkboard-user text-danger"></i> Group 6: My Teaching Panel (Faculty Duties)</div>
+            <span class="group-badge" style="background: rgba(244, 63, 94, 0.2); color: #fb7185; border-color: #fb7185;">10 Dedicated Actions</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div>
+                  <div class="item-name">Teaching Dashboard</div>
+                  <div class="item-path">Teaching Panel &rarr; Dashboard</div>
+                </div>
+              </div>
+              <div class="item-desc">Personal teaching workstation for subjects assigned directly to the HOD.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">My Timetable</div>
+                  <div class="item-path">Teaching Panel &rarr; My Timetable</div>
+                </div>
+              </div>
+              <div class="item-desc">HOD's personal weekly lecture schedule and room numbers.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-user-check"></i></div>
+                <div>
+                  <div class="item-name">Mark Attendance</div>
+                  <div class="item-path">Teaching Panel &rarr; Mark Attendance</div>
+                </div>
+              </div>
+              <div class="item-desc">1-click radio attendance marking with automatic SMS triggers to parents.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-reader"></i></div>
+                <div>
+                  <div class="item-name">Class Diary (Lessons)</div>
+                  <div class="item-path">Teaching Panel &rarr; Class Diary</div>
+                </div>
+              </div>
+              <div class="item-desc">Record delivered topics, teaching methods, and duration in HOD's own classes.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-tasks"></i></div>
+                <div>
+                  <div class="item-name">My Syllabus Tracker</div>
+                  <div class="item-path">Teaching Panel &rarr; My Syllabus Tracker</div>
+                </div>
+              </div>
+              <div class="item-desc">Topic-by-topic unit progress checklist for HOD's assigned subjects.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-signature"></i></div>
+                <div>
+                  <div class="item-name">Enter Internal Marks</div>
+                  <div class="item-path">Teaching Panel &rarr; Enter Internal Marks</div>
+                </div>
+              </div>
+              <div class="item-desc">Enter Mid-1, Mid-2, assignments, and lab scores for HOD's students.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-users-viewfinder"></i></div>
+                <div>
+                  <div class="item-name">My Mentees &amp; Counselling</div>
+                  <div class="item-path">Teaching Panel &rarr; My Mentees</div>
+                </div>
+              </div>
+              <div class="item-desc">Record mentoring remarks and generate official signed PDF counselling dossiers.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-clock"></i></div>
+                <div>
+                  <div class="item-name">My Attendance History</div>
+                  <div class="item-path">Teaching Panel &rarr; My Attendance</div>
+                </div>
+              </div>
+              <div class="item-desc">HOD's personal biometric check-in log and monthly presence stats.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-calendar-minus"></i></div>
+                <div>
+                  <div class="item-name">Apply Leave</div>
+                  <div class="item-path">Teaching Panel &rarr; Apply Leave</div>
+                </div>
+              </div>
+              <div class="item-desc">Apply for personal casual/medical leave with replacement class mapping.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-exchange-alt"></i></div>
+                <div>
+                  <div class="item-name">Class Transfers &amp; Proxies</div>
+                  <div class="item-path">Teaching Panel &rarr; Class Transfers</div>
+                </div>
+              </div>
+              <div class="item-desc">Request peer faculty substitution when HOD has administrative meetings during class hours.</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 3. FACULTY PANEL -->
+      <!-- ══════════════════════════════════════════════════════
+           3. FACULTY PANEL (16 Options across 4 Groups)
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-faculty" class="scope-detail-card d-none">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <div style="background: rgba(16, 185, 129, 0.2); color: #10b981; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(16, 185, 129, 0.4);">
               <i class="fas fa-chalkboard-teacher"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">Faculty & Educator Workspace</h3>
-              <span class="text-muted small">Daily classroom attendance, lesson diary recording, mentee counselling, and proxy transfers</span>
+              <h3 class="mb-0 fw-bold text-white">Faculty &amp; Educator Workspace</h3>
+              <span class="text-white small">Daily classroom attendance, lesson diary recording, mentee counselling &amp; proxy transfers</span>
             </div>
           </div>
-          <span class="badge bg-success text-dark px-3 py-2 fw-bold">Classroom Operations</span>
+          <span class="badge bg-success text-dark px-3 py-2 fw-bold fs-6">16 Sidebar Options</span>
         </div>
 
-        <p class="text-sub">
-          A friction-free educator console designed to reduce administrative overhead from hours to seconds with 1-click biometric attendance marking, automated parent notifications, and instant mentee report cards.
-        </p>
+        <!-- Faculty Group 1: Main -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-compass text-success"></i> Group 1: Main</div>
+            <span class="group-badge">2 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div>
+                  <div class="item-name">Faculty Dashboard</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; Faculty Dashboard</div>
+                </div>
+              </div>
+              <div class="item-desc">Today's class schedule, active period countdown, quick attendance shortcuts, and upcoming deadlines.</div>
+            </div>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-circle"></i></div>
+                <div>
+                  <div class="item-name">My Profile</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; My Profile</div>
+                </div>
+              </div>
+              <div class="item-desc">Manage teacher profile, research specializations, phone numbers, and profile photo.</div>
+            </div>
+          </div>
+        </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-              <i class="fas fa-user-check"></i>
-            </div>
-            <div class="feature-title">Radio-Button Attendance</div>
-            <div class="feature-desc">Superfast present/absent/late toggles with automatic absent SMS triggers sent to parents' registered mobiles.</div>
+        <!-- Faculty Group 2: Teaching & Schedule -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-chalkboard-teacher text-warning"></i> Group 2: Teaching &amp; Schedule</div>
+            <span class="group-badge">4 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
-              <i class="fas fa-book-reader"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">My Timetable</div>
+                  <div class="item-path">Sidebar &rarr; My Timetable</div>
+                </div>
+              </div>
+              <div class="item-desc">Color-coded weekly lecture timetable matrix with classroom numbers and batch breakdowns.</div>
             </div>
-            <div class="feature-title">Daily Class Diary</div>
-            <div class="feature-desc">Record topics delivered, pedagogical methodology, teaching aids used, and class duration for permanent audit.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-user-check"></i></div>
+                <div>
+                  <div class="item-name">Mark Attendance</div>
+                  <div class="item-path">Sidebar &rarr; Mark Attendance</div>
+                </div>
+              </div>
+              <div class="item-desc">1-click radio attendance marking on mobile/laptop with instant automated absentee SMS sent to parents.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-reader"></i></div>
+                <div>
+                  <div class="item-name">Class Diary (Lessons)</div>
+                  <div class="item-path">Sidebar &rarr; Class Diary (Lessons)</div>
+                </div>
+              </div>
+              <div class="item-desc">Log topics delivered, pedagogical methodology, teaching aids, and class duration for permanent audit.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-bookmark"></i></div>
+                <div>
+                  <div class="item-name">Syllabus Coverage Tracker</div>
+                  <div class="item-path">Sidebar &rarr; Syllabus Coverage Tracker</div>
+                </div>
+              </div>
+              <div class="item-desc">Interactive topic checklist syncing directly with Class Diary logs to show progress percentage across Units 1–5.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
-              <i class="fas fa-tasks"></i>
-            </div>
-            <div class="feature-title">Syllabus Unit Tracker</div>
-            <div class="feature-desc">Interactive topic checklist syncing directly with class diary logs to show percentage progress across Units 1 to 5.</div>
+        </div>
+
+        <!-- Faculty Group 3: Students & Evaluation -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-user-graduate text-info"></i> Group 3: Students &amp; Evaluation</div>
+            <span class="group-badge">4 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
-              <i class="fas fa-exchange-alt"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-users-viewfinder"></i></div>
+                <div>
+                  <div class="item-name">My Students &amp; Attendance</div>
+                  <div class="item-path">Sidebar &rarr; My Students &amp; Attendance</div>
+                </div>
+              </div>
+              <div class="item-desc">View student rosters, individual attendance percentages, subject breakdown, and parent contact details.</div>
             </div>
-            <div class="feature-title">Peer-to-Peer Class Transfers</div>
-            <div class="feature-desc">Hand over scheduled lectures to available colleagues during emergencies with built-in free-slot clash detection.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-signature"></i></div>
+                <div>
+                  <div class="item-name">Enter Internal Marks</div>
+                  <div class="item-path">Sidebar &rarr; Enter Internal Marks</div>
+                </div>
+              </div>
+              <div class="item-desc">Score input for Mid-1, Mid-2, assignments, and lab practicals with automatic weighted totals and validation.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-chart-line"></i></div>
+                <div>
+                  <div class="item-name">Student Results &amp; SGPA</div>
+                  <div class="item-path">Sidebar &rarr; Student Results &amp; SGPA</div>
+                </div>
+              </div>
+              <div class="item-desc">Inspect semester exam results, subject pass percentages, and student grade card analytics.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-user-friends"></i></div>
+                <div>
+                  <div class="item-name">Mentoring &amp; Reports</div>
+                  <div class="item-path">Sidebar &rarr; Mentoring &amp; Reports</div>
+                </div>
+              </div>
+              <div class="item-desc">Maintain mentee counseling notes, backlog records, and generate official signed VVIT Mentee PDF reports in 1 click.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
-              <i class="fas fa-user-friends"></i>
-            </div>
-            <div class="feature-title">Mentee Counselling Dossier</div>
-            <div class="feature-desc">Record session remarks, parent contacts, backlogs, and generate official signed VVIT Counselling PDF reports in 1 click.</div>
+        </div>
+
+        <!-- Faculty Group 4: Faculty Desk -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-briefcase text-purple" style="color: #c084fc;"></i> Group 4: Faculty Desk</div>
+            <span class="group-badge">6 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
-              <i class="fas fa-file-signature"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-clock"></i></div>
+                <div>
+                  <div class="item-name">My Attendance History</div>
+                  <div class="item-path">Sidebar &rarr; My Attendance History</div>
+                </div>
+              </div>
+              <div class="item-desc">Faculty's own biometric punch records, daily check-in times, and monthly presence percentages.</div>
             </div>
-            <div class="feature-title">Internal Marks Entry</div>
-            <div class="feature-desc">Clean score input for Mid-1, Mid-2, assignments, and lab internals with automatic weighted totals and validation.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-calendar-minus"></i></div>
+                <div>
+                  <div class="item-name">Apply Leave</div>
+                  <div class="item-path">Sidebar &rarr; Apply Leave</div>
+                </div>
+              </div>
+              <div class="item-desc">Submit online casual or medical leave requests with reason and dates for HOD approval.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;"><i class="fas fa-exchange-alt"></i></div>
+                <div>
+                  <div class="item-name">Class Transfers &amp; Proxies</div>
+                  <div class="item-path">Sidebar &rarr; Class Transfers &amp; Proxies</div>
+                </div>
+              </div>
+              <div class="item-desc">Hand over scheduled lectures to available colleagues during emergencies with built-in free-slot clash detection.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">Academic Calendar</div>
+                  <div class="item-path">Sidebar &rarr; Academic Calendar</div>
+                </div>
+              </div>
+              <div class="item-desc">University holiday schedules, working day counts, examination dates, and circular deadlines.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-bell"></i></div>
+                <div>
+                  <div class="item-name">Department Notices</div>
+                  <div class="item-path">Sidebar &rarr; Department Notices</div>
+                </div>
+              </div>
+              <div class="item-desc">Official departmental circulars, faculty meeting schedules, and institutional announcements.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-trophy"></i></div>
+                <div>
+                  <div class="item-name">Add Achievement</div>
+                  <div class="item-path">Sidebar &rarr; Add Achievement</div>
+                </div>
+              </div>
+              <div class="item-desc">Submit research papers, conference presentations, patents, and faculty development certifications for approval.</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 4. STUDENT PANEL -->
+      <!-- ══════════════════════════════════════════════════════
+           4. STUDENT PANEL (13 Options across 4 Groups)
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-student" class="scope-detail-card d-none">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(225, 29, 72, 0.15); color: #e11d48; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(225, 29, 72, 0.3);">
+            <div style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(244, 63, 94, 0.4);">
               <i class="fas fa-user-graduate"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">Student Empowerment Portal</h3>
-              <span class="text-muted small">Real-time attendance health, interactive weekly timetable, lecture logs, and grade card downloads</span>
+              <h3 class="mb-0 fw-bold text-white">Student Empowerment Portal</h3>
+              <span class="text-white small">Real-time attendance health, interactive weekly timetable, lecture logs &amp; grade cards</span>
             </div>
           </div>
-          <span class="badge bg-danger text-light px-3 py-2 fw-bold">Student Hub</span>
+          <span class="badge bg-danger text-light px-3 py-2 fw-bold fs-6">13 Sidebar Options</span>
         </div>
 
-        <p class="text-sub">
-          A transparent, mobile-responsive dashboard providing students with real-time access to their attendance percentage, daily lesson coverage, exam timetables, semester marks, and university feedback.
-        </p>
+        <!-- Student Group 1: Main -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-compass text-danger"></i> Group 1: Main</div>
+            <span class="group-badge">2 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div>
+                  <div class="item-name">Student Dashboard</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; Dashboard</div>
+                </div>
+              </div>
+              <div class="item-desc">Live attendance gauge, ongoing lecture banner, CGPA score, recent circulars, and quick exam shortcuts.</div>
+            </div>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-circle"></i></div>
+                <div>
+                  <div class="item-name">My Profile</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; My Profile</div>
+                </div>
+              </div>
+              <div class="item-desc">Student roll number, branch, section, registered parents' phone number, email, and bio-data.</div>
+            </div>
+          </div>
+        </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
-              <i class="fas fa-chart-pie"></i>
-            </div>
-            <div class="feature-title">Live Attendance Gauge</div>
-            <div class="feature-desc">Real-time percentage calculator with color-coded safety indicators (≥75% Green, 65-74% Yellow Condonation, &lt;65% Red Detention).</div>
+        <!-- Student Group 2: Academics & Schedule -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-book-open text-warning"></i> Group 2: Academics &amp; Schedule</div>
+            <span class="group-badge">5 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
-              <i class="fas fa-calendar-week"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">My Timetable</div>
+                  <div class="item-path">Sidebar &rarr; My Timetable</div>
+                </div>
+              </div>
+              <div class="item-desc">Interactive 6-day timetable schedule with real-time glowing ongoing period indicator and downloadable PDF.</div>
             </div>
-            <div class="feature-title">Interactive 6-Day Timetable</div>
-            <div class="feature-desc">Active period glow highlighting the ongoing lecture in real time, room numbers, faculty names, and downloadable PDF schedules.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-user-clock"></i></div>
+                <div>
+                  <div class="item-name">My Attendance Log</div>
+                  <div class="item-path">Sidebar &rarr; My Attendance Log</div>
+                </div>
+              </div>
+              <div class="item-desc">Subject-by-subject attendance percentages with safety indicators (&ge;75% Safe, 65–74% Condonation, &lt;65% Detention Risk).</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-reader"></i></div>
+                <div>
+                  <div class="item-name">Class Diary (Lessons)</div>
+                  <div class="item-path">Sidebar &rarr; Class Diary (Lessons)</div>
+                </div>
+              </div>
+              <div class="item-desc">Full visibility into daily lecture delivery notes written by teachers across all subjects to verify what was taught.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-book-bookmark"></i></div>
+                <div>
+                  <div class="item-name">Syllabus Tracker</div>
+                  <div class="item-path">Sidebar &rarr; Syllabus Tracker</div>
+                </div>
+              </div>
+              <div class="item-desc">Real-time unit-by-unit syllabus completion checklist across all registered engineering courses.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-calendar-check"></i></div>
+                <div>
+                  <div class="item-name">Academic Calendar</div>
+                  <div class="item-path">Sidebar &rarr; Academic Calendar</div>
+                </div>
+              </div>
+              <div class="item-desc">Official semester start/end dates, holiday schedules, examination dates, and fest schedules.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-              <i class="fas fa-book-open-reader"></i>
-            </div>
-            <div class="feature-title">Lecture Diary Transparency</div>
-            <div class="feature-desc">Students can view exactly what topics were taught on any given date across all subjects, ensuring nothing is missed.</div>
+        </div>
+
+        <!-- Student Group 3: Exams & Records -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-graduation-cap text-info"></i> Group 3: Exams &amp; Records</div>
+            <span class="group-badge">3 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
-              <i class="fas fa-award"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-chart-bar"></i></div>
+                <div>
+                  <div class="item-name">Results &amp; Backlogs</div>
+                  <div class="item-path">Sidebar &rarr; Results &amp; Backlogs</div>
+                </div>
+              </div>
+              <div class="item-desc">Instant score breakdown for Mid and Semester exams, SGPA/CGPA calculations, and downloadable Grade Cards.</div>
             </div>
-            <div class="feature-title">Semester Results & SGPA/CGPA</div>
-            <div class="feature-desc">Instant score breakdown for Mid and End-semester exams with automatic SGPA calculation and downloadable Grade Cards.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-id-card-clip"></i></div>
+                <div>
+                  <div class="item-name">Counselling Dossier</div>
+                  <div class="item-path">Sidebar &rarr; Counselling Dossier</div>
+                </div>
+              </div>
+              <div class="item-desc">View mentor feedback, counselor session notes, and download official signed counseling certificates.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;"><i class="fas fa-file-pdf"></i></div>
+                <div>
+                  <div class="item-name">Question Papers</div>
+                  <div class="item-path">Sidebar &rarr; Question Papers</div>
+                </div>
+              </div>
+              <div class="item-desc">Digital archive of past university examination papers categorized by regulation (R23, R20, R19, R16) and branch.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
-              <i class="fas fa-file-pdf"></i>
-            </div>
-            <div class="feature-title">Question Paper Archive</div>
-            <div class="feature-desc">Instant access to past university examination papers categorized by regulation (R23, R20, R19, R16) and branch.</div>
+        </div>
+
+        <!-- Student Group 4: Student Services -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-hands-helping text-purple" style="color: #c084fc;"></i> Group 4: Student Services</div>
+            <span class="group-badge">3 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
-              <i class="fas fa-pen-fancy"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-medical"></i></div>
+                <div>
+                  <div class="item-name">Apply OD / Medical Leave</div>
+                  <div class="item-path">Sidebar &rarr; Apply OD / Medical Leave</div>
+                </div>
+              </div>
+              <div class="item-desc">Submit online medical leave or On-Duty event applications with document proofs and track approval status.</div>
             </div>
-            <div class="feature-title">Leave & OD Applications</div>
-            <div class="feature-desc">Submit online medical leave or On-Duty event requests with document proofs and track approval status in real time.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-comment-dots"></i></div>
+                <div>
+                  <div class="item-name">Feedback Forms</div>
+                  <div class="item-path">Sidebar &rarr; Feedback Forms</div>
+                </div>
+              </div>
+              <div class="item-desc">Submit anonymous faculty evaluation surveys and institutional rating questionnaires online.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-trophy"></i></div>
+                <div>
+                  <div class="item-name">My Achievements</div>
+                  <div class="item-path">Sidebar &rarr; My Achievements</div>
+                </div>
+              </div>
+              <div class="item-desc">Upload hackathon certificates, paper publications, and sports awards to build an official college portfolio.</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 5. DEO PANEL -->
+      <!-- ══════════════════════════════════════════════════════
+           5. DEO PANEL (8 Options across 3 Groups)
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-deo" class="scope-detail-card d-none">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(59, 130, 246, 0.3);">
+            <div style="background: rgba(59, 130, 246, 0.2); color: #3b82f6; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(59, 130, 246, 0.4);">
               <i class="fas fa-keyboard"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">Data Entry Operator (DEO) Operations</h3>
-              <span class="text-muted small">Branch-scoped student record maintenance, fee clearance, and 2-day attendance modifications</span>
+              <h3 class="mb-0 fw-bold text-white">Data Entry Operator (DEO) Operations</h3>
+              <span class="text-white small">Branch student records, fee clearances &amp; strict 48-hour attendance modification window</span>
             </div>
           </div>
-          <span class="badge bg-primary text-light px-3 py-2 fw-bold">Data Operations</span>
+          <span class="badge bg-primary text-light px-3 py-2 fw-bold fs-6">8 Sidebar Options</span>
         </div>
 
-        <p class="text-sub">
-          The DEO workstation provides focused, branch-isolated data entry capabilities with built-in temporal security constraints preventing unauthorized historical data tampering.
-        </p>
+        <!-- DEO Group 1: Main -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-compass text-primary"></i> Group 1: Main</div>
+            <span class="group-badge">2 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div>
+                  <div class="item-name">DEO Dashboard</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; Dashboard</div>
+                </div>
+              </div>
+              <div class="item-desc">Data entry queue, pending student records, fee collection stats, and 48-hour attendance modification locks.</div>
+            </div>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-circle"></i></div>
+                <div>
+                  <div class="item-name">My Profile</div>
+                  <div class="item-path">Sidebar &rarr; Main &rarr; My Profile</div>
+                </div>
+              </div>
+              <div class="item-desc">Manage DEO account credentials, contact information, and assigned engineering department.</div>
+            </div>
+          </div>
+        </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
-              <i class="fas fa-user-plus"></i>
-            </div>
-            <div class="feature-title">Branch Student Admissions</div>
-            <div class="feature-desc">Enroll and edit student records strictly within the assigned engineering department with roll number verification.</div>
+        <!-- DEO Group 2: Data Entry & Operations -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-id-card text-info"></i> Group 2: Data Entry &amp; Operations</div>
+            <span class="group-badge">3 Sidebar Options</span>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
-              <i class="fas fa-clock-rotate-left"></i>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-user-plus"></i></div>
+                <div>
+                  <div class="item-name">Student Enrollment &amp; Records</div>
+                  <div class="item-path">Sidebar &rarr; Student Enrollment</div>
+                </div>
+              </div>
+              <div class="item-desc">Register new student admissions, bulk import department rosters, and update bio-data.</div>
             </div>
-            <div class="feature-title">Strict 2-Day Attendance Window</div>
-            <div class="feature-desc">Security rule enforcing that DEOs can only correct attendance records within 48 hours of session conduction.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-check-square"></i></div>
+                <div>
+                  <div class="item-name">Attendance Entry (48h Window)</div>
+                  <div class="item-path">Sidebar &rarr; Attendance Entry</div>
+                </div>
+              </div>
+              <div class="item-desc">Emergency attendance entry / corrections strictly locked to a <strong>48-hour temporal security window</strong> to prevent tampering.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-file-upload"></i></div>
+                <div>
+                  <div class="item-name">Upload Marks</div>
+                  <div class="item-path">Sidebar &rarr; Upload Marks</div>
+                </div>
+              </div>
+              <div class="item-desc">Digitize internal and laboratory marks from paper evaluation sheets into structured database records.</div>
+            </div>
           </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-              <i class="fas fa-receipt"></i>
+        </div>
+
+        <!-- DEO Group 3: Academics & Accounts -->
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-file-invoice-dollar text-success"></i> Group 3: Academics &amp; Accounts</div>
+            <span class="group-badge">3 Sidebar Options</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon"><i class="fas fa-receipt"></i></div>
+                <div>
+                  <div class="item-name">Student Fees &amp; Dues</div>
+                  <div class="item-path">Sidebar &rarr; Student Fees &amp; Dues</div>
+                </div>
+              </div>
+              <div class="item-desc">Record tuition, transport, and hostel fee payments, print official receipts, and manage fee clearances.</div>
             </div>
-            <div class="feature-title">Student Fee Management</div>
-            <div class="feature-desc">Track tuition, transport, and hostel fee payments, outstanding dues, receipts, and exam clearance statuses.</div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                  <div class="item-name">Department Timetables</div>
+                  <div class="item-path">Sidebar &rarr; Department Timetables</div>
+                </div>
+              </div>
+              <div class="item-desc">Inspect department timetable allocations and classroom assignments.</div>
+            </div>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-calendar-check"></i></div>
+                <div>
+                  <div class="item-name">Academic Calendar</div>
+                  <div class="item-path">Sidebar &rarr; Academic Calendar</div>
+                </div>
+              </div>
+              <div class="item-desc">Institutional calendar view for coordinating data entry cut-off dates and exam submission schedules.</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 6. AI & OCR -->
+      <!-- ══════════════════════════════════════════════════════
+           6. AI & OCR ENGINE
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-ai" class="scope-detail-card d-none">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(168, 85, 247, 0.15); color: #a855f7; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(168, 85, 247, 0.3);">
+            <div style="background: rgba(168, 85, 247, 0.2); color: #a855f7; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(168, 85, 247, 0.4);">
               <i class="fas fa-robot"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">Multimodal AI Intelligence & Document OCR</h3>
-              <span class="text-muted small">Gemini Vision AI, PDF table extraction, and VBot conversational academic assistant</span>
+              <h3 class="mb-0 fw-bold text-white">Multimodal AI Intelligence &amp; Document OCR</h3>
+              <span class="text-white small">Gemini Vision AI, PDF table extraction &amp; VBot 24/7 conversational assistant</span>
             </div>
           </div>
-          <span class="badge text-light px-3 py-2 fw-bold" style="background: #9333ea;">AI Augmented</span>
+          <span class="badge text-light px-3 py-2 fw-bold fs-6" style="background: #9333ea;">AI Augmented</span>
         </div>
 
-        <p class="text-sub">
-          Cutting-edge computer vision and generative AI models transform physical classroom artifacts (paper surveys, printed timetables) into structured digital records in milliseconds.
-        </p>
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-microchip text-purple" style="color: #c084fc;"></i> Multimodal AI Capabilities</div>
+            <span class="group-badge">Automated Extraction</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;"><i class="fas fa-camera-retro"></i></div>
+                <div>
+                  <div class="item-name">Gemini Vision Paper Form OCR</div>
+                  <div class="item-path">HOD &rarr; Feedback Form Creator</div>
+                </div>
+              </div>
+              <div class="item-desc">Take a photo of any physical paper feedback questionnaire — AI instantly parses questions, evaluation criteria, and ratings.</div>
+            </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">
-              <i class="fas fa-camera-retro"></i>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;"><i class="fas fa-file-lines"></i></div>
+                <div>
+                  <div class="item-name">PDF Table Parsing Engine</div>
+                  <div class="item-path">Core &rarr; PDF Utils</div>
+                </div>
+              </div>
+              <div class="item-desc">Extracts complex tabular evaluation grids and timetable layouts directly from PDF files using `pdfplumber` and `pypdf`.</div>
             </div>
-            <div class="feature-title">Gemini Vision Form Ingestion</div>
-            <div class="feature-desc">Take a photo of any physical paper feedback questionnaire — AI instantly parses the title, evaluation parameters, and questions.</div>
-          </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
-              <i class="fas fa-file-lines"></i>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;"><i class="fas fa-comments"></i></div>
+                <div>
+                  <div class="item-name">VBot Conversational Assistant</div>
+                  <div class="item-path">Portal Chatbot Widget</div>
+                </div>
+              </div>
+              <div class="item-desc">24/7 intelligent conversational bot answering student queries about attendance criteria, timetable timings, and regulations.</div>
             </div>
-            <div class="feature-title">PDF Table Parsing Engine</div>
-            <div class="feature-desc">Extracts complex tabular evaluation grids and timetable layouts directly from PDF files using `pdfplumber` and `pypdf`.</div>
-          </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-              <i class="fas fa-comments"></i>
-            </div>
-            <div class="feature-title">VBot Academic Assistant</div>
-            <div class="feature-desc">24/7 intelligent conversational bot answering student queries about attendance criteria, timetable timings, and regulations.</div>
           </div>
         </div>
       </div>
 
-      <!-- 7. SECURITY & CLOUD -->
+      <!-- ══════════════════════════════════════════════════════
+           7. SECURITY & CLOUD
+           ══════════════════════════════════════════════════════ -->
       <div id="scope-security" class="scope-detail-card d-none">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-4 border-secondary">
           <div class="d-flex align-items-center gap-3">
-            <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <div style="background: rgba(16, 185, 129, 0.2); color: #10b981; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border: 1px solid rgba(16, 185, 129, 0.4);">
               <i class="fas fa-shield-halved"></i>
             </div>
             <div>
-              <h3 class="mb-0 fw-bold text-light">Enterprise Security & Cloud Architecture</h3>
-              <span class="text-muted small">WAF Sanitizer, Brute-Force Rate Limiter, Scoped RBAC, and Render Cloud Deployment</span>
+              <h3 class="mb-0 fw-bold text-white">Enterprise Security &amp; Cloud Architecture</h3>
+              <span class="text-white small">WAF Sanitizer, Brute-Force Rate Limiter, Scoped RBAC &amp; Render Cloud Deployment</span>
             </div>
           </div>
-          <span class="badge bg-success text-dark px-3 py-2 fw-bold">Military-Grade Defense</span>
+          <span class="badge bg-success text-dark px-3 py-2 fw-bold fs-6">Defense-in-Depth</span>
         </div>
 
-        <p class="text-sub">
-          Built with a multi-layered defense-in-depth security model protecting sensitive institutional data, exam results, and parent contact information against cyber threats.
-        </p>
+        <div class="sidebar-group-box">
+          <div class="group-header">
+            <div class="group-title"><i class="fas fa-lock text-success"></i> Security &amp; Infrastructure Stack</div>
+            <span class="group-badge">Military-Grade Defense</span>
+          </div>
+          <div class="feature-items-grid">
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185;"><i class="fas fa-shield-virus"></i></div>
+                <div>
+                  <div class="item-name">Global WAF &amp; Payload Sanitizer</div>
+                  <div class="item-path">Middleware &rarr; SecurityLayer</div>
+                </div>
+              </div>
+              <div class="item-desc">Inspects all GET/POST requests, blocking path traversals, SQL injection fragments, and script injection payloads.</div>
+            </div>
 
-        <div class="feature-grid-3">
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
-              <i class="fas fa-shield-virus"></i>
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i class="fas fa-user-lock"></i></div>
+                <div>
+                  <div class="item-name">Login Rate Limiter</div>
+                  <div class="item-path">Middleware &rarr; RateLimiter</div>
+                </div>
+              </div>
+              <div class="item-desc">Protects authentication endpoints by locking out brute-force attacks by IP and username after successive failures.</div>
             </div>
-            <div class="feature-title">Global WAF & Payload Sanitizer</div>
-            <div class="feature-desc">Inspects all GET/POST requests, blocking path traversals, SQL injection fragments, and script injection payloads.</div>
-          </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
-              <i class="fas fa-user-lock"></i>
+
+            <div class="feature-item-card">
+              <div class="item-top">
+                <div class="item-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;"><i class="fas fa-cloud"></i></div>
+                <div>
+                  <div class="item-name">Cloud-Native (Render / Postgres)</div>
+                  <div class="item-path">Render Infrastructure</div>
+                </div>
+              </div>
+              <div class="item-desc">Deployed with WhiteNoise static asset compression, SSL enforcement, and automated database backups.</div>
             </div>
-            <div class="feature-title">Login Rate Limiter</div>
-            <div class="feature-desc">Protects authentication endpoints by locking out brute-force attacks by IP and username after successive failures.</div>
-          </div>
-          <div class="feature-box">
-            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
-              <i class="fas fa-cloud"></i>
-            </div>
-            <div class="feature-title">Cloud-Native (Render / Postgres)</div>
-            <div class="feature-desc">Deployed with WhiteNoise static asset compression, SSL enforcement, and automated database backups.</div>
           </div>
         </div>
       </div>
@@ -1016,7 +2206,7 @@
     <div class="section-title-wrap">
       <span class="section-tag">Competitive Advantage</span>
       <h2 class="section-main-heading">Traditional Legacy ERP vs. VVITU Smart Portal</h2>
-      <p class="text-muted" style="max-width: 700px; margin: 8px auto 0;">
+      <p class="text-white" style="max-width: 750px; margin: 8px auto 0; font-size: 1.05rem;">
         Why old monolithic university software causes bottlenecks and how VVITU's modern system solves everyday campus friction.
       </p>
     </div>
@@ -1024,22 +2214,22 @@
     <!-- Comparative Health Scores -->
     <div class="score-meter-wrap">
       <div class="score-card" style="border-left: 4px solid #ef4444;">
-        <div class="score-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.4);">
+        <div class="score-badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.5);">
           38%
         </div>
         <div>
           <h5 class="fw-bold text-danger mb-1"><i class="fas fa-times-circle me-1"></i> Traditional Legacy ERP</h5>
-          <p class="text-muted small mb-0">High paper consumption, delayed parent alerts, manual conflict resolution, and frustrating 2005-era UI.</p>
+          <p class="text-white small mb-0">High paper consumption, delayed parent alerts, manual conflict resolution, and frustrating 2005-era UI.</p>
         </div>
       </div>
 
       <div class="score-card" style="border-left: 4px solid #10b981;">
-        <div class="score-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 2px solid rgba(16, 185, 129, 0.4);">
+        <div class="score-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 2px solid rgba(16, 185, 129, 0.5);">
           99%
         </div>
         <div>
           <h5 class="fw-bold text-success mb-1"><i class="fas fa-check-circle me-1"></i> VVITU Smart Portal</h5>
-          <p class="text-muted small mb-0">Zero-paper cloud workflow, 1-click attendance + instant SMS, AI form parsing, and automated clash-free timetables.</p>
+          <p class="text-white small mb-0">Zero-paper cloud workflow, 1-click attendance + instant SMS, AI form parsing, and automated clash-free timetables.</p>
         </div>
       </div>
     </div>
@@ -1057,7 +2247,7 @@
           </thead>
           <tbody>
             <tr>
-              <td class="fw-bold text-light">1. Architecture & Speed</td>
+              <td class="fw-bold text-white">1. Architecture &amp; Speed</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Slow &amp; Outdated</span><br>
                 Clunky monolithic desktop apps or slow legacy PHP. Frequent crashes during simultaneous result releases.
@@ -1069,7 +2259,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">2. Attendance &amp; Notifications</td>
+              <td class="fw-bold text-white">2. Attendance &amp; Notifications</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Paper / Delayed</span><br>
                 Marked on paper sheets and manually entered days later. Parents only notified at semester end.
@@ -1081,7 +2271,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">3. Syllabus &amp; Lecture Tracking</td>
+              <td class="fw-bold text-white">3. Syllabus &amp; Lecture Tracking</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Zero Visibility</span><br>
                 No real-time tracking of what was taught in class. Syllabi completed haphazardly at the end.
@@ -1093,7 +2283,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">4. Timetables &amp; Clash Resolution</td>
+              <td class="fw-bold text-white">4. Timetables &amp; Clash Resolution</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Manual &amp; Error-Prone</span><br>
                 Static Word/Excel files printed on notice boards with frequent faculty double-booking conflicts.
@@ -1105,7 +2295,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">5. Class Transfers &amp; Proxies</td>
+              <td class="fw-bold text-white">5. Class Transfers &amp; Proxies</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Paper Slips &amp; Confusion</span><br>
                 Teachers pass physical paper slips for substitutions. HODs have no record of proxy conduction.
@@ -1117,7 +2307,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">6. Student Feedback Forms</td>
+              <td class="fw-bold text-white">6. Student Feedback Forms</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Paper Waste &amp; Manual Count</span><br>
                 Printing thousands of physical forms, distributing in classes, and manually calculating averages.
@@ -1129,7 +2319,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">7. Mentee Counselling Dossier</td>
+              <td class="fw-bold text-white">7. Mentee Counselling Dossier</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> Lost Physical Folders</span><br>
                 Handwritten notes in physical files prone to loss during NAAC/NBA accreditation inspections.
@@ -1141,7 +2331,7 @@
             </tr>
 
             <tr>
-              <td class="fw-bold text-light">8. UI/UX Design Aesthetics</td>
+              <td class="fw-bold text-white">8. UI/UX Design Aesthetics</td>
               <td class="col-trad">
                 <span class="pill-bad"><i class="fas fa-times"></i> 2005 Grey Forms</span><br>
                 Cluttered, un-responsive, unintuitive interfaces that frustrate faculty and students alike.
@@ -1162,7 +2352,7 @@
     <div class="section-title-wrap">
       <span class="section-tag">System Architecture</span>
       <h2 class="section-main-heading">End-to-End Operational Pipeline</h2>
-      <p class="text-muted" style="max-width: 600px; margin: 8px auto 0;">
+      <p class="text-white" style="max-width: 650px; margin: 8px auto 0;">
         How requests traverse from client devices through enterprise security layers down to PostgreSQL.
       </p>
     </div>
@@ -1205,10 +2395,10 @@
   <!-- CTA Footer -->
   <footer class="cta-footer">
     <div class="container">
-      <h2 style="font-family: var(--font-title); font-weight: 800; font-size: 2.5rem; color: #fff; margin-bottom: 16px;">
+      <h2 style="font-family: var(--font-title); font-weight: 800; font-size: 2.5rem; color: #ffffff; margin-bottom: 16px;">
         Experience the Future of Academic Management
       </h2>
-      <p class="text-muted mb-4" style="max-width: 620px; margin: 0 auto 28px;">
+      <p class="text-white mb-4" style="max-width: 620px; margin: 0 auto 28px; font-size: 1.1rem;">
         Ready to explore your dashboard? Sign in with your institutional credentials to access your personalized workspace.
       </p>
       <a href="/accounts/login/" class="btn btn-lg btn-primary px-5 py-3 shadow" style="border-radius: 14px; font-weight: 700; font-family: var(--font-title); letter-spacing: 0.5px;">
@@ -1225,7 +2415,6 @@
     // --- 1. Scope Switching Logic ---
     const scopesList = ['admin', 'hod', 'faculty', 'student', 'deo', 'ai', 'security'];
     let currentScopeIndex = 0;
-    let tourTimer = null;
     let tourProgressInterval = null;
     let isTourRunning = false;
 
@@ -1270,7 +2459,7 @@
       document.getElementById('tourProgressBar').style.display = 'block';
 
       let progress = 0;
-      const stepDuration = 5000; // 5s per slide
+      const stepDuration = 6000; // 6s per slide
       const intervalMs = 50;
       const progressIncrement = (intervalMs / stepDuration) * 100;
 
@@ -1299,7 +2488,7 @@
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
-    const numParticles = 65;
+    const numParticles = 55;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -1312,10 +2501,10 @@
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.7;
-        this.vy = (Math.random() - 0.5) * 0.7;
+        this.vx = (Math.random() - 0.5) * 0.6;
+        this.vy = (Math.random() - 0.5) * 0.6;
         this.radius = Math.random() * 2 + 1;
-        this.color = Math.random() > 0.5 ? 'rgba(14, 165, 233, ' : 'rgba(225, 29, 72, ';
+        this.color = Math.random() > 0.5 ? 'rgba(56, 189, 248, ' : 'rgba(244, 63, 94, ';
       }
       update() {
         this.x += this.vx;
@@ -1349,7 +2538,7 @@
 
           if (dist < 130) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(14, 165, 233, ${0.2 * (1 - dist / 130)})`;
+            ctx.strokeStyle = `rgba(56, 189, 248, ${0.18 * (1 - dist / 130)})`;
             ctx.lineWidth = 0.8;
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
