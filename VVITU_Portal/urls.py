@@ -3,8 +3,9 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
-from django.views.static import serve
 from core import views_media as core_views_media
+from student import views as student_views
+
 
 urlpatterns = [
     path('admin/',          admin.site.urls),
@@ -21,7 +22,9 @@ urlpatterns = [
 
     path('secure-media/leave-doc/<int:leave_id>/', core_views_media.view_student_leave_document, name='view_student_leave_document'),
     path('secure-media/feedback-doc/<int:form_id>/', core_views_media.view_feedback_document, name='view_feedback_document'),
+    path('academic-calendar/', student_views.academic_calendar, name='academic_calendar'),
 ]
+
 
 # Development static & media serving
 if settings.DEBUG:

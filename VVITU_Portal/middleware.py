@@ -15,8 +15,12 @@ PUBLIC_PREFIXES = [
     '/admin/',
     '/static/',
     '/media/',
-    '/notifications/',  # accessible to all authenticated roles
+    '/notifications/',          # accessible to all authenticated roles
+    '/chat/',                   # accessible to all authenticated roles
+    '/academic-calendar/',      # accessible to all authenticated roles
+    '/student/academic-calendar/', # accessible to all authenticated roles
 ]
+
 
 ROLE_URL_MAP = {
     '/student/':     {'student'},
