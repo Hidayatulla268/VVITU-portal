@@ -903,7 +903,7 @@
           <a href="{% url 'faculty:transfer_class' %}" class="nav-link {% if 'transfer' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Class Transfers & Proxies">
             <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
           </a>
-          <a href="{% url 'student:academic_calendar' %}" class="nav-link" data-nav-title="Academic Calendar">
+          <a href="{% url 'faculty:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Academic Calendar">
             <i class="fas fa-calendar-alt nav-icon"></i><span>Academic Calendar</span>
           </a>
           <a href="{% url 'notifications:centre' %}" class="nav-link" data-nav-title="Department Notices">
@@ -982,7 +982,7 @@
           <a href="{% url 'hod:manage_subject_syllabus' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Topic Schedule Plan">
             <i class="fas fa-list-check nav-icon"></i><span>Topic Schedule Plan</span>
           </a>
-          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+          <a href="{% url 'hod:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Academic Calendar">
             <i class="fas fa-calendar-day nav-icon"></i><span>Academic Calendar</span>
           </a>
           <a href="{% url 'hod:manage_exam_schedules' %}" class="nav-link {% if 'exam_schedule' in request.resolver_match.url_name and request.resolver_match.app_name == 'hod' %}active{% endif %}" data-nav-title="Exam Milestones">
@@ -1150,7 +1150,7 @@
           <a href="{% url 'deo:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Department Timetables">
             <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>Department Timetables</span>
           </a>
-          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+          <a href="{% url 'deo:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' and request.resolver_match.app_name == 'deo' %}active{% endif %}" data-nav-title="Academic Calendar">
             <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
           </a>
         </div>
@@ -1186,7 +1186,7 @@
           </span>
         </button>
         <div class="nav-section-items">
-          <a href="{% url 'student:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' %}active{% endif %}" data-nav-title="Academic Calendar">
+          <a href="{% url 'admin_dashboard:academic_calendar' %}" class="nav-link {% if request.resolver_match.url_name == 'academic_calendar' and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Academic Calendar">
             <i class="fas fa-calendar-check nav-icon"></i><span>Academic Calendar</span>
           </a>
           <a href="{% url 'admin_dashboard:manage_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'admin_dashboard' %}active{% endif %}" data-nav-title="Master Timetables">

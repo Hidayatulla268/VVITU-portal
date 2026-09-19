@@ -58,6 +58,8 @@ urlpatterns = [
     path('syllabus/',                views.manage_subject_syllabus,           name='manage_subject_syllabus'),
     path('syllabus/<int:subject_id>/', views.manage_subject_syllabus,          name='manage_subject_syllabus_subject'),
     path('exam-schedules/',          views.manage_exam_schedules,             name='manage_exam_schedules'),
+    path('academic-calendar/',       views.academic_calendar,                 name='academic_calendar'),
+
     # Detention, Readmission & Low Attendance
     path('detention-readmissions/',  views.manage_detention_readmissions,     name='manage_detention_readmissions'),
     path('detention-readmissions/<int:pk>/<str:action>/', views.action_readmission_request, name='action_readmission_request'),

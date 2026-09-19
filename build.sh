@@ -12,4 +12,7 @@ python manage.py collectstatic --no-input
 echo "🗄️ Applying database migrations..."
 python manage.py migrate --no-input
 
+echo "🌱 Seeding initial academic data & admin accounts..."
+python manage.py seed_data
+
 echo "✅ VVITU Portal Build Completed Successfully!"

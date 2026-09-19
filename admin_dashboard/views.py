@@ -4532,6 +4532,25 @@ def delete_feedback_form(request, form_id):
     return redirect('admin_dashboard:manage_feedback_forms')
 
 
+@admin_required
+def academic_calendar(request):
+    """Admin view of the university academic calendar."""
+    today = timezone.localdate()
+    branch_id = request.GET.get('branch', '')
+    
+    qs = AcademicCalendar.objects.filter(date__gte=today - datetime.timedelta(days=30))
+    if branch_id:
+        qs = qs.filter(Q(branch_id=branch_id) | Q(branch__isnull=True))
+    
+    events = list(qs.order_by('date'))
+    return render(request, 'student/academic_calendar.html', {
+        'upcoming': [e for e in events if e.date >= today],
+        'past':     [e for e in events if e.date <  today],
+        'today':    today,
+    })
+
+
+
 
 
 

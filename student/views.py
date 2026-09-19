@@ -849,29 +849,32 @@ def results(request):
     })
 
 
-@student_required
+@login_required
 def academic_calendar(request):
-    student   = request.student
-    today     = timezone.localdate()
-    branch_id = student.branch.id if student.branch else 0
-    year_id   = student.year.id   if student.year   else 0
-    cache_key = "acal_{}_{}".format(branch_id, year_id)
+    today = timezone.localdate()
+    branch = None
+    if request.user.role == 'student':
+        student = getattr(request.user, 'student_profile', None)
+        if student and student.branch:
+            branch = student.branch
+    elif request.user.role in ['faculty', 'hod', 'lab_technician']:
+        faculty = getattr(request.user, 'faculty_profile', None)
+        if faculty and faculty.department:
+            branch = faculty.department
 
-    events = cache.get(cache_key)
-    if events is None:
-        events = list(
-            AcademicCalendar.objects
-            .filter(date__gte=today - datetime.timedelta(days=30))
-            .filter(Q(branch=student.branch) | Q(branch__isnull=True))
-            .order_by('date')
-        )
-        cache.set(cache_key, events, timeout=300)
+    events = list(
+        AcademicCalendar.objects
+        .filter(date__gte=today - datetime.timedelta(days=30))
+        .filter(Q(branch=branch) | Q(branch__isnull=True) if branch else Q())
+        .order_by('date')
+    )
 
     return render(request, 'student/academic_calendar.html', {
         'upcoming': [e for e in events if e.date >= today],
         'past':     [e for e in events if e.date <  today],
         'today':    today,
     })
+
 
 
 @student_required

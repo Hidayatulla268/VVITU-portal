@@ -11,8 +11,9 @@ from functools import wraps
 logger = logging.getLogger(__name__)
 
 from accounts.models import User, Student, Faculty, DEOProfile, Achievement, generate_secure_temp_password
-from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification
+from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification, AcademicCalendar
 from core.timetable_service import get_section_timetable_context, get_faculty_timetable_context, generate_official_timetable_pdf
+
 
 # ─────────────────────────────────────────────
 # DECORATOR
@@ -688,3 +689,23 @@ def export_timetable_pdf(request, section_id):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="VVIT_Timetable_{section.branch.code}_{section.year.year}_{section.name}.pdf"'
     return response
+
+
+@deo_required
+def academic_calendar(request):
+    """DEO view of the university academic calendar."""
+    today = timezone.localdate()
+    branch = request.branch
+
+    events = list(
+        AcademicCalendar.objects
+        .filter(date__gte=today - datetime.timedelta(days=30))
+        .filter(Q(branch=branch) | Q(branch__isnull=True) if branch else Q())
+        .order_by('date')
+    )
+    return render(request, 'student/academic_calendar.html', {
+        'upcoming': [e for e in events if e.date >= today],
+        'past':     [e for e in events if e.date <  today],
+        'today':    today,
+    })
+

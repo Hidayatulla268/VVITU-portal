@@ -20,8 +20,10 @@ from accounts.models import User, Student, Faculty, Achievement, FacultyLeaveReq
 from core.models import (
     Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result,
     Notification, ResultRelease, FacultyAttendance, ClassTransfer, ClassDiary,
-    SubjectTopicPlan, ExamSchedule, ensure_sections_for_all_branches
+    SubjectTopicPlan, ExamSchedule, ensure_sections_for_all_branches,
+    AcademicCalendar
 )
+
 from admin_dashboard.views import _send_result_emails
 from core.sms_utils import send_result_notifications, send_result_sms_to_parent
 from core.syllabus_utils import get_subject_syllabus_progress, check_and_dispatch_syllabus_reminders
@@ -3603,6 +3605,26 @@ def delete_feedback_form(request, form_id):
     form_obj.delete()
     messages.success(request, f"Feedback form '{title}' deleted successfully.")
     return redirect('hod:manage_feedback_forms')
+
+
+@hod_required
+def academic_calendar(request):
+    """HOD view of the university academic calendar."""
+    today = timezone.localdate()
+    dept = request.department
+
+    events = list(
+        AcademicCalendar.objects
+        .filter(date__gte=today - datetime.timedelta(days=30))
+        .filter(Q(branch=dept) | Q(branch__isnull=True) if dept else Q())
+        .order_by('date')
+    )
+    return render(request, 'student/academic_calendar.html', {
+        'upcoming': [e for e in events if e.date >= today],
+        'past':     [e for e in events if e.date <  today],
+        'today':    today,
+    })
+
 
 
 

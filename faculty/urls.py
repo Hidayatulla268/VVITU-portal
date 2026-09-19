@@ -24,6 +24,8 @@ urlpatterns = [
     path('student-results/',     views.student_results,    name='student_results'),
     path('upload-marks/',        views.upload_marks,       name='upload_marks'),
     path('achievements/add/',    views.add_achievement,    name='add_achievement'),
+    path('academic-calendar/',   views.academic_calendar,  name='academic_calendar'),
+
 
     # Leave Requests
     path('leave-requests/',               views.leave_requests,      name='leave_requests'),

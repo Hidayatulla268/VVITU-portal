@@ -32,8 +32,10 @@ from django.views.decorators.http import require_POST
 from accounts.models import User, Faculty, Student, FacultyLeaveRequest, Achievement
 from core.models import (
     Section, Timetable, Attendance, Subject, Result, Exam, Year,
-    FacultyAttendance, ClassTransfer, ClassDiary, SubjectTopicPlan, ExamSchedule
+    FacultyAttendance, ClassTransfer, ClassDiary, SubjectTopicPlan, ExamSchedule,
+    AcademicCalendar
 )
+
 from core.sms_utils import send_absent_notifications, send_absent_sms_to_parent
 from core.syllabus_utils import get_subject_syllabus_progress, auto_match_and_complete_topic
 
@@ -2232,6 +2234,26 @@ def upload_my_timetable_api(request):
                 })
 
     return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=405)
+
+
+@faculty_required
+def academic_calendar(request):
+    """Faculty view of the university academic calendar, tailored to department."""
+    today = timezone.localdate()
+    dept = request.faculty.department if hasattr(request, 'faculty') and request.faculty.department else None
+
+    events = list(
+        AcademicCalendar.objects
+        .filter(date__gte=today - datetime.timedelta(days=30))
+        .filter(Q(branch=dept) | Q(branch__isnull=True) if dept else Q())
+        .order_by('date')
+    )
+    return render(request, 'student/academic_calendar.html', {
+        'upcoming': [e for e in events if e.date >= today],
+        'past':     [e for e in events if e.date <  today],
+        'today':    today,
+    })
+
 
 
 
