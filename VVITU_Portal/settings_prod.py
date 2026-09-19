@@ -16,20 +16,41 @@ from .settings import *          # pull in every base setting first
 
 # ── Security ────────────────────────────────────────────────────────────────
 DEBUG      = False
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY') or os.environ.get('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is missing! Production deployment halted for security.")
+    # Safe build-time fallback if SECRET_KEY is not yet injected during static compilation
+    SECRET_KEY = os.environ.get('RENDER_BUILD_SECRET', 'render-temp-build-secret-key-replace-in-env-2026')
 
-# Render / Railway set ALLOWED_HOSTS automatically via environment.
-_hosts_env   = os.environ.get('ALLOWED_HOSTS', '')
-ALLOWED_HOSTS = [h.strip() for h in _hosts_env.split(',') if h.strip()] or ['localhost', '127.0.0.1', 'vvitu-portal-jrsk.onrender.com']
+# Render automatically sets RENDER_EXTERNAL_HOSTNAME in the environment
+render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+
+_hosts_env = os.environ.get('ALLOWED_HOSTS', '') or os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+if _hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in _hosts_env.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com', 'testserver']
+
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
+if '.onrender.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('.onrender.com')
 
 # Strict CSRF Trusted Origins for Production
 _csrf_env = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '') or os.environ.get('CSRF_TRUSTED_ORIGINS', '')
 if _csrf_env:
     CSRF_TRUSTED_ORIGINS = [h.strip() for h in _csrf_env.split(',') if h.strip()]
 else:
-    CSRF_TRUSTED_ORIGINS = ['https://vvitu-portal-jrsk.onrender.com']
+    CSRF_TRUSTED_ORIGINS = [
+        'https://*.onrender.com',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
+
+if render_host:
+    https_host = f'https://{render_host}'
+    if https_host not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(https_host)
+
 
 # ── Database (PostgreSQL from DATABASE_URL env var) ─────────────────────────
 # Render and Railway both inject DATABASE_URL automatically when you attach
@@ -78,11 +99,14 @@ if DATABASE_URL:
 # This removes the need for a separate Nginx static-file server on free-tier
 # deployments, which can't run multiple processes.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+WHITENOISE_MANIFEST_STRICT = False
 
-# Make sure WhiteNoise middleware is right after SecurityMiddleware
-if 'whitenoise.middleware.WhiteNoiseMiddleware' not in MIDDLEWARE:
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+# Ensure WhiteNoise middleware is placed right after SecurityMiddleware
+if 'whitenoise.middleware.WhiteNoiseMiddleware' in MIDDLEWARE:
+    MIDDLEWARE.remove('whitenoise.middleware.WhiteNoiseMiddleware')
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
 
 # ── HTTPS / cookie security ──────────────────────────────────────────────────
 # These settings prevent session hijacking over plain HTTP.

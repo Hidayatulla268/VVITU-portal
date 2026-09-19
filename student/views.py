@@ -9,7 +9,7 @@ hit the DB only once per branch/year combination.
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, Http404
+from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.core.cache import cache
@@ -204,7 +204,8 @@ def dashboard(request):
         .order_by('timetable_entry__subject__semester')
     )
     if not recorded_sems:
-        current_max_sem = (student.year * 2) if hasattr(student, 'year') and student.year else 4
+        year_num = student.year.year if (hasattr(student, 'year') and student.year and hasattr(student.year, 'year')) else (student.year if isinstance(student.year, int) else 2)
+        current_max_sem = min(8, max(2, year_num * 2))
         recorded_sems = list(range(1, current_max_sem + 1))
 
     today      = timezone.localdate()
@@ -383,7 +384,8 @@ def attendance_log(request):
     if selected_sem:
         target_subjects = [s for s in target_subjects if s.semester == selected_sem]
     elif student.section and hasattr(student, 'year') and student.year:
-        target_subjects = [s for s in target_subjects if s.id in monthly_subj_map or (hasattr(s, 'year') and s.year and s.year.year == student.year)]
+        year_num = student.year.year if hasattr(student.year, 'year') else student.year
+        target_subjects = [s for s in target_subjects if s.id in monthly_subj_map or (hasattr(s, 'year') and s.year and (s.year == student.year or getattr(s.year, 'year', None) == year_num))]
 
     if not target_subjects:
         target_subjects = list(
@@ -527,7 +529,8 @@ def attendance_log(request):
         .order_by('timetable_entry__subject__semester')
     )
     if not recorded_sems:
-        current_max_sem = (student.year * 2) if hasattr(student, 'year') and student.year else 4
+        year_num = student.year.year if (hasattr(student, 'year') and student.year and hasattr(student.year, 'year')) else (student.year if isinstance(student.year, int) else 2)
+        current_max_sem = min(8, max(2, year_num * 2))
         recorded_sems = list(range(1, current_max_sem + 1))
 
     view_mode = request.GET.get('view', 'monthly').strip()
@@ -1248,6 +1251,39 @@ def fill_feedback(request, form_id):
         messages.info(request, "You have already submitted responses for this feedback form. Viewing your submission summary.")
         return redirect('student:feedback_summary', form_id=form_obj.id)
 
+    # Ensure form has questions to answer
+    if form_obj.questions.count() == 0:
+        # Try extracting from attached document if available
+        if form_obj.uploaded_document:
+            try:
+                from core.document_extractor import extract_feedback_form_data
+                form_obj.uploaded_document.file.seek(0)
+                extracted = extract_feedback_form_data(form_obj.uploaded_document.file, form_obj.uploaded_document.name)
+                if extracted.get('success') and extracted.get('questions'):
+                    for eq in extracted['questions']:
+                        FeedbackQuestion.objects.create(
+                            form=form_obj,
+                            question_text=eq['question_text'],
+                            question_type=eq['question_type'],
+                            options=eq.get('options') or None,
+                            is_required=eq.get('is_required', True),
+                            order=eq.get('order', 1)
+                        )
+            except Exception as e:
+                logger.warning(f"On-the-fly document extraction in fill_feedback failed: {e}")
+
+        # If still no questions, fallback to standard preset template
+        if form_obj.questions.count() == 0:
+            from core.feedback_service import populate_preset_questions
+            preset_map = {
+                'faculty': 'faculty_10',
+                'course': 'course_5',
+                'institutional': 'infrastructure_6',
+                'general': 'faculty_10'
+            }
+            preset_key = preset_map.get(form_obj.feedback_type, 'faculty_10')
+            populate_preset_questions(form_obj, preset_key)
+
     questions = form_obj.questions.all().order_by('order', 'id')
 
     if request.method == 'POST':
@@ -1269,7 +1305,7 @@ def fill_feedback(request, form_id):
             ip_address=ip_addr
         )
 
-        # Save answers
+        # Save answers for configured questions
         for q in questions:
             rating_val = None
             text_val = None
@@ -1284,8 +1320,16 @@ def fill_feedback(request, form_id):
                         rating_val = 5
                 elif q.is_required:
                     rating_val = 5 # Default fallback
+                
+                # Also check for per-question written remarks
+                q_comment = request.POST.get(f'question_{q.id}_comment', '').strip()
+                if q_comment:
+                    text_val = q_comment
             elif q.question_type == 'choice':
                 choice_val = request.POST.get(f'question_{q.id}', '').strip()
+                q_comment = request.POST.get(f'question_{q.id}_comment', '').strip()
+                if q_comment:
+                    text_val = q_comment
             elif q.question_type == 'text':
                 text_val = request.POST.get(f'question_{q.id}', '').strip()
 
@@ -1296,6 +1340,36 @@ def fill_feedback(request, form_id):
                 choice_value=choice_val,
                 text_value=text_val
             )
+
+        # Save any extra written answers added by student
+        extra_texts = request.POST.getlist('extra_question_text[]')
+        extra_answers = request.POST.getlist('extra_question_answer[]')
+        extra_ratings = request.POST.getlist('extra_question_rating[]')
+
+        for idx, ex_t in enumerate(extra_texts):
+            if ex_t.strip():
+                ex_ans = extra_answers[idx] if idx < len(extra_answers) else ''
+                ex_rate_str = extra_ratings[idx] if idx < len(extra_ratings) else ''
+                ex_rate = None
+                if ex_rate_str:
+                    try:
+                        ex_rate = int(ex_rate_str)
+                    except ValueError:
+                        pass
+
+                # Create question and answer
+                new_q = FeedbackQuestion.objects.create(
+                    form=form_obj,
+                    question_text=ex_t.strip(),
+                    question_type='text' if not ex_rate else 'rating_5',
+                    order=form_obj.questions.count() + 1
+                )
+                FeedbackAnswer.objects.create(
+                    submission=submission,
+                    question=new_q,
+                    rating_value=ex_rate,
+                    text_value=ex_ans.strip() if ex_ans.strip() else None
+                )
 
         messages.success(request, f"Feedback submitted successfully! Reference No: {submission.reference_no}. You can now download or print your summary.")
         return redirect('student:feedback_summary', form_id=form_obj.id)

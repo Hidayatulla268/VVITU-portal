@@ -12,21 +12,14 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 
 
+DEFAULT_INITIAL_PASSWORD = 'vvit@1234'
+
+
 def generate_secure_temp_password(length=12):
     """
-    Generates a cryptographically secure, random temporary password
-    satisfying uppercase, lowercase, digit, and special character requirements.
+    Standard college default temporary password for all new student/faculty accounts.
     """
-    chars = string.ascii_letters + string.digits + "!@#$%^&*"
-    pwd = [
-        secrets.choice(string.ascii_uppercase),
-        secrets.choice(string.ascii_lowercase),
-        secrets.choice(string.digits),
-        secrets.choice("!@#$%^&*"),
-    ]
-    pwd += [secrets.choice(chars) for _ in range(max(length - 4, 4))]
-    secrets.SystemRandom().shuffle(pwd)
-    return "".join(pwd)
+    return DEFAULT_INITIAL_PASSWORD
 
 
 # ─────────────────────────────────────────────

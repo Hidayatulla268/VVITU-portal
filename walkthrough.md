@@ -34,6 +34,12 @@ This walkthrough documents the complete design, engineering, verification, and m
 - **Live Status Dot**: Pulsating emerald beacon (`.user-dock-status-dot`) denoting active session connectivity.
 - **Role Display & Quick Logout**: Displays user initials/avatar, full name, formatted role pill, and a discrete power-off icon button with direct logout routing.
 
+### 🎨 6. 100% Theme Parity & Browser Cache Invalidation
+- **Deep Obsidian & Cyber-Crimson Integration**: Sidebar background matches the website's dark dashboard gradient (`linear-gradient(180deg, #090910 0%, #0c0d15 60%, #07070b 100%)`) with `backdrop-filter: blur(24px)` and subtle red glowing active route pill indicators.
+- **Aggressive User Agent Reset**: Applied `appearance: none !important; background: transparent !important; border: none !important;` to `.nav-section-header` and `.sidebar-search-box input`, permanently eliminating any browser fallback to white button rectangles or white textboxes.
+- **Instant Pre-Paint Injection**: Embedded dedicated high-priority `<style id="vvitSidebarThemeStyle">` in `<head>` so styles apply before the DOM paints with zero layout shift (FOUC).
+- **Cache Busting**: Bumped global `APP_VERSION` to `3.1.0` in `core/context_processors.py` and `base.html` so all client browsers immediately fetch updated stylesheets.
+
 ---
 
 ## 2. Role-Based Navigation Hierarchy Overview

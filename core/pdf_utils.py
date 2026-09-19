@@ -668,12 +668,22 @@ def generate_feedback_blank_printable_pdf(feedback_form):
     elements.append(blank_table)
     elements.append(Spacer(1, 8))
 
-    # 3. Rating Scale Legend
-    legend_data = [
-        [
-            Paragraph("<b>Evaluation Rating Scale:</b> &nbsp; <b>5</b> = Excellent &nbsp;|&nbsp; <b>4</b> = Very Good &nbsp;|&nbsp; <b>3</b> = Good &nbsp;|&nbsp; <b>2</b> = Fair &nbsp;|&nbsp; <b>1</b> = Poor", ParagraphStyle('Leg', fontName='Helvetica', fontSize=7.5, leading=9, alignment=1, textColor=colors.HexColor('#334155')))
+    # 3. Rating Scale Legend / Instructions
+    questions = feedback_form.questions.all().order_by('order', 'id')
+    is_choice_form = all(q.question_type == 'choice' for q in questions) if questions.exists() else False
+    
+    if is_choice_form:
+        legend_data = [
+            [
+                Paragraph("<b>Offline Instructions:</b> &nbsp; Please mark [ <b>&times;</b> ] or [ <b>&check;</b> ] in the respective choice column and write remarks/comments if applicable.", ParagraphStyle('Leg', fontName='Helvetica', fontSize=7.5, leading=9, alignment=1, textColor=colors.HexColor('#334155')))
+            ]
         ]
-    ]
+    else:
+        legend_data = [
+            [
+                Paragraph("<b>Evaluation Rating Scale:</b> &nbsp; <b>5</b> = Excellent &nbsp;|&nbsp; <b>4</b> = Very Good &nbsp;|&nbsp; <b>3</b> = Good &nbsp;|&nbsp; <b>2</b> = Fair &nbsp;|&nbsp; <b>1</b> = Poor", ParagraphStyle('Leg', fontName='Helvetica', fontSize=7.5, leading=9, alignment=1, textColor=colors.HexColor('#334155')))
+            ]
+        ]
     leg_table = Table(legend_data, colWidths=[523])
     leg_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#e2e8f0')),
@@ -684,34 +694,50 @@ def generate_feedback_blank_printable_pdf(feedback_form):
     elements.append(Spacer(1, 8))
 
     # 4. Questionnaire Grid
-    questions = feedback_form.questions.all().order_by('order', 'id')
-    
-    grid_data = [
-        [
-            Paragraph("<b>S.No</b>", hdr_style),
-            Paragraph("<b>Evaluation Parameter / Question</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=0, textColor=colors.white)),
-            Paragraph("<b>5</b>", hdr_style),
-            Paragraph("<b>4</b>", hdr_style),
-            Paragraph("<b>3</b>", hdr_style),
-            Paragraph("<b>2</b>", hdr_style),
-            Paragraph("<b>1</b>", hdr_style),
-            Paragraph("<b>Remarks</b>", hdr_style),
+    if is_choice_form:
+        grid_data = [
+            [
+                Paragraph("<b>S.No</b>", hdr_style),
+                Paragraph("<b>Evaluation Parameter / Question</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=0, textColor=colors.white)),
+                Paragraph("<b>Yes</b>", hdr_style),
+                Paragraph("<b>No</b>", hdr_style),
+                Paragraph("<b>Remarks, if any</b>", hdr_style),
+            ]
         ]
-    ]
-
-    for idx, q in enumerate(questions, 1):
-        grid_data.append([
-            Paragraph(str(idx), center_bold),
-            Paragraph(f"{q.question_text}", cell_style),
-            Paragraph("[ &nbsp; ]", center_bold),
-            Paragraph("[ &nbsp; ]", center_bold),
-            Paragraph("[ &nbsp; ]", center_bold),
-            Paragraph("[ &nbsp; ]", center_bold),
-            Paragraph("[ &nbsp; ]", center_bold),
-            Paragraph("________________", ParagraphStyle('RmkB', fontName='Helvetica', fontSize=7, leading=8, textColor=colors.HexColor('#94a3b8'))),
-        ])
-
-    q_grid = Table(grid_data, colWidths=[28, 275, 28, 28, 28, 28, 28, 80], repeatRows=1)
+        for idx, q in enumerate(questions, 1):
+            grid_data.append([
+                Paragraph(str(idx), center_bold),
+                Paragraph(f"{q.question_text}", cell_style),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("____________________", ParagraphStyle('RmkB', fontName='Helvetica', fontSize=7, leading=8, textColor=colors.HexColor('#94a3b8'))),
+            ])
+        q_grid = Table(grid_data, colWidths=[28, 335, 35, 35, 90], repeatRows=1)
+    else:
+        grid_data = [
+            [
+                Paragraph("<b>S.No</b>", hdr_style),
+                Paragraph("<b>Evaluation Parameter / Question</b>", ParagraphStyle('HdrL', fontName='Helvetica-Bold', fontSize=8, leading=10, alignment=0, textColor=colors.white)),
+                Paragraph("<b>5</b>", hdr_style),
+                Paragraph("<b>4</b>", hdr_style),
+                Paragraph("<b>3</b>", hdr_style),
+                Paragraph("<b>2</b>", hdr_style),
+                Paragraph("<b>1</b>", hdr_style),
+                Paragraph("<b>Remarks</b>", hdr_style),
+            ]
+        ]
+        for idx, q in enumerate(questions, 1):
+            grid_data.append([
+                Paragraph(str(idx), center_bold),
+                Paragraph(f"{q.question_text}", cell_style),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("[ &nbsp; ]", center_bold),
+                Paragraph("________________", ParagraphStyle('RmkB', fontName='Helvetica', fontSize=7, leading=8, textColor=colors.HexColor('#94a3b8'))),
+            ])
+        q_grid = Table(grid_data, colWidths=[28, 275, 28, 28, 28, 28, 28, 80], repeatRows=1)
     q_grid.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#800000')),
         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),

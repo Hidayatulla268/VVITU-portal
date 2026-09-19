@@ -28,9 +28,13 @@ if not DEBUG:
             "CRITICAL SECURITY ERROR: In production (DEBUG=False), DJANGO_SECRET_KEY must be explicitly set to a strong secret key in environment variables."
         )
 
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver', cast=Csv())
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver,.onrender.com', cast=Csv())
 if 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('testserver')
+render_host_base = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if render_host_base and render_host_base not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host_base)
+
 
 # ── Production HTTPS / Cookie security ──────
 SECURE_SSL_REDIRECT          = False if DEBUG else config('SECURE_SSL_REDIRECT', default=True, cast=bool)
@@ -87,10 +91,10 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 # ─────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',               # Static file server (must be right after SecurityMiddleware)
     'VVITU_Portal.middleware.SecuritySanitizerMiddleware',      # Global WAF / Payload Sanitizer
     'VVITU_Portal.middleware.GlobalSecurityHeadersMiddleware',   # Enterprise Security Headers (CSP, HSTS, COOP)
     'VVITU_Portal.middleware.LoginRateLimitMiddleware',          # IP & Username Brute Force Lockout
-    'whitenoise.middleware.WhiteNoiseMiddleware',               # serve static in prod
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -100,6 +104,7 @@ MIDDLEWARE = [
     'VVITU_Portal.middleware.RoleBasedAccessMiddleware',        # Scoped RBAC Middleware
     'VVITU_Portal.middleware.GlobalExceptionRedirectMiddleware', # Global Unhandled Exception Auto-Redirect
 ]
+
 
 ROOT_URLCONF = 'VVITU_Portal.urls'
 
@@ -208,7 +213,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    WHITENOISE_MANIFEST_STRICT = False
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -295,7 +302,13 @@ else:
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost:8000',
         'http://127.0.0.1:8000',
-        'https://vvitu-portal-jrsk.onrender.com',
+        'https://*.onrender.com',
     ]
+
+if render_host_base:
+    _https_render = f'https://{render_host_base}'
+    if _https_render not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_https_render)
+
 
 

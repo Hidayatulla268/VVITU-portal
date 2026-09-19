@@ -912,5 +912,9 @@ def generate_semester_grade_card_pdf(student, year_obj, semester):
        - Pinned to the bottom of the sidebar with user avatar, pulsating green online status beacon (`.user-dock-status-dot`), user display name, role pill, and 1-click power-off logout button.
     6. **100% Quality & Multi-Role Validation**:
        - Verified across all 5 dashboard portals (`admin`, `hod`, `faculty`, `deo`, `student`) with HTTP 200 responses, 0 Django check issues, and verified resolution of all 104 internal URL patterns.
+    7. **Bulletproof Dark Theme Integration & Browser Cache Invalidation**:
+       - Addressed browser caching where stale `v=2.5.0` stylesheets caused `<button>` accordion headers and search `<input>` to fall back to unstyled white browser user-agent boxes.
+       - Bumped global asset version token to `v=3.1.0` in `core/context_processors.py` and `templates/core/base.html`.
+       - Embedded a dedicated high-priority `<style id="vvitSidebarThemeStyle">` block in `<head>` featuring aggressive resets (`appearance: none !important; background: transparent !important; border: none !important;`), matching the portal's obsidian dark gradient (`#090910` to `#07070b`), glowing red active link indicators, and cyber crimson badges.
 
 

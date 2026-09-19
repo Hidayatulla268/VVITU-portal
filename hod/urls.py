@@ -71,6 +71,7 @@ urlpatterns = [
     # Student Feedback Management & Document Upload (HOD)
     path('feedback/',                     views.manage_feedback_forms, name='manage_feedback_forms'),
     path('feedback/create/',              views.create_feedback_form,  name='create_feedback_form'),
+    path('feedback/extract-api/',         views.extract_feedback_document_api, name='extract_feedback_document_api'),
     path('feedback/<int:form_id>/edit/',  views.edit_feedback_form,    name='edit_feedback_form'),
     path('feedback/<int:form_id>/analytics/', views.feedback_analytics, name='feedback_analytics'),
     path('feedback/<int:form_id>/analytics/pdf/', views.export_feedback_analytics_pdf, name='export_feedback_analytics_pdf'),

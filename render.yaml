@@ -1,0 +1,35 @@
+# Render Blueprint Configuration for VVITU Portal
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: vvitu-db
+    databaseName: vvitu_db
+    user: vvitu_user
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: vvitu-portal
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn VVITU_Portal.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DJANGO_SETTINGS_MODULE
+        value: VVITU_Portal.settings_prod
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vvitu-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com,localhost,127.0.0.1
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com
+      - key: GEMINI_API_KEY
+        sync: false

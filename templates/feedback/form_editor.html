@@ -3,6 +3,55 @@
 
 {% block title %}{% if is_edit %}Edit Feedback Form{% else %}Create / Upload Feedback Form{% endif %} — VVIT Portal{% endblock %}
 
+{% block extra_css %}
+<style>
+.drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 24px;
+  text-align: center;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--accent, #f59e0b);
+  background: rgba(245, 158, 11, 0.05);
+}
+.question-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.question-card:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+.q-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.pulse-btn {
+  animation: pulse-glow 2s infinite;
+}
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+{% endblock %}
+
 {% block page_header %}
 <div class="page-header-strip">
   <div class="ph-left">
@@ -10,7 +59,7 @@
       <i class="fas fa-file-signature me-2 text-accent"></i>
       {% if is_edit %}Edit Feedback Form: {{ form_obj.title }}{% else %}Create & Upload Student Feedback Form{% endif %}
     </h1>
-    <p class="ph-sub">Upload official documents (Photo/PDF), configure target audience, and define evaluation criteria.</p>
+    <p class="ph-sub">Upload official documents (Photo/PDF), auto-extract evaluation criteria into online forms, and configure audience scope.</p>
   </div>
   <div class="ph-right d-flex gap-2">
     {% if is_admin %}
@@ -33,7 +82,7 @@
       <h3 class="card-title-custom mb-1">
         <i class="fas fa-edit me-2 text-accent"></i>{% if is_edit %}Form Configuration & Settings{% else %}Feedback Form Parameters{% endif %}
       </h3>
-      <p class="text-muted small mb-0">Define scope, upload official physical documents for offline filling, and configure evaluation questions.</p>
+      <p class="text-muted small mb-0">Define scope, upload official documents for auto-conversion to online questionnaires, and configure evaluation questions.</p>
     </div>
     <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
       <i class="fas fa-shield-alt me-1"></i>{% if is_admin %}Administrator Access{% else %}HOD {{ department.code }} Department Access{% endif %}
@@ -50,7 +99,7 @@
     {% endfor %}
   {% endif %}
 
-  <form method="POST" enctype="multipart/form-data">
+  <form method="POST" enctype="multipart/form-data" id="feedbackEditorForm">
     {% csrf_token %}
 
     <!-- 1. Form Details & Categorization -->
@@ -61,11 +110,11 @@
       <div class="row g-3">
         <div class="col-md-8">
           <label class="form-label text-light fw-semibold small">Feedback Form Title <span class="text-danger">*</span></label>
-          <input type="text" name="title" class="vvit-input" placeholder="e.g. Faculty Teaching Performance Evaluation — Even Sem 2025-26" value="{{ form_obj.title|default:'' }}" required>
+          <input type="text" name="title" id="formTitleInput" class="vvit-input" placeholder="e.g. Faculty Teaching Performance Evaluation — Even Sem 2025-26" value="{{ form_obj.title|default:'' }}" required>
         </div>
         <div class="col-md-4">
           <label class="form-label text-light fw-semibold small">Feedback Category <span class="text-danger">*</span></label>
-          <select name="feedback_type" class="vvit-select" required>
+          <select name="feedback_type" id="feedbackTypeSelect" class="vvit-select" required>
             <option value="faculty" {% if form_obj.feedback_type == 'faculty' %}selected{% endif %}>Faculty Teaching Evaluation</option>
             <option value="course" {% if form_obj.feedback_type == 'course' %}selected{% endif %}>Course & Curriculum Feedback</option>
             <option value="institutional" {% if form_obj.feedback_type == 'institutional' %}selected{% endif %}>Institutional Facilities & Infrastructure</option>
@@ -74,7 +123,7 @@
         </div>
         <div class="col-12">
           <label class="form-label text-light fw-semibold small">Description & Instructions for Students</label>
-          <textarea name="description" class="vvit-input" rows="2" style="height: auto; min-height: 60px;" placeholder="Provide evaluation guidelines, rating criteria, or instructions for students...">{{ form_obj.description|default:'' }}</textarea>
+          <textarea name="description" id="formDescriptionInput" class="vvit-input" rows="2" style="height: auto; min-height: 60px;" placeholder="Provide evaluation guidelines, rating criteria, or instructions for students...">{{ form_obj.description|default:'' }}</textarea>
         </div>
       </div>
     </div>
@@ -137,29 +186,94 @@
       </div>
     </div>
 
-    <!-- 3. Upload Official Form Document (Photo or PDF) -->
+    <!-- 3. Upload Official Form Document (Photo or PDF) & OCR / AI Extractor -->
     <div class="mb-4">
-      <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
-        <i class="fas fa-file-upload me-2"></i>3. Upload Official Form Document (Photo or PDF)
+      <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center justify-content-between">
+        <span><i class="fas fa-file-upload me-2"></i>3. Upload Official Document & Smart Auto-Extraction</span>
+        <span class="badge bg-warning text-dark small fw-bold"><i class="fas fa-bolt me-1"></i>OCR & AI Powered</span>
       </h5>
-      <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.2);">
-        <label class="form-label text-light fw-semibold small">Attach Official Physical Feedback Form (Image JPG/PNG or PDF)</label>
-        <input type="file" name="uploaded_document" class="vvit-input" accept="image/*,application/pdf">
-        <div class="form-text small text-muted mt-1">
-          <i class="fas fa-info-circle me-1 text-accent"></i>Students can view/download this official uploaded document and print it to fill out and submit offline.
+
+      <div class="p-3 p-md-4 rounded mb-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.12);">
+        <label class="form-label text-light fw-semibold small mb-2">
+          Attach Official Feedback Questionnaire Document (Photo Image JPG/PNG or PDF)
+        </label>
+        
+        <div class="drop-zone mb-3" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <i class="fas fa-cloud-upload-alt fa-3x text-accent mb-2"></i>
+          <h6 class="text-white fw-bold mb-1">Click to Upload or Drag & Drop Document / Photo</h6>
+          <p class="text-muted small mb-0">Supports scanned feedback photos (.jpg, .jpeg, .png, .webp) and PDF documents (.pdf)</p>
+          <input type="file" name="uploaded_document" id="fileInput" class="d-none" accept="image/*,application/pdf" onchange="handleFileSelected(this)">
+        </div>
+
+        <!-- File Inspection & Action Panel -->
+        <div id="fileInfoPanel" class="d-none p-3 rounded mb-3" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25);">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div id="fileIconContainer" class="fs-2 text-accent">
+                <i class="fas fa-file-pdf"></i>
+              </div>
+              <div>
+                <strong class="text-white d-block" id="selectedFileName">filename.pdf</strong>
+                <span class="text-muted small" id="selectedFileSize">0 KB</span>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-warning btn-sm pulse-btn fw-bold px-3" id="btnExtract" onclick="extractQuestionsFromSelectedFile()">
+                <i class="fas fa-wand-magic-sparkles me-1"></i>Extract & Convert to Online Form
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelectedFile()">
+                <i class="fas fa-times me-1"></i>Change File
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extraction Progress Indicator -->
+        <div id="extractionProgress" class="d-none p-3 rounded mb-3" style="background: rgba(0, 230, 118, 0.08); border: 1px solid rgba(0, 230, 118, 0.25);">
+          <div class="d-flex align-items-center gap-3">
+            <div class="spinner-border text-success spinner-border-sm" role="status"></div>
+            <div>
+              <strong class="text-white small d-block" id="extractionStatusText">Extracting questions and rating criteria from document...</strong>
+              <span class="text-muted small">Using OCR and document structure parser to generate online input fields.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extraction Results Banner -->
+        <div id="extractionResults" class="d-none alert alert-success alert-dismissible fade show mb-3" role="alert">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <i class="fas fa-check-circle me-2 fs-5"></i>
+              <strong id="extractionResultsTitle">Extraction Complete!</strong>
+              <span class="d-block small mt-1" id="extractionResultsDesc">Converted 0 evaluation questions into online form fields below.</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+          </div>
         </div>
 
         {% if form_obj.uploaded_document %}
-          <div class="mt-3 p-3 rounded d-flex align-items-center justify-content-between" style="background: rgba(0, 230, 118, 0.06); border: 1px solid rgba(0, 230, 118, 0.25);">
+          <div class="mt-3 p-3 rounded d-flex flex-wrap align-items-center justify-content-between gap-3" style="background: rgba(0, 230, 118, 0.06); border: 1px solid rgba(0, 230, 118, 0.25);">
             <span class="small text-light text-truncate">
               <i class="{% if form_obj.document_is_pdf %}fas fa-file-pdf text-danger{% else %}fas fa-file-image text-info{% endif %} me-2 fa-lg"></i>
-              Current Attached Document: <strong class="text-white">{{ form_obj.uploaded_document.name }}</strong>
+              Currently Attached Document: <strong class="text-white">{{ form_obj.uploaded_document.name }}</strong>
             </span>
-            <a href="{% url 'view_feedback_document' form_obj.id %}" target="_blank" class="btn btn-sm btn-outline-info">
-              <i class="fas fa-eye me-1"></i>View Uploaded File
-            </a>
+            <div class="d-flex gap-2">
+              <a href="{% url 'view_feedback_document' form_obj.id %}" target="_blank" class="btn btn-sm btn-outline-info">
+                <i class="fas fa-eye me-1"></i>View Attached Document
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-warning" onclick="extractFromExistingDocument({{ form_obj.id }})">
+                <i class="fas fa-sync-alt me-1"></i>Re-Extract Questions
+              </button>
+            </div>
           </div>
         {% endif %}
+
+        <div class="form-check form-switch mt-3">
+          <input class="form-check-input" type="checkbox" name="auto_extract_questions" id="autoExtractToggle" checked>
+          <label class="form-check-label text-light fw-semibold small" for="autoExtractToggle">
+            ⚡ Automatically convert questions on file selection or upload
+          </label>
+        </div>
       </div>
     </div>
 
@@ -192,39 +306,87 @@
       </div>
     </div>
 
-    <!-- 5. Questionnaire Questions & Presets -->
-    {% if not is_edit %}
-      <div class="mb-4">
-        <h5 class="fw-bold text-accent mb-3 pb-2 border-bottom border-secondary d-flex align-items-center">
-          <i class="fas fa-list-ol me-2"></i>5. Questionnaire Questions & Presets
+    <!-- 5. Online Questionnaire Builder & Extracted Questions -->
+    <div class="mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary gap-2">
+        <h5 class="fw-bold text-accent mb-0 d-flex align-items-center">
+          <i class="fas fa-list-ol me-2"></i>5. Online Questionnaire Evaluation Questions (<span id="questionCountBadge">0</span>)
         </h5>
-        
-        <!-- Preset Loader -->
-        <div class="p-3 rounded mb-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);">
-          <label class="form-label text-light fw-semibold small">
-            <i class="fas fa-magic text-warning me-1"></i>1-Click Load Standard VVIT Questionnaire Preset:
-          </label>
-          <select name="preset_template" class="vvit-select">
-            <option value="">-- Do Not Load Preset (Build Custom Only) --</option>
-            <option value="faculty_10" selected>★ Standard Faculty Teaching Evaluation (10 Quality Criteria)</option>
-            <option value="course_5">★ Standard Course & Curriculum Feedback (5 Criteria)</option>
-            <option value="infrastructure_6">★ Campus Infrastructure & Facilities Evaluation (6 Criteria)</option>
-          </select>
-          <div class="form-text small text-muted mt-1">
-            Selecting a preset will automatically generate the official standard questions for this form.
-          </div>
-        </div>
-
-        <!-- Dynamic Custom Question Adder -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <label class="form-label text-light fw-semibold small mb-0">Additional Custom Evaluation Questions (Optional):</label>
+        <div class="d-flex gap-2">
           <button type="button" class="btn btn-sm btn-outline-info" onclick="addCustomQuestion()">
-            <i class="fas fa-plus me-1"></i>Add Custom Question
+            <i class="fas fa-plus me-1"></i>Add Question
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllQuestions()">
+            <i class="fas fa-trash-alt me-1"></i>Clear All
           </button>
         </div>
-        <div id="customQuestionsContainer"></div>
       </div>
-    {% endif %}
+      
+      <!-- Preset Loader -->
+      <div class="p-3 rounded mb-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="row align-items-center g-2">
+          <div class="col-md-8">
+            <label class="form-label text-light fw-semibold small mb-1">
+              <i class="fas fa-magic text-warning me-1"></i>Quick Preset Templates (or use extracted document questions below):
+            </label>
+            <select id="presetTemplateSelect" name="preset_template" class="vvit-select" onchange="handlePresetChange(this.value)">
+              <option value="">-- Custom / Extracted from Uploaded Document --</option>
+              <option value="faculty_10" {% if not is_edit and not form_obj.uploaded_document %}selected{% endif %}>★ Standard Faculty Teaching Evaluation (10 Criteria)</option>
+              <option value="course_5">★ Standard Course & Curriculum Feedback (5 Criteria)</option>
+              <option value="infrastructure_6">★ Campus Infrastructure & Facilities Evaluation (6 Criteria)</option>
+            </select>
+          </div>
+          <div class="col-md-4 text-md-end pt-md-3">
+            <button type="button" class="btn btn-sm btn-outline-accent" onclick="applyPresetDirectly()">
+              <i class="fas fa-file-import me-1"></i>Apply Preset into Cards
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Container for Dynamic Extracted / Custom Question Cards -->
+      <div id="customQuestionsContainer">
+        <!-- Initial preloaded questions in edit mode -->
+        {% if questions %}
+          {% for q in questions %}
+            <div class="question-card" data-order="{{ q.order }}">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="q-badge">Q<span class="q-num">{{ forloop.counter }}</span></span>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="form-check form-switch m-0 me-2">
+                    <input class="form-check-input" type="checkbox" name="custom_question_required[]" value="1" {% if q.is_required %}checked{% endif %}>
+                    <label class="form-check-label text-muted small">Required</label>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeQuestionCard(this)">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="row g-2">
+                <div class="col-md-8">
+                  <textarea name="custom_question_text[]" class="vvit-input" rows="2" placeholder="Enter evaluation parameter or question text..." required>{{ q.question_text }}</textarea>
+                </div>
+                <div class="col-md-4">
+                  <select name="custom_question_type[]" class="vvit-select mb-2" onchange="toggleOptionsField(this)">
+                    <option value="rating_5" {% if q.question_type == 'rating_5' %}selected{% endif %}>⭐ 1 to 5 Star Rating Scale</option>
+                    <option value="rating_10" {% if q.question_type == 'rating_10' %}selected{% endif %}>🔟 1 to 10 Scale</option>
+                    <option value="choice" {% if q.question_type == 'choice' %}selected{% endif %}>🔘 Single Choice / MCQ</option>
+                    <option value="text" {% if q.question_type == 'text' %}selected{% endif %}>✍️ Descriptive Text / Written Feedback</option>
+                  </select>
+                  <input type="text" name="custom_question_options[]" class="vvit-input {% if q.question_type != 'choice' %}d-none{% endif %} opt-field" placeholder="Comma-separated choices (e.g. Yes, No)" value="{{ q.options|default:'' }}">
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div id="noQuestionsNotice" class="{% if questions %}d-none{% endif %} text-center p-4 rounded" style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1);">
+        <i class="fas fa-tasks fa-2x text-muted mb-2"></i>
+        <p class="text-light small mb-2">No question fields configured yet.</p>
+        <p class="text-muted small mb-0">Upload a Photo/PDF above to auto-extract questions, apply a standard preset, or click <strong>Add Question</strong> to write custom ones.</p>
+      </div>
+    </div>
 
     <!-- Submit buttons -->
     <div class="d-flex justify-content-end gap-3 border-top border-secondary pt-4">
@@ -241,38 +403,361 @@
 </div>
 
 <script>
-let qIndex = 1;
-function addCustomQuestion() {
+const EXTRACT_API_URL = "{% if is_admin %}{% url 'admin_dashboard:extract_feedback_document_api' %}{% else %}{% url 'hod:extract_feedback_document_api' %}{% endif %}";
+const CSRF_TOKEN = "{{ csrf_token }}";
+
+const PRESETS = {
+  faculty_10: {
+    title: "Faculty Teaching Performance Evaluation — Standard Form",
+    type: "faculty",
+    desc: "Rate each teaching and instructional parameter on a scale of 1 (Poor) to 5 (Excellent).",
+    questions: [
+      { text: "Punctuality and regularity of faculty in taking scheduled classes", type: "rating_5" },
+      { text: "Clarity of explanation, depth of subject knowledge, and presentation skills", type: "rating_5" },
+      { text: "Ability to engage students, encourage questions, and maintain interactive classroom discipline", type: "rating_5" },
+      { text: "Fairness and transparency in internal assessment, assignment evaluation, and marks awarding", type: "rating_5" },
+      { text: "Timely completion and comprehensive coverage of syllabus topics as per course plan", type: "rating_5" },
+      { text: "Availability and willingness to help students outside class hours and clarify doubts", type: "rating_5" },
+      { text: "Use of modern teaching aids (PPTs, board work, digital LMS resources)", type: "rating_5" },
+      { text: "Relevance of examples, real-world applications, and practical case studies shared", type: "rating_5" },
+      { text: "Effective guidance and mentoring during laboratory / tutorial sessions", type: "rating_5" },
+      { text: "Overall satisfaction with the faculty member's teaching methodology and mentorship", type: "rating_5" }
+    ]
+  },
+  course_5: {
+    title: "Course Curriculum & Syllabus Evaluation",
+    type: "course",
+    desc: "Provide your assessment on the syllabus depth, modern relevance, and learning outcomes.",
+    questions: [
+      { text: "Relevance of course contents and syllabus depth to contemporary industry needs", type: "rating_5" },
+      { text: "Balance between theoretical concepts and hands-on practical application", type: "rating_5" },
+      { text: "Availability and quality of prescribed textbooks, reference materials, and e-learning resources", type: "rating_5" },
+      { text: "Appropriateness of internal evaluation weightage, question paper standards, and exam pattern", type: "rating_5" },
+      { text: "Overall effectiveness of the course in enhancing technical competence and skills", type: "rating_5" }
+    ]
+  },
+  infrastructure_6: {
+    title: "Campus Infrastructure & Facilities Evaluation",
+    type: "institutional",
+    desc: "Rate the quality and availability of campus infrastructure and student amenities.",
+    questions: [
+      { text: "Classroom infrastructure, ICT projectors, ventilation, and seating comfort", type: "rating_5" },
+      { text: "Laboratory equipment condition, computing facilities, software availability, and internet/Wi-Fi", type: "rating_5" },
+      { text: "Central Library resources, book accessibility, reading hall environment, and digital subscriptions", type: "rating_5" },
+      { text: "Campus cleanliness, sanitation, drinking water, cafeteria hygiene, and overall environment", type: "rating_5" },
+      { text: "Sports, extracurricular, and student technical club amenities", type: "rating_5" },
+      { text: "Overall campus atmosphere and administrative support responsiveness", type: "rating_5" }
+    ]
+  }
+};
+
+// Drag & Drop handlers
+const dropZone = document.getElementById('dropZone');
+['dragenter', 'dragover'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add('dragover');
+  }, false);
+});
+['dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove('dragover');
+  }, false);
+});
+dropZone.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  if (files.length > 0) {
+    const fileInput = document.getElementById('fileInput');
+    fileInput.files = files;
+    handleFileSelected(fileInput);
+  }
+});
+
+function handleFileSelected(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+
+  document.getElementById('selectedFileName').textContent = file.name;
+  document.getElementById('selectedFileSize').textContent = formatFileSize(file.size);
+
+  const iconContainer = document.getElementById('fileIconContainer');
+  if (file.name.toLowerCase().endsWith('.pdf')) {
+    iconContainer.innerHTML = '<i class="fas fa-file-pdf text-danger"></i>';
+  } else {
+    iconContainer.innerHTML = '<i class="fas fa-file-image text-info"></i>';
+  }
+
+  document.getElementById('fileInfoPanel').classList.remove('d-none');
+
+  const autoExtract = document.getElementById('autoExtractToggle').checked;
+  if (autoExtract) {
+    extractQuestionsFromSelectedFile();
+  }
+}
+
+function clearSelectedFile() {
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfoPanel').classList.add('d-none');
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function toggleOptionsField(selectElem) {
+  const card = selectElem.closest('.question-card');
+  const optField = card.querySelector('.opt-field');
+  if (selectElem.value === 'choice') {
+    optField.classList.remove('d-none');
+  } else {
+    optField.classList.add('d-none');
+  }
+}
+
+function updateQuestionNumbers() {
+  const cards = document.querySelectorAll('.question-card');
+  cards.forEach((card, index) => {
+    const num = card.querySelector('.q-num');
+    if (num) num.textContent = index + 1;
+  });
+  document.getElementById('questionCountBadge').textContent = cards.length;
+  const notice = document.getElementById('noQuestionsNotice');
+  if (cards.length === 0) {
+    notice.classList.remove('d-none');
+  } else {
+    notice.classList.add('d-none');
+  }
+}
+
+function removeQuestionCard(btn) {
+  const card = btn.closest('.question-card');
+  card.style.opacity = '0';
+  card.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    card.remove();
+    updateQuestionNumbers();
+  }, 200);
+}
+
+function addCustomQuestion(text = '', type = 'rating_5', options = '', required = true) {
   const container = document.getElementById('customQuestionsContainer');
   const div = document.createElement('div');
-  div.style.background = "rgba(255, 255, 255, 0.04)";
-  div.style.border = "1px solid rgba(255, 255, 255, 0.12)";
-  div.style.borderRadius = "10px";
-  div.style.padding = "14px";
-  div.style.marginBottom = "12px";
+  div.className = 'question-card';
   div.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <span class="fw-bold small text-accent">Custom Parameter #${qIndex}</span>
-      <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="this.closest('div[style]').remove()">
-        <i class="fas fa-times"></i>
-      </button>
+      <span class="q-badge">Q<span class="q-num">1</span></span>
+      <div class="d-flex align-items-center gap-2">
+        <div class="form-check form-switch m-0 me-2">
+          <input class="form-check-input" type="checkbox" name="custom_question_required[]" value="1" ${required ? 'checked' : ''}>
+          <label class="form-check-label text-muted small">Required</label>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeQuestionCard(this)">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
     </div>
     <div class="row g-2">
       <div class="col-md-8">
-        <input type="text" name="custom_question_text[]" class="vvit-input" placeholder="Enter question or evaluation parameter...">
+        <textarea name="custom_question_text[]" class="vvit-input" rows="2" placeholder="Enter evaluation parameter or question text..." required>${escapeHtml(text)}</textarea>
       </div>
       <div class="col-md-4">
-        <select name="custom_question_type[]" class="vvit-select">
-          <option value="rating_5">1 to 5 Star Rating Scale</option>
-          <option value="rating_10">1 to 10 Scale</option>
-          <option value="choice">Yes / No (Choice)</option>
-          <option value="text">Descriptive Text Feedback</option>
+        <select name="custom_question_type[]" class="vvit-select mb-2" onchange="toggleOptionsField(this)">
+          <option value="rating_5" ${type === 'rating_5' ? 'selected' : ''}>⭐ 1 to 5 Star Rating Scale</option>
+          <option value="rating_10" ${type === 'rating_10' ? 'selected' : ''}>🔟 1 to 10 Scale</option>
+          <option value="choice" ${type === 'choice' ? 'selected' : ''}>🔘 Single Choice / MCQ</option>
+          <option value="text" ${type === 'text' ? 'selected' : ''}>✍️ Descriptive Text / Written Feedback</option>
         </select>
+        <input type="text" name="custom_question_options[]" class="vvit-input ${type !== 'choice' ? 'd-none' : ''} opt-field" placeholder="Comma-separated choices (e.g. Yes, No)" value="${escapeHtml(options)}">
       </div>
     </div>
   `;
   container.appendChild(div);
-  qIndex++;
+  updateQuestionNumbers();
 }
+
+function clearAllQuestions() {
+  document.getElementById('customQuestionsContainer').innerHTML = '';
+  updateQuestionNumbers();
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function handlePresetChange(val) {
+  if (!val) return;
+  // Set category dropdown automatically
+  const preset = PRESETS[val];
+  if (preset) {
+    document.getElementById('feedbackTypeSelect').value = preset.type;
+    const titleInput = document.getElementById('formTitleInput');
+    if (!titleInput.value.trim()) {
+      titleInput.value = preset.title;
+    }
+  }
+}
+
+function applyPresetDirectly() {
+  const select = document.getElementById('presetTemplateSelect');
+  const val = select.value;
+  if (!val || !PRESETS[val]) {
+    alert("Please choose a preset template from the dropdown.");
+    return;
+  }
+  const preset = PRESETS[val];
+  clearAllQuestions();
+  document.getElementById('formTitleInput').value = preset.title;
+  document.getElementById('formDescriptionInput').value = preset.desc;
+  document.getElementById('feedbackTypeSelect').value = preset.type;
+
+  preset.questions.forEach(q => {
+    addCustomQuestion(q.text, q.type, '', true);
+  });
+}
+
+// Extraction API Client
+async function extractQuestionsFromSelectedFile() {
+  const fileInput = document.getElementById('fileInput');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Please select or drop a Photo or PDF file first.");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const progressDiv = document.getElementById('extractionProgress');
+  const statusText = document.getElementById('extractionStatusText');
+  const btnExtract = document.getElementById('btnExtract');
+
+  progressDiv.classList.remove('d-none');
+  btnExtract.disabled = true;
+  statusText.textContent = `Analyzing and extracting text from ${file.name}...`;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const resp = await fetch(EXTRACT_API_URL, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN
+      },
+      body: formData
+    });
+
+    const data = await resp.json();
+    if (data.success && data.questions && data.questions.length > 0) {
+      populateExtractedData(data);
+    } else if (file.type.startsWith('image/') && typeof Tesseract !== 'undefined') {
+      // Fallback to client-side Tesseract OCR for scanned images
+      statusText.textContent = "Running browser OCR on photo image...";
+      const ocrResult = await Tesseract.recognize(file, 'eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            statusText.textContent = `Reading image text... ${Math.round(m.progress * 100)}%`;
+          }
+        }
+      });
+
+      const ocrText = ocrResult.data.text;
+      const textFormData = new FormData();
+      textFormData.append('raw_text', ocrText);
+
+      const ocrResp = await fetch(EXTRACT_API_URL, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+        body: textFormData
+      });
+      const ocrData = await ocrResp.json();
+      if (ocrData.success && ocrData.questions && ocrData.questions.length > 0) {
+        populateExtractedData(ocrData);
+      } else {
+        showExtractionWarning("Could not detect numbered evaluation criteria automatically. You can build questions using the card builder below.");
+      }
+    } else {
+      showExtractionWarning(data.error || "No questionnaire questions could be recognized from this document. You can add questions manually or use a standard preset.");
+    }
+  } catch (err) {
+    console.error("Extraction error:", err);
+    showExtractionWarning("Document extraction encountered an issue: " + err.message);
+  } finally {
+    progressDiv.classList.add('d-none');
+    btnExtract.disabled = false;
+  }
+}
+
+async function extractFromExistingDocument(formId) {
+  const progressDiv = document.getElementById('extractionProgress');
+  const statusText = document.getElementById('extractionStatusText');
+  progressDiv.classList.remove('d-none');
+  statusText.textContent = "Re-extracting questions from attached document...";
+
+  try {
+    const formData = new FormData();
+    formData.append('form_id', formId);
+
+    const resp = await fetch(EXTRACT_API_URL, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF_TOKEN },
+      body: formData
+    });
+    const data = await resp.json();
+    if (data.success && data.questions && data.questions.length > 0) {
+      populateExtractedData(data);
+    } else {
+      alert(data.error || "No questions recognized.");
+    }
+  } catch (e) {
+    alert("Extraction error: " + e.message);
+  } finally {
+    progressDiv.classList.add('d-none');
+  }
+}
+
+function populateExtractedData(data) {
+  clearAllQuestions();
+
+  if (data.title && (!document.getElementById('formTitleInput').value.trim() || confirm("Update form title to extracted: '" + data.title + "'?"))) {
+    document.getElementById('formTitleInput').value = data.title;
+  }
+  if (data.description && (!document.getElementById('formDescriptionInput').value.trim() || confirm("Update description to extracted instructions?"))) {
+    document.getElementById('formDescriptionInput').value = data.description;
+  }
+  if (data.feedback_type) {
+    document.getElementById('feedbackTypeSelect').value = data.feedback_type;
+  }
+
+  data.questions.forEach(q => {
+    addCustomQuestion(q.question_text, q.question_type, q.options || '', q.is_required !== false);
+  });
+
+  // Show success banner
+  const resultsDiv = document.getElementById('extractionResults');
+  document.getElementById('extractionResultsTitle').textContent = `Successfully Extracted ${data.questions.length} Question Fields!`;
+  document.getElementById('extractionResultsDesc').textContent = `Generated online rating and written answer fields from the document. You can review, edit, or adjust question types below.`;
+  resultsDiv.classList.remove('d-none');
+  resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showExtractionWarning(msg) {
+  alert(msg);
+}
+
+// Pre-init preset if in create mode and empty
+document.addEventListener('DOMContentLoaded', () => {
+  const cards = document.querySelectorAll('.question-card');
+  if (cards.length === 0 && !document.getElementById('selectedFileName')) {
+    {% if not is_edit %}
+      applyPresetDirectly();
+    {% endif %}
+  }
+  updateQuestionNumbers();
+});
 </script>
 {% endblock %}

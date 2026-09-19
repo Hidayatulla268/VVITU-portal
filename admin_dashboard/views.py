@@ -4174,10 +4174,49 @@ def manage_feedback_forms(request):
 
 
 @admin_required
+def extract_feedback_document_api(request):
+    """AJAX API endpoint for Admin to extract form questions, title, and metadata from uploaded photo or PDF."""
+    from django.http import JsonResponse
+    from core.document_extractor import extract_feedback_form_data, parse_questionnaire_structure
+    from core.models import FeedbackForm
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST request required.'}, status=405)
+
+    try:
+        # Case 1: Raw text provided (e.g. client-side OCR)
+        raw_text = request.POST.get('raw_text', '').strip()
+        if raw_text:
+            data = parse_questionnaire_structure(raw_text)
+            return JsonResponse(data)
+
+        # Case 2: File uploaded directly via form data
+        if 'file' in request.FILES:
+            uploaded_file = request.FILES['file']
+            data = extract_feedback_form_data(uploaded_file, uploaded_file.name)
+            return JsonResponse(data)
+
+        # Case 3: Extract from an existing FeedbackForm by form_id
+        form_id = request.POST.get('form_id')
+        if form_id:
+            form_obj = get_object_or_404(FeedbackForm, id=form_id)
+            if not form_obj.uploaded_document:
+                return JsonResponse({'success': False, 'error': 'No document is attached to this form.'}, status=400)
+            data = extract_feedback_form_data(form_obj.uploaded_document.file, form_obj.uploaded_document.name)
+            return JsonResponse(data)
+
+        return JsonResponse({'success': False, 'error': 'No file, form_id, or text provided for extraction.'}, status=400)
+    except Exception as e:
+        logger.exception("Error extracting feedback document")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@admin_required
 def create_feedback_form(request):
     """Admin create/upload feedback form view."""
     from core.models import FeedbackForm, FeedbackQuestion, Branch, Year, Section
     from core.feedback_service import populate_preset_questions
+    from core.document_extractor import extract_feedback_form_data
 
     branches = Branch.objects.all()
     years = Year.objects.all().order_by('year')
@@ -4195,6 +4234,7 @@ def create_feedback_form(request):
         allow_online = request.POST.get('allow_online_submission') == 'on'
         allow_offline = request.POST.get('allow_offline_download') == 'on'
         preset_template = request.POST.get('preset_template', '').strip()
+        auto_extract = request.POST.get('auto_extract_questions') == 'on'
 
         uploaded_doc = request.FILES.get('uploaded_document')
 
@@ -4213,7 +4253,7 @@ def create_feedback_form(request):
                 from core.file_validators import validate_document_upload
                 from django.core.exceptions import ValidationError
                 try:
-                    validate_document_upload(uploaded_doc, allowed_extensions={'.pdf', '.jpg', '.jpeg', '.png'}, max_size_mb=5)
+                    validate_document_upload(uploaded_doc, allowed_extensions={'.pdf', '.jpg', '.jpeg', '.png', '.webp'}, max_size_mb=10)
                 except ValidationError as ve:
                     messages.error(request, f"Attached document rejected: {ve.message if hasattr(ve, 'message') else ve}")
                     return redirect('admin_dashboard:manage_feedback_forms')
@@ -4233,24 +4273,56 @@ def create_feedback_form(request):
                 created_by=request.user
             )
 
-            # Populate preset if selected
-            if preset_template:
-                populate_preset_questions(form_obj, preset_template)
-
-            # Custom questions parsing
+            # 1. Custom / Extracted questions parsing from UI
             q_texts = request.POST.getlist('custom_question_text[]')
             q_types = request.POST.getlist('custom_question_type[]')
-            order = form_obj.questions.count() + 1
+            q_options = request.POST.getlist('custom_question_options[]')
+            q_required = request.POST.getlist('custom_question_required[]')
 
-            for q_t, q_tp in zip(q_texts, q_types):
+            created_questions = False
+            order = 1
+            for idx, q_t in enumerate(q_texts):
                 if q_t.strip():
+                    q_tp = q_types[idx] if idx < len(q_types) else 'rating_5'
+                    q_opt = q_options[idx] if idx < len(q_options) else ''
+                    is_req = True
+                    if idx < len(q_required):
+                        is_req = q_required[idx] == '1' or q_required[idx] == 'on' or q_required[idx] == 'true'
+
                     FeedbackQuestion.objects.create(
                         form=form_obj,
                         question_text=q_t.strip(),
                         question_type=q_tp if q_tp else 'rating_5',
+                        options=q_opt.strip() if q_opt else None,
+                        is_required=is_req,
                         order=order
                     )
                     order += 1
+                    created_questions = True
+
+            # 2. Populate preset if selected and no custom questions were provided
+            if preset_template and not created_questions:
+                populate_preset_questions(form_obj, preset_template)
+                created_questions = True
+
+            # 3. Auto-extract from uploaded document if requested and no questions were manually built
+            if not created_questions and uploaded_doc and auto_extract:
+                try:
+                    uploaded_doc.seek(0)
+                    extracted = extract_feedback_form_data(uploaded_doc, uploaded_doc.name)
+                    if extracted.get('success') and extracted.get('questions'):
+                        for eq in extracted['questions']:
+                            FeedbackQuestion.objects.create(
+                                form=form_obj,
+                                question_text=eq['question_text'],
+                                question_type=eq['question_type'],
+                                options=eq.get('options') or None,
+                                is_required=eq.get('is_required', True),
+                                order=order
+                            )
+                            order += 1
+                except Exception as ex:
+                    logger.warning(f"Auto-extraction during save failed: {ex}")
 
             messages.success(request, f"Feedback form '{form_obj.title}' created and published successfully!")
             return redirect('admin_dashboard:manage_feedback_forms')
@@ -4272,6 +4344,7 @@ def edit_feedback_form(request, form_id):
     branches = Branch.objects.all()
     years = Year.objects.all().order_by('year')
     sections = Section.objects.all().select_related('branch', 'year')
+    questions = form_obj.questions.all().order_by('order', 'id')
 
     if request.method == 'POST':
         form_obj.title = request.POST.get('title', '').strip() or form_obj.title
@@ -4297,14 +4370,50 @@ def edit_feedback_form(request, form_id):
             form_obj.deadline = None
 
         if 'uploaded_document' in request.FILES:
-            form_obj.uploaded_document = request.FILES['uploaded_document']
+            from core.file_validators import validate_document_upload
+            from django.core.exceptions import ValidationError
+            uploaded_doc = request.FILES['uploaded_document']
+            try:
+                validate_document_upload(uploaded_doc, allowed_extensions={'.pdf', '.jpg', '.jpeg', '.png', '.webp'}, max_size_mb=10)
+                form_obj.uploaded_document = uploaded_doc
+            except ValidationError as ve:
+                messages.error(request, f"Attached document rejected: {ve.message if hasattr(ve, 'message') else ve}")
 
         form_obj.save()
+
+        # Update questions if submitted
+        q_texts = request.POST.getlist('custom_question_text[]')
+        q_types = request.POST.getlist('custom_question_type[]')
+        q_options = request.POST.getlist('custom_question_options[]')
+        q_required = request.POST.getlist('custom_question_required[]')
+
+        if q_texts:
+            form_obj.questions.all().delete()
+            order = 1
+            for idx, q_t in enumerate(q_texts):
+                if q_t.strip():
+                    q_tp = q_types[idx] if idx < len(q_types) else 'rating_5'
+                    q_opt = q_options[idx] if idx < len(q_options) else ''
+                    is_req = True
+                    if idx < len(q_required):
+                        is_req = q_required[idx] == '1' or q_required[idx] == 'on' or q_required[idx] == 'true'
+
+                    FeedbackQuestion.objects.create(
+                        form=form_obj,
+                        question_text=q_t.strip(),
+                        question_type=q_tp if q_tp else 'rating_5',
+                        options=q_opt.strip() if q_opt else None,
+                        is_required=is_req,
+                        order=order
+                    )
+                    order += 1
+
         messages.success(request, f"Feedback form '{form_obj.title}' updated successfully.")
         return redirect('admin_dashboard:manage_feedback_forms')
 
     return render(request, 'feedback/form_editor.html', {
         'form_obj': form_obj,
+        'questions': questions,
         'branches': branches,
         'years': years,
         'sections': sections,

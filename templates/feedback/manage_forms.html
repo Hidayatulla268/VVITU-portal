@@ -146,9 +146,15 @@
               {% endif %}
             </td>
             <td>
-              <span class="badge bg-secondary-subtle text-light border border-secondary px-2 py-1">
-                {{ form.total_submissions_count }} Responses
-              </span>
+              {% if form.total_submissions_count > 0 %}
+                <span class="badge bg-dark text-success border border-success border-opacity-50 px-2 py-1">
+                  <i class="fas fa-check-circle me-1 small"></i>{{ form.total_submissions_count }} Response{{ form.total_submissions_count|pluralize }}
+                </span>
+              {% else %}
+                <span class="badge bg-dark text-muted border border-secondary border-opacity-40 px-2 py-1">
+                  0 Responses
+                </span>
+              {% endif %}
             </td>
             <td>
               <div class="d-flex align-items-center gap-1">
