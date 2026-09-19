@@ -1343,3 +1343,634 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
 [data-theme="light"] .badge-unit-5 { background: #f0fdf4 !important; color: #15803d !important; border-color: #bbf7d0 !important; }
 [data-theme="light"] .badge-unit-other { background: #f1f5f9 !important; color: #475569 !important; border-color: #cbd5e1 !important; }
 
+/* ══════════════════════════════════════════════════════════════════════
+   LIVE CONDUCTION AUDIT & CUSTOM VVIT TABLE (DARK & LIGHT THEME ENGINE)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════
+   LIVE CONDUCTION AUDIT & CUSTOM VVIT TABLE (DARK & LIGHT THEME ENGINE)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Universal High-Contrast & Vibrant Highlights for Light Theme ── */
+
+/* 1. DANGER / RED / ACCENT HIGHLIGHTS (Bright & Punchy with Dark Vivid Text) */
+[data-theme="light"] .text-danger,
+[data-theme="light"] .text-accent {
+  color: #991b1b !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .badge.bg-danger,
+[data-theme="light"] .badge.bg-accent,
+[data-theme="light"] .badge-danger {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #b91c1c !important;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3) !important;
+}
+[data-theme="light"] .badge.bg-danger.bg-opacity-10,
+[data-theme="light"] .badge.bg-danger.bg-opacity-20,
+[data-theme="light"] .badge.bg-danger.bg-opacity-25,
+[data-theme="light"] .badge.bg-danger.bg-opacity-50,
+[data-theme="light"] .badge.bg-danger.bg-opacity-75,
+[data-theme="light"] .badge.bg-opacity-20.text-danger,
+[data-theme="light"] .badge.border-danger,
+[data-theme="light"] .pill-bad {
+  background-color: #fecaca !important;
+  border: 2px solid #dc2626 !important;
+  color: #991b1b !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.18) !important;
+}
+[data-theme="light"] .alert-danger,
+[data-theme="light"] .callout-danger {
+  background-color: #fee2e2 !important;
+  border: 2px solid #dc2626 !important;
+  color: #7f1d1d !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12) !important;
+}
+[data-theme="light"] .alert-danger hr {
+  border-color: #f87171 !important;
+}
+
+/* 2. SUCCESS / GREEN HIGHLIGHTS (Bright & Punchy with Dark Vivid Text) */
+[data-theme="light"] .text-success {
+  color: #14532d !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .badge.bg-success,
+[data-theme="light"] .badge-success {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #15803d !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3) !important;
+}
+[data-theme="light"] .badge.bg-success.bg-opacity-10,
+[data-theme="light"] .badge.bg-success.bg-opacity-20,
+[data-theme="light"] .badge.bg-success.bg-opacity-25,
+[data-theme="light"] .badge.bg-success.bg-opacity-50,
+[data-theme="light"] .badge.bg-success.bg-opacity-75,
+[data-theme="light"] .badge.bg-opacity-20.text-success,
+[data-theme="light"] .badge.border-success,
+[data-theme="light"] .pill-good {
+  background-color: #bbf7d0 !important;
+  border: 2px solid #16a34a !important;
+  color: #14532d !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.18) !important;
+}
+[data-theme="light"] .alert-success,
+[data-theme="light"] .callout-success {
+  background-color: #dcfce7 !important;
+  border: 2px solid #16a34a !important;
+  color: #14532d !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12) !important;
+}
+[data-theme="light"] .alert-success hr {
+  border-color: #4ade80 !important;
+}
+
+/* 3. WARNING / AMBER / PROXY HIGHLIGHTS (Bright & Punchy with Dark Vivid Text) */
+[data-theme="light"] .text-warning {
+  color: #78350f !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .badge.bg-warning,
+[data-theme="light"] .badge-warning {
+  background-color: #f59e0b !important;
+  color: #451a03 !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #d97706 !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3) !important;
+}
+[data-theme="light"] .badge.bg-warning.bg-opacity-10,
+[data-theme="light"] .badge.bg-warning.bg-opacity-20,
+[data-theme="light"] .badge.bg-warning.bg-opacity-25,
+[data-theme="light"] .badge.bg-warning.bg-opacity-50,
+[data-theme="light"] .badge.bg-warning.bg-opacity-75,
+[data-theme="light"] .badge.bg-opacity-20.text-warning,
+[data-theme="light"] .badge.border-warning {
+  background-color: #fef08a !important;
+  border: 2px solid #d97706 !important;
+  color: #78350f !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.18) !important;
+}
+[data-theme="light"] .alert-warning,
+[data-theme="light"] .callout-warning {
+  background-color: #fef3c7 !important;
+  border: 2px solid #d97706 !important;
+  color: #78350f !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.12) !important;
+}
+[data-theme="light"] .alert-warning hr {
+  border-color: #fbbf24 !important;
+}
+
+/* 4. INFO / CYAN / SKY BLUE HIGHLIGHTS (Bright & Punchy with Dark Vivid Text) */
+[data-theme="light"] .text-info {
+  color: #0369a1 !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .badge.bg-info,
+[data-theme="light"] .badge-info {
+  background-color: #0284c7 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #0369a1 !important;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
+}
+[data-theme="light"] .badge.bg-info.bg-opacity-10,
+[data-theme="light"] .badge.bg-info.bg-opacity-20,
+[data-theme="light"] .badge.bg-info.bg-opacity-25,
+[data-theme="light"] .badge.bg-info.bg-opacity-50,
+[data-theme="light"] .badge.bg-info.bg-opacity-75,
+[data-theme="light"] .badge.bg-opacity-20.text-info,
+[data-theme="light"] .badge.border-info {
+  background-color: #bae6fd !important;
+  border: 2px solid #0284c7 !important;
+  color: #075985 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.18) !important;
+}
+[data-theme="light"] .alert-info,
+[data-theme="light"] .callout-info {
+  background-color: #e0f2fe !important;
+  border: 2px solid #0284c7 !important;
+  color: #075985 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12) !important;
+}
+[data-theme="light"] .alert-info hr {
+  border-color: #38bdf8 !important;
+}
+
+/* 5. PRIMARY / INDIGO / PURPLE HIGHLIGHTS (Bright & Punchy with Dark Vivid Text) */
+[data-theme="light"] .text-primary,
+[data-theme="light"] .text-purple {
+  color: #3730a3 !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .badge.bg-primary,
+[data-theme="light"] .badge-primary {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #1d4ed8 !important;
+}
+[data-theme="light"] .badge.bg-primary.bg-opacity-10,
+[data-theme="light"] .badge.bg-primary.bg-opacity-20,
+[data-theme="light"] .badge.bg-primary.bg-opacity-25,
+[data-theme="light"] .badge.bg-primary.bg-opacity-50,
+[data-theme="light"] .badge.bg-primary.bg-opacity-75,
+[data-theme="light"] .badge.bg-opacity-20.text-primary,
+[data-theme="light"] .badge.border-primary {
+  background-color: #ddd6fe !important;
+  border: 2px solid #7c3aed !important;
+  color: #4c1d95 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.18) !important;
+}
+[data-theme="light"] .alert-primary,
+[data-theme="light"] .callout-primary {
+  background-color: #ede9fe !important;
+  border: 2px solid #6366f1 !important;
+  color: #3730a3 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* 6. ORANGE & SECONDARY WARNING HIGHLIGHTS */
+[data-theme="light"] .badge-unit-4,
+[data-theme="light"] .badge.bg-warning-subtle {
+  background-color: #fed7aa !important;
+  border: 2px solid #ea580c !important;
+  color: #7c2d12 !important;
+  font-weight: 800 !important;
+}
+
+/* 7. Dark & Secondary Badges */
+[data-theme="light"] .badge.bg-dark,
+[data-theme="light"] .audit-branch-badge {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border: 1.5px solid #0f172a !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .badge.bg-secondary {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* ── 8. High-Contrast Highlight Boxes in Tables & Schedules (Proxy, Substituted, Leave) ── */
+[data-theme="light"] div[style*="rgba(245, 158, 11"],
+[data-theme="light"] div[style*="rgba(245,158,11"],
+[data-theme="light"] div[style*="rgba(217, 119, 6"],
+[data-theme="light"] div[style*="rgba(180, 83, 9"],
+[data-theme="light"] .table-warning-row,
+[data-theme="light"] .proxy-box,
+[data-theme="light"] .transfer-box {
+  background-color: #fef08a !important;
+  border: 2px solid #d97706 !important;
+  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.16) !important;
+}
+[data-theme="light"] div[style*="rgba(245, 158, 11"] div,
+[data-theme="light"] div[style*="rgba(245, 158, 11"] small,
+[data-theme="light"] div[style*="rgba(245, 158, 11"] span,
+[data-theme="light"] div[style*="rgba(245, 158, 11"] p,
+[data-theme="light"] div[style*="rgba(245, 158, 11"] strong,
+[data-theme="light"] div[style*="rgba(245,158,11"] div,
+[data-theme="light"] div[style*="rgba(245,158,11"] small,
+[data-theme="light"] div[style*="rgba(245,158,11"] span,
+[data-theme="light"] div[style*="rgba(245,158,11"] p,
+[data-theme="light"] div[style*="rgba(245,158,11"] strong,
+[data-theme="light"] .proxy-box *,
+[data-theme="light"] .transfer-box * {
+  color: #78350f !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] div[style*="rgba(56, 189, 248"],
+[data-theme="light"] div[style*="rgba(56,189,248"],
+[data-theme="light"] div[style*="rgba(59, 130, 246"],
+[data-theme="light"] div[style*="rgba(2, 132, 199"],
+[data-theme="light"] div[style*="rgba(14, 165, 233"],
+[data-theme="light"] .table-info-row,
+[data-theme="light"] .conducted-box {
+  background-color: #bae6fd !important;
+  border: 2px solid #0284c7 !important;
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.16) !important;
+}
+[data-theme="light"] div[style*="rgba(56, 189, 248"] div,
+[data-theme="light"] div[style*="rgba(56, 189, 248"] small,
+[data-theme="light"] div[style*="rgba(56, 189, 248"] span,
+[data-theme="light"] div[style*="rgba(56, 189, 248"] p,
+[data-theme="light"] div[style*="rgba(56, 189, 248"] strong,
+[data-theme="light"] div[style*="rgba(56,189,248"] div,
+[data-theme="light"] div[style*="rgba(56,189,248"] small,
+[data-theme="light"] div[style*="rgba(56,189,248"] span,
+[data-theme="light"] div[style*="rgba(56,189,248"] p,
+[data-theme="light"] div[style*="rgba(56,189,248"] strong,
+[data-theme="light"] .conducted-box * {
+  color: #075985 !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] div[style*="rgba(239, 68, 68"],
+[data-theme="light"] div[style*="rgba(239,68,68"],
+[data-theme="light"] div[style*="rgba(220, 38, 38"],
+[data-theme="light"] div[style*="rgba(185, 28, 28"],
+[data-theme="light"] div[style*="rgba(244, 63, 94"],
+[data-theme="light"] .table-danger-row,
+[data-theme="light"] .absent-box,
+[data-theme="light"] .topic-overdue-row {
+  background-color: #fecaca !important;
+  border: 2px solid #dc2626 !important;
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.16) !important;
+}
+[data-theme="light"] div[style*="rgba(239, 68, 68"] div,
+[data-theme="light"] div[style*="rgba(239, 68, 68"] small,
+[data-theme="light"] div[style*="rgba(239, 68, 68"] span,
+[data-theme="light"] div[style*="rgba(239, 68, 68"] p,
+[data-theme="light"] div[style*="rgba(239, 68, 68"] strong,
+[data-theme="light"] .absent-box *,
+[data-theme="light"] .topic-overdue-row td {
+  color: #991b1b !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] div[style*="rgba(34, 197, 94"],
+[data-theme="light"] div[style*="rgba(34,197,94"],
+[data-theme="light"] div[style*="rgba(22, 163, 74"],
+[data-theme="light"] div[style*="rgba(16, 185, 129"],
+[data-theme="light"] .table-success-row,
+[data-theme="light"] .present-box,
+[data-theme="light"] .topic-completed-row {
+  background-color: #bbf7d0 !important;
+  border: 2px solid #16a34a !important;
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.16) !important;
+}
+[data-theme="light"] div[style*="rgba(34, 197, 94"] div,
+[data-theme="light"] div[style*="rgba(34, 197, 94"] small,
+[data-theme="light"] div[style*="rgba(34, 197, 94"] span,
+[data-theme="light"] div[style*="rgba(34, 197, 94"] p,
+[data-theme="light"] div[style*="rgba(34, 197, 94"] strong,
+[data-theme="light"] .present-box *,
+[data-theme="light"] .topic-completed-row td {
+  color: #14532d !important;
+  font-weight: 800 !important;
+}
+
+/* ── 9. High-Contrast KPI Cards & Summary Strips ── */
+[data-theme="light"] .kpi-card,
+[data-theme="light"] .hod-kpi-card,
+[data-theme="light"] .stat-card {
+  background: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme="light"] .kpi-card.kpi-info    { border-left: 6px solid #0284c7 !important; }
+[data-theme="light"] .kpi-card.kpi-success { border-left: 6px solid #16a34a !important; }
+[data-theme="light"] .kpi-card.kpi-warning { border-left: 6px solid #f59e0b !important; }
+[data-theme="light"] .kpi-card.kpi-danger  { border-left: 6px solid #dc2626 !important; }
+[data-theme="light"] .kpi-card.kpi-neutral { border-left: 6px solid #64748b !important; }
+[data-theme="light"] .kpi-card.kpi-accent  { border-left: 6px solid #dc2626 !important; }
+
+[data-theme="light"] .kpi-card .kpi-value,
+[data-theme="light"] .kpi-val,
+[data-theme="light"] .stat-pill-val,
+[data-theme="light"] .counter-val {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+[data-theme="light"] .kpi-card .kpi-label,
+[data-theme="light"] .kpi-lbl,
+[data-theme="light"] .stat-pill-lbl {
+  color: #1e293b !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .kpi-icon {
+  border-radius: 12px;
+}
+[data-theme="light"] .kpi-info .kpi-icon    { background: #bae6fd !important; color: #0284c7 !important; border: 2px solid #0284c7 !important; }
+[data-theme="light"] .kpi-success .kpi-icon { background: #bbf7d0 !important; color: #15803d !important; border: 2px solid #16a34a !important; }
+[data-theme="light"] .kpi-warning .kpi-icon { background: #fef08a !important; color: #b45309 !important; border: 2px solid #d97706 !important; }
+[data-theme="light"] .kpi-danger .kpi-icon  { background: #fecaca !important; color: #b91c1c !important; border: 2px solid #dc2626 !important; }
+[data-theme="light"] .kpi-neutral .kpi-icon { background: #f1f5f9 !important; color: #334155 !important; border: 2px solid #94a3b8 !important; }
+
+[data-theme="light"] .audit-kpi-bar {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+[data-theme="light"] .audit-kpi-box {
+  background: #ffffff !important;
+  border: 2px solid #94a3b8 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme="light"] .audit-kpi-box small {
+  color: #1e293b !important;
+  font-weight: 800 !important;
+}
+
+/* ── 10. Tables & Custom VVIT Table Styling ── */
+[data-theme="light"] .vvit-table thead tr,
+[data-theme="light"] .custom-vvit-table thead tr,
+[data-theme="light"] .custom-table-head {
+  background: #f1f5f9 !important;
+}
+[data-theme="light"] .vvit-table thead th,
+[data-theme="light"] .custom-vvit-table thead th,
+[data-theme="light"] .custom-table-head th {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  border-bottom: 2px solid #94a3b8 !important;
+}
+[data-theme="light"] .vvit-table tbody tr,
+[data-theme="light"] .custom-vvit-table tbody tr {
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+[data-theme="light"] .vvit-table td,
+[data-theme="light"] .custom-vvit-table td {
+  color: #0f172a !important;
+  font-weight: 600;
+}
+[data-theme="light"] .custom-vvit-table tbody tr:hover,
+[data-theme="light"] .vvit-table tbody tr:hover {
+  background: rgba(220, 38, 38, 0.06) !important;
+}
+
+/* ── 11. Progress Bars & Track Visibility in Light Theme ── */
+[data-theme="light"] .progress,
+[data-theme="light"] div[style*="background: rgba(255,255,255,0.1)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.1)"],
+[data-theme="light"] div[style*="background:rgba(255,255,255,0.1)"] {
+  background-color: #cbd5e1 !important;
+  border: 1px solid #94a3b8 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ── 12. Accordions in Light Theme ── */
+[data-theme="light"] .accordion-item {
+  background: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06) !important;
+}
+[data-theme="light"] .accordion-button {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+[data-theme="light"] .accordion-button:not(.collapsed) {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 -1px 0 #cbd5e1 !important;
+}
+[data-theme="light"] .accordion-button::after {
+  filter: invert(1) grayscale(100%) brightness(0.2) !important;
+}
+
+/* ── 13. Modals & Popups in Light Theme ── */
+[data-theme="light"] .modal-content,
+[data-theme="light"] .glass-modal,
+[data-theme="light"] div[style*="background: #18181b"],
+[data-theme="light"] div[style*="background:#18181b"],
+[data-theme="light"] div[style*="background: #0f172a"],
+[data-theme="light"] div[style*="background:#0f172a"] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18) !important;
+}
+[data-theme="light"] .modal-header,
+[data-theme="light"] .modal-footer {
+  border-color: #e2e8f0 !important;
+}
+
+/* ── 14. Command Tiles & Dashboard Action Buttons ── */
+[data-theme="light"] .command-tile,
+[data-theme="light"] .hod-command-tile,
+[data-theme="light"] .quick-action-btn {
+  background: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+[data-theme="light"] .command-tile:hover,
+[data-theme="light"] .hod-command-tile:hover,
+[data-theme="light"] .quick-action-btn:hover {
+  background: #f8fafc !important;
+  border-color: #b91c1c !important;
+  color: #7f1d1d !important;
+  box-shadow: 0 6px 18px rgba(185, 28, 28, 0.12) !important;
+}
+
+/* ── 15. Semi-Transparent Containers Overrides in Light Mode ── */
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"],
+[data-theme="light"] div[style*="background:rgba(255,255,255"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.02)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.03)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.04)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.05)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.06)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.08)"],
+[data-theme="light"] div[style*="background: rgba(255, 255, 255, 0.1)"] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06) !important;
+}
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] small,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] p,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] span {
+  color: #1e293b !important;
+}
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] h1,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] h2,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] h3,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] h4,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] h5,
+[data-theme="light"] div[style*="background: rgba(255, 255, 255"] h6 {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+
+/* ── 16. Universal Text Darkening (Eliminating White-on-White Blending) ── */
+[data-theme="light"] [style*="color: #fff"]:not(.btn):not(.badge.bg-danger):not(.badge.bg-success):not(.badge.bg-info):not(.badge.bg-dark):not(.badge.bg-secondary):not(.badge.bg-primary),
+[data-theme="light"] [style*="color:#fff"]:not(.btn):not(.badge.bg-danger):not(.badge.bg-success):not(.badge.bg-info):not(.badge.bg-dark):not(.badge.bg-secondary):not(.badge.bg-primary),
+[data-theme="light"] [style*="color: #ffffff"]:not(.btn):not(.badge.bg-danger):not(.badge.bg-success):not(.badge.bg-info):not(.badge.bg-dark):not(.badge.bg-secondary):not(.badge.bg-primary),
+[data-theme="light"] [style*="color:#ffffff"]:not(.btn):not(.badge.bg-danger):not(.badge.bg-success):not(.badge.bg-info):not(.badge.bg-dark):not(.badge.bg-secondary):not(.badge.bg-primary),
+[data-theme="light"] [style*="color: white"]:not(.btn):not(.badge.bg-danger):not(.badge.bg-success):not(.badge.bg-info):not(.badge.bg-dark):not(.badge.bg-secondary):not(.badge.bg-primary),
+[data-theme="light"] [style*="color:white"]:not(.btn):not(.badge.bg-danger):not(.badge.bg-success):not(.badge.bg-info):not(.badge.bg-dark):not(.badge.bg-secondary):not(.badge.bg-primary),
+[data-theme="light"] [style*="color: #f8fafc"],
+[data-theme="light"] [style*="color: #f1f5f9"],
+[data-theme="light"] [style*="color: #e2e8f0"],
+[data-theme="light"] [style*="color: #cbd5e1"],
+[data-theme="light"] [style*="color: #e5e7eb"],
+[data-theme="light"] [style*="color: #f3f4f6"],
+[data-theme="light"] [style*="color: #f0f0f5"],
+[data-theme="light"] [style*="color: rgba(255, 255, 255"],
+[data-theme="light"] [style*="color:rgba(255,255,255"] {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] [style*="color: #94a3b8"],
+[data-theme="light"] [style*="color: #64748b"],
+[data-theme="light"] .text-white-50,
+[data-theme="light"] .text-muted,
+[data-theme="light"] small.text-muted,
+[data-theme="light"] .text-dim,
+[data-theme="light"] .text-sub {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3,
+[data-theme="light"] h4, [data-theme="light"] h5, [data-theme="light"] h6,
+[data-theme="light"] .fw-bold, [data-theme="light"] strong, [data-theme="light"] b {
+  color: #0f172a !important;
+}
+
+/* ── 17. Cyber Timetable Component (Student, Faculty, HOD, Admin) in Light Theme ── */
+[data-theme="light"] .cyber-tt-container {
+  background: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] .cyber-top-strip {
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+[data-theme="light"] .cyber-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .cyber-view-toggle {
+  background: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+[data-theme="light"] .cyber-toggle-btn {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .cyber-toggle-btn.active {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35) !important;
+}
+[data-theme="light"] .cyber-time-hdr {
+  color: #b91c1c !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .cyber-day-hdr {
+  color: #475569 !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .cyber-day-hdr:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+[data-theme="light"] .cyber-day-hdr.glowing-active-day {
+  color: #15803d !important;
+  border-bottom: 3.5px solid #16a34a !important;
+  background: #f0fdf4 !important;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2) !important;
+}
+[data-theme="light"] .cyber-day-hdr.glowing-active-day::after {
+  background: #16a34a !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] .cyber-time-card {
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+[data-theme="light"] .cyber-time-val {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .cyber-slot-lbl {
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .cyber-class-card {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05) !important;
+}
+[data-theme="light"] .cyber-class-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.15) !important;
+}
+[data-theme="light"] .cyber-subj-name {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+[data-theme="light"] .cyber-fac-name {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .cyber-room-badge {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .cyber-empty-card {
+  background: #f8fafc !important;
+  border: 1.5px dashed #cbd5e1 !important;
+  color: #94a3b8 !important;
+}
+
+
+
+
+
+

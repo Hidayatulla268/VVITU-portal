@@ -11,6 +11,9 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const icon = document.getElementById('themeIcon');
   if (icon) icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+  try {
+    window.dispatchEvent(new CustomEvent('vvitThemeChanged', { detail: { theme } }));
+  } catch (e) {}
 }
 
 function toggleTheme() {

@@ -58,6 +58,7 @@ urlpatterns = [
     path('class-transfers/',         views.faculty_class_history, name='manage_class_transfers'),
     path('class-diary/',             views.class_diary_coverage,  name='class_diary_coverage'),
     path('syllabus/',                views.manage_subject_syllabus, name='manage_subject_syllabus'),
+    path('syllabus/<int:subject_id>/', views.manage_subject_syllabus, name='manage_subject_syllabus_subject'),
     path('exam-schedules/',          views.manage_exam_schedules,    name='manage_exam_schedules'),
     path('academic-calendar/',       views.academic_calendar,        name='academic_calendar'),
     path('academic-calendar/add/',   views.add_academic_calendar_event, name='add_academic_calendar_event'),
