@@ -23,7 +23,11 @@ urlpatterns = [
     path('secure-media/leave-doc/<int:leave_id>/', core_views_media.view_student_leave_document, name='view_student_leave_document'),
     path('secure-media/feedback-doc/<int:form_id>/', core_views_media.view_feedback_document, name='view_feedback_document'),
     path('academic-calendar/', student_views.academic_calendar, name='academic_calendar'),
+    path('overview/', core_views_media.portal_overview, name='portal_overview'),
+    path('features/', core_views_media.portal_overview, name='portal_features'),
 ]
+
+
 
 
 # Development static & media serving

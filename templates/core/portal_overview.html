@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VVITU Smart Portal — Scopes & Architecture Overview</title>
+  
+  <!-- SEO & Social Meta -->
+  <meta name="description" content="Comprehensive Architecture, Operational Scopes, and Module Capabilities of the VVITU University Platform. Compare traditional legacy ERPs with next-gen autonomous university systems.">
+  <meta name="keywords" content="VVITU, University Portal, Education ERP, Attendance Automation, Timetable Generator, Student Management System">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 & Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #070a13;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-card: rgba(255, 255, 255, 0.1);
+      --border-card-hover: rgba(14, 165, 233, 0.4);
+      --accent-crimson: #e11d48;
+      --accent-cyan: #0ea5e9;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --accent-indigo: #6366f1;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --glow-cyan: 0 0 25px rgba(14, 165, 233, 0.35);
+      --glow-crimson: 0 0 25px rgba(225, 29, 72, 0.35);
+      --glow-purple: 0 0 25px rgba(139, 92, 246, 0.35);
+      --font-title: 'Space Grotesk', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Ambient Canvas Background */
+    #particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .bg-radial-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: -2;
+      pointer-events: none;
+      background: radial-gradient(circle at 15% 20%, rgba(225, 29, 72, 0.12) 0%, transparent 45%),
+                  radial-gradient(circle at 85% 25%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                  #070a13;
+    }
+
+    /* Top Sticky Navigation */
+    .showcase-nav {
+      background: rgba(7, 10, 19, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-card);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 14px 0;
+      transition: all 0.3s ease;
+    }
+    .brand-title {
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    .nav-link-custom {
+      color: var(--text-sub);
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Hero Section */
+    .hero-section {
+      padding: 85px 0 60px;
+      text-align: center;
+      position: relative;
+    }
+    .badge-pill-neon {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 22px;
+      border-radius: 30px;
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      color: #38bdf8;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 25px;
+      box-shadow: var(--glow-cyan);
+      animation: pulseGlow 3s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); }
+      to { box-shadow: 0 0 30px rgba(14, 165, 233, 0.5); }
+    }
+    .hero-title {
+      font-family: var(--font-title);
+      font-size: 3.4rem;
+      font-weight: 800;
+      letter-spacing: -1.2px;
+      line-height: 1.15;
+      margin-bottom: 22px;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 45%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      color: var(--text-sub);
+      font-size: 1.25rem;
+      max-width: 880px;
+      margin: 0 auto 35px;
+      font-weight: 400;
+    }
+
+    /* KPI Highlights Grid */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 40px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      backdrop-filter: blur(14px);
+      padding: 24px 20px;
+      border-radius: 18px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .kpi-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(14, 165, 233, 0.45);
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.5);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--accent-cyan);
+    }
+    .kpi-num {
+      font-family: var(--font-title);
+      font-size: 2.3rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .kpi-label {
+      color: var(--text-sub);
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+
+    /* Section Headers */
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent-crimson);
+      font-weight: 700;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .section-main-heading {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    /* Scope Tabs Navigation */
+    .scope-tab-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 35px;
+    }
+    .scope-tab-btn {
+      padding: 13px 24px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-card);
+      color: var(--text-sub);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .scope-tab-btn:hover {
+      background: rgba(30, 41, 59, 0.85);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+    .scope-tab-btn.active {
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.3) 0%, rgba(14, 165, 233, 0.3) 100%);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 25px rgba(14, 165, 233, 0.35);
+    }
+
+    /* Auto Tour Bar */
+    .tour-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .tour-btn {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-card);
+      color: #38bdf8;
+      border-radius: 30px;
+      padding: 6px 18px;
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .tour-btn:hover {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+    .tour-progress-bar {
+      width: 140px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      display: none;
+    }
+    .tour-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--accent-cyan);
+      transition: width 0.1s linear;
+    }
+
+    /* Scope Card */
+    .scope-detail-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 22px;
+      padding: 40px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      animation: scopeFade 0.4s ease;
+    }
+    @keyframes scopeFade {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Feature Grid */
+    .feature-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 22px;
+      margin-top: 30px;
+    }
+    .feature-box {
+      background: rgba(10, 15, 29, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .feature-box:hover {
+      border-color: rgba(14, 165, 233, 0.4);
+      transform: translateY(-4px);
+      background: rgba(15, 23, 42, 0.95);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    }
+    .feature-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+    .feature-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      line-height: 1.55;
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+      padding: 60px 0;
+    }
+    .score-meter-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 35px;
+    }
+    .score-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .score-badge {
+      width: 75px;
+      height: 75px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .comparison-table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+    }
+    .table-compare {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+    .table-compare th, .table-compare td {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      vertical-align: top;
+    }
+    .table-compare thead th {
+      background: rgba(10, 15, 29, 0.95);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    .col-trad {
+      color: #f87171 !important;
+      background: rgba(239, 68, 68, 0.03);
+    }
+    .col-vvitu {
+      color: #38bdf8 !important;
+      background: rgba(14, 165, 233, 0.04);
+      font-weight: 500;
+    }
+    .pill-bad {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .pill-good {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    /* Architecture Flow Grid */
+    .arch-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 30px;
+    }
+    .arch-step-box {
+      background: rgba(10, 15, 29, 0.8);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 22px 18px;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .arch-step-box:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+    .arch-step-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .arch-step-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: #fff;
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+    .arch-step-desc {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      line-height: 1.45;
+    }
+
+    /* Footer */
+    .cta-footer {
+      background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.95) 100%);
+      border-top: 1px solid var(--border-card);
+      padding: 70px 0 45px;
+      text-align: center;
+      margin-top: 80px;
+    }
+
+    @media (max-width: 768px) {
+      .hero-title { font-size: 2.3rem; }
+      .hero-sub { font-size: 1.05rem; }
+      .scope-detail-card { padding: 24px; }
+      .score-meter-wrap { grid-template-columns: 1fr; }
+      .table-compare th, .table-compare td { padding: 14px 16px; font-size: 0.88rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Canvas & Glow Overlays -->
+  <div class="bg-radial-overlay"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Navigation Bar -->
+  <nav class="showcase-nav">
+    <div class="container d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #e11d48, #0ea5e9); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(225, 29, 72, 0.4);">
+          <i class="fas fa-graduation-cap text-white fs-5"></i>
+        </div>
+        <div>
+          <div class="brand-title">VVITU Smart University Portal</div>
+          <div style="font-size: 0.72rem; color: var(--text-sub); font-family: var(--font-mono);">Autonomous Operating System & Platform Architecture</div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="#scopes" class="nav-link-custom d-none d-md-inline-block">Operational Scopes</a>
+        <a href="#comparison" class="nav-link-custom d-none d-md-inline-block">Legacy ERP vs VVITU</a>
+        <a href="#architecture" class="nav-link-custom d-none d-md-inline-block">Cloud Architecture</a>
+        <a href="{% url 'accounts:login' %}" class="btn btn-sm btn-primary px-3 shadow" style="border-radius: 10px; font-weight: 600;">
+          <i class="fas fa-sign-in-alt me-1"></i> Launch Portal
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section container">
+    <div class="badge-pill-neon">
+      <i class="fas fa-bolt"></i> Next-Gen Academic Operating System
+    </div>
+    <h1 class="hero-title">
+      Unified University Intelligence &<br>Autonomous Governance Platform
+    </h1>
+    <p class="hero-sub">
+      A high-performance, real-time academic ERP engineered specifically for <strong>Vasireddy Venkatadri International Technological University</strong>. Eliminating paperwork with automated clash-free timetables, instant absentee alerts, AI document parsing, and topic-by-topic syllabus synchronization.
+    </p>
+
+    <!-- Auto Play Tour Switcher -->
+    <div class="tour-controls">
+      <button class="tour-btn" id="tourToggleBtn" onclick="toggleAutoTour()">
+        <i class="fas fa-play" id="tourIcon"></i> <span id="tourText">Start Auto Tour</span>
+      </button>
+      <div class="tour-progress-bar" id="tourProgressBar">
+        <div class="tour-progress-fill" id="tourProgressFill"></div>
+      </div>
+    </div>
+
+    <!-- KPI Matrix Highlights -->
+    <div class="kpi-row">
+      <div class="kpi-card" style="border-left-color: #38bdf8;">
+        <div class="kpi-num" style="color: #38bdf8;" data-target="5">5</div>
+        <div class="kpi-label">Scoped Role Portals (Admin, HOD, Faculty, Student, DEO)</div>
+      </div>
+      <div class="kpi-card" style="border-left-color: #fb7185;">
+        <div class="kpi-num" style="color: #fb7185;" data-target="32">32+</div>
+        <div class="kpi-label">Core Modules (Timetables, Diaries, Syllabi, Proxies, Marks, Leaves)</div>
+      </div>
+      <div class="kpi-card" style="border-left-color: #34d399;">
+        <div class="kpi-num" style="color: #34d399;" data-target="100">&lt;100ms</div>
+        <div class="kpi-label">Response Time with WhiteNoise Asset Compression & Caching</div>
+      </div>
+      <div class="kpi-card" style="border-left-color: #c084fc;">
+        <div class="kpi-num" style="color: #c084fc;">Zero-Trust</div>
+        <div class="kpi-label">WAF Payload Sanitizer & Multi-Factor Role Verification</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCOPES SECTION -->
+  <section id="scopes" class="container py-5">
+    <div class="section-title-wrap">
+      <span class="section-tag">Role Architecture</span>
+      <h2 class="section-main-heading">Explore Every Operational Scope</h2>
+      <p class="text-muted" style="max-width: 650px; margin: 8px auto 0;">
+        Each role inside VVITU possesses a dedicated workspace with granular permissions, purpose-built workflows, and zero unauthorized data leakage.
+      </p>
+    </div>
+
+    <!-- Scope Switcher Buttons -->
+    <div class="scope-tab-buttons">
+      <button class="scope-tab-btn active" data-scope="admin" onclick="switchScope('admin', this)">
+        <i class="fas fa-crown text-warning"></i> Admin Command Center
+      </button>
+      <button class="scope-tab-btn" data-scope="hod" onclick="switchScope('hod', this)">
+        <i class="fas fa-university text-info"></i> HOD Department Suite
+      </button>
+      <button class="scope-tab-btn" data-scope="faculty" onclick="switchScope('faculty', this)">
+        <i class="fas fa-chalkboard-teacher text-success"></i> Faculty Workspace
+      </button>
+      <button class="scope-tab-btn" data-scope="student" onclick="switchScope('student', this)">
+        <i class="fas fa-user-graduate text-danger"></i> Student Hub
+      </button>
+      <button class="scope-tab-btn" data-scope="deo" onclick="switchScope('deo', this)">
+        <i class="fas fa-keyboard text-primary"></i> DEO Center
+      </button>
+      <button class="scope-tab-btn" data-scope="ai" onclick="switchScope('ai', this)">
+        <i class="fas fa-robot text-purple" style="color: #c084fc;"></i> AI & OCR Engine
+      </button>
+      <button class="scope-tab-btn" data-scope="security" onclick="switchScope('security', this)">
+        <i class="fas fa-shield-halved text-success"></i> Security & Cloud
+      </button>
+    </div>
+
+    <!-- Scope Content Display Container -->
+    <div id="scopeContainer">
+
+      <!-- 1. ADMIN PANEL -->
+      <div id="scope-admin" class="scope-detail-card">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(245, 158, 11, 0.3);">
+              <i class="fas fa-crown"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">University Admin Command Center</h3>
+              <span class="text-muted small">Global institutional governance, curriculum masters, and security oversight</span>
+            </div>
+          </div>
+          <span class="badge bg-warning text-dark px-3 py-2 fw-bold">Executive Authority</span>
+        </div>
+
+        <p class="text-sub">
+          The Admin portal empowers university leadership with complete top-down control over academic schedules, student enrollments, faculty deployments, financial overrides, and database operations.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="feature-title">Master Timetable Engine</div>
+            <div class="feature-desc">Interactive 6-day timetable matrix with real-time faculty double-booking conflict detection and instant official PDF generation.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+              <i class="fas fa-users-cog"></i>
+            </div>
+            <div class="feature-title">Faculty & Student Lifecycle</div>
+            <div class="feature-desc">Complete CRUD directory with bulk CSV onboarding, class teacher assignments, counsellor mappings, and soft-delete protections.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="feature-title">Academic Calendar CRUD</div>
+            <div class="feature-desc">Full authority to schedule, edit, or remove university holidays, examination milestones, tech fests, and circular deadlines.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
+              <i class="fas fa-database"></i>
+            </div>
+            <div class="feature-title">1-Click Automated Backups</div>
+            <div class="feature-desc">On-demand SQL & PDF backups with point-in-time downloadable archives and instant database restoration safeguards.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+              <i class="fas fa-award"></i>
+            </div>
+            <div class="feature-title">Achievement Ratification</div>
+            <div class="feature-desc">Verification hub for student hackathon wins, research papers, certifications, and faculty awards with portfolio badges.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
+              <i class="fas fa-paper-plane"></i>
+            </div>
+            <div class="feature-title">Result Publishing Engine</div>
+            <div class="feature-desc">Bulk exam score upload, grade calculation (SGPA/CGPA), and instantaneous multi-channel release (Web, Email, SMS).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. HOD PANEL -->
+      <div id="scope-hod" class="scope-detail-card d-none">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(14, 165, 233, 0.3);">
+              <i class="fas fa-university"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">Head of Department (HOD) Operations Suite</h3>
+              <span class="text-muted small">Branch-level academic execution, lecture auditing, proxy approvals, and syllabus tracking</span>
+            </div>
+          </div>
+          <span class="badge bg-info text-dark px-3 py-2 fw-bold">Department Governance</span>
+        </div>
+
+        <p class="text-sub">
+          The HOD suite bridges institutional policy with daily classroom execution, offering granular oversight into lecture conduction, teacher substitutions, topic completion, and digital feedback analytics.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="feature-title">Class Conduction Audits</div>
+            <div class="feature-desc">Real-time inspection of daily lecture logs, verifying period-by-period faculty attendance and student presence.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+              <i class="fas fa-list-check"></i>
+            </div>
+            <div class="feature-title">Syllabus Topic Plans</div>
+            <div class="feature-desc">Topic-by-topic curriculum plans across all 5 units with scheduled dates versus actual delivery tracking.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="feature-title">Proxy & Transfer Approvals</div>
+            <div class="feature-desc">Approve or reject peer-to-peer faculty class exchanges with automated audit trails and timetable reassignment.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
+              <i class="fas fa-poll-h"></i>
+            </div>
+            <div class="feature-title">Feedback Form Creator</div>
+            <div class="feature-desc">Create custom evaluation surveys or upload paper form photos to parse questions with Gemini Vision AI.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
+              <i class="fas fa-chalkboard-user"></i>
+            </div>
+            <div class="feature-title">Integrated Teaching Panel</div>
+            <div class="feature-desc">Complete faculty workstation for HOD's own teaching subjects (My Timetable, Attendance, Diary, Marks).</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
+              <i class="fas fa-calendar-minus"></i>
+            </div>
+            <div class="feature-title">Faculty Leave Management</div>
+            <div class="feature-desc">Approve casual/medical leave requests while verifying that class substitutions have been secured.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. FACULTY PANEL -->
+      <div id="scope-faculty" class="scope-detail-card d-none">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">Faculty & Educator Workspace</h3>
+              <span class="text-muted small">Daily classroom attendance, lesson diary recording, mentee counselling, and proxy transfers</span>
+            </div>
+          </div>
+          <span class="badge bg-success text-dark px-3 py-2 fw-bold">Classroom Operations</span>
+        </div>
+
+        <p class="text-sub">
+          A friction-free educator console designed to reduce administrative overhead from hours to seconds with 1-click biometric attendance marking, automated parent notifications, and instant mentee report cards.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+              <i class="fas fa-user-check"></i>
+            </div>
+            <div class="feature-title">Radio-Button Attendance</div>
+            <div class="feature-desc">Superfast present/absent/late toggles with automatic absent SMS triggers sent to parents' registered mobiles.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+              <i class="fas fa-book-reader"></i>
+            </div>
+            <div class="feature-title">Daily Class Diary</div>
+            <div class="feature-desc">Record topics delivered, pedagogical methodology, teaching aids used, and class duration for permanent audit.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <div class="feature-title">Syllabus Unit Tracker</div>
+            <div class="feature-desc">Interactive topic checklist syncing directly with class diary logs to show percentage progress across Units 1 to 5.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="feature-title">Peer-to-Peer Class Transfers</div>
+            <div class="feature-desc">Hand over scheduled lectures to available colleagues during emergencies with built-in free-slot clash detection.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
+              <i class="fas fa-user-friends"></i>
+            </div>
+            <div class="feature-title">Mentee Counselling Dossier</div>
+            <div class="feature-desc">Record session remarks, parent contacts, backlogs, and generate official signed VVIT Counselling PDF reports in 1 click.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
+              <i class="fas fa-file-signature"></i>
+            </div>
+            <div class="feature-title">Internal Marks Entry</div>
+            <div class="feature-desc">Clean score input for Mid-1, Mid-2, assignments, and lab internals with automatic weighted totals and validation.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. STUDENT PANEL -->
+      <div id="scope-student" class="scope-detail-card d-none">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(225, 29, 72, 0.15); color: #e11d48; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(225, 29, 72, 0.3);">
+              <i class="fas fa-user-graduate"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">Student Empowerment Portal</h3>
+              <span class="text-muted small">Real-time attendance health, interactive weekly timetable, lecture logs, and grade card downloads</span>
+            </div>
+          </div>
+          <span class="badge bg-danger text-light px-3 py-2 fw-bold">Student Hub</span>
+        </div>
+
+        <p class="text-sub">
+          A transparent, mobile-responsive dashboard providing students with real-time access to their attendance percentage, daily lesson coverage, exam timetables, semester marks, and university feedback.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
+              <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="feature-title">Live Attendance Gauge</div>
+            <div class="feature-desc">Real-time percentage calculator with color-coded safety indicators (≥75% Green, 65-74% Yellow Condonation, &lt;65% Red Detention).</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+              <i class="fas fa-calendar-week"></i>
+            </div>
+            <div class="feature-title">Interactive 6-Day Timetable</div>
+            <div class="feature-desc">Active period glow highlighting the ongoing lecture in real time, room numbers, faculty names, and downloadable PDF schedules.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+              <i class="fas fa-book-open-reader"></i>
+            </div>
+            <div class="feature-title">Lecture Diary Transparency</div>
+            <div class="feature-desc">Students can view exactly what topics were taught on any given date across all subjects, ensuring nothing is missed.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+              <i class="fas fa-award"></i>
+            </div>
+            <div class="feature-title">Semester Results & SGPA/CGPA</div>
+            <div class="feature-desc">Instant score breakdown for Mid and End-semester exams with automatic SGPA calculation and downloadable Grade Cards.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
+              <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="feature-title">Question Paper Archive</div>
+            <div class="feature-desc">Instant access to past university examination papers categorized by regulation (R23, R20, R19, R16) and branch.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(20, 184, 166, 0.15); color: #2dd4bf;">
+              <i class="fas fa-pen-fancy"></i>
+            </div>
+            <div class="feature-title">Leave & OD Applications</div>
+            <div class="feature-desc">Submit online medical leave or On-Duty event requests with document proofs and track approval status in real time.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. DEO PANEL -->
+      <div id="scope-deo" class="scope-detail-card d-none">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(59, 130, 246, 0.3);">
+              <i class="fas fa-keyboard"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">Data Entry Operator (DEO) Operations</h3>
+              <span class="text-muted small">Branch-scoped student record maintenance, fee clearance, and 2-day attendance modifications</span>
+            </div>
+          </div>
+          <span class="badge bg-primary text-light px-3 py-2 fw-bold">Data Operations</span>
+        </div>
+
+        <p class="text-sub">
+          The DEO workstation provides focused, branch-isolated data entry capabilities with built-in temporal security constraints preventing unauthorized historical data tampering.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="feature-title">Branch Student Admissions</div>
+            <div class="feature-desc">Enroll and edit student records strictly within the assigned engineering department with roll number verification.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+              <i class="fas fa-clock-rotate-left"></i>
+            </div>
+            <div class="feature-title">Strict 2-Day Attendance Window</div>
+            <div class="feature-desc">Security rule enforcing that DEOs can only correct attendance records within 48 hours of session conduction.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+              <i class="fas fa-receipt"></i>
+            </div>
+            <div class="feature-title">Student Fee Management</div>
+            <div class="feature-desc">Track tuition, transport, and hostel fee payments, outstanding dues, receipts, and exam clearance statuses.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. AI & OCR -->
+      <div id="scope-ai" class="scope-detail-card d-none">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(168, 85, 247, 0.15); color: #a855f7; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(168, 85, 247, 0.3);">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">Multimodal AI Intelligence & Document OCR</h3>
+              <span class="text-muted small">Gemini Vision AI, PDF table extraction, and VBot conversational academic assistant</span>
+            </div>
+          </div>
+          <span class="badge text-light px-3 py-2 fw-bold" style="background: #9333ea;">AI Augmented</span>
+        </div>
+
+        <p class="text-sub">
+          Cutting-edge computer vision and generative AI models transform physical classroom artifacts (paper surveys, printed timetables) into structured digital records in milliseconds.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">
+              <i class="fas fa-camera-retro"></i>
+            </div>
+            <div class="feature-title">Gemini Vision Form Ingestion</div>
+            <div class="feature-desc">Take a photo of any physical paper feedback questionnaire — AI instantly parses the title, evaluation parameters, and questions.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+              <i class="fas fa-file-lines"></i>
+            </div>
+            <div class="feature-title">PDF Table Parsing Engine</div>
+            <div class="feature-desc">Extracts complex tabular evaluation grids and timetable layouts directly from PDF files using `pdfplumber` and `pypdf`.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+              <i class="fas fa-comments"></i>
+            </div>
+            <div class="feature-title">VBot Academic Assistant</div>
+            <div class="feature-desc">24/7 intelligent conversational bot answering student queries about attendance criteria, timetable timings, and regulations.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. SECURITY & CLOUD -->
+      <div id="scope-security" class="scope-detail-card d-none">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom pb-3 mb-3 border-secondary">
+          <div class="d-flex align-items-center gap-3">
+            <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <i class="fas fa-shield-halved"></i>
+            </div>
+            <div>
+              <h3 class="mb-0 fw-bold text-light">Enterprise Security & Cloud Architecture</h3>
+              <span class="text-muted small">WAF Sanitizer, Brute-Force Rate Limiter, Scoped RBAC, and Render Cloud Deployment</span>
+            </div>
+          </div>
+          <span class="badge bg-success text-dark px-3 py-2 fw-bold">Military-Grade Defense</span>
+        </div>
+
+        <p class="text-sub">
+          Built with a multi-layered defense-in-depth security model protecting sensitive institutional data, exam results, and parent contact information against cyber threats.
+        </p>
+
+        <div class="feature-grid-3">
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(225, 29, 72, 0.15); color: #fb7185;">
+              <i class="fas fa-shield-virus"></i>
+            </div>
+            <div class="feature-title">Global WAF & Payload Sanitizer</div>
+            <div class="feature-desc">Inspects all GET/POST requests, blocking path traversals, SQL injection fragments, and script injection payloads.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+              <i class="fas fa-user-lock"></i>
+            </div>
+            <div class="feature-title">Login Rate Limiter</div>
+            <div class="feature-desc">Protects authentication endpoints by locking out brute-force attacks by IP and username after successive failures.</div>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon-wrap" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+              <i class="fas fa-cloud"></i>
+            </div>
+            <div class="feature-title">Cloud-Native (Render / Postgres)</div>
+            <div class="feature-desc">Deployed with WhiteNoise static asset compression, SSL enforcement, and automated database backups.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- COMPARISON SECTION: Traditional ERP vs VVITU -->
+  <section id="comparison" class="comparison-section container">
+    <div class="section-title-wrap">
+      <span class="section-tag">Competitive Advantage</span>
+      <h2 class="section-main-heading">Traditional Legacy ERP vs. VVITU Smart Portal</h2>
+      <p class="text-muted" style="max-width: 700px; margin: 8px auto 0;">
+        Why old monolithic university software causes bottlenecks and how VVITU's modern system solves everyday campus friction.
+      </p>
+    </div>
+
+    <!-- Comparative Health Scores -->
+    <div class="score-meter-wrap">
+      <div class="score-card" style="border-left: 4px solid #ef4444;">
+        <div class="score-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 2px solid rgba(239, 68, 68, 0.4);">
+          38%
+        </div>
+        <div>
+          <h5 class="fw-bold text-danger mb-1"><i class="fas fa-times-circle me-1"></i> Traditional Legacy ERP</h5>
+          <p class="text-muted small mb-0">High paper consumption, delayed parent alerts, manual conflict resolution, and frustrating 2005-era UI.</p>
+        </div>
+      </div>
+
+      <div class="score-card" style="border-left: 4px solid #10b981;">
+        <div class="score-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 2px solid rgba(16, 185, 129, 0.4);">
+          99%
+        </div>
+        <div>
+          <h5 class="fw-bold text-success mb-1"><i class="fas fa-check-circle me-1"></i> VVITU Smart Portal</h5>
+          <p class="text-muted small mb-0">Zero-paper cloud workflow, 1-click attendance + instant SMS, AI form parsing, and automated clash-free timetables.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed 8-Point Comparison Matrix -->
+    <div class="comparison-table-wrap">
+      <div class="table-responsive">
+        <table class="table-compare">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Capability / Dimension</th>
+              <th style="width: 37%;" class="col-trad"><i class="fas fa-times-circle me-1"></i> Traditional Legacy ERP</th>
+              <th style="width: 38%;" class="col-vvitu"><i class="fas fa-check-circle me-1"></i> VVITU Smart Portal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-light">1. Architecture & Speed</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Slow &amp; Outdated</span><br>
+                Clunky monolithic desktop apps or slow legacy PHP. Frequent crashes during simultaneous result releases.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> Sub-100ms Cloud-Native</span><br>
+                Modern Django 5 + PostgreSQL deployed on Render cloud with WhiteNoise compression and caching.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">2. Attendance &amp; Notifications</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Paper / Delayed</span><br>
+                Marked on paper sheets and manually entered days later. Parents only notified at semester end.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> 1-Click + Instant SMS</span><br>
+                1-click radio buttons on phone/laptop with automatic absentee SMS sent to parents immediately.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">3. Syllabus &amp; Lecture Tracking</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Zero Visibility</span><br>
+                No real-time tracking of what was taught in class. Syllabi completed haphazardly at the end.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> Daily Diary + Unit Sync</span><br>
+                Every lecture records delivered topics in the Class Diary, syncing with Units 1-5 progress checklists.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">4. Timetables &amp; Clash Resolution</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Manual &amp; Error-Prone</span><br>
+                Static Word/Excel files printed on notice boards with frequent faculty double-booking conflicts.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> Automated Clash Detection</span><br>
+                Interactive 6-day timetable matrix with real-time clash alerts and official 1-click PDF generator.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">5. Class Transfers &amp; Proxies</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Paper Slips &amp; Confusion</span><br>
+                Teachers pass physical paper slips for substitutions. HODs have no record of proxy conduction.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> P2P Exchange with Audit</span><br>
+                Online request &amp; accept workflow with free faculty discovery and HOD approval audit trail.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">6. Student Feedback Forms</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Paper Waste &amp; Manual Count</span><br>
+                Printing thousands of physical forms, distributing in classes, and manually calculating averages.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> AI Vision Photo Ingestion</span><br>
+                Upload a photo of any physical form — Gemini AI parses questions into an instant online survey.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">7. Mentee Counselling Dossier</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> Lost Physical Folders</span><br>
+                Handwritten notes in physical files prone to loss during NAAC/NBA accreditation inspections.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> 1-Click Accredited PDF</span><br>
+                Complete student records, backlogs, parent remarks, and official signed PDF generation in 1 click.
+              </td>
+            </tr>
+
+            <tr>
+              <td class="fw-bold text-light">8. UI/UX Design Aesthetics</td>
+              <td class="col-trad">
+                <span class="pill-bad"><i class="fas fa-times"></i> 2005 Grey Forms</span><br>
+                Cluttered, un-responsive, unintuitive interfaces that frustrate faculty and students alike.
+              </td>
+              <td class="col-vvitu">
+                <span class="pill-good"><i class="fas fa-check"></i> Cyber-Neon Glassmorphic</span><br>
+                Ultra-modern dark theme, micro-animations, mobile responsive, and intuitive command docks.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE PIPELINE SECTION -->
+  <section id="architecture" class="container py-5">
+    <div class="section-title-wrap">
+      <span class="section-tag">System Architecture</span>
+      <h2 class="section-main-heading">End-to-End Operational Pipeline</h2>
+      <p class="text-muted" style="max-width: 600px; margin: 8px auto 0;">
+        How requests traverse from client devices through enterprise security layers down to PostgreSQL.
+      </p>
+    </div>
+
+    <div class="scope-detail-card p-4">
+      <div class="arch-flow-grid">
+        <div class="arch-step-box">
+          <div class="arch-step-num">STEP 01</div>
+          <div class="arch-step-title"><i class="fas fa-laptop-code me-1" style="color: #38bdf8;"></i> Client Devices</div>
+          <div class="arch-step-desc">Students, Faculty &amp; HODs access via HTTPS on phones, tablets, or laptops.</div>
+        </div>
+
+        <div class="arch-step-box">
+          <div class="arch-step-num">STEP 02</div>
+          <div class="arch-step-title"><i class="fas fa-shield-halved text-danger me-1"></i> WAF &amp; Rate Limiter</div>
+          <div class="arch-step-desc">Inspects payloads for malicious patterns, applies login rate limits, and injects HSTS.</div>
+        </div>
+
+        <div class="arch-step-box">
+          <div class="arch-step-num">STEP 03</div>
+          <div class="arch-step-title"><i class="fas fa-cubes text-warning me-1"></i> WhiteNoise Static</div>
+          <div class="arch-step-desc">Serves compressed CSS, JS, and font assets directly with Brotli/Gzip caching.</div>
+        </div>
+
+        <div class="arch-step-box">
+          <div class="arch-step-num">STEP 04</div>
+          <div class="arch-step-title"><i class="fas fa-lock text-success me-1"></i> Scoped RBAC Router</div>
+          <div class="arch-step-desc">Enforces role-based permissions (Admin, HOD, Faculty, Student, DEO).</div>
+        </div>
+
+        <div class="arch-step-box">
+          <div class="arch-step-num">STEP 05</div>
+          <div class="arch-step-title"><i class="fas fa-database text-purple me-1" style="color: #c084fc;"></i> PostgreSQL Storage</div>
+          <div class="arch-step-desc">Persistent relational database with connection pooling and automated daily backups.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Footer -->
+  <footer class="cta-footer">
+    <div class="container">
+      <h2 style="font-family: var(--font-title); font-weight: 800; font-size: 2.5rem; color: #fff; margin-bottom: 16px;">
+        Experience the Future of Academic Management
+      </h2>
+      <p class="text-muted mb-4" style="max-width: 620px; margin: 0 auto 28px;">
+        Ready to explore your dashboard? Sign in with your institutional credentials to access your personalized workspace.
+      </p>
+      <a href="{% url 'accounts:login' %}" class="btn btn-lg btn-primary px-5 py-3 shadow" style="border-radius: 14px; font-weight: 700; font-family: var(--font-title); letter-spacing: 0.5px;">
+        <i class="fas fa-arrow-right me-2"></i> Launch VVITU Portal Login
+      </a>
+      <div class="text-muted small mt-5">
+        &copy; 2026 Vasireddy Venkatadri International Technological University. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // --- 1. Scope Switching Logic ---
+    const scopesList = ['admin', 'hod', 'faculty', 'student', 'deo', 'ai', 'security'];
+    let currentScopeIndex = 0;
+    let tourTimer = null;
+    let tourProgressInterval = null;
+    let isTourRunning = false;
+
+    function switchScope(scopeId, btnElement) {
+      // 1. Update buttons
+      document.querySelectorAll('.scope-tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (btnElement) {
+        btnElement.classList.add('active');
+      } else {
+        const matchingBtn = document.querySelector(`.scope-tab-btn[data-scope="${scopeId}"]`);
+        if (matchingBtn) matchingBtn.classList.add('active');
+      }
+
+      // 2. Hide all scope panels
+      scopesList.forEach(s => {
+        const el = document.getElementById('scope-' + s);
+        if (el) el.classList.add('d-none');
+      });
+
+      // 3. Show target scope panel
+      const targetEl = document.getElementById('scope-' + scopeId);
+      if (targetEl) {
+        targetEl.classList.remove('d-none');
+      }
+
+      currentScopeIndex = scopesList.indexOf(scopeId);
+    }
+
+    // --- 2. Auto-Play Tour ---
+    function toggleAutoTour() {
+      if (isTourRunning) {
+        stopAutoTour();
+      } else {
+        startAutoTour();
+      }
+    }
+
+    function startAutoTour() {
+      isTourRunning = true;
+      document.getElementById('tourText').innerText = 'Pause Tour';
+      document.getElementById('tourIcon').className = 'fas fa-pause';
+      document.getElementById('tourProgressBar').style.display = 'block';
+
+      let progress = 0;
+      const stepDuration = 5000; // 5s per slide
+      const intervalMs = 50;
+      const progressIncrement = (intervalMs / stepDuration) * 100;
+
+      tourProgressInterval = setInterval(() => {
+        progress += progressIncrement;
+        document.getElementById('tourProgressFill').style.width = progress + '%';
+
+        if (progress >= 100) {
+          progress = 0;
+          currentScopeIndex = (currentScopeIndex + 1) % scopesList.length;
+          switchScope(scopesList[currentScopeIndex]);
+        }
+      }, intervalMs);
+    }
+
+    function stopAutoTour() {
+      isTourRunning = false;
+      document.getElementById('tourText').innerText = 'Resume Tour';
+      document.getElementById('tourIcon').className = 'fas fa-play';
+      clearInterval(tourProgressInterval);
+      document.getElementById('tourProgressFill').style.width = '0%';
+      document.getElementById('tourProgressBar').style.display = 'none';
+    }
+
+    // --- 3. Interactive Particle Canvas Animation ---
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const numParticles = 65;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.7;
+        this.vy = (Math.random() - 0.5) * 0.7;
+        this.radius = Math.random() * 2 + 1;
+        this.color = Math.random() > 0.5 ? 'rgba(14, 165, 233, ' : 'rgba(225, 29, 72, ';
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color + '0.6)';
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < numParticles; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 130) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(14, 165, 233, ${0.2 * (1 - dist / 130)})`;
+            ctx.lineWidth = 0.8;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+  </script>
+</body>
+</html>

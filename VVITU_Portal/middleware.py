@@ -19,7 +19,10 @@ PUBLIC_PREFIXES = [
     '/chat/',                   # accessible to all authenticated roles
     '/academic-calendar/',      # accessible to all authenticated roles
     '/student/academic-calendar/', # accessible to all authenticated roles
+    '/overview/',               # Public Interactive Showcase & Architecture Tour
+    '/features/',               # Public Features & ERP Comparison
 ]
+
 
 
 ROLE_URL_MAP = {

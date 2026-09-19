@@ -102,3 +102,12 @@ def view_feedback_document(request, form_id):
     response['X-Content-Type-Options'] = 'nosniff'
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(form_obj.uploaded_document.name)}"'
     return response
+
+
+def portal_overview(request):
+    """
+    Public interactive animated overview of all portal scopes, capabilities, and comparison with legacy ERPs.
+    """
+    from django.shortcuts import render
+    return render(request, 'core/portal_overview.html')
+
