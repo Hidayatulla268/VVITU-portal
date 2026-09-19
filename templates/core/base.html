@@ -1050,47 +1050,49 @@
         </div>
       </div>
 
-      {% if faculty_obj %}
-      <!-- HOD: My Teaching Hub -->
-      <div class="nav-section-group" data-group="hod-teaching-hub">
-        <button class="nav-section-header" type="button" aria-expanded="false">
-          <span class="nav-section-title"><i class="fas fa-chalkboard-user"></i><span>My Teaching Hub</span></span>
+      <!-- HOD: My Teaching Panel (Faculty Duties) -->
+      <div class="nav-section-group open" data-group="hod-teaching-hub">
+        <button class="nav-section-header" type="button" aria-expanded="true">
+          <span class="nav-section-title"><i class="fas fa-chalkboard-user"></i><span>My Teaching Panel</span></span>
           <span class="nav-section-meta">
-            <span class="section-count-badge">9</span>
+            <span class="section-count-badge">10</span>
             <i class="fas fa-chevron-right chevron-icon"></i>
           </span>
         </button>
         <div class="nav-section-items">
-          <a href="{% url 'faculty:dashboard' %}" class="nav-link" data-nav-title="Faculty Dashboard">
-            <i class="fas fa-tachometer-alt nav-icon"></i><span>Faculty Dashboard</span>
+          <a href="{% url 'faculty:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Faculty Teaching Dashboard">
+            <i class="fas fa-chalkboard-teacher nav-icon text-accent"></i><span>Teaching Dashboard</span>
           </a>
-          <a href="{% url 'faculty:my_timetable' %}" class="nav-link" data-nav-title="My Timetable">
+          <a href="{% url 'faculty:my_timetable' %}" class="nav-link {% if 'timetable' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Teaching Timetable">
             <i class="fas fa-calendar-alt nav-icon text-warning"></i><span>My Timetable</span>
           </a>
-          <a href="{% url 'faculty:mark_attendance' %}" class="nav-link" data-nav-title="Mark Attendance">
+          <a href="{% url 'faculty:mark_attendance' %}" class="nav-link {% if 'mark_attendance' in request.resolver_match.url_name %}active{% endif %}" data-nav-title="Mark Class Attendance">
             <i class="fas fa-user-check nav-icon"></i><span>Mark Attendance</span>
           </a>
-          <a href="{% url 'faculty:class_diary' %}" class="nav-link" data-nav-title="Class Diary">
-            <i class="fas fa-book-reader nav-icon"></i><span>Class Diary</span>
+          <a href="{% url 'faculty:class_diary' %}" class="nav-link {% if 'class_diary' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Class Diary">
+            <i class="fas fa-book-reader nav-icon"></i><span>Class Diary (Lessons)</span>
           </a>
-          <a href="{% url 'faculty:upload_marks' %}" class="nav-link" data-nav-title="Enter Internal Marks">
+          <a href="{% url 'faculty:my_syllabus_tracker' %}" class="nav-link {% if 'syllabus' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Syllabus Tracker">
+            <i class="fas fa-tasks nav-icon"></i><span>My Syllabus Tracker</span>
+          </a>
+          <a href="{% url 'faculty:upload_marks' %}" class="nav-link {% if 'upload_marks' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Enter Internal Marks">
             <i class="fas fa-file-signature nav-icon"></i><span>Enter Internal Marks</span>
           </a>
-          <a href="{% url 'faculty:counselled_students' %}" class="nav-link" data-nav-title="My Mentees">
-            <i class="fas fa-users-viewfinder nav-icon"></i><span>My Mentees</span>
+          <a href="{% url 'faculty:counselled_students' %}" class="nav-link {% if 'counsel' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Mentees & Counselling">
+            <i class="fas fa-users-viewfinder nav-icon"></i><span>My Mentees & Counselling</span>
           </a>
-          <a href="{% url 'faculty:my_attendance' %}" class="nav-link" data-nav-title="My Attendance History">
+          <a href="{% url 'faculty:my_attendance' %}" class="nav-link {% if 'my_attendance' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="My Attendance History">
             <i class="fas fa-user-clock nav-icon"></i><span>My Attendance History</span>
           </a>
-          <a href="{% url 'faculty:leave_requests' %}" class="nav-link" data-nav-title="Apply Leave">
+          <a href="{% url 'faculty:leave_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'leave_requests' and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Apply Personal Leave">
             <i class="fas fa-calendar-minus nav-icon"></i><span>Apply Leave</span>
           </a>
-          <a href="{% url 'faculty:transfer_class' %}" class="nav-link" data-nav-title="Class Transfers">
-            <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers</span>
+          <a href="{% url 'faculty:transfer_class' %}" class="nav-link {% if 'transfer' in request.resolver_match.url_name and request.resolver_match.app_name == 'faculty' %}active{% endif %}" data-nav-title="Class Transfers & Proxies">
+            <i class="fas fa-exchange-alt nav-icon"></i><span>Class Transfers & Proxies</span>
           </a>
         </div>
       </div>
-      {% endif %}
+
 
     {% elif user.role == 'deo' %}
       <!-- DEO: Main -->
