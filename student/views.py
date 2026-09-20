@@ -17,6 +17,12 @@ from django.utils import timezone
 from django.db.models import Q
 from django.contrib import messages
 
+import logging
+import datetime
+from functools import wraps
+
+logger = logging.getLogger(__name__)
+
 from accounts.models import Student, Achievement
 from core.models import (
     Timetable, Attendance, Result, Exam,
@@ -24,9 +30,6 @@ from core.models import (
     SubjectTopicPlan, ExamSchedule
 )
 from core.syllabus_utils import get_subject_syllabus_progress
-
-import datetime
-from functools import wraps
 
 # Pre-load ML modules at server startup to prevent request-time import lag
 try:
@@ -1154,8 +1157,8 @@ def apply_readmission(request):
                 messages.error(request, f"Error processing readmission request: {e}")
 
     past_readmissions = StudentReadmissionRequest.objects.filter(student=student).order_by('-created_at')
-    available_years = Year.objects.filter(is_deleted=False).order_by('year')
-    available_sections = Section.objects.filter(branch=student.branch, is_deleted=False).order_by('name') if student.branch else []
+    available_years = Year.objects.all().order_by('year')
+    available_sections = Section.objects.filter(branch=student.branch).order_by('name') if student.branch else []
 
     return render(request, 'student/readmission_apply.html', {
         'student': student,
@@ -1222,7 +1225,7 @@ def fill_feedback(request, form_id):
     Renders questions with star ratings and comments, allows downloading blank PDF for offline fill,
     and records answers on POST.
     """
-    from core.models import FeedbackForm, FeedbackSubmission, FeedbackAnswer
+    from core.models import FeedbackForm, FeedbackQuestion, FeedbackSubmission, FeedbackAnswer
     student = request.student
     form_obj = get_object_or_404(FeedbackForm, id=form_id, is_active=True)
 
@@ -1392,7 +1395,10 @@ def feedback_summary(request, form_id):
     from core.models import FeedbackForm, FeedbackSubmission
     student = request.student
     form_obj = get_object_or_404(FeedbackForm, id=form_id)
-    submission = get_object_or_404(FeedbackSubmission, form=form_obj, student=student)
+    submission = FeedbackSubmission.objects.filter(form=form_obj, student=student).first()
+    if not submission:
+        messages.info(request, "You have not yet submitted responses for this feedback form.")
+        return redirect('student:fill_feedback', form_id=form_id)
 
     answers = submission.answers.select_related('question').order_by('question__order', 'id')
 
@@ -1414,7 +1420,10 @@ def download_feedback_pdf(request, form_id):
     
     student = request.student
     form_obj = get_object_or_404(FeedbackForm, id=form_id)
-    submission = get_object_or_404(FeedbackSubmission, form=form_obj, student=student)
+    submission = FeedbackSubmission.objects.filter(form=form_obj, student=student).first()
+    if not submission:
+        messages.info(request, "Please submit your feedback response before downloading the summary PDF.")
+        return redirect('student:fill_feedback', form_id=form_id)
 
     try:
         pdf_buffer = generate_student_feedback_summary_pdf(submission)

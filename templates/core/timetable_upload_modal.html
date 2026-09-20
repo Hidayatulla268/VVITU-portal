@@ -442,15 +442,13 @@ document.addEventListener('DOMContentLoaded', function() {
     btnCommitSync.disabled = true;
     btnCommitSync.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving & Syncing...';
 
-    const uploadApiUrl = "{{ upload_api_url|default:'' }}" || (
-      {% if request.resolver_match.app_name == 'admin_dashboard' %}
-        "{% url 'admin_dashboard:upload_timetable_api' %}"
-      {% elif request.resolver_match.app_name == 'faculty' %}
-        "{% url 'faculty:upload_my_timetable_api' %}"
-      {% else %}
-        "{% url 'hod:upload_timetable_api' %}"
-      {% endif %}
-    );
+    let fallbackApiUrl = "{% url 'hod:upload_timetable_api' %}";
+    {% if request.resolver_match.app_name == 'admin_dashboard' %}
+    fallbackApiUrl = "{% url 'admin_dashboard:upload_timetable_api' %}";
+    {% elif request.resolver_match.app_name == 'faculty' %}
+    fallbackApiUrl = "{% url 'faculty:upload_my_timetable_api' %}";
+    {% endif %}
+    const uploadApiUrl = "{{ upload_api_url|default:'' }}" || fallbackApiUrl;
 
     fetch(uploadApiUrl, {
       method: 'POST',

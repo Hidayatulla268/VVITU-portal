@@ -68,6 +68,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -127,8 +128,8 @@ a:hover { color: var(--text-primary); }
   top: 0; left: 0; right: 0;
   height: var(--navbar-h);
   background: rgba(5, 5, 8, 0.85);
-  backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--clr-border);
   display: flex;
   align-items: center;
@@ -261,8 +262,8 @@ a:hover { color: var(--text-primary); }
   width: var(--sidebar-w);
   height: calc(100vh - var(--navbar-h, 60px));
   background: rgba(10, 10, 16, 0.94);
-  backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   overflow-y: auto;
   overflow-x: hidden;
@@ -909,8 +910,8 @@ html.sidebar-compact-active .sidebar-user-dock {
 /* ── 9. GLASS CARD ────────────────────────────────────────────────── */
 .glass-card {
   background: var(--clr-surface);
-  backdrop-filter: var(--blur-sm);
   -webkit-backdrop-filter: var(--blur-sm);
+  backdrop-filter: var(--blur-sm);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
@@ -1337,8 +1338,8 @@ textarea {
 .vvit-select,
 .form-select,
 select {
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ef4444' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
   background-repeat: no-repeat !important;
   background-position: right 0.85rem center !important;
@@ -1382,15 +1383,15 @@ select option,
 /* ── 13b. UNIVERSAL MODALS ────────────────────────────────────────── */
 .modal-backdrop {
   background-color: rgba(5, 5, 8, 0.82) !important;
-  backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
 }
 
 .modal-content,
 .glass-modal {
   background: rgba(18, 18, 28, 0.96) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8) !important;

@@ -1273,12 +1273,6 @@ def faculty_attendance_report(request):
     }
     return render(request, 'admin_dashboard/faculty_attendance.html', context)
 
-    context = {
-        'exams':       exams,
-        'release_map': release_map,
-    }
-    return render(request, 'admin_dashboard/release_results.html', context)
-
 
 def _send_result_emails(exam, request):
     """

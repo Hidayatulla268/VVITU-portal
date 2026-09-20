@@ -560,7 +560,6 @@ def manage_fees(request):
                 messages.error(request, f"Could not update fees for {stu.roll_number}: Invalid or excessive fee amount entered.")
 
             return redirect(f"{request.path}?year={year_id}&q={search}&status={status_filter}")
-            return redirect(f"{request.path}?year={year_id}&q={search}&status={status_filter}")
 
         elif action == 'bulk_assign':
             def parse_val(v):

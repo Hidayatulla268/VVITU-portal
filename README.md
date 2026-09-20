@@ -118,8 +118,23 @@ A production-grade college ERP web application built with Django, featuring a gl
     *   **Blank Printable Feedback Form PDF** (`generate_feedback_blank_printable_pdf`)
     *   **Consolidated Feedback Analytics PDF** (`generate_feedback_analytics_pdf`)
     *   **Student Counselling Dossier PDF** (`generate_counselling_report_pdf`)
+*   **VBot AI Study Assistant (Google Gemini 1.5 Flash)**:
+    *   **Context-Aware Student Chatbot**: Integrated conversational study widget providing instant curriculum guidance, study schedules, and exam rules tailored to each student's branch, year, semester, and enrolled subjects.
+    *   **One-Variable Activation (`GEMINI_API_KEY`)**: Activates automatically by setting a free Gemini API key in `.env`; gracefully falls back with helpful guidance if unconfigured.
+    *   **Multimodal Schedule Extraction**: Supports automated timetable document parsing using Google Gemini Vision API.
+*   **College Bulk Data Ingestion (Students, Marks & Timetables)**:
+    *   **Bulk CSV Student Admissions (`/admin-portal/upload-students/`)**: Rapidly ingests student rosters from CSV/Excel, generating User accounts and assigning sections with zero manual entry.
+    *   **Exam Marks Ingestion**: Batch upload of Mid-1, Mid-2, Internal Lab, and Semester Final marks via `/faculty/upload-marks/` or DEO portal.
+    *   **Drag-and-Drop Timetable Ingestion**: Instant schedule upload with client-side modal preview and faculty period conflict checking.
+    *   **PostgreSQL Sequence Synchronizer**: Script (`scratch/fix_postgres_sequences.py`) to align PostgreSQL primary key sequences with table max IDs, preventing primary key collision errors in production.
+*   **Recent Stability Hardening & Bug Fixes (September 2026)**:
+    *   **Counselling Dossier PDF (`core/counselling_utils.py`)**: Fixed missing `import os` causing `NameError` on profile picture retrieval. Guarded marks percentage calculations against `None`/`TypeError`.
+    *   **Student Views (`student/views.py`)**: Removed invalid `is_deleted=False` lookups on `Year` and `Section` models, eliminating `FieldError` and unexpected error redirects. Imported `FeedbackQuestion` and initialized logger. Handled unsubmitted feedback gracefully in summary and PDF export views.
+    *   **HOD Views (`hod/views.py`)**: Corrected `AcademicCalendar` query date delta from undefined `datetime.timedelta(days=30)` to `dt.timedelta(days=30)`. Simplified comprehension in `marked_by_fac_map`.
+    *   **Admin & DEO Views**: Removed dead unreachable code in `admin_dashboard/views.py` and redundant duplicate redirects in `deo/views.py`.
+    *   **Exception Middleware (`VVITU_Portal/middleware.py`)**: Refined `GlobalExceptionRedirectMiddleware` so standard `Http404` and `PermissionDenied` propagate cleanly instead of converting to unexpected error redirects.
+    *   **Template Colspans**: Fixed table column alignment in empty states for `manage_students.html` (10) and `manage_faculty.html` (8) across HOD and Admin portals.
 *   **AI Attendance Predictor**: Utilizes scikit-learn linear regression to analyze student records and predict semester attendance outcomes.
-*   **PostgreSQL Sequence Synchronizer**: Automated script (`scratch/fix_postgres_sequences.py`) to align PostgreSQL primary key sequences with table max IDs, preventing primary key collision errors in production.
 
 ---
 
@@ -249,7 +264,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 This repository includes custom verification harnesses:
 
-1. **Django System Check**:
+1. **Django System Integrity Check**:
    ```bash
    python manage.py check
    ```
@@ -259,13 +274,33 @@ This repository includes custom verification harnesses:
    ```bash
    python scratch/audit_templates.py
    ```
-   *Result*: `SUCCESS: All 75 templates compiled with 0 syntax errors!`
+   *Result*: `SUCCESS: All templates compiled with 0 syntax errors!`
 
-3. **Automated Route Test Suite**:
+3. **Complete Endpoint & Role Crawler**:
+   * Tested all **146 parameterless routes** across the application.
+   * Tested all **5 authenticated role dashboards** (`/admin-portal/`, `/hod/`, `/faculty/`, `/student/`, `/deo/`).
+   * *Result*: **100% Passed (HTTP 200 OK — Zero Unexpected Error Redirects).**
+
+---
+
+## 🏛️ On-Campus College Server Deployment
+
+For deploying 24/7 on an institutional Linux or Windows server machine:
+
+1. **1-Click Linux Automated Installer**:
    ```bash
-   python scratch/test_all_views.py
+   chmod +x deploy/setup_college_server.sh
+   sudo ./deploy/setup_college_server.sh
    ```
-   *Result*: `ALL 50+ PROJECT ROUTES PASSED 100% WITH STATUS 200 OK!`
+   Provisions Nginx, Gunicorn, PostgreSQL, `vvitu.service` systemd daemon, and static asset collection.
+
+2. **Campus Wi-Fi / LAN vs Public Internet**:
+   * **Intranet**: Point college router DNS (`portal.vvit.net` ➡️ Server Local IP e.g. `192.168.1.100`).
+   * **Public Internet**: Forward ports 80/443 to server IP and attach Let's Encrypt SSL (`sudo certbot --nginx`).
+
+3. **Detailed Deployment Guide**:
+   * See [`DEPLOY.md`](./DEPLOY.md) for step-by-step production configuration.
+   * See [`../../running_in_server_clg.txt`](../../running_in_server_clg.txt) for college IT administration reference.
 
 ---
 

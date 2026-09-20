@@ -2831,7 +2831,7 @@ def get_department_class_attendance_audit_data(dept, target_date, year_filter=No
     marked_by_fac_ids = {a['marked_by_id'] for a in att_rows if a['marked_by_id']}
     marked_by_fac_map = {
         f.id: f
-        for f in Faculty.objects.filter(id__in=marked_by_ids if 'marked_by_ids' in locals() else marked_by_fac_ids).select_related('user', 'department')
+        for f in Faculty.objects.filter(id__in=marked_by_fac_ids).select_related('user', 'department')
     }
 
     att_by_slot = {}
@@ -3615,7 +3615,7 @@ def academic_calendar(request):
 
     events = list(
         AcademicCalendar.objects
-        .filter(date__gte=today - datetime.timedelta(days=30))
+        .filter(date__gte=today - dt.timedelta(days=30))
         .filter(Q(branch=dept) | Q(branch__isnull=True) if dept else Q())
         .order_by('date')
     )

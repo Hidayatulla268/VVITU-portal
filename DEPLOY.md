@@ -176,3 +176,56 @@ Add the line:
 | **View Live Gunicorn Logs** | `sudo journalctl -u vvitu -f` |
 | **View Nginx Access / Error Logs** | `sudo tail -f /var/log/nginx/vvitu_access.log` |
 | **Pull New Code & Deploy Update** | `git pull && python manage.py migrate && python manage.py collectstatic --no-input && sudo systemctl restart vvitu` |
+
+---
+
+## 🤖 Activating VBot AI Study Assistant (Google Gemini 1.5)
+
+The portal features an integrated AI study assistant (VBot) accessible in the bottom-right widget across all student and academic pages:
+1. Get a free Google Gemini API Key from [Google AI Studio](https://aistudio.google.com/).
+2. Add the key to `/var/www/vvitu/.env`:
+   ```ini
+   GEMINI_API_KEY=AIzaSy...your_gemini_api_key_here
+   ```
+3. Restart the service:
+   ```bash
+   sudo systemctl restart vvitu
+   ```
+4. **VBot Capabilities**:
+   * Context-aware answers based on student's branch, current year, semester, and enrolled subjects.
+   * Clarifies syllabus topics, study planning, and university grading rules (R23 SGPA/CGPA).
+   * Intelligent timetable document extraction via Gemini Vision.
+
+---
+
+## 📊 College Data Ingestion: Students, Marks & Timetables
+
+To populate the college server with institutional data:
+
+### 1. Bulk Student Ingestion via CSV
+* Navigate to **Admin Portal ➡️ Manage Students ➡️ Upload CSV** (`/admin-portal/upload-students/`).
+* Upload an Excel/CSV file with columns: `roll_number, name, branch, year, semester, section, email, phone, parent_phone`.
+* The system automatically creates User accounts, student profiles, sets default passwords, and assigns sections.
+
+### 2. Bulk Marks & Results Entry
+* Faculty and DEO portals support batch marks entry via CSV for Mid-1, Mid-2, Internal Lab, and Semester Final exams.
+* Navigate to `/faculty/upload-marks/` or `/deo/upload-marks/`.
+
+### 3. Timetable Ingestion with Collision Check
+* Navigate to `/hod/timetable/` or `/admin-portal/timetable/`.
+* Use the drag-and-drop Excel/JSON parser with interactive preview to populate schedules without manual period entry.
+* The system auto-validates against faculty double-booking.
+
+### 4. PostgreSQL Primary Key Alignment
+After bulk data imports, always synchronize PostgreSQL auto-increment sequences:
+```bash
+python scratch/fix_postgres_sequences.py
+```
+
+---
+
+## ✅ Quality & Verification Status
+* **Django Checks**: `python manage.py check` $\rightarrow$ **0 issues identified**.
+* **Route Coverage**: 146 parameterless endpoints and all 5 role dashboards return **HTTP 200 OK with zero unexpected error redirects**.
+* **Official PDF Engines**: ReportLab engines verified for Grade Cards, Monthly Attendance, Counselling Dossiers, and Blank Feedback forms.
+

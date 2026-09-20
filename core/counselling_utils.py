@@ -13,6 +13,7 @@ Aggregates all student information across modules:
   • Official ReportLab PDF Report Generation with Signatures
 """
 
+import os
 import io
 import datetime
 from django.utils import timezone
@@ -164,9 +165,9 @@ def get_student_counselling_dossier(student):
                 'code': subj.code,
                 'name': subj.name,
                 'credits': credits,
-                'mid1_marks': f"{float(mid1.marks_obtained):.1f}/{float(mid1.max_marks):.0f}" if mid1 else '—',
-                'mid2_marks': f"{float(mid2.marks_obtained):.1f}/{float(mid2.max_marks):.0f}" if mid2 else '—',
-                'final_marks': f"{float(marks_obt):.1f}/{float(max_m):.0f}" if marks_obt is not None else '—',
+                'mid1_marks': f"{float(mid1.marks_obtained):.1f}/{float(mid1.max_marks):.0f}" if (mid1 and mid1.marks_obtained is not None and mid1.max_marks is not None) else '—',
+                'mid2_marks': f"{float(mid2.marks_obtained):.1f}/{float(mid2.max_marks):.0f}" if (mid2 and mid2.marks_obtained is not None and mid2.max_marks is not None) else '—',
+                'final_marks': f"{float(marks_obt):.1f}/{float(max_m):.0f}" if (marks_obt is not None and max_m is not None) else '—',
                 'total_score': f"{float(total_score):.1f}" if total_score is not None else '—',
                 'grade': grade if grade else '—',
                 'grade_points': pts if grade else '—',

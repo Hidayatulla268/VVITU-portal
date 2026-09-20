@@ -315,6 +315,13 @@ class GlobalExceptionRedirectMiddleware:
         return self.get_response(request)
 
     def process_exception(self, request, exception):
+        from django.http import Http404
+        from django.core.exceptions import PermissionDenied
+
+        # Allow standard 404 and 403 handlers to process normal not-found and permission errors
+        if isinstance(exception, (Http404, PermissionDenied)):
+            return None
+
         import logging
         logging.getLogger('django.request').error(f"Unhandled exception on {request.path_info}: {exception}", exc_info=True)
         
