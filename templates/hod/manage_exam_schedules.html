@@ -51,8 +51,8 @@
             <small class="text-muted">{{ sched.branch.code|default:"All Branches" }} Department</small>
           </td>
           <td>
-            <span class="badge border border-secondary text-primary" style="background: transparent;">{{ sched.year }}</span>
-            <span class="badge border border-secondary text-body ms-1" style="background: transparent;">Sem {{ sched.semester }}</span>
+            <span class="badge badge-year-blue">{{ sched.year }}</span>
+            <span class="badge badge-sem-blue ms-1">Sem {{ sched.semester }}</span>
           </td>
           <td>
             {% if sched.exam_type == 'mid1' %}

@@ -1095,7 +1095,14 @@ html.sidebar-compact-active .sidebar-user-dock {
   border-bottom: 1px solid var(--clr-border);
 }
 
-.vvit-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.vvit-table tbody tr:hover {
+  background: linear-gradient(90deg, 
+    rgba(220, 38, 38, 0.26) 0%, 
+    rgba(239, 68, 68, 0.18) 35%, 
+    rgba(220, 38, 38, 0.12) 100%) !important;
+  box-shadow: inset 4px 0 0 #ef4444, 0 0 24px rgba(239, 68, 68, 0.36), inset 0 0 16px rgba(239, 68, 68, 0.14) !important;
+  cursor: pointer !important;
+}
 .vvit-table tbody tr:last-child { border-bottom: none; }
 .vvit-table tbody tr.row-warning { background: rgba(245,158,11,0.06); }
 
@@ -3170,7 +3177,12 @@ tr.row-warning td { background: rgba(245,158,11,0.06) !important; }
 }
 
 .vvit-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: linear-gradient(90deg, 
+    rgba(220, 38, 38, 0.26) 0%, 
+    rgba(239, 68, 68, 0.18) 35%, 
+    rgba(220, 38, 38, 0.12) 100%) !important;
+  box-shadow: inset 4px 0 0 #ef4444, 0 0 24px rgba(239, 68, 68, 0.36), inset 0 0 16px rgba(239, 68, 68, 0.14) !important;
+  cursor: pointer !important;
 }
 
 /* Timetable slot cards lift and active glow shadow */

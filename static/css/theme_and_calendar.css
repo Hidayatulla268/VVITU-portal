@@ -2090,6 +2090,96 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
   border: 1px solid #cbd5e1 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   18. VIVID BLUE BADGES & SHINING MEDIUM RED TABLE ROW HOVER EFFECT
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Vivid Electric Blue Badges for Year and Semester in Dark Mode */
+.badge-year-blue,
+.badge-sem-blue {
+  background: rgba(14, 165, 233, 0.14) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.55) !important;
+  font-weight: 700 !important;
+  font-size: 0.76rem !important;
+  letter-spacing: 0.03em !important;
+  padding: 0.32em 0.65em !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.18) !important;
+  transition: all 0.2s ease !important;
+}
+
+.badge-year-blue:hover,
+.badge-sem-blue:hover {
+  background: rgba(14, 165, 233, 0.25) !important;
+  color: #7dd3fc !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.38) !important;
+}
+
+[data-theme="light"] .badge-year-blue,
+[data-theme="light"] .badge-sem-blue {
+  background: rgba(2, 132, 199, 0.10) !important;
+  color: #0369a1 !important;
+  border: 1.5px solid #0284c7 !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+/* ── Universal Table Row Medium Red Shining Hover Effect ── */
+.vvit-table tbody tr,
+.custom-vvit-table tbody tr,
+.table tbody tr,
+table.table-hover tbody tr {
+  transition: background 0.22s ease-in-out, box-shadow 0.22s ease-in-out, border-color 0.22s ease-in-out, transform 0.15s ease-out !important;
+}
+
+.vvit-table tbody tr:hover,
+.custom-vvit-table tbody tr:hover,
+.table tbody tr:hover,
+table.table-hover tbody tr:hover {
+  background: linear-gradient(90deg, 
+    rgba(220, 38, 38, 0.26) 0%, 
+    rgba(239, 68, 68, 0.18) 35%, 
+    rgba(220, 38, 38, 0.12) 100%) !important;
+  box-shadow: inset 4px 0 0 #ef4444, 0 0 24px rgba(239, 68, 68, 0.36), inset 0 0 16px rgba(239, 68, 68, 0.14) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.vvit-table tbody tr:hover td,
+.custom-vvit-table tbody tr:hover td,
+.table tbody tr:hover td,
+table.table-hover tbody tr:hover td {
+  background-color: transparent !important;
+}
+
+/* Medium Red Shining Hover Effect in Light Theme */
+[data-theme="light"] .vvit-table tbody tr:hover,
+[data-theme="light"] .custom-vvit-table tbody tr:hover,
+[data-theme="light"] .table tbody tr:hover,
+[data-theme="light"] table.table-hover tbody tr:hover {
+  background: linear-gradient(90deg, 
+    rgba(220, 38, 38, 0.15) 0%, 
+    rgba(239, 68, 68, 0.11) 40%, 
+    rgba(220, 38, 38, 0.07) 100%) !important;
+  box-shadow: inset 4px 0 0 #dc2626, 0 0 16px rgba(220, 38, 38, 0.22) !important;
+}
+
+/* Ensure table headers have high-contrast text in dark theme */
+.vvit-table thead th,
+.custom-vvit-table thead th {
+  color: #cbd5e1 !important;
+}
+[data-theme="light"] .vvit-table thead th,
+[data-theme="light"] .custom-vvit-table thead th {
+  color: #0f172a !important;
+}
+
+
 
 
 

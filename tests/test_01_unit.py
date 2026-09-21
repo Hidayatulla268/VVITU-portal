@@ -252,7 +252,7 @@ class ContextProcessorsAndTemplateTagsUnitTest(TestCase):
         req = self.factory.get('/')
         ctx = app_version(req)
         self.assertIn('APP_VERSION', ctx)
-        self.assertEqual(ctx['APP_VERSION'], '3.3.0')
+        self.assertEqual(ctx['APP_VERSION'], '3.5.0')
 
     def test_active_theme_context_processor(self):
         # Default

@@ -68,7 +68,7 @@ class DefectRegressionSuiteTest(TestCase):
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('admin_dashboard:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, '?v=3.3.0')
+        self.assertContains(resp, '?v=3.5.0')
         self.client.logout()
 
     def test_regression_calendar_1day_reminder_boundary(self):
