@@ -11,6 +11,7 @@ from functools import wraps
 logger = logging.getLogger(__name__)
 
 from accounts.models import User, Student, Faculty, DEOProfile, Achievement, generate_secure_temp_password
+from accounts.email_utils import send_welcome_credentials_email
 from core.models import Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result, Notification, AcademicCalendar
 from core.timetable_service import get_section_timetable_context, get_faculty_timetable_context, generate_official_timetable_pdf
 
@@ -147,7 +148,8 @@ def add_student(request):
             fees_pending=fees_pending_amount,
             fees_updated_at=timezone.now() if fees_pending_amount > 0 else None,
         )
-        messages.success(request, f"Student {username} created successfully! (Initial Password: {temp_pwd})")
+        send_welcome_credentials_email(user, temp_pwd, roll_number=username, request=request)
+        messages.success(request, f"Student {username} created successfully! (Initial Password: {temp_pwd}) Login credentials dispatched to {email}.")
         return redirect('deo:manage_students')
         
     return render(request, 'deo/add_student.html', {
@@ -695,16 +697,20 @@ def academic_calendar(request):
     """DEO view of the university academic calendar."""
     today = timezone.localdate()
     branch = request.branch
+    event_type = request.GET.get('type', '')
 
-    events = list(
-        AcademicCalendar.objects
-        .filter(date__gte=today - datetime.timedelta(days=30))
-        .filter(Q(branch=branch) | Q(branch__isnull=True) if branch else Q())
-        .order_by('date')
-    )
+    qs = AcademicCalendar.objects.filter(date__gte=today - datetime.timedelta(days=60))
+    if branch:
+        qs = qs.filter(Q(branch=branch) | Q(branch__isnull=True))
+    if event_type:
+        qs = qs.filter(event_type=event_type)
+
+    events = list(qs.order_by('date'))
     return render(request, 'student/academic_calendar.html', {
         'upcoming': [e for e in events if e.date >= today],
         'past':     [e for e in events if e.date <  today],
         'today':    today,
+        'selected_type': event_type,
+        'event_types': AcademicCalendar.EVENT_TYPE_CHOICES,
     })
 

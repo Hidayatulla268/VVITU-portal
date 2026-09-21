@@ -1340,10 +1340,10 @@ textarea {
 select {
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ef4444' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
   background-repeat: no-repeat !important;
   background-position: right 0.85rem center !important;
-  background-size: 16px 12px !important;
+  background-size: 14px 10px !important;
   padding-right: 2.5rem !important;
 }
 
@@ -1357,8 +1357,20 @@ textarea:focus {
   outline: none !important;
   border-color: var(--accent-bright) !important;
   box-shadow: 0 0 0 3px rgba(220,38,38,0.25) !important;
-  background: rgba(0,0,0,0.65) !important;
+  background-color: rgba(0,0,0,0.65) !important;
   color: var(--text-primary) !important;
+}
+
+.vvit-select:focus,
+.form-select:focus,
+select:focus,
+.vvit-select:active,
+.form-select:active,
+select:active {
+  background-repeat: no-repeat !important;
+  background-position: right 0.85rem center !important;
+  background-size: 14px 10px !important;
+  padding-right: 2.5rem !important;
 }
 
 .vvit-input::placeholder,
@@ -2539,8 +2551,19 @@ select option,
    but not yet in the base stylesheet
 ══════════════════════════════════════════════ */
 
-/* ── Sticky sidebar utility ──────────────────── */
-.sticky-top { position: sticky; top: 80px; z-index: 100; }
+/* ── Sticky utility ──────────────────────────── */
+.sticky-top { position: sticky; top: 0; z-index: 100; }
+.sticky-top-sidebar { position: sticky; top: 80px; z-index: 100; }
+
+/* ── Sticky Table Headers (never stick in the middle of rows) ── */
+.table thead.sticky-top,
+.table thead.sticky-top th,
+.table-sticky-head th,
+.custom-table-head th {
+  position: sticky;
+  top: 0 !important;
+  z-index: 10;
+}
 
 /* ── Detail grid for edit-attendance page ────── */
 .detail-grid {

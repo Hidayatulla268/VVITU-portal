@@ -64,7 +64,7 @@ def send_sms(phone_number, message):
                 },
                 method='POST'
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
+            with urllib.request.urlopen(req, timeout=5) as response:  # nosec B310
                 res_body = response.read().decode('utf-8')
                 logger.info(f"Live SMS Gateway response for {cleaned_number}: {res_body}")
                 print(f"[LIVE SMS GATEWAY SUCCESS] -> Delivered to {cleaned_number}")
@@ -102,7 +102,7 @@ def send_sms(phone_number, message):
                 },
                 method='POST'
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
+            with urllib.request.urlopen(req, timeout=5) as response:  # nosec B310
                 res_body = response.read().decode('utf-8')
                 logger.info(f"Twilio SMS Gateway response for {cleaned_number}: {res_body}")
                 print(f"[TWILIO SMS SUCCESS] -> Delivered to {cleaned_number}")

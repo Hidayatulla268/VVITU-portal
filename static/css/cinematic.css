@@ -733,7 +733,7 @@ body::before {
 
 .vvit-input,
 .vvit-select {
-  background: rgba(0,0,0,0.45) !important;
+  background-color: rgba(0,0,0,0.45) !important;
   backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
   transition: all 0.3s ease !important;
@@ -741,7 +741,7 @@ body::before {
 
 .vvit-input:focus,
 .vvit-select:focus {
-  background: rgba(0,0,0,0.6) !important;
+  background-color: rgba(0,0,0,0.6) !important;
   border-color: rgba(220,38,38,0.6) !important;
   box-shadow:
     0 0 0 3px rgba(220,38,38,0.12),

@@ -14,12 +14,16 @@ the handful of values that must change in a live environment:
 import os
 from .settings import *          # pull in every base setting first
 
+from django.core.exceptions import ImproperlyConfigured
+
 # ── Security ────────────────────────────────────────────────────────────────
 DEBUG      = False
 SECRET_KEY = os.environ.get('SECRET_KEY') or os.environ.get('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
-    # Safe build-time fallback if SECRET_KEY is not yet injected during static compilation
-    SECRET_KEY = os.environ.get('RENDER_BUILD_SECRET', 'render-temp-build-secret-key-replace-in-env-2026')
+    raise ImproperlyConfigured(
+        "CRITICAL SECURITY ERROR: SECRET_KEY environment variable is required in production. "
+        "Production startup aborted. Never boot production with a fallback key."
+    )
 
 # Render automatically sets RENDER_EXTERNAL_HOSTNAME in the environment
 render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -100,7 +104,7 @@ if DATABASE_URL:
 # deployments, which can't run multiple processes.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_MANIFEST_STRICT = True
 
 # Ensure WhiteNoise middleware is placed right after SecurityMiddleware
 if 'whitenoise.middleware.WhiteNoiseMiddleware' in MIDDLEWARE:

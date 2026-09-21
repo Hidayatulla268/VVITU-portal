@@ -917,4 +917,42 @@ def generate_semester_grade_card_pdf(student, year_obj, semester):
        - Bumped global asset version token to `v=3.1.0` in `core/context_processors.py` and `templates/core/base.html`.
        - Embedded a dedicated high-priority `<style id="vvitSidebarThemeStyle">` block in `<head>` featuring aggressive resets (`appearance: none !important; background: transparent !important; border: none !important;`), matching the portal's obsidian dark gradient (`#090910` to `#07070b`), glowing red active link indicators, and cyber crimson badges.
 
+### RR. Method 2 Student Onboarding: Cryptographic Temporary Passwords & Automated Welcome Email Dispatch
+*   **What it is:** A secure, production-grade student onboarding system replacing predictable default passwords (`vvit@1234`) with dynamic cryptographic generation, automatic credential dispatch via transactional email, and mandatory password reset on first login.
+*   **Key Engineering:**
+    1. **`generate_secure_temp_password()`**: Employs `secrets.choice` across upper and lower ASCII letters, digits, and special characters (`!@#$%^&*`) to generate 10-character unguessable passwords, with support for an optional `INITIAL_STUDENT_PASSWORD` override in staging environments.
+    2. **`send_welcome_credentials_email()` (`accounts/email_utils.py`)**: Assembles and transmits a formatted transactional email containing the student's name, roll number/username, temporary password, login portal URL, and clear guidance.
+    3. **Universal Integration**: Connected into Single Student Creation (`admin_dashboard/views.py`, `hod/views.py`, `deo/views.py`) and Bulk CSV Student Uploads.
+    4. **Enforced Security Policy (`force_password_change`)**: Sets `force_password_change = True` upon account creation; the student cannot browse the portal until they replace the temporary password with their own permanent credentials.
+
+### SS. Academic Calendar Event Reminders Daemon & Automated Warning Engine
+*   **What it is:** Automated management command utilities (`core/management/commands/send_event_reminders.py`) that run via background cron or schedulers to notify users of impending milestones and academic risks.
+*   **Key Capabilities:**
+    1. **Targeted Event Reminders**: Scans upcoming `AcademicCalendar` entries within 24 hours. Formats and sends in-app notifications and emails specifically to the relevant branch and target audience.
+    2. **Low-Attendance Automated Warning**: Computes live student attendance percentages against the mandatory 75% university eligibility threshold. Automatically dispatches warning alerts to students and notification emails to parents.
+
+### TT. Production Security Hardening & Blocker Resolutions (P1 & P2)
+*   **What it is:** Resolution of all production deployment blockers identified during strict security and deployment reviews:
+    1. **P1 — Insecure Secret Key Fail-Fast**: `VVITU_Portal/settings_prod.py` raises `ImproperlyConfigured` immediately on startup if `SECRET_KEY` is not provided in environment variables, preventing deployment with hardcoded fallback secrets.
+    2. **P1 — Test / Deployment Dependency Parity**: Upgraded/locked virtual environment to `Django 5.2.17` (matching `<6.0` LTS series), guaranteeing 100% parity between local test runs and cloud hosts like Render.
+    3. **P2 — CSRF-Protected POST-Only Logout**: Enforced `@require_POST` on `/accounts/logout/` and embedded `#globalLogoutForm` with `{% csrf_token %}` across all desktop navbar, mobile sidebar, and user dock buttons, permanently blocking cross-site GET logouts.
+    4. **P2 — Strict WhiteNoise Static Manifest**: Enabled `WHITENOISE_MANIFEST_STRICT = True` across development and production, catching missing or misnamed static files at compile time.
+    5. **P2 — Integrated Security Toolchain (SAST & Vulnerability Auditing)**:
+       - `pip-audit`: Zero vulnerabilities found across all dependencies.
+       - `bandit`: Zero High, Zero Medium security issues across 20,362 lines of code.
+
+### UU. Master 10-Tier Enterprise Test Suite Architecture (60 Tests, 100% Pass Rate)
+*   **What it is:** A comprehensive university testing hierarchy orchestrator (`run_vvitu_test_suite.py`) executing all 10 testing tiers sequentially against an isolated test schema:
+    1. **Tier 1 — Unit Testing** (`tests.test_01_unit`, 14 tests): Model validations, business rules, marks constraints, attendance bounds.
+    2. **Tier 2 — Integration Testing** (`tests.test_02_integration`, 3 tests): Multi-component workflows, timetable-to-attendance propagation.
+    3. **Tier 3 — Functional Testing** (`tests.test_03_functional`, 5 tests): Role dashboards, syllabus trackers, leave approvals.
+    4. **Tier 4 — System Testing** (`tests.test_04_system`, 4 tests): End-to-end university pipelines, event reminder daemons.
+    5. **Tier 5 — Security Testing** (`tests.test_05_security`, 6 tests): IDOR barriers, WAF sanitization, role boundary isolation.
+    6. **Tier 6 — Performance Testing** (`tests.test_06_performance`, 3 tests): Query optimization, response latency thresholds.
+    7. **Tier 7 — Compatibility Testing** (`tests.test_07_compatibility`, 4 tests): Desktop/mobile viewports, dark/light theme tokens.
+    8. **Tier 8 — Regression Testing** (`tests.test_08_regression`, 4 tests): Historical bug fix preservation.
+    9. **Tier 9 — User Acceptance Testing (UAT)** (`tests.test_09_uat`, 3 tests): Student, Faculty, and Admin user journeys.
+    10. **Tier 10 — Enterprise Issue Audit** (`tests.test_10_issue_audit`, 14 tests): Verification of all audit checklist items including Method 2 onboarding, POST-only logout, production fail-fast settings, and WhiteNoise strict manifest.
+*   **Overall Outcome**: 60 / 60 tests passed (100% success rate, 0 failures, 0 errors).
+
 

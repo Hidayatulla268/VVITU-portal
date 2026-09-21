@@ -311,6 +311,143 @@
 .cyber-grid-content {
   min-width: 980px;
 }
+
+.cyber-meta-badge {
+  background: #11121c;
+  color: #94a3b8;
+  border: 1px solid #1f2338;
+}
+
+/* ── LIGHT THEME ADAPTATION ──────────────────────────── */
+[data-theme="light"] .cyber-tt-container {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] .cyber-top-strip {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+[data-theme="light"] .cyber-title {
+  color: #0f172a !important;
+}
+[data-theme="light"] .cyber-view-toggle {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+[data-theme="light"] .cyber-toggle-btn {
+  color: #475569 !important;
+}
+[data-theme="light"] .cyber-toggle-btn.active {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="light"] .cyber-time-hdr {
+  color: #e11d48 !important;
+}
+[data-theme="light"] .cyber-day-hdr {
+  color: #475569 !important;
+}
+[data-theme="light"] .cyber-day-hdr:hover {
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+[data-theme="light"] .cyber-day-hdr.glowing-active-day {
+  color: #059669 !important;
+  border-bottom: 3.5px solid #10b981 !important;
+  background: #ecfdf5 !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+}
+[data-theme="light"] .cyber-day-hdr.glowing-active-day::after {
+  background: #10b981 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="light"] .cyber-time-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+[data-theme="light"] .cyber-time-val {
+  color: #0f172a !important;
+}
+[data-theme="light"] .cyber-slot-lbl {
+  color: #64748b !important;
+}
+[data-theme="light"] .cyber-class-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 3px solid #e11d48 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+[data-theme="light"] .cyber-class-card:hover {
+  background: #f8fafc !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.12) !important;
+}
+[data-theme="light"] .cyber-subj-badge {
+  background: rgba(225, 29, 72, 0.08) !important;
+  color: #e11d48 !important;
+  border: 1px solid rgba(225, 29, 72, 0.25) !important;
+}
+[data-theme="light"] .cyber-subj-icon {
+  color: #e11d48 !important;
+}
+[data-theme="light"] .cyber-subj-name {
+  color: #0f172a !important;
+}
+[data-theme="light"] .cyber-card-bot {
+  color: #64748b !important;
+}
+[data-theme="light"] .cyber-room i {
+  color: #e11d48 !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card {
+  background: #f0fdf4 !important;
+  border: 2px solid #10b981 !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25) !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card:hover {
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.4) !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card .cyber-subj-badge {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card .cyber-subj-icon {
+  color: #059669 !important;
+  text-shadow: none !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card .cyber-subj-name {
+  color: #065f46 !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card .cyber-card-bot {
+  color: #047857 !important;
+}
+[data-theme="light"] .cyber-class-card.glowing-active-card .cyber-room i {
+  color: #059669 !important;
+}
+[data-theme="light"] .cyber-empty-card {
+  background: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  color: #94a3b8 !important;
+}
+[data-theme="light"] .cyber-empty-card.glowing-active-card {
+  border: 1.5px dashed #10b981 !important;
+  background: rgba(16, 185, 129, 0.05) !important;
+  color: #059669 !important;
+}
+[data-theme="light"] .cyber-break-bar {
+  background: rgba(225, 29, 72, 0.04) !important;
+  border: 1px dashed rgba(225, 29, 72, 0.3) !important;
+  color: #e11d48 !important;
+}
+[data-theme="light"] .cyber-meta-badge {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
 </style>
 
 <div class="vvit-tt-wrapper mb-4">
@@ -327,8 +464,8 @@
         </button>
       </div>
       {% if target_date %}
-      <span class="badge bg-dark-50 text-accent border border-secondary px-3 py-2">
-        <i class="far fa-calendar-alt me-1"></i>Date: {{ target_date|date:"d M Y" }} ({{ day_name }})
+      <span class="badge cyber-meta-badge px-3 py-2">
+        <i class="far fa-calendar-alt me-1 text-accent"></i>Date: {{ target_date|date:"d M Y" }} ({{ day_name }})
       </span>
       {% endif %}
     </div>
@@ -372,13 +509,13 @@
         </span>
       </div>
       <div class="d-flex flex-wrap gap-2 small text-muted">
-        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+        <span class="badge cyber-meta-badge px-2 py-1">
           <i class="fas fa-door-open me-1 text-warning"></i>Room: {{ metadata.room_number|default:"C-402" }}
         </span>
-        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+        <span class="badge cyber-meta-badge px-2 py-1">
           <i class="fas fa-user-tie me-1 text-info"></i>Class Teacher: {{ metadata.class_teacher.user.get_full_name|default:metadata.class_teacher_name|default:"TBA" }}
         </span>
-        <span class="badge bg-dark text-white-50 border border-secondary px-2 py-1">
+        <span class="badge cyber-meta-badge px-2 py-1">
           <i class="fas fa-clock me-1 text-danger"></i>Click any Day Header to highlight
         </span>
       </div>

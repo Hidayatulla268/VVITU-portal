@@ -22,6 +22,18 @@
 {% endblock %}
 
 {% block content %}
+{% if no_section %}
+<div class="glass-card mb-4 text-center py-5">
+  <div class="mb-3">
+    <i class="fas fa-school-circle-exclamation fa-3x text-warning"></i>
+  </div>
+  <h4 class="text-white fw-bold mb-2">No Section Assigned</h4>
+  <p class="text-muted small mx-auto" style="max-width: 480px;">
+    You are not currently enrolled in an active academic section. Please contact your department HOD or Dean of Academics to be assigned to your class section.
+  </p>
+</div>
+{% endif %}
+
 {% if syllabus_summaries %}
 <!-- Subject Syllabus Coverage Summary Strip -->
 <div class="row g-3 mb-4">

@@ -108,7 +108,7 @@
             <small class="text-muted">{{ stat.faculty.employee_id }}</small>
           </td>
           <td>
-            <a href="{% url 'hod:manage_subject_syllabus_subject' stat.subject.id %}" class="badge bg-primary bg-opacity-75 text-light text-decoration-none" title="View/Edit Topic Plan">
+            <a href="/hod/syllabus/subject/{{ stat.subject.id }}/" class="badge bg-primary bg-opacity-75 text-light text-decoration-none" title="View/Edit Topic Plan">
               {{ stat.subject.code }}
             </a>
             <div class="text-light small mt-1">{{ stat.subject.name }}</div>
@@ -176,7 +176,7 @@
             {% endif %}
           </td>
           <td class="text-end">
-            <a href="{% url 'hod:manage_subject_syllabus_subject' stat.subject.id %}" class="btn btn-sm btn-outline-info p-1 px-2" title="View & Edit Subject Topic Schedule">
+            <a href="/hod/syllabus/subject/{{ stat.subject.id }}/" class="btn btn-sm btn-outline-info p-1 px-2" title="View & Edit Subject Topic Schedule">
               <i class="fas fa-calendar-alt me-1"></i>Plan
             </a>
           </td>
@@ -275,7 +275,7 @@
 <div class="glass-card">
   <div class="card-header-custom d-flex justify-content-between align-items-center mb-3">
     <h3 class="card-title-custom mb-0"><i class="fas fa-list-check me-2 text-accent"></i>Department Class Lecture Timeline</h3>
-    <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ entries.count }} Record(s)</span>
+    <span class="badge bg-secondary bg-opacity-50 px-3 py-1">{{ entries.paginator.count|default:entries|length }} Record(s)</span>
   </div>
 
   {% if entries %}
@@ -362,6 +362,24 @@
       </tbody>
     </table>
   </div>
+  {% if entries.has_other_pages %}
+  <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2 pt-2 border-top border-secondary border-opacity-25">
+    <div class="small text-muted">
+      Showing page {{ entries.number }} of {{ entries.paginator.num_pages }} ({{ entries.paginator.count }} records)
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if entries.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ entries.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if faculty_id %}&faculty_id={{ faculty_id }}{% endif %}{% if subject_id %}&subject_id={{ subject_id }}{% endif %}{% if section_id %}&section_id={{ section_id }}{% endif %}{% if unit_number %}&unit_number={{ unit_number }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">&laquo; Prev</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ entries.number }}</span></li>
+        {% if entries.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ entries.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if faculty_id %}&faculty_id={{ faculty_id }}{% endif %}{% if subject_id %}&subject_id={{ subject_id }}{% endif %}{% if section_id %}&section_id={{ section_id }}{% endif %}{% if unit_number %}&unit_number={{ unit_number }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Next &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
   {% else %}
   <div class="text-center py-5">
     <i class="fas fa-book-open-reader fa-3x text-muted mb-3 opacity-50"></i>

@@ -1,7 +1,22 @@
 {% load static %}{% load core_tags %}<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ ACTIVE_THEME|default:'dark' }}">
 <head>
   <meta charset="UTF-8"/>
+  <!-- Anti-FOUC (Flash of Dark/Light Theme) Instant Theme Synchronizer -->
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('vvit-theme');
+        if (t && (t === 'light' || t === 'dark')) {
+          if (document.documentElement.getAttribute('data-theme') !== t) {
+            document.documentElement.setAttribute('data-theme', t);
+          }
+          document.cookie = "vvit_theme=" + t + ";path=/;max-age=31536000;SameSite=Lax";
+          document.cookie = "vvit-theme=" + t + ";path=/;max-age=31536000;SameSite=Lax";
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}VVITU Portal{% endblock %} | Vasireddy Venkatadri International Technological University</title>
 
@@ -558,6 +573,88 @@
     }
   </style>
 
+  <!-- ══════════════════════════════════════════════════════════════════
+       GLOBAL SELECT CHEVRON FIX — PREVENTS REPEATING / TILING CHEVRONS
+       Enforces a single, crisp, non-repeating arrow pinned to the right edge
+       ══════════════════════════════════════════════════════════════════ -->
+  <style id="globalSelectFix">
+    select,
+    .vvit-select,
+    .form-select,
+    select:focus,
+    .vvit-select:focus,
+    .form-select:focus,
+    select:active,
+    .vvit-select:active,
+    .form-select:active,
+    select:hover,
+    .vvit-select:hover,
+    .form-select:hover {
+      background-repeat: no-repeat !important;
+      background-position: right 0.85rem center !important;
+      background-size: 14px 10px !important;
+      padding-right: 2.5rem !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+    }
+
+    /* Dark Theme (Default) Single Subtle Slate Chevron */
+    select,
+    .vvit-select,
+    .form-select,
+    select:focus,
+    .vvit-select:focus,
+    .form-select:focus,
+    select:active,
+    .vvit-select:active,
+    .form-select:active {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 0.85rem center !important;
+      background-size: 14px 10px !important;
+    }
+
+    /* Light Theme Single Crisp Neutral Slate Chevron & White Clean Background */
+    [data-theme="light"] select,
+    [data-theme="light"] .vvit-select,
+    [data-theme="light"] .form-select,
+    [data-theme="light"] select:focus,
+    [data-theme="light"] .vvit-select:focus,
+    [data-theme="light"] .form-select:focus,
+    [data-theme="light"] select:active,
+    [data-theme="light"] .vvit-select:active,
+    [data-theme="light"] .form-select:active,
+    [data-theme="light"] select:hover,
+    [data-theme="light"] .vvit-select:hover,
+    [data-theme="light"] .form-select:hover {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 0.85rem center !important;
+      background-size: 14px 10px !important;
+      padding-right: 2.5rem !important;
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border: 1px solid rgba(15, 23, 42, 0.25) !important;
+    }
+
+    [data-theme="light"] select:focus,
+    [data-theme="light"] .vvit-select:focus,
+    [data-theme="light"] .form-select:focus {
+      border-color: #b91c1c !important;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18) !important;
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+
+    [data-theme="light"] select option,
+    [data-theme="light"] .vvit-select option,
+    [data-theme="light"] .form-select option {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+  </style>
+
   <script>
     (function() {
       try {
@@ -600,7 +697,7 @@
     <div class="navbar-right ms-auto d-flex align-items-center gap-3">
       <!-- Theme Toggle Dark/Light -->
       <button type="button" class="theme-toggle-btn" id="themeToggle" title="Toggle Dark / Light Mode" onclick="toggleTheme()">
-        <i class="fas fa-sun" id="themeIcon"></i>
+        <i class="fas {% if ACTIVE_THEME == 'light' %}fa-moon{% else %}fa-sun{% endif %}" id="themeIcon"></i>
       </button>
       <!-- ── Notification Bell ─────────────────────── -->
       <div class="notif-bell-wrap dropdown" id="notifDropdownWrap">
@@ -670,13 +767,18 @@
           {% endif %}
           <li><hr class="dropdown-divider" style="border-color: var(--clr-border);"></li>
           <li>
-            <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+            <a class="dropdown-item" href="javascript:void(0)" onclick="document.getElementById('globalLogoutForm').submit();" role="button">
               <i class="fas fa-sign-out-alt me-2"></i>Logout
             </a>
           </li>
         </ul>
       </div>
     </div>
+
+    <!-- Global Secure POST Logout Form with CSRF protection -->
+    <form id="globalLogoutForm" method="POST" action="{% url 'accounts:logout' %}" style="display: none;">
+      {% csrf_token %}
+    </form>
 
   </div>
 </nav>
@@ -1323,7 +1425,7 @@
     {% endif %}
 
     <div class="sidebar-divider"></div>
-    <a href="{% url 'accounts:logout' %}" class="nav-link nav-link-danger" data-nav-title="Logout">
+    <a href="javascript:void(0)" onclick="document.getElementById('globalLogoutForm').submit();" class="nav-link nav-link-danger" data-nav-title="Logout" role="button">
       <i class="fas fa-sign-out-alt nav-icon"></i><span>Logout</span>
     </a>
   </nav>
@@ -1345,9 +1447,9 @@
       <div class="user-dock-role">{{ user.get_role_display|default:user.role|upper }}</div>
     </div>
     <div class="user-dock-actions">
-      <a href="{% url 'accounts:logout' %}" class="user-dock-logout-btn" title="Logout" aria-label="Logout">
+      <button type="button" onclick="document.getElementById('globalLogoutForm').submit();" class="user-dock-logout-btn" title="Logout" aria-label="Logout" style="border: none; background: transparent; cursor: pointer;">
         <i class="fas fa-power-off"></i>
-      </a>
+      </button>
     </div>
   </div>
 </aside>

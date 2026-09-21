@@ -398,6 +398,13 @@ class Attendance(models.Model):
             models.Index(fields=['date']),
         ]
 
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        if self.date and self.date > timezone.localdate():
+            raise ValidationError({'date': 'Attendance cannot be marked for future dates.'})
+
     def __str__(self):
         return f"{self.student.roll_number} | {self.date} | {self.timetable_entry.subject.code} | {self.status}"
 
@@ -460,6 +467,16 @@ class Result(models.Model):
             models.Index(fields=['student', 'exam']),
             models.Index(fields=['exam', 'subject']),
         ]
+
+    def clean(self):
+        super().clean()
+        from django.core.exceptions import ValidationError
+        if self.marks_obtained is not None and self.marks_obtained < 0:
+            raise ValidationError({'marks_obtained': 'Marks obtained cannot be negative.'})
+        if self.max_marks is not None and self.max_marks <= 0:
+            raise ValidationError({'max_marks': 'Maximum marks must be greater than zero.'})
+        if self.marks_obtained is not None and self.max_marks is not None and self.marks_obtained > self.max_marks:
+            raise ValidationError({'marks_obtained': 'Marks obtained cannot exceed maximum marks.'})
 
     def __str__(self):
         return f"{self.student.roll_number} | {self.exam} | {self.subject.code} | {self.grade}"
@@ -567,6 +584,9 @@ class AcademicCalendar(models.Model):
                                     help_text="Leave blank for all branches")
     year        = models.ForeignKey(Year,   on_delete=models.SET_NULL, null=True, blank=True,
                                     help_text="Leave blank for all years")
+    reminder_sent = models.BooleanField(default=False, db_index=True,
+                                        help_text="Whether 1-day advance reminder email and notification have been dispatched")
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['date']

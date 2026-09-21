@@ -728,7 +728,7 @@ def class_diary(request):
     date_from_str = request.GET.get('date_from', '').strip()
     date_to_str = request.GET.get('date_to', '').strip()
 
-    diary_qs = ClassDiary.objects.filter(faculty=faculty).select_related('section__branch', 'subject', 'timetable_entry')
+    diary_qs = ClassDiary.objects.filter(faculty=faculty).select_related('section__branch', 'section__year', 'subject__branch', 'timetable_entry')
 
     if search_query:
         diary_qs = diary_qs.filter(
@@ -756,7 +756,10 @@ def class_diary(request):
     if date_to:
         diary_qs = diary_qs.filter(date__lte=date_to)
 
-    entries = diary_qs.order_by('-date', 'period')
+    from django.core.paginator import Paginator
+    paginator = Paginator(diary_qs.order_by('-date', 'period'), 35)
+    page_number = request.GET.get('page', 1)
+    entries = paginator.get_page(page_number)
 
     # Sections & Subjects handled by this faculty
     handled_sec_ids = Timetable.objects.filter(faculty=faculty).values_list('section_id', flat=True).distinct()
@@ -765,10 +768,10 @@ def class_diary(request):
 
     # Today's slots for quick modal selection
     day_name = today.strftime('%A')
-    today_slots = Timetable.objects.filter(faculty=faculty, day__iexact=day_name).select_related('section__branch', 'subject').order_by('period')
+    today_slots = Timetable.objects.filter(faculty=faculty, day__iexact=day_name).select_related('section__branch', 'section__year', 'subject').order_by('period')
 
     # All weekly slots for faculty
-    all_slots = Timetable.objects.filter(faculty=faculty).select_related('section__branch', 'subject').order_by('day', 'period')
+    all_slots = Timetable.objects.filter(faculty=faculty).select_related('section__branch', 'section__year', 'subject').order_by('day', 'period')
 
     context = {
         'entries': entries,
@@ -1609,6 +1612,10 @@ def upload_marks(request):
                         except ValueError:
                             errors.append(f"Row {row_idx}: Invalid marks format for {roll}.")
                             continue
+
+                        if marks_obt < 0 or max_mks <= 0 or marks_obt > max_mks:
+                            errors.append(f"Row {row_idx}: Marks {marks_obt} out of valid range (0 to {max_mks}) for {roll}.")
+                            continue
                             
                         try:
                             # Verify student exists and belongs to the selected section
@@ -1658,6 +1665,10 @@ def upload_marks(request):
                             marks_obt = float(marks_input)
                         except ValueError:
                             messages.error(request, f"Invalid marks for student {stu.roll_number}.")
+                            return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
+
+                        if marks_obt < 0 or max_marks_default <= 0 or marks_obt > max_marks_default:
+                            messages.error(request, f"Marks {marks_obt} for {stu.roll_number} must be between 0 and {max_marks_default}.")
                             return redirect(f"{request.path}?subject={subj_id}&exam={ex_id}&section={sec_id}")
                             
                         Result.objects.update_or_create(
@@ -2241,17 +2252,22 @@ def academic_calendar(request):
     """Faculty view of the university academic calendar, tailored to department."""
     today = timezone.localdate()
     dept = request.faculty.department if hasattr(request, 'faculty') and request.faculty.department else None
+    event_type = request.GET.get('type', '')
 
-    events = list(
-        AcademicCalendar.objects
-        .filter(date__gte=today - datetime.timedelta(days=30))
-        .filter(Q(branch=dept) | Q(branch__isnull=True) if dept else Q())
-        .order_by('date')
-    )
+    qs = AcademicCalendar.objects.filter(date__gte=today - datetime.timedelta(days=60))
+    if dept:
+        qs = qs.filter(Q(branch=dept) | Q(branch__isnull=True))
+    if event_type:
+        qs = qs.filter(event_type=event_type)
+
+    events = list(qs.order_by('date'))
+
     return render(request, 'student/academic_calendar.html', {
         'upcoming': [e for e in events if e.date >= today],
         'past':     [e for e in events if e.date <  today],
         'today':    today,
+        'selected_type': event_type,
+        'event_types': AcademicCalendar.EVENT_TYPE_CHOICES,
     })
 
 

@@ -188,9 +188,23 @@
   </div>
 
   <!-- Table Component -->
+  <style>
+    .custom-table-head th {
+      position: sticky;
+      top: 0 !important;
+      z-index: 5;
+      background: #11121c;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    [data-theme="light"] .custom-table-head th {
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
+      border-bottom: 2px solid #cbd5e1 !important;
+    }
+  </style>
   <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
     <table class="table table-hover align-middle mb-0 custom-vvit-table">
-      <thead class="sticky-top custom-table-head">
+      <thead class="custom-table-head">
         <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;">
           <th style="width: 75px;" class="text-center">Branch</th>
           <th style="width: 85px;" class="text-center">Period</th>

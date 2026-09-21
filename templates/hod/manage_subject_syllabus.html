@@ -19,7 +19,7 @@
     </a>
     {% if selected_subject %}
       <button type="button" class="btn-vvit-primary" data-bs-toggle="modal" data-bs-target="#addTopicModal">
-        <i class="fas fa-plus me-1"></i>+ Add Topic
+        <i class="fas fa-plus me-1"></i>Add Topic
       </button>
       <button type="button" class="btn-vvit-outline text-info" data-bs-toggle="modal" data-bs-target="#bulkAddModal">
         <i class="fas fa-layer-group me-1"></i>Bulk Add
@@ -283,7 +283,15 @@
                       <td class="text-end">
                         <div class="d-inline-flex gap-1">
                           <button type="button" class="btn btn-sm btn-outline-info p-1 px-2" 
-                                  onclick="openEditModal({{ topic.id }}, {{ topic.unit_number }}, '{{ topic.topic_name|escapejs }}', '{{ topic.target_date|date:'Y-m-d' }}', '{{ topic.target_milestone }}', {{ topic.order }}, '{{ topic.description|default:''|escapejs }}', {{ topic.is_completed|yesno:'1,0' }})"
+                                  data-topic-id="{{ topic.id }}"
+                                  data-unit-number="{{ topic.unit_number }}"
+                                  data-topic-name="{{ topic.topic_name|escape }}"
+                                  data-target-date="{{ topic.target_date|date:'Y-m-d' }}"
+                                  data-milestone="{{ topic.target_milestone }}"
+                                  data-order="{{ topic.order }}"
+                                  data-description="{{ topic.description|default:''|escape }}"
+                                  data-completed="{{ topic.is_completed|yesno:'1,0' }}"
+                                  onclick="openEditModalFromBtn(this)"
                                   title="Edit Topic">
                             <i class="fas fa-edit"></i>
                           </button>
@@ -512,6 +520,19 @@
 function openAddModalForUnit(unitNum) {
   document.getElementById('addTopicUnit').value = unitNum;
   new bootstrap.Modal(document.getElementById('addTopicModal')).show();
+}
+
+function openEditModalFromBtn(btn) {
+  openEditModal(
+    btn.getAttribute('data-topic-id'),
+    btn.getAttribute('data-unit-number'),
+    btn.getAttribute('data-topic-name'),
+    btn.getAttribute('data-target-date'),
+    btn.getAttribute('data-milestone'),
+    btn.getAttribute('data-order'),
+    btn.getAttribute('data-description'),
+    parseInt(btn.getAttribute('data-completed') || '0', 10)
+  );
 }
 
 function openEditModal(topicId, unitNum, topicName, targetDate, milestone, order, desc, isComp) {

@@ -17,9 +17,10 @@ from django.core.mail import send_mail
 logger = logging.getLogger(__name__)
 
 
-def get_subject_syllabus_progress(subject, faculty=None, section=None):
+def get_subject_syllabus_progress(subject, faculty=None, section=None, preloaded_topics=None, preloaded_schedules=None, preloaded_diary_units=None):
     """
     Calculate comprehensive syllabus and topic schedule progress for a given subject.
+    Accepts optional preloaded data to avoid N+1 queries when called in bulk.
     Returns:
       - total_topics: count of planned topics
       - completed_topics: count of completed topics
@@ -34,16 +35,23 @@ def get_subject_syllabus_progress(subject, faculty=None, section=None):
     from core.models import SubjectTopicPlan, ExamSchedule, ClassDiary
 
     today = timezone.localdate()
-    topic_plans = SubjectTopicPlan.objects.filter(subject=subject).order_by('unit_number', 'order', 'target_date')
+    
+    if preloaded_topics is not None:
+        topic_plans = preloaded_topics
+    else:
+        topic_plans = list(SubjectTopicPlan.objects.filter(subject=subject).order_by('unit_number', 'order', 'target_date'))
 
-    total_topics = topic_plans.count()
-    completed_topics = topic_plans.filter(is_completed=True).count()
+    total_topics = len(topic_plans)
+    completed_topics = len([t for t in topic_plans if t.is_completed])
     overdue_topics = [t for t in topic_plans if t.is_overdue]
     overdue_count = len(overdue_topics)
 
     # Unit-wise breakdown
     unit_stats = {}
     total_unit_weights = 0.0
+    
+    # Lazy-fetch diary units once if needed
+    diary_units = preloaded_diary_units
 
     for u in [1, 2, 3, 4, 5]:
         u_topics = [t for t in topic_plans if t.unit_number == u]
@@ -52,11 +60,11 @@ def get_subject_syllabus_progress(subject, faculty=None, section=None):
         
         if u_total > 0:
             u_pct = int(round((u_done / float(u_total)) * 100))
-            # Fraction of this unit completed (0.0 to 1.0)
             u_fraction = round(u_done / float(u_total), 2)
         else:
-            # Fallback check if any ClassDiary entries exist for this unit
-            diary_exists = ClassDiary.objects.filter(subject=subject, unit_number=u).exists()
+            if diary_units is None:
+                diary_units = set(ClassDiary.objects.filter(subject=subject).values_list('unit_number', flat=True).distinct())
+            diary_exists = (u in diary_units)
             u_pct = 100 if diary_exists else 0
             u_fraction = 1.0 if diary_exists else 0.0
             u_total = 1 if diary_exists else 0
@@ -84,22 +92,19 @@ def get_subject_syllabus_progress(subject, faculty=None, section=None):
         completion_pct = int(round((units_completed_count / 5.0) * 100))
 
     # ── Exam Milestones (Mid-1 and Mid-2) ──
-    # Check for active ExamSchedule for this branch/year/sem
-    mid1_schedule = ExamSchedule.objects.filter(
-        Q(branch=subject.branch) | Q(branch__isnull=True),
-        year=subject.year,
-        semester=subject.semester,
-        exam_type='mid1',
-        is_active=True
-    ).order_by('-start_date').first()
-
-    mid2_schedule = ExamSchedule.objects.filter(
-        Q(branch=subject.branch) | Q(branch__isnull=True),
-        year=subject.year,
-        semester=subject.semester,
-        exam_type='mid2',
-        is_active=True
-    ).order_by('-start_date').first()
+    if preloaded_schedules is not None:
+        mid1_schedule = next((s for s in preloaded_schedules if (s.branch_id == subject.branch_id or s.branch_id is None) and s.year_id == subject.year_id and s.semester == subject.semester and s.exam_type == 'mid1'), None)
+        mid2_schedule = next((s for s in preloaded_schedules if (s.branch_id == subject.branch_id or s.branch_id is None) and s.year_id == subject.year_id and s.semester == subject.semester and s.exam_type == 'mid2'), None)
+    else:
+        schedules = list(ExamSchedule.objects.filter(
+            Q(branch=subject.branch) | Q(branch__isnull=True),
+            year=subject.year,
+            semester=subject.semester,
+            exam_type__in=['mid1', 'mid2'],
+            is_active=True
+        ).order_by('-start_date'))
+        mid1_schedule = next((s for s in schedules if s.exam_type == 'mid1'), None)
+        mid2_schedule = next((s for s in schedules if s.exam_type == 'mid2'), None)
 
     mid1_target_units = float(mid1_schedule.target_units) if mid1_schedule else 2.5
     mid1_deadline = mid1_schedule.target_completion_date if mid1_schedule else None
@@ -125,9 +130,14 @@ def get_subject_syllabus_progress(subject, faculty=None, section=None):
         status_label = "In Progress"
         status_color = "info"
 
+    # Avoid triggering lazy N+1 query if subject.faculty is not preloaded
+    fac_obj = faculty
+    if not fac_obj and hasattr(subject, '_state') and 'faculty' in getattr(subject._state, 'fields_cache', {}):
+        fac_obj = subject.faculty
+
     return {
         'subject': subject,
-        'faculty': faculty or subject.faculty,
+        'faculty': fac_obj,
         'total_topics': total_topics,
         'completed_topics': completed_topics,
         'completion_pct': completion_pct,
@@ -148,6 +158,60 @@ def get_subject_syllabus_progress(subject, faculty=None, section=None):
         'status_label': status_label,
         'status_color': status_color,
     }
+
+
+def get_batch_subject_syllabus_progress(subjects, preloaded_diaries=None, active_schedules=None):
+    """
+    Bulk computes syllabus progress for an iterable of subjects in only 2-3 queries total,
+    returning a dictionary {subject_id: progress_dict}.
+    """
+    from collections import defaultdict
+    from core.models import SubjectTopicPlan, ExamSchedule, ClassDiary
+
+    subj_list = list(subjects)
+    if not subj_list:
+        return {}
+
+    subj_ids = [s.id for s in subj_list]
+
+    # 1. Fetch active exam schedules once if not provided
+    if active_schedules is None:
+        active_schedules = list(ExamSchedule.objects.filter(is_active=True).order_by('-start_date'))
+
+    # 2. Fetch all topic plans for all subjects in one query
+    topic_plans_all = list(
+        SubjectTopicPlan.objects.filter(subject_id__in=subj_ids)
+        .order_by('unit_number', 'order', 'target_date')
+    )
+    topic_plans_by_subj = defaultdict(list)
+    for tp in topic_plans_all:
+        topic_plans_by_subj[tp.subject_id].append(tp)
+
+    # 3. Diary units lookup
+    diary_units_by_subj = defaultdict(set)
+    if preloaded_diaries is not None:
+        for d in preloaded_diaries:
+            s_id = d.get('subject_id') if isinstance(d, dict) else d.subject_id
+            u_num = d.get('unit_number') if isinstance(d, dict) else d.unit_number
+            diary_units_by_subj[s_id].add(u_num)
+    else:
+        # Check units from DB for subjects that have zero planned topics
+        subjects_needing_diary = [s_id for s_id in subj_ids if len(topic_plans_by_subj[s_id]) == 0]
+        if subjects_needing_diary:
+            d_records = ClassDiary.objects.filter(subject_id__in=subjects_needing_diary).values('subject_id', 'unit_number')
+            for r in d_records:
+                diary_units_by_subj[r['subject_id']].add(r['unit_number'])
+
+    progress_map = {}
+    for subj in subj_list:
+        progress_map[subj.id] = get_subject_syllabus_progress(
+            subj,
+            preloaded_topics=topic_plans_by_subj[subj.id],
+            preloaded_schedules=active_schedules,
+            preloaded_diary_units=diary_units_by_subj[subj.id]
+        )
+
+    return progress_map
 
 
 def auto_match_and_complete_topic(subject, topic_text, unit_number=1, faculty=None, diary_entry=None, date=None):

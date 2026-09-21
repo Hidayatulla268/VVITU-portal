@@ -11,7 +11,14 @@
     <p class="ph-sub">Official institutional schedule, exams, holidays, and milestones</p>
   </div>
   {% if user.role == 'admin' %}
-  <div class="ph-right">
+  <div class="ph-right d-flex gap-2 flex-wrap">
+    <form method="POST" action="{% url 'admin_dashboard:academic_calendar' %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="dispatch_reminders">
+      <button type="submit" class="btn btn-outline-warning shadow-sm" title="Check and send 1-day advance email and in-app alerts to students, faculty, HODs, and DEOs">
+        <i class="fas fa-bell me-1"></i> Send Reminders
+      </button>
+    </form>
     <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addEventModal">
       <i class="fas fa-plus-circle me-1"></i> Add Academic Event
     </button>
@@ -21,13 +28,35 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* Guaranteed single-chevron dropdown arrow — prevents repeating/tiling arrows */
+  select.vvit-select,
+  select.form-select,
+  select {
+    background-repeat: no-repeat !important;
+    background-position: right 0.85rem center !important;
+    background-size: 14px 10px !important;
+    padding-right: 2.5rem !important;
+  }
+  [data-theme="light"] select.vvit-select,
+  [data-theme="light"] select.form-select,
+  [data-theme="light"] select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.85rem center !important;
+    background-size: 14px 10px !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+</style>
+
 <!-- Filters Strip (For Admin / All Roles) -->
 {% if branches or event_types %}
 <div class="glass-card mb-4 p-3">
   <form method="GET" class="row g-2 align-items-center">
     <div class="col-12 col-md-4">
       <label class="form-label text-muted small mb-1 fw-bold"><i class="fas fa-filter me-1 text-accent"></i>Event Category</label>
-      <select name="type" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
+      <select name="type" class="vvit-select form-select form-select-sm" onchange="this.form.submit()">
         <option value="">All Categories (Holidays, Exams, Events...)</option>
         {% for code, label in event_types %}
         <option value="{{ code }}" {% if selected_type == code %}selected{% endif %}>{{ label }}</option>
@@ -37,7 +66,7 @@
     {% if branches %}
     <div class="col-12 col-md-4">
       <label class="form-label text-muted small mb-1 fw-bold"><i class="fas fa-code-branch me-1 text-accent"></i>Branch Filter</label>
-      <select name="branch" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
+      <select name="branch" class="vvit-select form-select form-select-sm" onchange="this.form.submit()">
         <option value="">All Branches / University-Wide</option>
         {% for b in branches %}
         <option value="{{ b.id }}" {% if selected_branch == b.id|stringformat:"i" %}selected{% endif %}>{{ b.code }} — {{ b.name }}</option>

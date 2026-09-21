@@ -8,24 +8,34 @@
 const THEME_KEY = 'vvit-theme';
 
 function applyTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') theme = 'dark';
   document.documentElement.setAttribute('data-theme', theme);
   const icon = document.getElementById('themeIcon');
-  if (icon) icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+  if (icon) {
+    icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+  }
   try {
+    localStorage.setItem(THEME_KEY, theme);
+    document.cookie = "vvit_theme=" + theme + ";path=/;max-age=31536000;SameSite=Lax";
+    document.cookie = "vvit-theme=" + theme + ";path=/;max-age=31536000;SameSite=Lax";
     window.dispatchEvent(new CustomEvent('vvitThemeChanged', { detail: { theme } }));
   } catch (e) {}
 }
 
 function toggleTheme() {
-  const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
+  const cur  = document.documentElement.getAttribute('data-theme') || localStorage.getItem(THEME_KEY) || 'dark';
   const next = cur === 'dark' ? 'light' : 'dark';
   applyTheme(next);
-  localStorage.setItem(THEME_KEY, next);
-  setTimeout(initDatePickers, 60);  // refresh calendar colours
+  if (typeof initDatePickers === 'function') {
+    setTimeout(initDatePickers, 60);  // refresh calendar colours
+  }
 }
 
-// Apply saved theme immediately (before paint)
-(function () { applyTheme(localStorage.getItem(THEME_KEY) || 'dark'); })();
+// Ensure theme and icon are aligned on script load
+(function () {
+  const saved = localStorage.getItem(THEME_KEY) || document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(saved);
+})();
 
 
 /* ── 2. SIDEBAR TOGGLE & SCROLL PERSISTENCE ─────────────────────── */

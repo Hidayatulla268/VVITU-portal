@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 logger = logging.getLogger(__name__)
 
 from accounts.models import User, Student, Faculty, Achievement, FacultyLeaveRequest, generate_secure_temp_password
+from accounts.email_utils import send_welcome_credentials_email
 from core.models import (
     Branch, Year, Section, Subject, Timetable, Attendance, Exam, Result,
     Notification, ResultRelease, FacultyAttendance, ClassTransfer, ClassDiary,
@@ -24,9 +25,10 @@ from core.models import (
     AcademicCalendar
 )
 
+from collections import defaultdict
 from admin_dashboard.views import _send_result_emails
 from core.sms_utils import send_result_notifications, send_result_sms_to_parent
-from core.syllabus_utils import get_subject_syllabus_progress, check_and_dispatch_syllabus_reminders
+from core.syllabus_utils import get_subject_syllabus_progress, get_batch_subject_syllabus_progress, check_and_dispatch_syllabus_reminders
 
 # ─────────────────────────────────────────────
 # DECORATOR
@@ -1033,7 +1035,8 @@ def add_student(request):
             created_by=request.user
         )
         
-        messages.success(request, f"Student {username} created successfully.")
+        send_welcome_credentials_email(user, temp_pwd, roll_number=username, request=request)
+        messages.success(request, f"Student {username} created successfully! (Initial Password: {temp_pwd}) Login credentials dispatched to {email}.")
         return redirect('hod:manage_students')
         
     return render(request, 'hod/add_student.html', {
@@ -1206,7 +1209,8 @@ def add_faculty(request):
             created_by=request.user
         )
         
-        messages.success(request, f"Faculty {emp_id} created successfully! (Initial Password: {temp_pwd})")
+        send_welcome_credentials_email(user, temp_pwd, roll_number=emp_id, request=request)
+        messages.success(request, f"Faculty {emp_id} created successfully! (Initial Password: {temp_pwd}) Login credentials dispatched to {email}.")
         return redirect('hod:manage_faculty')
         
     return render(request, 'hod/add_faculty.html')
@@ -2194,7 +2198,10 @@ def class_diary_coverage(request):
     if date_to:
         diary_qs = diary_qs.filter(date__lte=date_to)
 
-    entries = diary_qs.order_by('-date', 'period')
+    from django.core.paginator import Paginator
+    paginator = Paginator(diary_qs.order_by('-date', 'period'), 50)
+    page_number = request.GET.get('page', 1)
+    entries = paginator.get_page(page_number)
 
     # Department faculty, subjects & sections for dropdown filters
     dept_faculty = Faculty.objects.filter(department=dept, is_active=True, user__is_deleted=False).select_related('user').order_by('user__first_name')
@@ -2203,9 +2210,15 @@ def class_diary_coverage(request):
 
     # ── Syllabus / Unit Coverage Aggregation per Faculty & Subject ──
     coverage_stats = []
-    timetables = Timetable.objects.filter(section__branch=dept).select_related('faculty__user', 'subject', 'section').distinct()
-    pair_keys = set()
+    timetables = Timetable.objects.filter(section__branch=dept).select_related(
+        'faculty__user', 'faculty__department',
+        'subject__branch', 'subject__year',
+        'section__branch', 'section__year'
+    ).distinct()
 
+    pair_keys = set()
+    unique_pairs = []
+    subject_map = {}
     for t in timetables:
         if not t.faculty:
             continue
@@ -2213,23 +2226,44 @@ def class_diary_coverage(request):
         if key in pair_keys:
             continue
         pair_keys.add(key)
+        unique_pairs.append(t)
+        if t.subject_id and t.subject:
+            subject_map[t.subject_id] = t.subject
 
+    # Batch load all relevant diary records in ONE query
+    diary_records = list(base_qs.filter(
+        subject_id__in=list(subject_map.keys())
+    ).values('faculty_id', 'subject_id', 'section_id', 'unit_number', 'date', 'period', 'id', 'topic_covered', 'created_at'))
+
+    diary_lookup = defaultdict(list)
+    for d in diary_records:
+        key = (d['faculty_id'], d['subject_id'], d['section_id'])
+        diary_lookup[key].append(d)
+
+    # Batch compute syllabus progress for all unique subjects in 2-3 queries
+    subject_progress_cache = get_batch_subject_syllabus_progress(
+        subject_map.values(),
+        preloaded_diaries=diary_records
+    )
+
+    for t in unique_pairs:
         fac = t.faculty
         subj = t.subject
         sec = t.section
+        key = (t.faculty_id, t.subject_id, t.section_id)
 
-        logs = base_qs.filter(faculty=fac, subject=subj, section=sec)
-        total_logs = logs.count()
-        covered_units = set(logs.values_list('unit_number', flat=True))
+        logs = diary_lookup.get(key, [])
+        total_logs = len(logs)
+        covered_units = set(d['unit_number'] for d in logs)
 
         standard_units_covered = [u for u in [1, 2, 3, 4, 5] if u in covered_units]
         unit_count = len(standard_units_covered)
         progress_pct = min(100, int((unit_count / 5.0) * 100))
 
-        latest_log = logs.order_by('-date', '-period').first()
+        latest_log = max(logs, key=lambda x: (x['date'], x['period'])) if logs else None
 
         # Detailed planned topic schedule analysis
-        syllabus_data = get_subject_syllabus_progress(subj, faculty=fac, section=sec)
+        syllabus_data = subject_progress_cache.get(subj.id) or get_subject_syllabus_progress(subj, faculty=fac, section=sec)
 
         coverage_stats.append({
             'faculty': fac,
@@ -3612,17 +3646,22 @@ def academic_calendar(request):
     """HOD view of the university academic calendar."""
     today = timezone.localdate()
     dept = request.department
+    event_type = request.GET.get('type', '')
 
-    events = list(
-        AcademicCalendar.objects
-        .filter(date__gte=today - dt.timedelta(days=30))
-        .filter(Q(branch=dept) | Q(branch__isnull=True) if dept else Q())
-        .order_by('date')
-    )
+    qs = AcademicCalendar.objects.filter(date__gte=today - dt.timedelta(days=60))
+    if dept:
+        qs = qs.filter(Q(branch=dept) | Q(branch__isnull=True))
+    if event_type:
+        qs = qs.filter(event_type=event_type)
+
+    events = list(qs.order_by('date'))
+
     return render(request, 'student/academic_calendar.html', {
         'upcoming': [e for e in events if e.date >= today],
         'past':     [e for e in events if e.date <  today],
         'today':    today,
+        'selected_type': event_type,
+        'event_types': AcademicCalendar.EVENT_TYPE_CHOICES,
     })
 
 

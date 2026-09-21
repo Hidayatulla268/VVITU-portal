@@ -76,11 +76,13 @@ Scroll down to **Environment Variables** and add:
 | :--- | :--- | :--- |
 | `PYTHON_VERSION` | `3.11.9` | Python runtime version |
 | `DJANGO_SETTINGS_MODULE` | `VVITU_Portal.settings_prod` | Production settings |
-| `SECRET_KEY` | *(Click "Generate" or enter a random 50-char string)* | Django security key |
+| `SECRET_KEY` | *(Click "Generate" or enter a random 50-char string)* | **REQUIRED**: Django security key (production aborts startup if missing) |
 | `DATABASE_URL` | *(Paste Internal Database URL from Step 1)* | PostgreSQL connection |
 | `ALLOWED_HOSTS` | `.onrender.com,localhost,127.0.0.1` | Allowed domain hosts |
 | `CSRF_TRUSTED_ORIGINS` | `https://*.onrender.com` | Allowed CSRF origins |
 | `GEMINI_API_KEY` | *(Optional: paste your Gemini API key)* | VBot AI features |
+
+> ⚠️ **CRITICAL**: The application enforces a fail-fast policy for `SECRET_KEY`. Do not leave `SECRET_KEY` blank or production startup will immediately terminate with `ImproperlyConfigured`.
 
 4. Click **Create Web Service**.
 
@@ -96,7 +98,11 @@ Once your service finishes deploying and the status is **Live**:
    ```bash
    python manage.py seed_data
    ```
-4. This command will instantly populate:
+4. (Optional) Run the complete 10-tier test suite to verify the deployment:
+   ```bash
+   python run_vvitu_test_suite.py
+   ```
+5. Initial population includes:
    - Superuser: **`admin`** / Password: **`vvit@1234`**
    - All 8 Engineering Branches (CSE, ECE, EEE, IT, CSM, CSD, CIVIL, MECH)
    - Student & Faculty accounts

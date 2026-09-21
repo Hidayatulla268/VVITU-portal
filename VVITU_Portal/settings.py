@@ -123,6 +123,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.app_version',
+                'core.context_processors.active_theme',
             ],
         },
     },
@@ -214,7 +215,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-    WHITENOISE_MANIFEST_STRICT = False
+    WHITENOISE_MANIFEST_STRICT = True
 
 
 MEDIA_URL = '/media/'

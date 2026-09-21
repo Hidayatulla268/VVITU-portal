@@ -69,8 +69,9 @@ def get_user_notifications(user, limit=None):
     # STUDENT NOTIFICATION RESTRICTION RULE:
     # Students can ONLY see notifications sent by Admin or HOD
     # (or system result releases) that specifically target students.
-    # ─────────────────────────────────────────────────────────
-    if user_role == 'student':
+    if user_role == 'admin' or getattr(user, 'is_superuser', False):
+        target_q = Q()
+    elif user_role == 'student':
         sender_q = (
             Q(created_by__role__in=['admin', 'hod']) |
             Q(created_by__is_superuser=True) |

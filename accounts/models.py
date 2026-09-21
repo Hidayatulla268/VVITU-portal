@@ -5,21 +5,34 @@ Custom User model with role-based access control.
 Student and Faculty profiles linked via OneToOneField.
 """
 
+import os
 import secrets
 import string
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
-
-
-DEFAULT_INITIAL_PASSWORD = 'vvit@1234'
+from django.core.exceptions import ValidationError
 
 
 def generate_secure_temp_password(length=12):
     """
-    Standard college default temporary password for all new student/faculty accounts.
+    Generate a cryptographically secure random password or read university environment override.
+    Ensures uppercase, lowercase, digit, and special characters are present.
     """
-    return DEFAULT_INITIAL_PASSWORD
+    env_pwd = os.environ.get('INITIAL_STUDENT_PASSWORD')
+    if env_pwd:
+        return env_pwd
+
+    chars = string.ascii_letters + string.digits + "@#$%&*"
+    pwd = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("@#$%&*")
+    ]
+    pwd += [secrets.choice(chars) for _ in range(max(4, length - 4))]
+    secrets.SystemRandom().shuffle(pwd)
+    return ''.join(pwd)
 
 
 # ─────────────────────────────────────────────
@@ -137,6 +150,11 @@ class Student(models.Model):
             models.Index(fields=['roll_number']),
             models.Index(fields=['branch', 'year', 'section']),
         ]
+
+    def clean(self):
+        super().clean()
+        if self.fees_pending is not None and self.fees_pending < 0:
+            raise ValidationError({'fees_pending': 'Pending fees cannot be negative.'})
 
     def __str__(self):
         return f"{self.roll_number} — {self.user.get_full_name()}"

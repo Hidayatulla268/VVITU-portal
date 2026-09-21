@@ -8,7 +8,7 @@ import os
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth.password_validation import validate_password
@@ -102,8 +102,9 @@ def login_view(request):
 # ─────────────────────────────────────────────
 # LOGOUT
 # ─────────────────────────────────────────────
+@require_POST
 def logout_view(request):
-    """Log out and redirect to login page."""
+    """Log out and redirect to login page (POST-only with CSRF protection)."""
     logout(request)
     messages.info(request, "You have been logged out successfully.")
     return redirect('accounts:login')

@@ -29,7 +29,7 @@ from core.models import (
     AcademicCalendar, QuestionPaper, Subject, ClassDiary,
     SubjectTopicPlan, ExamSchedule
 )
-from core.syllabus_utils import get_subject_syllabus_progress
+from core.syllabus_utils import get_subject_syllabus_progress, get_batch_subject_syllabus_progress
 
 # Pre-load ML modules at server startup to prevent request-time import lag
 try:
@@ -627,11 +627,14 @@ def class_diary(request):
 
     # Get subjects taught in this section and their syllabus progress
     section_subj_ids = Timetable.objects.filter(section=section).values_list('subject_id', flat=True).distinct()
-    section_subjects = Subject.objects.filter(id__in=section_subj_ids, is_deleted=False).order_by('code')
+    section_subjects = list(Subject.objects.filter(id__in=section_subj_ids, is_deleted=False).select_related('branch', 'year').order_by('code'))
 
+    progress_map = get_batch_subject_syllabus_progress(section_subjects)
     syllabus_summaries = []
     for subj in section_subjects:
-        prog = get_subject_syllabus_progress(subj)
+        prog = progress_map.get(subj.id)
+        if not prog:
+            continue
         syllabus_summaries.append({
             'subject': subj,
             'completion_pct': prog['completion_pct'],
@@ -670,9 +673,9 @@ def syllabus_coverage(request, subject_id=None):
 
     # Subjects for student's branch & year & current semester
     semester = (student.year.year * 2) - 1 if student.year else 1
-    subjects = Subject.objects.filter(branch=student.branch, year=student.year, semester=semester, is_deleted=False).order_by('code')
+    subjects = Subject.objects.filter(branch=student.branch, year=student.year, semester=semester, is_deleted=False).select_related('faculty__user', 'branch', 'year').order_by('code')
     if not subjects.exists():
-        subjects = Subject.objects.filter(branch=student.branch, year=student.year, is_deleted=False).order_by('code')
+        subjects = Subject.objects.filter(branch=student.branch, year=student.year, is_deleted=False).select_related('faculty__user', 'branch', 'year').order_by('code')
 
     selected_subject = None
     if subject_id:
@@ -864,18 +867,27 @@ def academic_calendar(request):
         faculty = getattr(request.user, 'faculty_profile', None)
         if faculty and faculty.department:
             branch = faculty.department
+    elif request.user.role == 'deo':
+        deo = getattr(request.user, 'deo_profile', None)
+        if deo and deo.branch:
+            branch = deo.branch
 
-    events = list(
-        AcademicCalendar.objects
-        .filter(date__gte=today - datetime.timedelta(days=30))
-        .filter(Q(branch=branch) | Q(branch__isnull=True) if branch else Q())
-        .order_by('date')
-    )
+    event_type = request.GET.get('type', '')
+
+    qs = AcademicCalendar.objects.filter(date__gte=today - datetime.timedelta(days=60))
+    if branch:
+        qs = qs.filter(Q(branch=branch) | Q(branch__isnull=True))
+    if event_type:
+        qs = qs.filter(event_type=event_type)
+
+    events = list(qs.order_by('date'))
 
     return render(request, 'student/academic_calendar.html', {
         'upcoming': [e for e in events if e.date >= today],
         'past':     [e for e in events if e.date <  today],
         'today':    today,
+        'selected_type': event_type,
+        'event_types': AcademicCalendar.EVENT_TYPE_CHOICES,
     })
 
 
