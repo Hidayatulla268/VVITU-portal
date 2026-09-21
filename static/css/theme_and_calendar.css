@@ -1587,17 +1587,51 @@ input[type="month"]::-webkit-calendar-picker-indicator:hover {
   font-weight: 800 !important;
 }
 
-/* 7. Dark & Secondary Badges */
-[data-theme="light"] .badge.bg-dark,
+/* 7. Clean Transparent Badges in Light Mode (No Black Background Fills) */
+.audit-branch-badge {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #a5b4fc !important;
+  border: 1px solid rgba(165, 180, 252, 0.4) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+}
 [data-theme="light"] .audit-branch-badge {
-  background-color: #1e293b !important;
-  color: #ffffff !important;
-  border: 1.5px solid #0f172a !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #4338ca !important;
+  border: 1.5px solid #a5b4fc !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+}
+
+[data-theme="light"] .badge.bg-dark,
+[data-theme="light"] .badge.bg-dark-50 {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #1e293b !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .syllabus-target-badge,
+[data-theme="light"] .badge.bg-dark.text-accent,
+[data-theme="light"] .badge.text-accent {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #dc2626 !important;
+  border: 1.5px solid rgba(220, 38, 38, 0.4) !important;
   font-weight: 800 !important;
 }
+
 [data-theme="light"] .badge.bg-secondary {
-  background-color: #475569 !important;
-  color: #ffffff !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #475569 !important;
+  border: 1.5px solid #cbd5e1 !important;
   font-weight: 700 !important;
 }
 

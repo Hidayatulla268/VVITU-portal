@@ -51,8 +51,8 @@
             <small class="text-muted">{{ sched.branch.code|default:"All Branches" }} Department</small>
           </td>
           <td>
-            <span class="badge bg-primary bg-opacity-50 text-light">{{ sched.year }}</span>
-            <span class="badge bg-secondary bg-opacity-50 text-light ms-1">Sem {{ sched.semester }}</span>
+            <span class="badge border border-secondary text-primary" style="background: transparent;">{{ sched.year }}</span>
+            <span class="badge border border-secondary text-body ms-1" style="background: transparent;">Sem {{ sched.semester }}</span>
           </td>
           <td>
             {% if sched.exam_type == 'mid1' %}
@@ -70,7 +70,7 @@
             </div>
           </td>
           <td>
-            <span class="badge bg-dark border border-secondary text-accent fw-bold px-2 py-1" style="font-size: 0.82rem;">
+            <span class="badge syllabus-target-badge border border-danger border-opacity-50 text-danger fw-bold px-2 py-1" style="background: transparent !important; font-size: 0.85rem;">
               {{ sched.target_units }} Units
             </span>
           </td>

@@ -5,7 +5,7 @@ Provides system-wide template variables such as APP_VERSION for static asset cac
 
 def app_version(request):
     return {
-        'APP_VERSION': '3.3.0'
+        'APP_VERSION': '3.4.0'
     }
 
 

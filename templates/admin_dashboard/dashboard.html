@@ -222,7 +222,7 @@
           {% for row in class_audit_data.rows|slice:":25" %}
           <tr class="{% if not row.is_marked %}table-row-unmarked{% endif %}">
             <td class="text-center">
-              <span class="badge audit-branch-badge fw-bold" style="font-size: 0.75rem;">{{ row.branch.code }}</span>
+              <span class="badge audit-branch-badge fw-bold" style="background: transparent !important; font-size: 0.75rem;">{{ row.branch.code }}</span>
             </td>
             <td class="text-center">
               <span class="badge bg-primary text-light fw-bold" style="font-size: 0.78rem;">P{{ row.period }}</span>
