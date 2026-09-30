@@ -20137,30 +20137,6 @@
 },
 {
   "model": "accounts.user",
-  "pk": 1423,
-  "fields": {
-    "password": "",
-    "last_login": "2026-09-21T06:16:23.176Z",
-    "is_superuser": false,
-    "username": "HOD_CSO_TEST",
-    "first_name": "CSO",
-    "last_name": "HOD",
-    "email": "",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2026-09-14T02:20:09.300Z",
-    "role": "hod",
-    "phone": null,
-    "profile_picture": "",
-    "is_deleted": false,
-    "deleted_by_name": null,
-    "deleted_at": null,
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
-  "model": "accounts.user",
   "pk": 1425,
   "fields": {
     "password": "",
@@ -20222,30 +20198,6 @@
     "is_active": true,
     "date_joined": "2026-09-15T03:07:04.712Z",
     "role": "admin",
-    "phone": null,
-    "profile_picture": "",
-    "is_deleted": false,
-    "deleted_by_name": null,
-    "deleted_at": null,
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
-  "model": "accounts.user",
-  "pk": 1428,
-  "fields": {
-    "password": "",
-    "last_login": "2026-09-21T06:16:23.343Z",
-    "is_superuser": false,
-    "username": "hod_cso_test_tt",
-    "first_name": "",
-    "last_name": "",
-    "email": "hod_tt@vvit.net",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2026-09-15T03:07:04.712Z",
-    "role": "hod",
     "phone": null,
     "profile_picture": "",
     "is_deleted": false,
@@ -21292,7 +21244,7 @@
   "pk": 1537,
   "fields": {
     "password": "pbkdf2_sha256$1500000$hVcu9W0pRhC3DhWG5AlLJg$9462U9mEaPdaSKxcmJqfW2GkIr6+VCycFuB8Fujg50E=",
-    "last_login": null,
+    "last_login": "2026-09-30T07:31:50.806Z",
     "is_superuser": false,
     "username": "24BQ1A4939",
     "first_name": "PUPPALA",
@@ -21508,7 +21460,7 @@
   "pk": 1546,
   "fields": {
     "password": "pbkdf2_sha256$1500000$evUIsZ7a3wS8TKJWoTVtUW$rXRhmj7iWEGMVsnqPY47yurPE/mvLyK4S1CYz1YLoGQ=",
-    "last_login": null,
+    "last_login": "2026-09-30T07:31:11.968Z",
     "is_superuser": false,
     "username": "24BQ1A4948",
     "first_name": "TAVVA",
@@ -21981,6 +21933,1187 @@
     "deleted_at": null,
     "groups": [],
     "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 1566,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$1btNyRdEgKIloufNTOuYOR$XGUhsj3rOlDTwrtcYWSuhxkLDI3OL0xoE0TbEqoaQOo=",
+    "last_login": "2026-09-30T07:39:23.108Z",
+    "is_superuser": false,
+    "username": "sai.jothi",
+    "first_name": "Dr. Sai",
+    "last_name": "Jothi",
+    "email": "sai.jothi@vvit.net",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-30T07:37:15.008Z",
+    "role": "hod",
+    "phone": null,
+    "profile_picture": "",
+    "is_deleted": false,
+    "deleted_by_name": null,
+    "deleted_at": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 183,
+  "fields": {
+    "user": 575,
+    "employee_id": "HOD001",
+    "department": 36,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 184,
+  "fields": {
+    "user": 576,
+    "employee_id": "HOD002",
+    "department": 37,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 185,
+  "fields": {
+    "user": 577,
+    "employee_id": "HOD003",
+    "department": 38,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 186,
+  "fields": {
+    "user": 578,
+    "employee_id": "HOD008",
+    "department": 39,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 187,
+  "fields": {
+    "user": 579,
+    "employee_id": "HOD007",
+    "department": 40,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 188,
+  "fields": {
+    "user": 580,
+    "employee_id": "HOD004",
+    "department": 41,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 189,
+  "fields": {
+    "user": 581,
+    "employee_id": "HOD005",
+    "department": 42,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 190,
+  "fields": {
+    "user": 582,
+    "employee_id": "HOD006",
+    "department": 43,
+    "designation": "Professor & HOD",
+    "joining_date": "2018-06-01",
+    "monthly_leave_limit": "2.5",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 191,
+  "fields": {
+    "user": 583,
+    "employee_id": "EMP015",
+    "department": 36,
+    "designation": "Associate Professor",
+    "joining_date": "2021-01-16",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 192,
+  "fields": {
+    "user": 584,
+    "employee_id": "EMP016",
+    "department": 36,
+    "designation": "Associate Professor",
+    "joining_date": "2021-11-26",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 193,
+  "fields": {
+    "user": 585,
+    "employee_id": "EMP017",
+    "department": 36,
+    "designation": "Professor",
+    "joining_date": "2021-08-11",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 194,
+  "fields": {
+    "user": 586,
+    "employee_id": "EMP018",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-09-14",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 195,
+  "fields": {
+    "user": 587,
+    "employee_id": "EMP019",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-03-18",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 196,
+  "fields": {
+    "user": 588,
+    "employee_id": "EMP020",
+    "department": 36,
+    "designation": "Associate Professor",
+    "joining_date": "2021-04-06",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 197,
+  "fields": {
+    "user": 589,
+    "employee_id": "EMP021",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-03-25",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 198,
+  "fields": {
+    "user": 590,
+    "employee_id": "EMP022",
+    "department": 36,
+    "designation": "Senior Assistant Professor",
+    "joining_date": "2021-04-23",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 199,
+  "fields": {
+    "user": 591,
+    "employee_id": "EMP023",
+    "department": 36,
+    "designation": "Senior Assistant Professor",
+    "joining_date": "2021-10-16",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 200,
+  "fields": {
+    "user": 592,
+    "employee_id": "EMP024",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-10-22",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 201,
+  "fields": {
+    "user": 593,
+    "employee_id": "EMP025",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-02-12",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 202,
+  "fields": {
+    "user": 594,
+    "employee_id": "EMP026",
+    "department": 36,
+    "designation": "Senior Assistant Professor",
+    "joining_date": "2021-07-16",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 203,
+  "fields": {
+    "user": 595,
+    "employee_id": "EMP027",
+    "department": 36,
+    "designation": "Professor",
+    "joining_date": "2021-12-10",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 204,
+  "fields": {
+    "user": 596,
+    "employee_id": "EMP028",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-03-19",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 205,
+  "fields": {
+    "user": 597,
+    "employee_id": "EMP029",
+    "department": 36,
+    "designation": "Associate Professor",
+    "joining_date": "2021-05-11",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 206,
+  "fields": {
+    "user": 598,
+    "employee_id": "EMP030",
+    "department": 36,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-24",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 207,
+  "fields": {
+    "user": 599,
+    "employee_id": "EMP039",
+    "department": 37,
+    "designation": "Associate Professor",
+    "joining_date": "2021-10-17",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 208,
+  "fields": {
+    "user": 600,
+    "employee_id": "EMP040",
+    "department": 37,
+    "designation": "Associate Professor",
+    "joining_date": "2021-04-28",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 209,
+  "fields": {
+    "user": 601,
+    "employee_id": "EMP041",
+    "department": 37,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-03-17",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 210,
+  "fields": {
+    "user": 602,
+    "employee_id": "EMP042",
+    "department": 37,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-23",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 211,
+  "fields": {
+    "user": 603,
+    "employee_id": "EMP043",
+    "department": 37,
+    "designation": "Associate Professor",
+    "joining_date": "2021-04-06",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 212,
+  "fields": {
+    "user": 604,
+    "employee_id": "EMP044",
+    "department": 37,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-15",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 213,
+  "fields": {
+    "user": 605,
+    "employee_id": "EMP045",
+    "department": 37,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-06-27",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 214,
+  "fields": {
+    "user": 606,
+    "employee_id": "EMP046",
+    "department": 37,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-04-25",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 215,
+  "fields": {
+    "user": 607,
+    "employee_id": "EMP047",
+    "department": 37,
+    "designation": "Associate Professor",
+    "joining_date": "2021-02-28",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 216,
+  "fields": {
+    "user": 608,
+    "employee_id": "EMP048",
+    "department": 37,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-06-05",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 217,
+  "fields": {
+    "user": 609,
+    "employee_id": "EMP031",
+    "department": 42,
+    "designation": "Associate Professor",
+    "joining_date": "2021-11-17",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 218,
+  "fields": {
+    "user": 610,
+    "employee_id": "EMP032",
+    "department": 42,
+    "designation": "Associate Professor",
+    "joining_date": "2021-08-14",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 219,
+  "fields": {
+    "user": 611,
+    "employee_id": "EMP033",
+    "department": 42,
+    "designation": "Associate Professor",
+    "joining_date": "2021-07-26",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 220,
+  "fields": {
+    "user": 612,
+    "employee_id": "EMP034",
+    "department": 42,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-03-18",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 221,
+  "fields": {
+    "user": 613,
+    "employee_id": "EMP035",
+    "department": 42,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-05-19",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 222,
+  "fields": {
+    "user": 614,
+    "employee_id": "EMP036",
+    "department": 42,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-04-27",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 223,
+  "fields": {
+    "user": 615,
+    "employee_id": "EMP037",
+    "department": 42,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-12-19",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 224,
+  "fields": {
+    "user": 616,
+    "employee_id": "EMP038",
+    "department": 42,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-09-13",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 225,
+  "fields": {
+    "user": 617,
+    "employee_id": "EMP007",
+    "department": 43,
+    "designation": "Associate Professor",
+    "joining_date": "2021-05-22",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 226,
+  "fields": {
+    "user": 618,
+    "employee_id": "EMP008",
+    "department": 43,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-09-07",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 227,
+  "fields": {
+    "user": 619,
+    "employee_id": "EMP009",
+    "department": 43,
+    "designation": "Associate Professor",
+    "joining_date": "2021-10-24",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 228,
+  "fields": {
+    "user": 620,
+    "employee_id": "EMP010",
+    "department": 43,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-12-05",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 229,
+  "fields": {
+    "user": 621,
+    "employee_id": "EMP011",
+    "department": 43,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-12-05",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 230,
+  "fields": {
+    "user": 622,
+    "employee_id": "EMP012",
+    "department": 43,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-06-02",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 231,
+  "fields": {
+    "user": 623,
+    "employee_id": "EMP013",
+    "department": 43,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-10-11",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 232,
+  "fields": {
+    "user": 624,
+    "employee_id": "EMP014",
+    "department": 43,
+    "designation": "Senior Assistant Professor",
+    "joining_date": "2021-04-17",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 233,
+  "fields": {
+    "user": 625,
+    "employee_id": "EMP056",
+    "department": 41,
+    "designation": "Associate Professor",
+    "joining_date": "2021-10-25",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 234,
+  "fields": {
+    "user": 626,
+    "employee_id": "EMP057",
+    "department": 41,
+    "designation": "Associate Professor",
+    "joining_date": "2021-01-07",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 235,
+  "fields": {
+    "user": 627,
+    "employee_id": "EMP058",
+    "department": 41,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-09-16",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 236,
+  "fields": {
+    "user": 628,
+    "employee_id": "EMP059",
+    "department": 41,
+    "designation": "Associate Professor",
+    "joining_date": "2021-04-28",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 237,
+  "fields": {
+    "user": 629,
+    "employee_id": "EMP060",
+    "department": 41,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-26",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 238,
+  "fields": {
+    "user": 630,
+    "employee_id": "EMP061",
+    "department": 41,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-04-17",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 239,
+  "fields": {
+    "user": 631,
+    "employee_id": "EMP062",
+    "department": 41,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-07-19",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 240,
+  "fields": {
+    "user": 632,
+    "employee_id": "EMP063",
+    "department": 41,
+    "designation": "Associate Professor",
+    "joining_date": "2021-09-10",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 241,
+  "fields": {
+    "user": 633,
+    "employee_id": "EMP049",
+    "department": 38,
+    "designation": "Associate Professor",
+    "joining_date": "2021-09-09",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 242,
+  "fields": {
+    "user": 634,
+    "employee_id": "EMP050",
+    "department": 38,
+    "designation": "Associate Professor",
+    "joining_date": "2021-03-07",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 243,
+  "fields": {
+    "user": 635,
+    "employee_id": "EMP051",
+    "department": 38,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-09-12",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 244,
+  "fields": {
+    "user": 636,
+    "employee_id": "EMP052",
+    "department": 38,
+    "designation": "Senior Assistant Professor",
+    "joining_date": "2021-10-18",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 245,
+  "fields": {
+    "user": 637,
+    "employee_id": "EMP053",
+    "department": 38,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-04-15",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 246,
+  "fields": {
+    "user": 638,
+    "employee_id": "EMP054",
+    "department": 38,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-25",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 247,
+  "fields": {
+    "user": 639,
+    "employee_id": "EMP055",
+    "department": 38,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-08-13",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 248,
+  "fields": {
+    "user": 640,
+    "employee_id": "EMP064",
+    "department": 39,
+    "designation": "Associate Professor",
+    "joining_date": "2021-02-23",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 249,
+  "fields": {
+    "user": 641,
+    "employee_id": "EMP065",
+    "department": 39,
+    "designation": "Associate Professor",
+    "joining_date": "2021-09-21",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 250,
+  "fields": {
+    "user": 642,
+    "employee_id": "EMP066",
+    "department": 39,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-10",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 251,
+  "fields": {
+    "user": 643,
+    "employee_id": "EMP067",
+    "department": 39,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-12-04",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 252,
+  "fields": {
+    "user": 644,
+    "employee_id": "EMP068",
+    "department": 39,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-05-19",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 253,
+  "fields": {
+    "user": 645,
+    "employee_id": "EMP069",
+    "department": 39,
+    "designation": "Senior Assistant Professor",
+    "joining_date": "2021-05-09",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 254,
+  "fields": {
+    "user": 646,
+    "employee_id": "EMP070",
+    "department": 39,
+    "designation": "Professor",
+    "joining_date": "2021-12-05",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 255,
+  "fields": {
+    "user": 647,
+    "employee_id": "EMP001",
+    "department": 40,
+    "designation": "Associate Professor",
+    "joining_date": "2021-04-06",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 256,
+  "fields": {
+    "user": 648,
+    "employee_id": "EMP002",
+    "department": 40,
+    "designation": "Associate Professor",
+    "joining_date": "2021-01-01",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 257,
+  "fields": {
+    "user": 649,
+    "employee_id": "EMP003",
+    "department": 40,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-10-14",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 258,
+  "fields": {
+    "user": 650,
+    "employee_id": "EMP004",
+    "department": 40,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-07-24",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 259,
+  "fields": {
+    "user": 651,
+    "employee_id": "EMP005",
+    "department": 40,
+    "designation": "Associate Professor",
+    "joining_date": "2021-12-23",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 260,
+  "fields": {
+    "user": 652,
+    "employee_id": "EMP006",
+    "department": 40,
+    "designation": "Assistant Professor",
+    "joining_date": "2021-01-15",
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 261,
+  "fields": {
+    "user": 1421,
+    "employee_id": "EMP_BS_001",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 262,
+  "fields": {
+    "user": 1422,
+    "employee_id": "EMP_KB_002",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 264,
+  "fields": {
+    "user": 1426,
+    "employee_id": "FAC_TEST_99",
+    "department": 44,
+    "designation": "Associate Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 268,
+  "fields": {
+    "user": 1439,
+    "employee_id": "EMP_CSO_04",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 269,
+  "fields": {
+    "user": 1440,
+    "employee_id": "EMP_CSO_05",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 270,
+  "fields": {
+    "user": 1441,
+    "employee_id": "EMP_CSO_06",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 271,
+  "fields": {
+    "user": 1442,
+    "employee_id": "EMP_CSO_01",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 272,
+  "fields": {
+    "user": 1443,
+    "employee_id": "EMP_CSO_02",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 273,
+  "fields": {
+    "user": 1444,
+    "employee_id": "EMP_CSO_03",
+    "department": 44,
+    "designation": "Associate Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 274,
+  "fields": {
+    "user": 1445,
+    "employee_id": "EMP_CSO_07",
+    "department": 44,
+    "designation": "Assistant Professor",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
+  }
+},
+{
+  "model": "accounts.faculty",
+  "pk": 275,
+  "fields": {
+    "user": 1566,
+    "employee_id": "HOD009",
+    "department": 44,
+    "designation": "Professor & HOD",
+    "joining_date": null,
+    "monthly_leave_limit": "2.0",
+    "is_active": true
   }
 },
 {

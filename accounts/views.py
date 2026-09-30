@@ -52,14 +52,21 @@ def login_view(request):
         from django.db.models import Q
         User = get_user_model()
         
-        # Fast direct lookup with select_related for instant profile access (supports roll_number, employee_id, username, email)
-        db_user = User.objects.filter(
+        # Fast direct lookup with select_related for instant profile access (supports roll_number, employee_id, username, email, and aliases)
+        lookup_q = (
             Q(username__iexact=username) |
             Q(email__iexact=username) |
             Q(student_profile__roll_number__iexact=username) |
             Q(faculty_profile__employee_id__iexact=username) |
             Q(deo_profile__employee_id__iexact=username)
-        ).select_related('student_profile').first()
+        )
+        norm_user = username.lower().replace(' ', '').replace('.', '').replace('_', '')
+        if norm_user in ['saijothi', 'hodcso', 'csohod']:
+            lookup_q |= Q(username='sai.jothi') | Q(faculty_profile__employee_id='HOD009')
+        elif norm_user.startswith('hod') and len(norm_user) <= 7:
+            lookup_q |= Q(username__iexact=norm_user) | Q(faculty_profile__employee_id__iexact=norm_user)
+
+        db_user = User.objects.filter(lookup_q).select_related('student_profile', 'faculty_profile', 'deo_profile').first()
 
         user = None
         if db_user and not getattr(db_user, 'is_deleted', False) and db_user.is_active and db_user.check_password(password):
