@@ -10,10 +10,12 @@ echo ============================================================
 cd /d "%~dp0\.."
 
 REM Activate virtual environment
-if exist venv\Scripts\activate.bat (
+if exist secenv\Scripts\activate.bat (
+    call secenv\Scripts\activate.bat
+) else if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat
 ) else (
-    echo [ERROR] Python virtual environment not found in .\venv!
+    echo [ERROR] Python virtual environment not found in .\secenv or .\venv!
     pause
     exit /b 1
 )
@@ -26,9 +28,11 @@ REM Collect static files
 echo [2/3] Collecting static files...
 python manage.py collectstatic --no-input
 
-REM Launch production server via Waitress / Gunicorn / Daphne
-echo [3/3] Launching VVITU Portal Server on Port 8000...
-echo Visit: http://localhost:8000 or http://127.0.0.1:8000
-python manage.py runserver 0.0.0.0:8000
+REM Launch production server via Waitress WSGI Server (16 threads for 200+ users)
+echo [3/3] Launching VVITU Portal Production Server on Port 8000...
+for /f "tokens=*" %%a in ('python -c "import socket; print(socket.gethostbyname(socket.gethostname()))"') do set "LAB_IP=%%a"
+echo Local Access:   http://localhost:8000
+if not "%LAB_IP%"=="" echo Network Access: http://%LAB_IP%:8000
+python -m waitress --host=0.0.0.0 --port=8000 --threads=16 --channel-timeout=60 VVITU_Portal.wsgi:application
 
 pause

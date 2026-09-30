@@ -22,6 +22,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
@@ -33,12 +34,11 @@ from accounts.models import User, Student, Faculty, DEOProfile, FacultyLeaveRequ
 from accounts.email_utils import send_welcome_credentials_email
 from core.models import (
     Branch, Year, Section, Subject, Timetable,
-    Attendance, Exam, Result, AcademicCalendar, QuestionPaper, ResultRelease,
+    Attendance, Exam, Result, AcademicCalendar, ResultRelease,
     FacultyAttendance, ClassTransfer, ClassDiary, Notification,
     SubjectTopicPlan, ExamSchedule, ensure_sections_for_all_branches
 )
 from collections import defaultdict
-from core.sms_utils import send_result_notifications, send_result_sms_to_parent
 from core.syllabus_utils import get_subject_syllabus_progress, get_batch_subject_syllabus_progress, check_and_dispatch_syllabus_reminders
 
 
@@ -528,10 +528,10 @@ def assign_counsellor(request):
 from core.models import SectionTimetableMetadata
 from core.timetable_service import (
     get_section_timetable_context, get_faculty_timetable_context,
-    sync_class_timetable_from_data, sync_faculty_timetable_from_data,
+    sync_class_timetable_from_data,
     extract_timetable_with_ai, generate_official_timetable_pdf,
     check_faculty_schedule_clash,
-    STANDARD_PERIOD_TIMINGS, DAY_LIST, PERIOD_LIST
+    STANDARD_PERIOD_TIMINGS
 )
 
 @admin_required
@@ -1151,10 +1151,7 @@ def faculty_attendance_report(request):
 
         for fac in faculties:
             rec = existing_date_records.get(fac.id)
-            # Enforce 3-hour Absent Lockout Policy
-            is_locked = False
             if rec and rec.is_absent_locked:
-                is_locked = True
                 status = 'A'
                 absent_locked_until = rec.absent_locked_until
                 locked_count += 1
@@ -1659,7 +1656,6 @@ def bulk_upload_students(request):
     """
     import csv
     import io
-    from django.db import transaction
     
     if request.method == 'POST':
         if 'csv_file' not in request.FILES:
@@ -1671,18 +1667,18 @@ def bulk_upload_students(request):
             messages.error(request, "Invalid file format. Please upload a .csv file.")
             return redirect('admin_dashboard:bulk_upload_students')
             
+        errors = []
         try:
             data_set = csv_file.read().decode('utf-8-sig')
             io_string = io.StringIO(data_set)
             
             success_count = 0
-            errors = []
             created_students_to_notify = []
             
             reader = csv.reader(io_string, delimiter=',', quotechar='"')
             is_first_row = True
             
-            with transaction.atomic():
+            with transaction.atomic():  # type: ignore
                 for row_idx, row in enumerate(reader, start=1):
                     if not row or not any(cell.strip() for cell in row):
                         continue
@@ -2041,14 +2037,14 @@ def delete_backup(request, pk):
 @admin_required
 def export_database_pdf(request):
     """Generate and download a beautifully styled PDF of all system data and student results."""
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.pagesizes import A4  # type: ignore
+    from reportlab.lib import colors  # type: ignore
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak  # type: ignore
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore
     import io
     
     from accounts.models import Student, Faculty
-    from core.models import Subject, Branch, Section, Attendance
+    from core.models import Subject, Branch, Attendance
 
     # Fetch data
     active_students = Student.objects.filter(user__is_deleted=False).select_related('user', 'branch', 'section', 'year').order_by('roll_number')
@@ -2268,7 +2264,7 @@ def export_database_pdf(request):
     story.append(PageBreak())
 
     # 6. Examination Schedules & Syllabus Milestone Targets
-    from core.models import ExamSchedule, SubjectTopicPlan
+    from core.models import ExamSchedule
     story.append(Paragraph("6. Examination Timetables & Syllabus Milestones", section_heading))
     exam_schedules = ExamSchedule.objects.all().select_related('branch', 'year').order_by('start_date')
     exam_headers = [
@@ -2342,10 +2338,10 @@ def export_database_pdf(request):
 @admin_required
 def export_student_results_pdf(request):
     """Generate and download a beautifully styled PDF of all student results."""
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.pagesizes import A4  # type: ignore
+    from reportlab.lib import colors  # type: ignore
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak  # type: ignore
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore
     import io
     
     from accounts.models import Student
@@ -2727,7 +2723,7 @@ def manage_fees(request):
     """
     from accounts.models import Student, StudentFee
     from core.models import Year, Branch
-    from django.db.models import Sum, Q
+    from django.db.models import Q
 
     years = Year.objects.all()
     branches = Branch.objects.all()
@@ -2757,19 +2753,23 @@ def manage_fees(request):
     
     if request.method == 'POST':
         action = request.POST.get('action')
+
+        def parse_val(v, max_limit=10000000.0):
+            if not v:
+                return 0.0
+            try:
+                val = float(str(v).strip())
+                if val < 0:
+                    return 0.0
+                if val > max_limit:
+                    return max_limit
+                return round(val, 2)
+            except (ValueError, TypeError, OverflowError):
+                return 0.0
         
         if action == 'update_single':
             stu_id = request.POST.get('student_id')
             stu = get_object_or_404(Student, id=stu_id)
-
-            def parse_val(v, max_limit=10000000.0):
-                if not v: return 0.0
-                try:
-                    val = float(str(v).strip())
-                    if val < 0: return 0.0
-                    if val > max_limit: return max_limit
-                    return round(val, 2)
-                except (ValueError, TypeError, OverflowError): return 0.0
 
             col = parse_val(request.POST.get('college_fee'))
             hos = parse_val(request.POST.get('hostel_fee'))
@@ -2809,11 +2809,6 @@ def manage_fees(request):
             return redirect(f"{request.path}?year={year_id}&branch={branch_id}&q={search}&status={status_filter}")
 
         elif action == 'bulk_assign':
-            def parse_val(v):
-                if not v: return 0.0
-                try: return float(str(v).strip())
-                except (ValueError, TypeError): return 0.0
-
             col = parse_val(request.POST.get('college_fee'))
             nba = parse_val(request.POST.get('nba_fee'))
             exm = parse_val(request.POST.get('exam_fee'))
@@ -2885,7 +2880,6 @@ def faculty_class_history(request):
         messages.error(request, "Access restricted to College Administration.")
         return redirect('accounts:dashboard')
 
-    import datetime
     from core.transfer_utils import get_conducted_class_history, get_free_faculty_for_period, parse_flexible_date
     from core.sms_utils import send_class_transfer_notification
     from core.models import Timetable, ClassTransfer
@@ -3998,7 +3992,6 @@ def faculty_class_attendance_audit(request):
         target_fac_id = request.GET.get('faculty_id')
         period_num = request.GET.get('period')
         subject_name = request.GET.get('subject')
-        branch_code = request.GET.get('branch_code', '')
         if target_fac_id and period_num:
             fac = Faculty.objects.filter(id=target_fac_id).first()
             if fac:

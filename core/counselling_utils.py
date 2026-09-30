@@ -15,13 +15,10 @@ Aggregates all student information across modules:
 
 import os
 import io
-import datetime
 from django.utils import timezone
-from django.db.models import Q, Count, Sum
-from django.conf import settings
 
-from accounts.models import Student, Achievement, Faculty
-from core.models import Subject, Exam, Result, Attendance, Timetable, Year, Branch
+from accounts.models import Achievement
+from core.models import Subject, Result, Attendance
 
 
 def get_student_counselling_dossier(student):
@@ -314,7 +311,7 @@ def generate_counselling_report_pdf(student):
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.platypus import (
-        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, HRFlowable
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether, HRFlowable
     )
     from reportlab.pdfgen import canvas
 

@@ -35,6 +35,15 @@ render_host_base = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if render_host_base and render_host_base not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_host_base)
 
+# Automatically include machine local LAN IP(s) for seamless lab/campus hosting
+try:
+    import socket
+    for _ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+        if _ip and _ip not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_ip)
+except Exception:
+    pass
+
 
 # ── Production HTTPS / Cookie security ──────
 SECURE_SSL_REDIRECT          = False if DEBUG else config('SECURE_SSL_REDIRECT', default=True, cast=bool)
@@ -304,7 +313,17 @@ else:
         'http://localhost:8000',
         'http://127.0.0.1:8000',
         'https://*.onrender.com',
+        'https://*.trycloudflare.com',
     ]
+
+# Auto-trust local IP hosts configured in ALLOWED_HOSTS for campus LAN convenience
+for _h in ALLOWED_HOSTS:
+    if _h and _h not in ['*', 'localhost', '127.0.0.1', 'testserver', '.onrender.com']:
+        for _scheme in ['http', 'https']:
+            for _port in ['', ':8000', ':80']:
+                _origin = f"{_scheme}://{_h}{_port}"
+                if _origin not in CSRF_TRUSTED_ORIGINS:
+                    CSRF_TRUSTED_ORIGINS.append(_origin)
 
 if render_host_base:
     _https_render = f'https://{render_host_base}'
