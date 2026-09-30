@@ -46,7 +46,7 @@ class UserAdmin(BaseUserAdmin):
 class StudentAdmin(admin.ModelAdmin):
     list_display  = ('roll_number', 'user', 'branch', 'year', 'section', 'is_active')
     list_filter   = ('branch', 'year', 'is_active')
-    search_fields = ('roll_number', 'user__first_name', 'user__last_name')
+    search_fields = ('roll_number', 'user__first_name', 'user__last_name', 'aadhaar_number', 'apaar_id')
     raw_id_fields = ('user', 'class_teacher', 'counsellor')
 
 @admin.register(Faculty)

@@ -79,12 +79,20 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label text-muted">Parent / Guardian Name</label>
-            <input type="text" name="parent_name" class="vvit-input" value="{{ student.parent_name|default:'' }}">
+            <label class="form-label text-muted">Father / Guardian Name</label>
+            <input type="text" name="parent_name" class="vvit-input" value="{{ student.father_name|default:student.parent_name|default:'' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Mother's Name</label>
+            <input type="text" name="mother_name" class="vvit-input" value="{{ student.mother_name|default:'' }}">
           </div>
           <div class="col-md-6">
             <label class="form-label text-muted">Parent Occupation / Work</label>
             <input type="text" name="parent_occupation" class="vvit-input" value="{{ student.parent_occupation|default:'' }}" placeholder="e.g. Business / Service">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="vvit-input" value="{{ student.date_of_birth|date:'Y-m-d'|default:'' }}">
           </div>
           <div class="col-md-6">
             <label class="form-label text-muted">Parent Mobile</label>
@@ -106,11 +114,35 @@
           </div>
           <div class="col-md-4">
             <label class="form-label text-muted">Caste Category</label>
-            <input type="text" name="caste" class="vvit-input" value="{{ student.caste|default:'' }}" placeholder="e.g. OC / BC-A / SC / ST">
+            <input type="text" name="caste" class="vvit-input" value="{{ student.caste_category|default:student.caste|default:'' }}" placeholder="e.g. OC / BC-A / SC / ST">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">Sub-Caste</label>
+            <input type="text" name="caste_sub_category" class="vvit-input" value="{{ student.caste_sub_category|default:'' }}" placeholder="e.g. Kamma / Yadav / Reddy">
           </div>
           <div class="col-md-4">
             <label class="form-label text-muted">Religion</label>
             <input type="text" name="religion" class="vvit-input" value="{{ student.religion|default:'' }}" placeholder="e.g. Hindu / Muslim / Christian">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">Aadhaar Number</label>
+            <input type="text" name="aadhaar_number" class="vvit-input" value="{{ student.aadhaar_number|default:'' }}" placeholder="XXXX XXXX XXXX">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">APAAR / ABC ID</label>
+            <input type="text" name="apaar_id" class="vvit-input" value="{{ student.apaar_id|default:'' }}" placeholder="12-digit APAAR ID">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">Admission Quota</label>
+            <input type="text" name="admission_type" class="vvit-input" value="{{ student.admission_type|default:'CONVENOR' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">SSC Hall Ticket No</label>
+            <input type="text" name="ssc_hall_ticket" class="vvit-input" value="{{ student.ssc_hall_ticket|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-muted">Inter / Diploma Hall Ticket</label>
+            <input type="text" name="inter_hall_ticket" class="vvit-input" value="{{ student.inter_hall_ticket|default:'' }}">
           </div>
 
           <div class="col-md-12">

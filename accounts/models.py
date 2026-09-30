@@ -141,6 +141,25 @@ class Student(models.Model):
     detention_reason  = models.TextField(blank=True, null=True)
     original_batch_year = models.IntegerField(default=2024, help_text="Original joining batch year")
     readmitted_date   = models.DateField(blank=True, null=True)
+    # Extended FRS Profile Fields
+    date_of_birth     = models.DateField(blank=True, null=True, help_text="Date of birth")
+    father_name       = models.CharField(max_length=150, blank=True, null=True, help_text="Father's Name")
+    mother_name       = models.CharField(max_length=150, blank=True, null=True, help_text="Mother's Name")
+    aadhaar_number    = models.CharField(max_length=25, blank=True, null=True, help_text="12-digit Aadhaar Number")
+    apaar_id          = models.CharField(max_length=25, blank=True, null=True, help_text="Automated Permanent Academic Account Registry / APAAR ID")
+    caste_category    = models.CharField(max_length=50, blank=True, null=True, help_text="Caste Category (OC, BC-A, BC-B, etc.)")
+    caste_sub_category= models.CharField(max_length=100, blank=True, null=True, help_text="Sub-caste name")
+    nationality       = models.CharField(max_length=50, default="INDIAN", blank=True, null=True)
+    course            = models.CharField(max_length=50, default="B.TECH", blank=True, null=True)
+    date_of_admission = models.DateField(blank=True, null=True, help_text="Date of admission")
+    academic_year     = models.CharField(max_length=30, blank=True, null=True, help_text="e.g. 2024-2027 or 2024-2028")
+    admission_type    = models.CharField(max_length=50, default="CONVENOR", blank=True, null=True, help_text="CONVENOR / MANAGEMENT")
+    reservation_category = models.CharField(max_length=50, blank=True, null=True, help_text="OBC, EWS, NA")
+    ssc_pass_type     = models.CharField(max_length=50, default="REGULAR", blank=True, null=True)
+    ssc_hall_ticket   = models.CharField(max_length=50, blank=True, null=True)
+    inter_hall_ticket = models.CharField(max_length=50, blank=True, null=True, help_text="Inter or Diploma Hall Ticket")
+    state             = models.CharField(max_length=100, default="ANDHRA PRADESH", blank=True, null=True)
+
 
 
     class Meta:
@@ -155,6 +174,17 @@ class Student(models.Model):
         super().clean()
         if self.fees_pending is not None and self.fees_pending < 0:
             raise ValidationError({'fees_pending': 'Pending fees cannot be negative.'})
+
+    def save(self, *args, **kwargs):
+        if self.father_name and not self.parent_name:
+            self.parent_name = self.father_name
+        elif self.parent_name and not self.father_name:
+            self.father_name = self.parent_name
+        if self.caste_category and not self.caste:
+            self.caste = self.caste_category
+        elif self.caste and not self.caste_category:
+            self.caste_category = self.caste
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.roll_number} — {self.user.get_full_name()}"

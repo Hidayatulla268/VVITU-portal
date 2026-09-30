@@ -1096,6 +1096,22 @@ def edit_student(request, pk):
         student.religion = p.get('religion', '').strip() or None
         student.permanent_address = p.get('permanent_address', '').strip() or None
         student.present_address = p.get('present_address', '').strip() or None
+        if p.get('mother_name'):
+            student.mother_name = p.get('mother_name', '').strip()
+        if p.get('date_of_birth'):
+            student.date_of_birth = p.get('date_of_birth') or None
+        if p.get('aadhaar_number'):
+            student.aadhaar_number = p.get('aadhaar_number', '').strip()
+        if p.get('apaar_id'):
+            student.apaar_id = p.get('apaar_id', '').strip()
+        if p.get('caste_sub_category'):
+            student.caste_sub_category = p.get('caste_sub_category', '').strip()
+        if p.get('admission_type'):
+            student.admission_type = p.get('admission_type', '').strip()
+        if p.get('ssc_hall_ticket'):
+            student.ssc_hall_ticket = p.get('ssc_hall_ticket', '').strip()
+        if p.get('inter_hall_ticket'):
+            student.inter_hall_ticket = p.get('inter_hall_ticket', '').strip()
 
         fees_val = p.get('fees_pending')
         if fees_val is not None and fees_val != '':

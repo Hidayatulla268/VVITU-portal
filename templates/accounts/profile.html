@@ -95,66 +95,153 @@
       </div>
 
       {% if user.role == 'student' and student %}
-      <!-- Student Profile Fields -->
-      <div class="row g-4">
-        <div class="col-md-6">
+      <!-- 1. Academic & Enrollment Details -->
+      <div class="mb-3 d-flex align-items-center justify-content-between">
+        <h4 class="fw-bold mb-0" style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright);">
+          <i class="fas fa-graduation-cap me-2"></i>Academic &amp; Enrollment
+        </h4>
+        <span class="badge-section" style="font-size: 0.7rem;">{{ student.course|default:"B.TECH" }} &bull; {{ student.academic_year|default:"2024-2027" }}</span>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6 col-lg-4">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
             <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">HallTicket / Roll No</div>
             <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.roll_number }}</div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-4">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Department / Branch</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.branch.name }} ({{ student.branch.code }})</div>
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Degree &amp; Program</div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">{{ student.course|default:"B.TECH" }} ({{ student.branch.code }})</div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-4">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Current Semester & Year</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
-              Sem {{ student.year.year }} — Year {{ student.year.get_year_display }}
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Current Year &amp; Sem</div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">
+              Year {{ student.year.get_year_display }} &bull; Sem {{ student.year.year }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Assigned Section</div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">Section {{ student.section.name|default:"A" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Admission Date</div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">{{ student.date_of_admission|date:"d M Y"|default:student.admission_year }}</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Admission Quota</div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">
+              <span class="badge {% if student.admission_type == 'CONVENOR' %}bg-success{% else %}bg-info{% endif %} text-white px-2 py-1" style="font-size: 0.8rem;">
+                {{ student.admission_type|default:"CONVENOR" }}
+              </span>
             </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Assigned Section</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">Section {{ student.section.name|default:"Not Assigned" }}</div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
             <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Class Teacher</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
               {{ student.class_teacher.user.get_full_name|default:"Not Assigned" }}
             </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Counsellor</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Assigned Counsellor</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
               {{ student.counsellor.user.get_full_name|default:"Not Assigned" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Personal & Family Profile -->
+      <div class="mb-3 mt-4 pt-3 d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--clr-border);">
+        <h4 class="fw-bold mb-0" style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright);">
+          <i class="fas fa-user-friends me-2"></i>Personal &amp; Family Information
+        </h4>
+        <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.7rem;">FRS Verified</span>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Gender</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.gender|default:"Not Specified" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Date of Birth</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.date_of_birth|date:"d M Y"|default:"Not Provided" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Religion</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.religion|default:"HINDU" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Reservation / Quota</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.reservation_category|default:"NA" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Father's Name</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.father_name|default:student.parent_name|default:"Not Provided" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Mother's Name</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.mother_name|default:"Not Provided" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Caste &amp; Category</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
+              <span class="badge bg-secondary me-2">{{ student.caste_category|default:student.caste|default:"OC" }}</span>
+              {{ student.caste_sub_category|default:"" }}
             </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Admission Year</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.admission_year }}</div>
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Nationality &amp; State</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
+              {{ student.nationality|default:"INDIAN" }} &bull; {{ student.state|default:"ANDHRA PRADESH" }}
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent / Guardian Name</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">{{ student.parent_name|default:"Not Provided" }}</div>
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Student Mobile</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
+              {% if student.personal_mobile or user.phone %}
+              <a href="tel:{{ student.personal_mobile|default:user.phone }}" class="link-accent">
+                <i class="fas fa-phone me-1"></i>{{ student.personal_mobile|default:user.phone }}
+              </a>
+              {% else %}
+              Not Provided
+              {% endif %}
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent Mobile Number</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--text-primary);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent Contact Mobile</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
               {% if student.parent_mobile %}
               <a href="tel:{{ student.parent_mobile }}" class="link-accent">
                 <i class="fas fa-phone me-1"></i>{{ student.parent_mobile }}
@@ -165,12 +252,51 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 3. Official Identity & Prior Academic Examination Records -->
+      <div class="mb-3 mt-4 pt-3 d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--clr-border);">
+        <h4 class="fw-bold mb-0" style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright);">
+          <i class="fas fa-shield-alt me-2"></i>Official Identity &amp; Prior Examination Records
+        </h4>
+        <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.7rem;"><i class="fas fa-check-circle me-1"></i>Verified</span>
+      </div>
+      <div class="row g-3">
         <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Account Status</div>
-            <div class="fw-bold mt-1" style="font-size: 1.05rem; color: var(--clr-success);">
-              <i class="fas fa-circle-check me-2"></i>Active Student
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">APAAR ID / ABC ID</div>
+            <div class="fw-bold mt-1 d-flex align-items-center justify-content-between" style="font-size: 1rem; color: var(--text-primary);">
+              <span>{{ student.apaar_id|default:"Pending Allocation" }}</span>
+              {% if student.apaar_id %}
+              <span class="badge bg-success text-white small px-2 py-1"><i class="fas fa-id-badge me-1"></i>Linked</span>
+              {% endif %}
             </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Aadhaar Number</div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary); letter-spacing: 0.05em;">
+              {{ student.aadhaar_number|default:"Not Provided" }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">SSC Pass Type</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.ssc_pass_type|default:"REGULAR" }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">SSC Hall Ticket No</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.ssc_hall_ticket|default:"Not Provided" }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Inter / Diploma Hall Ticket</div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">{{ student.inter_hall_ticket|default:"Not Provided" }}</div>
           </div>
         </div>
       </div>
