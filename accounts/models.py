@@ -158,6 +158,7 @@ class Student(models.Model):
     ssc_pass_type     = models.CharField(max_length=50, default="REGULAR", blank=True, null=True)
     ssc_hall_ticket   = models.CharField(max_length=50, blank=True, null=True)
     inter_hall_ticket = models.CharField(max_length=50, blank=True, null=True, help_text="Inter or Diploma Hall Ticket")
+    personal_email    = models.EmailField(blank=True, null=True, help_text="Personal Email Address (e.g. Gmail)")
     state             = models.CharField(max_length=100, default="ANDHRA PRADESH", blank=True, null=True)
 
 
@@ -195,7 +196,11 @@ class Student(models.Model):
 
     @property
     def email(self):
-        return self.user.email
+        return self.personal_email or self.user.email
+
+    @property
+    def college_email(self):
+        return f"{self.roll_number.lower()}@vvit.net"
 
     @property
     def phone(self):

@@ -49,25 +49,85 @@
 
       <!-- Contact Details -->
       <div class="text-start px-4 mt-3" style="border-top: 1px solid var(--clr-border); padding-top: 20px;">
-        <div class="mb-3 d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-envelope"></i>
+        {% if user.role == 'student' and student %}
+          <!-- Student Personal Email -->
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div>
+              <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                Personal Email <span class="badge bg-secondary" style="font-size: 0.6rem; padding: 1px 4px;">Students Data</span>
+              </div>
+              <div style="font-weight: 600; color: var(--text-primary); font-size: 0.84rem; word-break: break-all;">
+                {{ student.personal_email|default:user.email|default:"Not Configured" }}
+              </div>
+            </div>
           </div>
-          <div>
-            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Email Address</div>
-            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem; word-break: break-all;">{{ user.email|default:"Not Configured" }}</div>
-          </div>
-        </div>
 
-        <div class="mb-0 d-flex align-items-center gap-3">
-          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-phone"></i>
+          <!-- Student College Email -->
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-university"></i>
+            </div>
+            <div>
+              <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                College Email <span class="badge bg-primary" style="font-size: 0.6rem; padding: 1px 4px;">Official</span>
+              </div>
+              <div style="font-weight: 600; color: var(--accent-bright); font-size: 0.84rem; word-break: break-all;">
+                {{ student.college_email }}
+              </div>
+            </div>
           </div>
-          <div>
-            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number</div>
-            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ user.phone|default:"Not Configured" }}</div>
+
+          <!-- Student Phone / Mobile -->
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <div>
+              <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                Student Mobile <span class="badge bg-secondary" style="font-size: 0.6rem; padding: 1px 4px;">Primary</span>
+              </div>
+              <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">
+                {{ student.personal_mobile|default:user.phone|default:"Not Configured" }}
+              </div>
+            </div>
           </div>
-        </div>
+
+          <!-- Parent Contact Phone -->
+          {% if student.parent_mobile %}
+          <div class="mb-0 d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-phone-volume"></i>
+            </div>
+            <div>
+              <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Parent Mobile</div>
+              <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ student.parent_mobile }}</div>
+            </div>
+          </div>
+          {% endif %}
+        {% else %}
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div>
+              <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Email Address</div>
+              <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem; word-break: break-all;">{{ user.email|default:"Not Configured" }}</div>
+            </div>
+          </div>
+
+          <div class="mb-0 d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div>
+              <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number</div>
+              <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ user.phone|default:"Not Configured" }}</div>
+            </div>
+          </div>
+        {% endif %}
 
         {% if user.role not in 'student faculty lab_technician' %}
         <div class="mt-4 pt-3 text-center" style="border-top: 1px dashed var(--clr-border);">
@@ -163,7 +223,81 @@
         </div>
       </div>
 
-      <!-- 2. Personal & Family Profile -->
+      <!-- 2. Contact & Communication Channels (Students Data & College) -->
+      <div class="mb-3 mt-4 pt-3 d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--clr-border);">
+        <h4 class="fw-bold mb-0" style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright);">
+          <i class="fas fa-address-book me-2"></i>Contact &amp; Communications
+        </h4>
+        <span class="badge bg-primary text-white px-2 py-1" style="font-size: 0.7rem;"><i class="fas fa-check-circle me-1"></i>Students Data Verified</span>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Student Mobile Number</div>
+              <span class="badge bg-secondary" style="font-size: 0.65rem;">Primary Phone</span>
+            </div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">
+              {% if student.personal_mobile or user.phone %}
+              <a href="tel:{{ student.personal_mobile|default:user.phone }}" class="link-accent text-decoration-none">
+                <i class="fas fa-mobile-alt me-2 text-accent"></i>{{ student.personal_mobile|default:user.phone }}
+              </a>
+              {% else %}
+              Not Provided
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Personal Email Address</div>
+              <span class="badge bg-secondary" style="font-size: 0.65rem;">Students Data</span>
+            </div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary); word-break: break-all;">
+              {% if student.personal_email or user.email %}
+              <a href="mailto:{{ student.personal_email|default:user.email }}" class="link-accent text-decoration-none">
+                <i class="fas fa-envelope me-2 text-accent"></i>{{ student.personal_email|default:user.email }}
+              </a>
+              {% else %}
+              Not Provided
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">College Domain Email</div>
+              <span class="badge bg-info text-white" style="font-size: 0.65rem;">Official</span>
+            </div>
+            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--accent-bright); word-break: break-all;">
+              <a href="mailto:{{ student.college_email }}" class="link-accent text-decoration-none">
+                <i class="fas fa-university me-2 text-accent"></i>{{ student.college_email }}
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent / Guardian Mobile</div>
+              <span class="badge bg-secondary" style="font-size: 0.65rem;">FRS Record</span>
+            </div>
+            <div class="fw-bold mt-1" style="font-size: 1rem; color: var(--text-primary);">
+              {% if student.parent_mobile %}
+              <a href="tel:{{ student.parent_mobile }}" class="link-accent text-decoration-none">
+                <i class="fas fa-phone-volume me-2 text-accent"></i>{{ student.parent_mobile }}
+              </a>
+              {% else %}
+              Not Provided
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Personal & Family Profile -->
       <div class="mb-3 mt-4 pt-3 d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--clr-border);">
         <h4 class="fw-bold mb-0" style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright);">
           <i class="fas fa-user-friends me-2"></i>Personal &amp; Family Information
@@ -224,37 +358,9 @@
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Student Mobile</div>
-            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
-              {% if student.personal_mobile or user.phone %}
-              <a href="tel:{{ student.personal_mobile|default:user.phone }}" class="link-accent">
-                <i class="fas fa-phone me-1"></i>{{ student.personal_mobile|default:user.phone }}
-              </a>
-              {% else %}
-              Not Provided
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Parent Contact Mobile</div>
-            <div class="fw-bold mt-1" style="font-size: 0.95rem; color: var(--text-primary);">
-              {% if student.parent_mobile %}
-              <a href="tel:{{ student.parent_mobile }}" class="link-accent">
-                <i class="fas fa-phone me-1"></i>{{ student.parent_mobile }}
-              </a>
-              {% else %}
-              Not Provided
-              {% endif %}
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- 3. Official Identity & Prior Academic Examination Records -->
+      <!-- 4. Official Identity & Prior Academic Examination Records -->
       <div class="mb-3 mt-4 pt-3 d-flex align-items-center justify-content-between" style="border-top: 1px solid var(--clr-border);">
         <h4 class="fw-bold mb-0" style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-bright);">
           <i class="fas fa-shield-alt me-2"></i>Official Identity &amp; Prior Examination Records

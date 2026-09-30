@@ -63,18 +63,38 @@
             <i class="fas fa-envelope"></i>
           </div>
           <div>
-            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Email Address</div>
-            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem; word-break: break-all;">{{ student.user.email }}</div>
+            <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
+              Personal Email <span class="badge bg-secondary" style="font-size: 0.6rem; padding: 1px 4px;">Student</span>
+            </div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.85rem; word-break: break-all;">
+              {{ student.personal_email|default:student.user.email|default:"—" }}
+            </div>
           </div>
         </div>
 
         <div class="mb-3 d-flex align-items-center gap-3">
           <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-phone"></i>
+            <i class="fas fa-university"></i>
           </div>
           <div>
-            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number</div>
-            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ student.user.phone|default:"—" }}</div>
+            <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
+              College Email <span class="badge bg-primary" style="font-size: 0.6rem; padding: 1px 4px;">Official</span>
+            </div>
+            <div style="font-weight: 600; color: var(--accent-bright); font-size: 0.85rem; word-break: break-all;">
+              {{ student.college_email }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3 d-flex align-items-center gap-3">
+          <div class="kpi-icon" style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-subtle); color: var(--accent-bright); font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-mobile-alt"></i>
+          </div>
+          <div>
+            <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">
+              Student Mobile <span class="badge bg-secondary" style="font-size: 0.6rem; padding: 1px 4px;">Primary</span>
+            </div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ student.personal_mobile|default:student.user.phone|default:"—" }}</div>
           </div>
         </div>
 
@@ -83,8 +103,8 @@
             <i class="fas fa-users"></i>
           </div>
           <div>
-            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Parent Name / Phone</div>
-            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ student.parent_name|default:"—" }} / {{ student.parent_mobile|default:"—" }}</div>
+            <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Parent / Mobile</div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.88rem;">{{ student.father_name|default:student.parent_name|default:"—" }} / {{ student.parent_mobile|default:"—" }}</div>
           </div>
         </div>
       </div>
@@ -226,10 +246,67 @@
       </div>
     </div>
 
-    <!-- Extended Personal & Demographic Information -->
+    <!-- Contact & Communications Channels (Students Data) -->
     <div class="glass-card mb-4">
-      <div class="card-header-custom mb-3">
+      <div class="card-header-custom mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom"><i class="fas fa-address-book me-2 text-accent"></i>Contact &amp; Communication Channels</h3>
+        <span class="badge bg-primary text-white px-2 py-1" style="font-size: 0.72rem;"><i class="fas fa-check-circle me-1"></i>Students Data</span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase"><i class="fas fa-mobile-alt me-1 text-accent"></i>Student Mobile Number</div>
+            <div class="fw-bold mt-1 text-light">
+              {% if student.personal_mobile or student.user.phone %}
+              <a href="tel:{{ student.personal_mobile|default:student.user.phone }}" class="link-accent text-decoration-none">
+                {{ student.personal_mobile|default:student.user.phone }}
+              </a>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase"><i class="fas fa-envelope me-1 text-accent"></i>Personal Email (Students Data)</div>
+            <div class="fw-bold mt-1 text-light" style="word-break: break-all;">
+              {% if student.personal_email or student.user.email %}
+              <a href="mailto:{{ student.personal_email|default:student.user.email }}" class="link-accent text-decoration-none">
+                {{ student.personal_email|default:student.user.email }}
+              </a>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase"><i class="fas fa-university me-1 text-accent"></i>College Domain Email</div>
+            <div class="fw-bold mt-1 text-light" style="word-break: break-all;">
+              <a href="mailto:{{ student.college_email }}" class="link-accent text-decoration-none">
+                {{ student.college_email }}
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase"><i class="fas fa-phone-volume me-1 text-accent"></i>Parent / Guardian Mobile</div>
+            <div class="fw-bold mt-1 text-light">
+              {% if student.parent_mobile %}
+              <a href="tel:{{ student.parent_mobile }}" class="link-accent text-decoration-none">
+                {{ student.parent_mobile }}
+              </a>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extended Personal & Demographic Information (FRS Record) -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom mb-3 d-flex justify-content-between align-items-center">
         <h3 class="card-title-custom"><i class="fas fa-id-card-alt me-2 text-accent"></i>Extended Personal & Family Profile</h3>
+        <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.72rem;">FRS Verified</span>
       </div>
       <div class="row g-3">
         <div class="col-md-4">
@@ -240,8 +317,8 @@
         </div>
         <div class="col-md-4">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted small text-uppercase"><i class="fas fa-layer-group me-1 text-accent"></i>Caste Category</div>
-            <div class="fw-bold mt-1 text-light">{{ student.caste|default:"—" }}</div>
+            <div class="text-muted small text-uppercase"><i class="fas fa-birthday-cake me-1 text-accent"></i>Date of Birth</div>
+            <div class="fw-bold mt-1 text-light">{{ student.date_of_birth|date:"d M Y"|default:"—" }}</div>
           </div>
         </div>
         <div class="col-md-4">
@@ -251,22 +328,32 @@
           </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted small text-uppercase"><i class="fas fa-user-shield me-1 text-accent"></i>Parent / Guardian Name</div>
-            <div class="fw-bold mt-1 text-light">{{ student.parent_name|default:"—" }}</div>
+            <div class="text-muted small text-uppercase"><i class="fas fa-user-shield me-1 text-accent"></i>Father's Name</div>
+            <div class="fw-bold mt-1 text-light">{{ student.father_name|default:student.parent_name|default:"—" }}</div>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted small text-uppercase"><i class="fas fa-briefcase me-1 text-accent"></i>Parent Occupation / Work</div>
-            <div class="fw-bold mt-1 text-light">{{ student.parent_occupation|default:"—" }}</div>
+            <div class="text-muted small text-uppercase"><i class="fas fa-female me-1 text-accent"></i>Mother's Name</div>
+            <div class="fw-bold mt-1 text-light">{{ student.mother_name|default:"—" }}</div>
           </div>
         </div>
-        <div class="col-md-4">
+
+        <div class="col-md-6">
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
-            <div class="text-muted small text-uppercase"><i class="fas fa-mobile-alt me-1 text-accent"></i>Student Personal Mobile</div>
-            <div class="fw-bold mt-1 text-light">{{ student.personal_mobile|default:student.user.phone|default:"—" }}</div>
+            <div class="text-muted small text-uppercase"><i class="fas fa-layer-group me-1 text-accent"></i>Caste &amp; Sub-Category</div>
+            <div class="fw-bold mt-1 text-light">
+              <span class="badge bg-secondary me-1">{{ student.caste_category|default:student.caste|default:"OC" }}</span>
+              {{ student.caste_sub_category|default:"" }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase"><i class="fas fa-flag me-1 text-accent"></i>Nationality &amp; State</div>
+            <div class="fw-bold mt-1 text-light">{{ student.nationality|default:"INDIAN" }} &bull; {{ student.state|default:"ANDHRA PRADESH" }}</div>
           </div>
         </div>
 
@@ -280,6 +367,46 @@
           <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
             <div class="text-muted small text-uppercase"><i class="fas fa-map-marker-alt me-1 text-accent"></i>Present / Local Address</div>
             <div class="fw-bold mt-1 text-light" style="white-space: pre-line;">{{ student.present_address|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Official Identity & Academic Examination Records -->
+    <div class="glass-card mb-4">
+      <div class="card-header-custom mb-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title-custom"><i class="fas fa-shield-alt me-2 text-accent"></i>Official Identity &amp; Prior Exam Records</h3>
+        <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.72rem;"><i class="fas fa-check-circle me-1"></i>Verified</span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">APAAR ID / ABC ID</div>
+            <div class="fw-bold mt-1 text-light">{{ student.apaar_id|default:"Pending Allocation" }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">Aadhaar Number</div>
+            <div class="fw-bold mt-1 text-light">{{ student.aadhaar_number|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">SSC Pass Type</div>
+            <div class="fw-bold mt-1 text-light">{{ student.ssc_pass_type|default:"REGULAR" }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">SSC Hall Ticket No</div>
+            <div class="fw-bold mt-1 text-light">{{ student.ssc_hall_ticket|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-item p-3" style="background: rgba(0,0,0,0.15); border: 1px solid var(--clr-border); border-radius: var(--radius-md);">
+            <div class="text-muted small text-uppercase">Inter / Diploma Hall Ticket</div>
+            <div class="fw-bold mt-1 text-light">{{ student.inter_hall_ticket|default:"—" }}</div>
           </div>
         </div>
       </div>
